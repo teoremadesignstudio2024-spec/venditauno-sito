@@ -499,8 +499,9 @@ footer .foot-links { display: flex; gap: 18px; justify-content: center; margin-t
   display: flex; align-items: center; justify-content: center; color: var(--muted-foreground); font-size: 1.6rem;
 }
 .result-info { padding: 12px 14px; }
-.result-info .who { font-weight: 700; font-size: 0.9rem; }
-.result-info .what { font-size: 0.82rem; color: var(--money-bright); font-weight: 600; margin-top: 2px; }
+.result-info .who { font-weight: 700; font-size: 0.85rem; color: var(--muted-foreground); }
+.result-info .what { font-size: 0.92rem; color: var(--money-bright); font-weight: 800; margin-top: 3px; line-height: 1.3; }
+.result-info .shot-note { font-size: 0.72rem; color: var(--muted-foreground); opacity: 0.7; margin-top: 6px; }
 
 /* ---------- Case study ---------- */
 .case-study {
