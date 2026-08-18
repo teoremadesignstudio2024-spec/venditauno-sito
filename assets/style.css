@@ -488,6 +488,20 @@ footer .foot-links { display: flex; gap: 18px; justify-content: center; margin-t
 .quiz-back { display: block; margin: 20px auto 0; font-size: 0.85rem; color: var(--muted-foreground); text-align: center; }
 .quiz-back:hover { color: var(--foreground); }
 
+/* ---------- Results screenshot grid ---------- */
+.results-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 640px) { .results-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px) { .results-grid { grid-template-columns: repeat(4, 1fr); } }
+.result-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: var(--transition); }
+.result-card:hover { border-color: var(--border-accent); transform: translateY(-2px); }
+.result-shot {
+  aspect-ratio: 4/3; background: linear-gradient(160deg, var(--muted), var(--card));
+  display: flex; align-items: center; justify-content: center; color: var(--muted-foreground); font-size: 1.6rem;
+}
+.result-info { padding: 12px 14px; }
+.result-info .who { font-weight: 700; font-size: 0.9rem; }
+.result-info .what { font-size: 0.82rem; color: var(--money-bright); font-weight: 600; margin-top: 2px; }
+
 /* ---------- Case study ---------- */
 .case-study {
   display: grid; gap: 32px; grid-template-columns: 1fr; align-items: center;
