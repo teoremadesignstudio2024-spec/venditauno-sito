@@ -557,6 +557,19 @@ footer .foot-links { display: flex; gap: 18px; justify-content: center; margin-t
 .calc-output .calc-sub { color: var(--muted-foreground); font-size: 0.85rem; margin-top: 8px; }
 .calc-note { font-size: 0.75rem; color: var(--muted-foreground); margin-top: 18px; text-align: center; }
 
+/* ---------- Italy map with city dots ---------- */
+.italy-map-wrap { position: relative; max-width: 300px; margin: 0 auto 32px; }
+.italy-map-wrap img { width: 100%; display: block; }
+.map-dot {
+  position: absolute; width: 11px; height: 11px; border-radius: 50%;
+  background: var(--accent-bright); box-shadow: 0 0 9px rgba(60,131,245,0.75);
+  transform: translate(-50%, -50%);
+  animation: dotBlink 3s ease-in-out infinite;
+}
+.map-dot.taken { background: var(--muted-foreground); opacity: 0.45; box-shadow: none; animation: none; }
+@keyframes dotBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) { .map-dot { animation: none; } }
+
 /* ---------- Zona disponibilità split panel ---------- */
 .zona-panel {
   display: grid; gap: 32px; grid-template-columns: 1fr;
