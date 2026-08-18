@@ -2,7 +2,18 @@
 document.querySelectorAll('[data-nav-toggle]').forEach((btn) => {
   btn.addEventListener('click', () => {
     const links = document.querySelector('.nav-links');
-    links.style.display = links.style.display === 'flex' ? 'none' : 'flex';
+    const isOpen = links.classList.toggle('open');
+    btn.textContent = isOpen ? '✕' : '☰';
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+});
+// Close mobile menu when a link inside it is tapped
+document.querySelectorAll('.nav-links a').forEach((link) => {
+  link.addEventListener('click', () => {
+    const links = document.querySelector('.nav-links');
+    links.classList.remove('open');
+    const toggle = document.querySelector('[data-nav-toggle]');
+    if (toggle) { toggle.textContent = '☰'; toggle.setAttribute('aria-expanded', 'false'); }
   });
 });
 
