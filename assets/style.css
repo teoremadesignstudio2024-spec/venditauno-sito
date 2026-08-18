@@ -219,7 +219,8 @@ h3 { font-size: 1.2rem; }
 }
 .nav-inner { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; max-width: 1180px; margin: 0 auto; }
 .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.05rem; }
-.nav-logo-img { height: 26px; width: auto; display: block; }
+.nav-logo-img { height: 40px; width: auto; display: block; }
+@media (max-width: 420px) { .nav-logo-img { height: 32px; } }
 .nav-logo .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-bright), var(--money-bright)); flex-shrink: 0; }
 .nav-links a { color: var(--muted-foreground); font-weight: 500; transition: var(--transition); position: relative; }
 .nav-links a:hover { color: var(--foreground); }
