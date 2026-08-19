@@ -515,6 +515,7 @@ footer .foot-links { display: flex; gap: 18px; justify-content: center; margin-t
   display: flex; align-items: center; justify-content: center;
 }
 @media (min-width: 800px) { .case-video { border-radius: 0; height: 100%; aspect-ratio: auto; } }
+.case-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .case-play {
   width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.12);
   backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.25);
