@@ -96,7 +96,7 @@ function pageShell(title, bodyHtml) {
 <body style="background:var(--background);">
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo"><img src="/assets/img/logo.png" alt="Vendita Uno" class="nav-logo-img"></a>
+    <a href="/" class="nav-logo"><img src="/assets/img/logo-academy.png" alt="VenditaUno Academy" class="nav-logo-img" style="height:34px;"></a>
   </div>
 </nav>
 ${bodyHtml}
