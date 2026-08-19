@@ -129,7 +129,7 @@ if (calcSlider) {
   const outMandati = document.querySelector('[data-calc-mandati]');
   const outFatturato = document.querySelector('[data-calc-fatturato]');
   const COMMISSIONE_MEDIA = 7000;
-  const COSTO_PER_INCARICO = 150;
+  const COSTO_PER_INCARICO = 250;
   const update = () => {
     const investimento = parseInt(calcSlider.value, 10);
     currentLabel.textContent = investimento.toLocaleString('it-IT');
