@@ -1,0 +1,10 @@
+{
+  "_comment": "Lista utenti Academy. Per aggiungerne uno nuovo, chiedi a Claude di generarti l'hash della password e aggiungi una riga qui. Non mettere mai la password in chiaro.",
+  "users": [
+    {
+      "username": "demo",
+      "salt": "8f2a1c9e4b7d3f6a1e5c8b2d9f4a7e3c",
+      "hash": "c333c929e7d50fbf3398aeedd9b7d065e964a68c7d864bf37c4a4753fd3f7e88"
+    }
+  ]
+}

@@ -1,6 +1,12 @@
 name = "venditauno-sito"
+main = "worker.js"
 compatibility_date = "2024-09-23"
 
 [assets]
 directory = "."
+binding = "ASSETS"
 not_found_handling = "404-page"
+
+[[kv_namespaces]]
+binding = "ACADEMY_PROGRESS"
+id = "16990aca669849f8905453df22aea689"
