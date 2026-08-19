@@ -512,11 +512,18 @@ footer .foot-links { display: flex; gap: 18px; justify-content: center; margin-t
 .case-video {
   position: relative; aspect-ratio: 16/9; border-radius: var(--radius-lg); overflow: hidden;
   background: linear-gradient(160deg, var(--muted), var(--card));
+  background-size: cover; background-position: center;
   display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
 }
 @media (min-width: 800px) { .case-video { border-radius: 0; height: 100%; aspect-ratio: auto; } }
+.case-video::before {
+  content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.25); transition: background 0.25s ease;
+}
+.case-video:hover::before { background: rgba(0,0,0,0.4); }
 .case-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .case-play {
+  position: relative; z-index: 1;
   width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.12);
   backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.25);
   display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.4rem;

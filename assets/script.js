@@ -195,5 +195,13 @@ if (timelineEl) {
   timelineObserver.observe(timelineEl);
 }
 
+// Click-to-play YouTube facade (loads the player only after a click)
+document.querySelectorAll('[data-yt-facade]').forEach((el) => {
+  el.addEventListener('click', () => {
+    const id = el.dataset.ytFacade;
+    el.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  }, { once: true });
+});
+
 // Copyright year
 document.querySelectorAll('[data-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });
