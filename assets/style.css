@@ -386,6 +386,20 @@ h3 { font-size: 1.2rem; }
 .sticky-cta .sub { color: var(--muted-foreground); font-weight: 400; display: none; }
 @media (min-width: 640px) { .sticky-cta .sub { display: inline; } }
 
+/* ---------- GHL form frame ---------- */
+.ghl-frame-wrap {
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  background: linear-gradient(135deg, var(--accent-bright), var(--money-bright));
+  box-shadow: 0 0 30px -8px rgba(60,131,245,0.45);
+}
+.ghl-frame-inner {
+  background: #fff;
+  border-radius: calc(var(--radius-lg) - 4px);
+  overflow: hidden;
+}
+.ghl-frame-inner iframe { display: block; width: 100%; border: none; }
+
 /* ---------- Form panel ---------- */
 .form-panel {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
