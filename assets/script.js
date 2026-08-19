@@ -203,5 +203,12 @@ document.querySelectorAll('[data-yt-facade]').forEach((el) => {
   }, { once: true });
 });
 
+// Scratch card reveal
+document.querySelectorAll('[data-scratch]').forEach((card) => {
+  const cover = card.querySelector('[data-scratch-cover]');
+  if (!cover) return;
+  cover.addEventListener('click', () => { card.classList.add('revealed'); }, { once: true });
+});
+
 // Copyright year
 document.querySelectorAll('[data-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });
