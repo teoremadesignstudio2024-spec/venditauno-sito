@@ -268,7 +268,7 @@ h3 { font-size: 1.2rem; }
     transition: width 0.3s ease;
   }
   .nav-links a:hover::after { width: 100%; }
-  .nav-links .nav-cta-mobile { display: none; }
+  .nav-links .nav-cta-mobile, .nav-links .academy-mobile { display: none; }
   .nav-cta { display: inline-flex; }
   .nav-academy { display: inline-flex; }
   .nav-toggle { display: none; }
