@@ -129,8 +129,9 @@ function pageShell(title, bodyHtml) {
 </head>
 <body style="background:var(--background);">
 <nav class="nav">
-  <div class="nav-inner">
+  <div class="nav-inner" style="justify-content:space-between;">
     <a href="/" class="nav-logo"><img src="/assets/img/logo-academy.png" alt="VenditaUno Academy" class="nav-logo-img" style="height:34px;"></a>
+    <a href="/" style="color:var(--muted-foreground);font-size:0.9rem;font-weight:600;white-space:nowrap;">← Torna al sito</a>
   </div>
 </nav>
 ${bodyHtml}
