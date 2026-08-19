@@ -203,6 +203,16 @@ document.querySelectorAll('[data-yt-facade]').forEach((el) => {
   }, { once: true });
 });
 
+// Mandate signing animation
+document.querySelectorAll('[data-sign-anim]').forEach((el) => {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) { el.classList.add('in-view'); obs.unobserve(el); }
+    });
+  }, { threshold: 0.4 });
+  obs.observe(el);
+});
+
 // Scratch card reveal
 document.querySelectorAll('[data-scratch]').forEach((card) => {
   const cover = card.querySelector('[data-scratch-cover]');

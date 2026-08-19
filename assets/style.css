@@ -386,6 +386,25 @@ h3 { font-size: 1.2rem; }
 .sticky-cta .sub { color: var(--muted-foreground); font-weight: 400; display: none; }
 @media (min-width: 640px) { .sticky-cta .sub { display: inline; } }
 
+/* ---------- Mandate signing animation ---------- */
+.sign-anim {
+  max-width: 420px; margin: 0 auto 28px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 24px; text-align: center;
+}
+.sign-anim .doc { width: 100%; max-width: 220px; margin: 0 auto; }
+.sign-anim .doc-line { stroke: var(--border); stroke-width: 2; }
+.sign-anim .doc-signature {
+  fill: none; stroke: var(--accent-bright); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 260; stroke-dashoffset: 260;
+  transition: stroke-dashoffset 1.8s ease-in-out;
+}
+.sign-anim.in-view .doc-signature { stroke-dashoffset: 0; }
+.sign-anim .pen {
+  opacity: 0; transition: opacity 0.3s ease 1.6s;
+}
+.sign-anim.in-view .pen { opacity: 1; }
+.sign-anim p { margin-top: 14px; font-weight: 700; color: var(--foreground); }
+
 /* ---------- Scratch card ---------- */
 .scratch-card {
   position: relative; max-width: 420px; margin: 0 auto; border-radius: var(--radius-lg);
