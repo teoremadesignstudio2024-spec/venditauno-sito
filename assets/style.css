@@ -235,7 +235,6 @@ h3 { font-size: 1.2rem; }
 .nav-toggle {
   display: flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; font-size: 1.4rem; color: var(--foreground); flex-shrink: 0;
-  margin-left: auto;
 }
 
 /* Mobile: dropdown panel */
