@@ -403,6 +403,16 @@ h3 { font-size: 1.2rem; }
 }
 .founder-photo:not(:has(img)) { padding: 20px; }
 .founder-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; }
+
+.team-grid { display: grid; gap: 20px; grid-template-columns: 1fr; max-width: 320px; margin: 40px auto 0; }
+@media (min-width: 600px) { .team-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); max-width: 100%; } }
+.team-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 24px; text-align: center; transition: var(--transition); }
+.team-card:hover { border-color: var(--border-accent); }
+.team-photo { width: 110px; height: 110px; border-radius: 50%; overflow: hidden; margin: 0 auto 16px; border: 2px solid var(--border-accent); }
+.team-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.team-name { font-weight: 800; font-size: 1.05rem; }
+.team-role { color: var(--money-bright); font-size: 0.85rem; font-weight: 700; margin: 4px 0 12px; }
+.team-bio { color: var(--muted-foreground); font-size: 0.9rem; line-height: 1.5; }
 }
 
 /* ---------- Sticky CTA ---------- */
