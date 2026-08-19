@@ -225,6 +225,13 @@ h3 { font-size: 1.2rem; }
 .nav-links a { color: var(--muted-foreground); font-weight: 500; transition: var(--transition); position: relative; }
 .nav-links a:hover { color: var(--foreground); }
 .nav-cta { display: none; }
+.nav-academy {
+  display: none; align-items: center; gap: 6px;
+  font-size: 0.85rem; font-weight: 700; color: var(--accent-bright);
+  border: 1px solid var(--border-accent); border-radius: 999px; padding: 8px 16px;
+  white-space: nowrap; transition: var(--transition);
+}
+.nav-academy:hover { background: rgba(60,131,245,0.1); }
 .nav-toggle {
   display: flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; font-size: 1.4rem; color: var(--foreground); flex-shrink: 0;
@@ -263,6 +270,7 @@ h3 { font-size: 1.2rem; }
   .nav-links a:hover::after { width: 100%; }
   .nav-links .nav-cta-mobile { display: none; }
   .nav-cta { display: inline-flex; }
+  .nav-academy { display: inline-flex; }
   .nav-toggle { display: none; }
 }
 
