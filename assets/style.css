@@ -382,6 +382,16 @@ h3 { font-size: 1.2rem; }
 }
 .money-figure sup { font-size: 0.4em; vertical-align: super; }
 
+.legal-clause {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 32px 36px; margin-top: 24px;
+}
+.legal-clause h3 { font-size: 1.1rem; margin-bottom: 18px; letter-spacing: 0.01em; }
+.legal-clause p { font-size: 0.92rem; line-height: 1.7; color: var(--muted-foreground); margin-bottom: 14px; }
+.legal-clause p:last-child { margin-bottom: 0; }
+.legal-clause p strong { color: var(--foreground); }
+@media (max-width: 600px) { .legal-clause { padding: 26px 22px; } }
+
 /* ---------- Testimonial (funnel titolari) ---------- */
 .founder-card { display: grid; gap: 32px; grid-template-columns: 1fr; align-items: center; }
 @media (min-width: 800px) { .founder-card { grid-template-columns: 320px 1fr; } }
