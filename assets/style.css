@@ -119,6 +119,22 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .section { padding: 100px 0; position: relative; z-index: 1; }
 .section-tight { padding: 64px 0; }
 
+/* ---------- Alternating light sections ---------- */
+.section-light {
+  --background: #f4f7fb;
+  --card: #ffffff;
+  --card-hover: #eaf1fb;
+  --muted: #eef3fa;
+  --foreground: #0b1a2e;
+  --muted-foreground: #52607a;
+  --border: #e1e8f2;
+  --border-accent: rgba(37, 99, 235, 0.35);
+  --accent-bright: #2563eb;
+  --money-bright: #0284c7;
+  background: var(--background);
+  color: var(--foreground);
+}
+
 /* ---------- Typography ---------- */
 .eyebrow {
   display: inline-flex;
