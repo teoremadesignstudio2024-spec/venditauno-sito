@@ -1,10 +1,32 @@
 import usersData from "./academy-users.json";
 
-const VIDEOS = [
-  { id: "v1", youtubeId: "jqOjebgNQvk", title: "Modulo 1 — Introduzione al metodo" },
-  { id: "v2", youtubeId: "jqOjebgNQvk", title: "Modulo 2 — Acquisizione mandati" },
-  { id: "v3", youtubeId: "jqOjebgNQvk", title: "Modulo 3 — Chiusura e firma" },
+const MODULES = [
+  {
+    id: "m1",
+    title: "Modulo 1 — Introduzione al metodo",
+    videos: [
+      { id: "m1v1", youtubeId: "jqOjebgNQvk", title: "Introduzione al metodo Vendita Uno" },
+    ],
+  },
+  {
+    id: "m2",
+    title: "Modulo 2 — Acquisizione mandati",
+    videos: [
+      { id: "m2v1", youtubeId: "jqOjebgNQvk", title: "Come acquisire mandati in esclusiva" },
+    ],
+  },
+  {
+    id: "m3",
+    title: "Modulo 3 — Chiusura e firma",
+    videos: [
+      { id: "m3v1", youtubeId: "jqOjebgNQvk", title: "Chiusura e firma del mandato" },
+    ],
+  },
 ];
+
+// PDF scaricabili gratis per chi ha accesso all'Academy.
+// Per aggiungerne uno: carica il file in /site/assets/pdf/ e aggiungi una riga qui.
+const PDFS = [];
 
 const COOKIE_NAME = "vu_academy_session";
 // TODO: spostare questa stringa in un Cloudflare Secret reale (wrangler secret put SESSION_SECRET)
@@ -86,11 +108,23 @@ function pageShell(title, bodyHtml) {
 .login-box input { width: 100%; padding: 12px 14px; margin-bottom: 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--muted); color: var(--foreground); font-size: 1rem; }
 .login-box label { font-size: 0.85rem; color: var(--muted-foreground); display: block; margin-bottom: 6px; }
 .error-msg { color: #f87171; font-size: 0.9rem; margin-bottom: 14px; text-align: center; }
+.module-block { margin-bottom: 40px; }
+.module-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.module-head h2 { font-size: 1.2rem; margin: 0; }
+.module-progress { font-size: 0.82rem; color: var(--muted-foreground); font-weight: 600; white-space: nowrap; }
 .video-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
 .video-item iframe { width: 100%; aspect-ratio: 16/9; border: none; border-radius: var(--radius); }
 .video-item h3 { margin: 14px 0 10px; }
 .complete-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius); border: 1px solid var(--border); font-weight: 700; font-size: 0.9rem; cursor: pointer; background: var(--muted); color: var(--foreground); }
 .complete-btn.done { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4); color: #4ade80; }
+.pdf-section { margin-top: 48px; padding-top: 36px; border-top: 1px solid var(--border); }
+.pdf-list { display: flex; flex-direction: column; gap: 12px; }
+.pdf-card { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; text-decoration: none; color: var(--foreground); transition: var(--transition); }
+.pdf-card:hover { border-color: var(--border-accent); }
+.pdf-card .pdf-icon { font-size: 1.6rem; flex-shrink: 0; }
+.pdf-card h4 { margin: 0 0 4px; font-size: 1rem; }
+.pdf-card p { margin: 0; font-size: 0.85rem; color: var(--muted-foreground); }
+.pdf-empty { color: var(--muted-foreground); font-size: 0.92rem; }
 </style>
 </head>
 <body style="background:var(--background);">
@@ -129,22 +163,46 @@ async function academyPage(username, env, request) {
     const raw = await kv.get(`progress:${username}`);
     if (raw) completed = JSON.parse(raw);
   }
-  const videosHtml = VIDEOS.map((v) => `
-    <div class="video-item">
-      <iframe src="https://www.youtube.com/embed/${v.youtubeId}" title="${v.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-      <h3>${v.title}</h3>
-      <button class="complete-btn ${completed[v.id] ? "done" : ""}" data-video-id="${v.id}" onclick="toggleComplete(this)">
-        ${completed[v.id] ? "✓ Completato" : "Segna come completato"}
-      </button>
-    </div>`).join("");
+
+  const modulesHtml = MODULES.map((mod) => {
+    const doneCount = mod.videos.filter((v) => completed[v.id]).length;
+    const videosHtml = mod.videos.map((v) => `
+      <div class="video-item">
+        <iframe src="https://www.youtube.com/embed/${v.youtubeId}" title="${v.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        <h3>${v.title}</h3>
+        <button class="complete-btn ${completed[v.id] ? "done" : ""}" data-video-id="${v.id}" onclick="toggleComplete(this)">
+          ${completed[v.id] ? "✓ Completato" : "Segna come completato"}
+        </button>
+      </div>`).join("");
+    return `
+    <div class="module-block">
+      <div class="module-head">
+        <h2>${mod.title}</h2>
+        <span class="module-progress">${doneCount}/${mod.videos.length} completati</span>
+      </div>
+      ${videosHtml}
+    </div>`;
+  }).join("");
+
+  const pdfHtml = PDFS.length
+    ? `<div class="pdf-list">${PDFS.map((p) => `
+        <a class="pdf-card" href="${p.url}" target="_blank" rel="noopener">
+          <span class="pdf-icon">📄</span>
+          <div><h4>${p.title}</h4><p>${p.description || ""}</p></div>
+        </a>`).join("")}</div>`
+    : `<p class="pdf-empty">Nuovi materiali scaricabili in arrivo a breve.</p>`;
 
   return pageShell("Academy", `
   <div class="academy-wrap">
     <div class="eyebrow money">🎓 VenditaUno Academy</div>
     <h1 style="margin-bottom:8px;">Ciao, ${username}</h1>
     <p style="color:var(--muted-foreground);margin-bottom:32px;">Guarda i video e segna come completati man mano che li finisci.</p>
-    ${videosHtml}
-    <a href="/academy/logout" style="display:block;text-align:center;margin-top:20px;color:var(--muted-foreground);font-size:0.9rem;">Esci</a>
+    ${modulesHtml}
+    <div class="pdf-section">
+      <div class="eyebrow" style="margin-bottom:14px;">📄 Materiali scaricabili</div>
+      ${pdfHtml}
+    </div>
+    <a href="/academy/logout" style="display:block;text-align:center;margin-top:32px;color:var(--muted-foreground);font-size:0.9rem;">Esci</a>
   </div>
   <script>
     function toggleComplete(btn) {
