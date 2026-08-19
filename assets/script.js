@@ -128,6 +128,7 @@ if (calcSlider) {
   const currentLabel = document.querySelector('[data-calc-current]');
   const outMandati = document.querySelector('[data-calc-mandati]');
   const outFatturato = document.querySelector('[data-calc-fatturato]');
+  const outSpesaAnnua = document.querySelector('[data-calc-spesa-annua]');
   const COMMISSIONE_MEDIA = 7000;
   const COSTO_PER_INCARICO = 250;
   const update = () => {
@@ -136,6 +137,7 @@ if (calcSlider) {
     const incarichi = Math.floor(investimento / COSTO_PER_INCARICO);
     outMandati.textContent = incarichi + ' incarichi/mese';
     outFatturato.textContent = '+' + (incarichi * 12 * COMMISSIONE_MEDIA).toLocaleString('it-IT') + '€/anno';
+    if (outSpesaAnnua) outSpesaAnnua.textContent = (investimento * 12).toLocaleString('it-IT') + '€/anno';
   };
   calcSlider.addEventListener('input', update);
   update();
