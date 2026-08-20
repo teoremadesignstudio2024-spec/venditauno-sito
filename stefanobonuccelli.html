@@ -15,6 +15,36 @@
 <meta property="og:locale" content="it_IT">
 <link rel="icon" type="image/png" href="assets/img/logo.png">
 <link rel="stylesheet" href="assets/style.css">
+<style>
+/* Palette dedicata a Immobiliare Bonuccelli — verde, non il blu di Vendita Uno */
+:root {
+  --primary: #16a34a;
+  --primary-hover: #22c55e;
+  --primary-dark: #15803d;
+  --accent: #16a34a;
+  --accent-bright: #22c55e;
+  --money: #16a34a;
+  --money-bright: #4ade80;
+  --border-accent: rgba(34, 197, 94, 0.35);
+}
+body {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(34,197,94,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 30%, rgba(74,222,128,0.06) 0%, transparent 45%),
+    radial-gradient(ellipse at 10% 90%, rgba(34,197,94,0.07) 0%, transparent 50%),
+    var(--background);
+  background-attachment: fixed;
+}
+.blob-1 { background: radial-gradient(circle, rgba(34,197,94,0.5), transparent 70%); }
+.blob-2 { background: radial-gradient(circle, rgba(74,222,128,0.32), transparent 70%); }
+.blob-3 { background: radial-gradient(circle, rgba(134,239,172,0.28), transparent 70%); }
+.hero-spotlight { background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 20%), rgba(34,197,94,0.16), transparent 70%); }
+.gradient-text { filter: drop-shadow(0 0 18px rgba(34,197,94,0.25)); }
+.btn-primary { box-shadow: 0 8px 30px -6px rgba(34,197,94,0.5); }
+.btn-primary:hover { box-shadow: 0 14px 40px -6px rgba(34,197,94,0.7); }
+.btn-money { background: linear-gradient(135deg, var(--money), var(--primary-dark)); color: #04150a; box-shadow: 0 8px 30px -6px rgba(74,222,128,0.5); }
+.btn-money:hover { box-shadow: 0 14px 40px -6px rgba(74,222,128,0.75); }
+</style>
 </head>
 <body>
 <div class="scroll-progress" data-scroll-progress></div>
