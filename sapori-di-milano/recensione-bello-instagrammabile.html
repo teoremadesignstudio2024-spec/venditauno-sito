@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#161311">
+<meta name="theme-color" content="#0b0b0c">
 <title>Il ristorante più instagrammato di Milano è anche il più bravo? — I Sapori di Milano</title>
 <meta name="description" content="Recensione: abbiamo verificato se il locale più fotografato di Milano regge il confronto col piatto. Voto SDM 6.4/10 — Verdetto misto.">
 <link rel="icon" type="image/jpeg" href="assets/img/sigillo-certified.jpg">
@@ -11,43 +11,45 @@
 </head>
 <body>
 
-<div class="utility-bar">Non assegniamo stelle. Diamo verdetti. — Aggiornato ogni settimana</div>
+<div class="ticker"><div class="ticker-track">
+  <span>★ NON ASSEGNIAMO STELLE, DIAMO VERDETTI ★ ZERO CENE OFFERTE ★ ZERO PUBBLIREDAZIONALI ★ AGGIORNATO OGNI SETTIMANA</span>
+  <span>★ NON ASSEGNIAMO STELLE, DIAMO VERDETTI ★ ZERO CENE OFFERTE ★ ZERO PUBBLIREDAZIONALI ★ AGGIORNATO OGNI SETTIMANA</span>
+</div></div>
 
 <header class="masthead">
   <div class="masthead-inner">
-    <p class="eyebrow muted">Il giornale del gusto milanese</p>
-    <h1 class="masthead-logo"><a href="index.html">I Sapori di Milano</a></h1>
-    <p class="masthead-tagline">«Più onesti di una guida, più cattivi di una recensione a stelle.»</p>
+    <a href="index.html" class="masthead-logo">
+      <span class="logo-mark">SDM</span>
+      <span class="logo-word">I Sapori di Milano</span>
+    </a>
+    <nav class="masthead-nav">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#recensioni" class="current">Recensioni</a></li>
+        <li><a href="index.html#in-arrivo">Guide</a></li>
+        <li><a href="index.html#in-arrivo">Tendenze</a></li>
+        <li><a href="manifesto.html">Manifesto</a></li>
+      </ul>
+    </nav>
   </div>
-  <nav class="masthead-nav">
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="index.html#recensioni" class="current">Recensioni</a></li>
-      <li><a href="index.html#in-arrivo">Guide</a></li>
-      <li><a href="index.html#in-arrivo">Tendenze</a></li>
-      <li><a href="index.html#in-arrivo">Interviste</a></li>
-      <li><a href="manifesto.html">Il Manifesto</a></li>
-    </ul>
-  </nav>
+  <p class="masthead-tagline-bar">Più onesti di una guida. Più cattivi di una recensione a stelle.</p>
 </header>
 
 <article class="wrap">
   <header class="article-head">
     <p class="eyebrow">Recensioni · Hype Check</p>
-    <h1>Il ristorante più instagrammato di Milano è anche il più bravo? Abbiamo verificato</h1>
+    <h1 class="display">Bello, fotogenico, dimenticabile</h1>
     <p class="article-dek">Luci perfette, code fuori dalla porta, hashtag ovunque. Ma il piatto, quello vero, regge il confronto con la scenografia?</p>
     <p class="byline">Testo della <b>Redazione</b> — 24 Agosto 2026 — 7 min di lettura</p>
 
     <div class="article-scorebar">
-      <span class="score-badge"><span class="n">6.4</span><span class="d">Voto SDM</span></span>
-      <div class="tags">
-        <span class="tag-pill">Verdetto Misto</span>
-        <span class="tag-pill">Bello ma non basta</span>
-      </div>
+      <span class="score-stamp" style="background:var(--ink);">6.4<small>Voto SDM</small></span>
+      <span class="sticker outline">Verdetto Misto</span>
+      <span class="sticker">Bello ma non basta</span>
     </div>
   </header>
 
-  <div class="article-hero-art" style="--card-a:#3a2f28; --card-b:#161311;"></div>
+  <div class="article-photo photo" style="--pb:#2a2a2c;"></div>
 
   <div class="article-body">
     <p class="lede">Prima ancora di sedersi, tre persone diverse hanno già fotografato il muro di neon rosa dell'ingresso. Il locale di cui tutta Milano parla da sei mesi è, va detto subito, oggettivamente bellissimo: un'estetica curata fino all'ultimo tovagliolo, un'illuminazione che sembra progettata da chi lavora nella moda, non nella ristorazione. Il problema arriva quando si passa dal muro al piatto.</p>
@@ -58,9 +60,7 @@
     <h2>Cosa abbiamo mangiato</h2>
     <p>Il problema è tutto qui: i piatti sono corretti, mai memorabili. Il crudo di branzino con agrumi è fresco ma timido di sapore, come se la cucina avesse paura di osare per non rovinare l'impiattamento. Il risotto "instagrammabile" servito nella pentola di rame — sì, arriva già annunciato così dal menu — è cotto bene ma scondito, quasi in attesa che sia la fotografia, e non la forchetta, a doverlo giudicare.</p>
 
-    <blockquote class="pull-quote">
-      «Abbiamo contato quattordici telefoni alzati in quaranta minuti. Zero "wow" detti a voce, mentre si mangiava.»
-    </blockquote>
+    <p class="pull-quote">Quattordici telefoni alzati in quaranta minuti. <span class="accent">Zero "wow" detti a voce.</span></p>
 
     <h2>Il conto</h2>
     <p>65€ a persona, vino escluso, per un pasto che in termini di tecnica ne varrebbe forse 40. Il resto lo pagate per l'atmosfera — e va detto con chiarezza, non per il cibo.</p>
@@ -83,7 +83,7 @@
 </article>
 
 <section class="newsletter">
-  <h2>Il verdetto, prima di tutti gli altri</h2>
+  <h2 class="display">Il verdetto, prima di tutti</h2>
   <p>Una email a settimana. Zero pubbliredazionali, zero inviti pagati.</p>
   <form class="newsletter-form" onsubmit="event.preventDefault(); document.getElementById('nl-msg').style.display='block'; this.reset();">
     <input type="email" placeholder="La tua email" required aria-label="Email">

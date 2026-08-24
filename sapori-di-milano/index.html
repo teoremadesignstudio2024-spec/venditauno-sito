@@ -3,131 +3,137 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#161311">
+<meta name="theme-color" content="#0b0b0c">
 <title>I Sapori di Milano — Il giornale del gusto milanese</title>
-<meta name="description" content="Non diamo stelle, diamo verdetti. Recensioni, guide e inchieste sulla scena gastronomica di Milano, scritte come un magazine di moda.">
+<meta name="description" content="Non diamo stelle, diamo verdetti. Recensioni, guide e inchieste sulla scena gastronomica di Milano.">
 <link rel="icon" type="image/jpeg" href="assets/img/sigillo-certified.jpg">
 <link rel="stylesheet" href="style.css">
 <!-- TODO: sostituire con dominio definitivo (canonical, og:url, sitemap) quando disponibile -->
 </head>
 <body>
 
-<div class="utility-bar">Non assegniamo stelle. Diamo verdetti. — Aggiornato ogni settimana</div>
+<div class="ticker"><div class="ticker-track">
+  <span>★ NON ASSEGNIAMO STELLE, DIAMO VERDETTI ★ ZERO CENE OFFERTE ★ ZERO PUBBLIREDAZIONALI ★ AGGIORNATO OGNI SETTIMANA</span>
+  <span>★ NON ASSEGNIAMO STELLE, DIAMO VERDETTI ★ ZERO CENE OFFERTE ★ ZERO PUBBLIREDAZIONALI ★ AGGIORNATO OGNI SETTIMANA</span>
+</div></div>
 
 <header class="masthead">
   <div class="masthead-inner">
-    <p class="eyebrow muted">Il giornale del gusto milanese</p>
-    <h1 class="masthead-logo"><a href="index.html">I Sapori di Milano</a></h1>
-    <p class="masthead-tagline">«Più onesti di una guida, più cattivi di una recensione a stelle.»</p>
+    <a href="index.html" class="masthead-logo">
+      <span class="logo-mark">SDM</span>
+      <span class="logo-word">I Sapori di Milano</span>
+    </a>
+    <nav class="masthead-nav">
+      <ul>
+        <li><a href="index.html" class="current">Home</a></li>
+        <li><a href="index.html#recensioni">Recensioni</a></li>
+        <li><a href="index.html#in-arrivo">Guide</a></li>
+        <li><a href="index.html#in-arrivo">Tendenze</a></li>
+        <li><a href="manifesto.html">Manifesto</a></li>
+      </ul>
+    </nav>
   </div>
-  <nav class="masthead-nav">
-    <ul>
-      <li><a href="index.html" class="current">Home</a></li>
-      <li><a href="index.html#recensioni">Recensioni</a></li>
-      <li><a href="index.html#in-arrivo">Guide</a></li>
-      <li><a href="index.html#in-arrivo">Tendenze</a></li>
-      <li><a href="index.html#in-arrivo">Interviste</a></li>
-      <li><a href="manifesto.html">Il Manifesto</a></li>
-    </ul>
-  </nav>
+  <p class="masthead-tagline-bar">Più onesti di una guida. Più cattivi di una recensione a stelle.</p>
 </header>
 
 <main class="wrap">
 
   <section class="hero" id="recensioni">
     <div class="hero-grid">
-      <a href="recensione-trattoria-del-corso.html" class="hero-art" style="--card-a:#4a3324; --card-b:#161311;">
-        <span class="hero-art-cap">Trattoria del Corso — Navigli</span>
+      <a href="recensione-trattoria-del-corso.html" class="hero-photo photo" style="--pb:#4a2018;">
+        <span class="photo-cap">Trattoria del Corso — Navigli</span>
       </a>
-      <div>
-        <p class="eyebrow">Recensione della settimana · Trattorie</p>
-        <h2 class="hero-title">Il quinto quarto diventa culto: dentro la Trattoria del Corso</h2>
-        <p class="hero-dek">C'è un posto sui Navigli dove la trippa si ordina come si ordinerebbe un piatto stellato. Ci siamo andati due volte, di nascosto, per capire se il passaparola aveva ragione.</p>
-        <p class="hero-meta">Testo della Redazione — 24 Agosto 2026 — 6 min di lettura</p>
-        <div class="sigillo-row" style="margin-bottom:18px;">
-          <img src="assets/img/sigillo-certified.jpg" alt="Sigillo di Certificazione I Sapori di Milano" class="sigillo" style="width:56px;height:56px;">
-          <span class="sigillo-caption">Sigillo di Certificazione</span>
-        </div>
-        <a href="recensione-trattoria-del-corso.html" class="btn-read">Leggi il verdetto <span class="score-badge accent" style="width:auto;height:auto;border:none;flex-direction:row;gap:4px;padding:0;"><span class="n" style="font-size:16px;">9.1</span></span> →</a>
+      <div class="hero-side">
+        <span class="big-score">9.1</span>
+        <p class="eyebrow">Recensione della settimana</p>
+        <h1 class="hero-title display">Il quinto<br>quarto<br>diventa culto</h1>
+        <p class="hero-dek">C'è un posto sui Navigli dove la trippa si ordina come un piatto stellato. Ci siamo andati due volte, di nascosto, per capire se il passaparola aveva ragione.</p>
+        <p class="hero-meta">Testo della Redazione — 24 Agosto 2026 — 6 min</p>
+        <a href="recensione-trattoria-del-corso.html" class="btn-read">Leggi il verdetto →</a>
       </div>
     </div>
   </section>
 
   <section>
     <div class="section-head">
-      <h2>Ultimi verdetti</h2>
+      <h2 class="display">Ultimi verdetti</h2>
       <span class="see-all">Vedi tutte le recensioni</span>
     </div>
     <div class="grid">
 
       <a class="card" href="recensione-trattoria-del-corso.html">
-        <div class="card-art" style="--card-a:#4a3324; --card-b:#161311;">
-          <span class="card-tag">Instant Classic</span>
-          <span class="card-score">9.1</span>
+        <span class="sticker red">Instant Classic</span>
+        <span class="card-score">9.1</span>
+        <div class="card-photo photo" style="--pb:#4a2018;"></div>
+        <div class="card-body">
+          <h3><span class="display">Il quinto quarto diventa culto</span></h3>
+          <p>La trippa come un piatto stellato. Il posto che non ci aspettavamo di amare così tanto.</p>
+          <p class="card-meta">Recensioni · Trattorie</p>
         </div>
-        <h3>Il quinto quarto diventa culto: dentro la Trattoria del Corso</h3>
-        <p>La trippa come piatto stellato, il servizio come se fossimo di famiglia. Il posto che non ci aspettavamo di amare così tanto.</p>
-        <p class="card-meta">Recensioni · Trattorie</p>
       </a>
 
       <a class="card" href="recensione-bello-instagrammabile.html">
-        <div class="card-art" style="--card-a:#3a2f28; --card-b:#161311;">
-          <span class="card-tag">Verdetto Misto</span>
-          <span class="card-score">6.4</span>
+        <span class="sticker outline">Verdetto Misto</span>
+        <span class="card-score">6.4</span>
+        <div class="card-photo photo" style="--pb:#2a2a2c;"></div>
+        <div class="card-body">
+          <h3><span class="display">Bello, fotogenico, dimenticabile</span></h3>
+          <p>Il ristorante più instagrammato di Milano è anche il più bravo? Abbiamo verificato.</p>
+          <p class="card-meta">Recensioni · Hype Check</p>
         </div>
-        <h3>Il ristorante più instagrammato di Milano è anche il più bravo? Abbiamo verificato</h3>
-        <p>Luci perfette, code fuori dalla porta, hashtag ovunque. Ma il piatto, quello vero, regge il confronto con la scenografia?</p>
-        <p class="card-meta">Recensioni · Hype Check</p>
       </a>
 
       <div class="card soon">
-        <div class="card-art" style="--card-a:#5a2a24; --card-b:#161311;">
-          <span class="card-tag">In arrivo</span>
+        <span class="sticker">In arrivo</span>
+        <div class="card-photo photo" style="--pb:#5a2a24;"></div>
+        <div class="card-body">
+          <h3><span class="display">Isola è la nuova Brera?</span></h3>
+          <p>Cinque indirizzi che lo confermano. Zero sponsorizzazioni.</p>
+          <p class="card-meta">Guide · Quartieri</p>
         </div>
-        <h3>Isola è la nuova Brera? Cinque indirizzi che lo confermano</h3>
-        <p>Una guida di quartiere, zero sponsorizzazioni: dove mangiare oggi nella parte di Milano che cambia più in fretta.</p>
-        <p class="card-meta">Guide · Quartieri</p>
       </div>
 
       <div class="card soon" id="in-arrivo">
-        <div class="card-art" style="--card-a:#2c3a30; --card-b:#161311;">
-          <span class="card-tag">In arrivo</span>
+        <span class="sticker">In arrivo</span>
+        <div class="card-photo photo" style="--pb:#2c3a30;"></div>
+        <div class="card-body">
+          <h3><span class="display">Perché non diamo mai 10</span></h3>
+          <p>Il nostro voto più alto di sempre è 9.4. Spieghiamo il metodo.</p>
+          <p class="card-meta">Manifesto · Metodo</p>
         </div>
-        <h3>Perché non diamo mai 10 (e cosa ci vorrebbe)</h3>
-        <p>Il nostro voto più alto di sempre è 9.4. Spieghiamo il metodo dietro il numero che tutti ci chiedono di spiegare.</p>
-        <p class="card-meta">Il Manifesto · Metodo</p>
       </div>
 
       <div class="card soon">
-        <div class="card-art" style="--card-a:#463a26; --card-b:#161311;">
-          <span class="card-tag">In arrivo</span>
+        <span class="sticker">In arrivo</span>
+        <div class="card-photo photo" style="--pb:#463a26;"></div>
+        <div class="card-body">
+          <h3><span class="display">Lo chef che ha rotto il risotto</span></h3>
+          <p>Intervista: il midollo come eresia, e perché lo zafferano non basta più.</p>
+          <p class="card-meta">Interviste · Chef</p>
         </div>
-        <h3>Abbiamo intervistato lo chef che ha reinventato il risotto alla milanese</h3>
-        <p>Una conversazione sulla tradizione da rompere, il midollo come eresia e perché lo zafferano non basta più.</p>
-        <p class="card-meta">Interviste · Chef</p>
       </div>
 
       <div class="card soon">
-        <div class="card-art" style="--card-a:#33241f; --card-b:#161311;">
-          <span class="card-tag">In arrivo</span>
+        <span class="sticker">In arrivo</span>
+        <div class="card-photo photo" style="--pb:#33241f;"></div>
+        <div class="card-body">
+          <h3><span class="display">Dove mangiare dopo mezzanotte</span></h3>
+          <p>Sette indirizzi per chi esce tardi e non si accontenta di un kebab.</p>
+          <p class="card-meta">Guide · Notturna</p>
         </div>
-        <h3>Guida: dove mangiare bene a Milano dopo mezzanotte</h3>
-        <p>Sette indirizzi per chi esce tardi e non si accontenta di un kebab. Aggiornata ogni mese.</p>
-        <p class="card-meta">Guide · Notturna</p>
       </div>
 
     </div>
   </section>
 
-  <blockquote class="pull-quote">
-    «Michelin premia chi si comporta bene. Noi raccontiamo chi cucina davvero bene. Non sempre sono la stessa persona.»
+  <p class="pull-quote">Michelin premia chi si comporta bene.<br><span class="accent">Noi raccontiamo chi cucina bene.</span> Non sempre sono la stessa persona.
     <cite>Dal Manifesto de I Sapori di Milano</cite>
-  </blockquote>
+  </p>
 
 </main>
 
 <section class="newsletter">
-  <h2>Il verdetto, prima di tutti gli altri</h2>
+  <h2 class="display">Il verdetto, prima di tutti</h2>
   <p>Una email a settimana. Zero pubbliredazionali, zero inviti pagati.</p>
   <form class="newsletter-form" onsubmit="event.preventDefault(); document.getElementById('nl-msg').style.display='block'; this.reset();">
     <!-- TODO: collegare a un servizio email reale (Brevo/Mailchimp) quando pronto -->
