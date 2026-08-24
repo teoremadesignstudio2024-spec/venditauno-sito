@@ -1,0 +1,421 @@
+/* I Sapori di Milano — sistema editoriale
+   Ispirazione: masthead da rivista di moda (Vogue-style) applicato al food journalism.
+   Font: Bodoni Moda (titoli/masthead) + Source Serif 4 (corpo articolo) + Inter (UI/eyebrow). */
+
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --cream:#f6f1e7;
+  --cream-2:#efe8d8;
+  --ink:#161311;
+  --ink-70: rgba(22,19,17,.7);
+  --ink-45: rgba(22,19,17,.45);
+  --rosso:#a3241c;
+  --oro:#9c7a34;
+  --line: rgba(22,19,17,.16);
+  --white:#fffdf9;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--cream);
+  color:var(--ink);
+  font-family:'Source Serif 4', Georgia, serif;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+
+/* eyebrow / UI labels */
+.eyebrow{
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--rosso);
+}
+.eyebrow.muted{color:var(--ink-45);}
+
+/* top utility bar */
+.utility-bar{
+  background:var(--ink);
+  color:var(--cream);
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  text-align:center;
+  padding:7px 12px;
+}
+
+/* masthead */
+.masthead{
+  border-bottom:1px solid var(--line);
+  background:var(--cream);
+}
+.masthead-inner{
+  max-width:1180px;
+  margin:0 auto;
+  padding:22px 24px 18px;
+  text-align:center;
+}
+.masthead-logo{
+  font-family:'Bodoni Moda', serif;
+  font-weight:800;
+  font-size:clamp(34px,7vw,64px);
+  letter-spacing:.02em;
+  margin:0;
+  line-height:1;
+}
+.masthead-logo a{display:inline-block;}
+.masthead-tagline{
+  font-family:'Bodoni Moda', serif;
+  font-style:italic;
+  font-size:14px;
+  color:var(--ink-70);
+  margin:8px 0 0;
+}
+.masthead-nav{
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  margin-top:18px;
+}
+.masthead-nav ul{
+  list-style:none;
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:28px;
+  margin:0;
+  padding:12px 0;
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.masthead-nav a{border-bottom:1px solid transparent;padding-bottom:2px;transition:border-color .15s;}
+.masthead-nav a:hover{border-color:var(--rosso);}
+.masthead-nav .current{color:var(--rosso);}
+
+/* hero feature */
+.hero{
+  padding:56px 0 40px;
+  border-bottom:1px solid var(--line);
+}
+.hero-grid{
+  display:grid;
+  grid-template-columns:1.3fr 1fr;
+  gap:48px;
+  align-items:center;
+}
+.hero-art{
+  aspect-ratio:4/5;
+  border-radius:2px;
+  background:
+    radial-gradient(120% 140% at 20% 15%, rgba(163,36,28,.55), transparent 55%),
+    linear-gradient(160deg, #2a2420, #161311 65%);
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  align-items:flex-end;
+}
+.hero-art::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 26px);
+}
+.hero-art-cap{
+  position:relative;
+  padding:22px;
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.75);
+}
+.hero-title{
+  font-family:'Bodoni Moda', serif;
+  font-weight:700;
+  font-size:clamp(30px,4.2vw,52px);
+  line-height:1.05;
+  margin:14px 0 16px;
+}
+.hero-dek{
+  font-size:17px;
+  color:var(--ink-70);
+  margin:0 0 18px;
+  max-width:46ch;
+}
+.hero-meta{
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  color:var(--ink-45);
+  letter-spacing:.02em;
+  margin-bottom:18px;
+}
+.btn-read{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  border-bottom:2px solid var(--ink);
+  padding-bottom:4px;
+}
+.btn-read:hover{border-color:var(--rosso); color:var(--rosso);}
+
+/* score badge — il "Voto SDM" */
+.score-badge{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:76px;height:76px;
+  border-radius:50%;
+  border:2px solid var(--ink);
+  font-family:'Bodoni Moda', serif;
+  flex-shrink:0;
+}
+.score-badge .n{font-size:24px;font-weight:800;line-height:1;}
+.score-badge .d{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.08em;color:var(--ink-45);margin-top:2px;}
+.score-badge.accent{border-color:var(--rosso); color:var(--rosso);}
+
+/* section titles */
+.section-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  border-bottom:2px solid var(--ink);
+  padding-bottom:10px;
+  margin:56px 0 28px;
+}
+.section-head h2{
+  font-family:'Bodoni Moda', serif;
+  font-size:26px;
+  margin:0;
+  letter-spacing:.01em;
+}
+.section-head .see-all{
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+}
+
+/* article grid + cards */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:36px 32px;
+}
+@media (max-width:860px){ .grid{grid-template-columns:1fr 1fr;} .hero-grid{grid-template-columns:1fr;} }
+@media (max-width:560px){ .grid{grid-template-columns:1fr;} }
+
+.card{display:block;}
+.card-art{
+  aspect-ratio:4/3;
+  margin-bottom:14px;
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(150deg,var(--card-a,#3a2f28),var(--card-b,#161311));
+}
+.card-art::after{
+  content:"";
+  position:absolute; inset:0;
+  background-image:repeating-linear-gradient(115deg, rgba(255,255,255,.06) 0 2px, transparent 2px 24px);
+}
+.card-tag{
+  position:absolute; top:10px; left:10px;
+  font-family:'Inter',sans-serif;
+  font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  background:var(--white);
+  color:var(--ink);
+  padding:4px 8px;
+}
+.card-score{
+  position:absolute; bottom:10px; right:10px;
+  font-family:'Bodoni Moda',serif; font-weight:800; font-size:15px;
+  background:var(--white);
+  color:var(--ink);
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.card h3{
+  font-family:'Bodoni Moda', serif;
+  font-size:21px;
+  line-height:1.15;
+  margin:0 0 8px;
+}
+.card p{font-size:14.5px;color:var(--ink-70);margin:0 0 8px;}
+.card .card-meta{font-family:'Inter',sans-serif;font-size:11px;color:var(--ink-45);letter-spacing:.04em;text-transform:uppercase;}
+
+.card.soon{opacity:.55;}
+.card.soon .card-art{filter:grayscale(1);}
+
+/* pull quote */
+.pull-quote{
+  font-family:'Bodoni Moda', serif;
+  font-style:italic;
+  font-size:clamp(22px,3vw,30px);
+  line-height:1.35;
+  border-top:1px solid var(--ink);
+  border-bottom:1px solid var(--ink);
+  padding:26px 0;
+  margin:38px 0;
+  color:var(--ink);
+}
+.pull-quote cite{
+  display:block;
+  font-family:'Inter',sans-serif;
+  font-style:normal;
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-45);
+  margin-top:12px;
+}
+
+/* article page */
+.article-head{padding:48px 0 30px; border-bottom:1px solid var(--line); text-align:center;}
+.article-head h1{
+  font-family:'Bodoni Moda', serif;
+  font-weight:700;
+  font-size:clamp(32px,5vw,56px);
+  line-height:1.05;
+  max-width:20ch;
+  margin:16px auto 18px;
+}
+.article-dek{font-size:19px; color:var(--ink-70); max-width:60ch; margin:0 auto 22px;}
+.byline{font-family:'Inter',sans-serif; font-size:12px; color:var(--ink-45); letter-spacing:.03em;}
+.byline b{color:var(--ink);}
+
+.article-scorebar{
+  display:flex; align-items:center; justify-content:center; gap:18px;
+  margin:26px 0 0;
+  flex-wrap:wrap;
+}
+.article-scorebar .tags{display:flex; gap:8px; flex-wrap:wrap;}
+.tag-pill{
+  font-family:'Inter',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  border:1px solid var(--ink); padding:5px 10px; border-radius:20px;
+}
+.tag-pill.rosso{border-color:var(--rosso); color:var(--rosso);}
+
+.article-hero-art{
+  aspect-ratio:21/9;
+  margin:34px 0;
+  background:linear-gradient(150deg,var(--card-a,#3a2f28),var(--card-b,#161311));
+  position:relative;
+}
+.article-hero-art::after{
+  content:"";
+  position:absolute; inset:0;
+  background-image:repeating-linear-gradient(115deg, rgba(255,255,255,.06) 0 2px, transparent 2px 26px);
+}
+
+.article-body{max-width:680px; margin:0 auto; font-size:18.5px;}
+.article-body p{margin:0 0 22px;}
+.article-body p.lede::first-letter{
+  font-family:'Bodoni Moda', serif;
+  font-weight:800;
+  font-size:64px;
+  float:left;
+  line-height:.8;
+  padding:8px 10px 0 0;
+  color:var(--rosso);
+}
+.article-body h2{
+  font-family:'Bodoni Moda', serif;
+  font-size:26px;
+  margin:44px 0 16px;
+}
+.article-body ul{padding-left:22px;}
+
+.scheda{
+  max-width:680px; margin:44px auto 0;
+  border:1px solid var(--ink);
+  padding:24px 26px;
+  font-family:'Inter',sans-serif;
+}
+.scheda h3{
+  font-family:'Bodoni Moda', serif; font-size:18px; margin:0 0 14px;
+}
+.scheda dl{display:grid; grid-template-columns:auto 1fr; gap:8px 18px; margin:0; font-size:13.5px;}
+.scheda dt{color:var(--ink-45); letter-spacing:.04em; text-transform:uppercase; font-size:11px; font-weight:700; align-self:start; padding-top:2px;}
+.scheda dd{margin:0;}
+.scheda .demo-note{
+  margin-top:16px; padding-top:14px; border-top:1px dashed var(--line);
+  font-size:12px; color:var(--ink-45); font-style:italic;
+}
+
+/* newsletter */
+.newsletter{
+  background:var(--ink);
+  color:var(--cream);
+  padding:56px 24px;
+  text-align:center;
+  margin-top:64px;
+}
+.newsletter h2{
+  font-family:'Bodoni Moda', serif;
+  font-size:clamp(24px,3.4vw,36px);
+  margin:0 0 10px;
+}
+.newsletter p{color:rgba(246,241,231,.7); margin:0 0 22px;}
+.newsletter-form{display:flex; gap:10px; justify-content:center; max-width:440px; margin:0 auto; flex-wrap:wrap;}
+.newsletter-form input[type=email]{
+  flex:1; min-width:220px;
+  padding:13px 16px;
+  border:1px solid rgba(246,241,231,.4);
+  background:transparent;
+  color:var(--cream);
+  font-family:'Inter',sans-serif; font-size:14px;
+}
+.newsletter-form input::placeholder{color:rgba(246,241,231,.5);}
+.newsletter-form button{
+  padding:13px 22px;
+  background:var(--rosso);
+  color:var(--white);
+  border:none;
+  font-family:'Inter',sans-serif; font-weight:700; font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+  cursor:pointer;
+}
+.newsletter-msg{margin-top:14px; font-size:13px; color:var(--oro); font-family:'Inter',sans-serif;}
+
+/* footer */
+.magazine-footer{
+  padding:34px 24px 50px;
+  text-align:center;
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  color:var(--ink-45);
+}
+.magazine-footer a{border-bottom:1px solid var(--ink-45);}
+.magazine-footer .back{
+  display:inline-block; margin-bottom:18px;
+  font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:11px; color:var(--ink);
+  border-bottom:1px solid var(--ink);
+}
+
+/* manifesto page */
+.manifesto-body{max-width:680px; margin:0 auto; padding:0 24px 60px;}
+.manifesto-body p{font-size:18.5px;}
+.manifesto-list{list-style:none; padding:0; margin:30px 0;}
+.manifesto-list li{
+  padding:16px 0; border-top:1px solid var(--line);
+  font-family:'Bodoni Moda', serif; font-size:19px;
+}
+.manifesto-list li:last-child{border-bottom:1px solid var(--line);}
+.manifesto-list b{color:var(--rosso);}
