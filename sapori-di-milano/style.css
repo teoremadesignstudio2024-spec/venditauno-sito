@@ -3,7 +3,7 @@
    rivista di moda classica: dark, tipografia condensata enorme, numeri di voto
    che "escono" dalle foto, tag adesivo ruotati, grana fotografica duotone. */
 
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Permanent+Marker&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root{
   --bg:#0b0b0c;
@@ -144,12 +144,14 @@ a{color:inherit;text-decoration:none;}
 .sticker.lime{background:var(--lime); color:#0b0b0c;}
 .sticker.outline{background:transparent; color:var(--ink); border:2px solid var(--ink);}
 
-/* photo blocks — gradient + halftone grain standing in for real photography */
+/* photo blocks — illustrazione line-art (oro su scuro, stile incisione, coerente col Sigillo)
+   al posto di una vera fotografia: qui non possiamo scaricare foto reali. */
 .photo{
   position:relative;
   overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
   background:
-    radial-gradient(120% 160% at 15% 10%, rgba(255,75,62,.5), transparent 55%),
+    radial-gradient(120% 160% at 15% 10%, rgba(255,75,62,.35), transparent 55%),
     linear-gradient(155deg, var(--pb,#2a2a2c), #0b0b0c 70%);
 }
 .photo::before{
@@ -164,19 +166,48 @@ a{color:inherit;text-decoration:none;}
   content:"";
   position:absolute; inset:0;
   box-shadow: inset 0 0 60px rgba(0,0,0,.5);
+  pointer-events:none;
 }
 .photo-cap{
-  position:relative; z-index:1;
+  position:absolute; left:0; bottom:0; z-index:1;
   padding:16px;
   font-family:'Space Grotesk',sans-serif;
   font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
   color:rgba(243,241,234,.85);
 }
+.illus{
+  width:62%; height:62%;
+  position:relative; z-index:1;
+  stroke:#e4c98a;
+  fill:none;
+  stroke-width:2.2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.9;
+}
+
+/* titolo scritto a pennarello, sovrapposto alla foto */
+.marker-title{
+  position:absolute; z-index:2;
+  font-family:'Permanent Marker', cursive;
+  font-weight:400;
+  text-transform:none;
+  color:#fbfaf5;
+  text-shadow: 2px 2px 0 rgba(0,0,0,.55);
+  line-height:1.05;
+  transform:rotate(var(--tilt,-3deg));
+}
 
 /* hero */
 .hero{padding:56px 0 20px;}
 .hero-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:20px; align-items:end;}
-.hero-photo{aspect-ratio:4/5; display:flex; align-items:flex-end; border:2px solid var(--ink);}
+.hero-photo{aspect-ratio:4/5; border:2px solid var(--ink);}
+.hero-photo .marker-title{
+  font-size:clamp(30px,4.4vw,46px);
+  max-width:80%;
+  top:12%; left:8%;
+}
+.hero-photo .photo-cap{bottom:0;}
 .hero-title{
   font-size:clamp(46px,7.4vw,96px);
   line-height:.92;
@@ -228,6 +259,12 @@ a{color:inherit;text-decoration:none;}
 
 .card{display:block; position:relative;}
 .card-photo{aspect-ratio:4/3; margin-bottom:0; border:2px solid var(--ink); border-bottom:none;}
+.card-photo .marker-title{
+  font-size:clamp(19px,2.6vw,25px);
+  max-width:82%;
+  bottom:10px; left:10px;
+}
+.card.soon .marker-title{color:var(--ink-40); text-shadow:none;}
 .card-body{
   border:2px solid var(--ink); border-top:none;
   padding:18px 18px 20px;
