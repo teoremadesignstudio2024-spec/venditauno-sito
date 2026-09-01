@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudiaPirla · Immunologia</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --bg:#f5f7fb; --card:#ffffff; --ink:#1c2333; --sub:#5b6478; --line:#e3e7f0;
+  --brand:#3d5cff; --brand2:#7c4dff; --brand-ink:#ffffff;
+  --ok:#1a9e5c; --ok-bg:#e7f8ef; --bad:#e6435c; --bad-bg:#fdecef;
+  --warn:#f5a623;
+  --radius:16px; --shadow:0 8px 24px rgba(30,40,80,.08);
+  --grid:#1c2333; --grid-bg:#ffffff; --xw-block:#20232f;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1220; --card:#171b2e; --ink:#eef0fa; --sub:#9aa2bd; --line:#2a2f47;
+    --ok:#3ddc84; --ok-bg:#0f2b1e; --bad:#ff5d72; --bad-bg:#2e1420;
+    --shadow:0 8px 24px rgba(0,0,0,.35);
+    --grid:#eef0fa; --grid-bg:#12162a;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.5;
+}
+.wrap{max-width:880px;margin:0 auto;padding:18px 16px 80px}
+header.top{
+  position:sticky; top:0; z-index:20; background:var(--bg);
+  padding:14px 0 10px; border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.brand .logo{
+  width:38px;height:38px;border-radius:11px;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+}
+.brand h1{font-size:19px;margin:0;letter-spacing:-.02em}
+.brand .tag{font-size:12.5px;color:var(--sub);margin-top:1px}
+nav.tabs{display:flex;gap:8px}
+nav.tabs button{
+  flex:1; border:1px solid var(--line); background:var(--card); color:var(--ink);
+  padding:10px 8px; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer;
+  transition:.15s;
+}
+nav.tabs button.active{background:var(--brand); border-color:var(--brand); color:var(--brand-ink)}
+main{padding-top:18px}
+.view{display:none}
+.view.active{display:block}
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:18px;
+}
+.card + .card{margin-top:14px}
+h2.section-title{font-size:15px; text-transform:uppercase; letter-spacing:.06em; color:var(--sub); margin:22px 0 10px}
+h2.section-title:first-child{margin-top:0}
+
+/* THEORY */
+.acc-item{border:1px solid var(--line); border-radius:14px; margin-bottom:10px; overflow:hidden; background:var(--card)}
+.acc-head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:14px 16px; cursor:pointer; font-weight:700; font-size:15px;
+}
+.acc-head .chev{transition:.2s; color:var(--sub); font-size:13px}
+.acc-item.open .acc-head .chev{transform:rotate(180deg)}
+.acc-body{max-height:0; overflow:hidden; transition:max-height .25s ease}
+.acc-body-inner{padding:0 16px 16px; color:var(--sub); font-size:14.5px}
+.acc-body-inner p{margin:0 0 10px}
+.acc-body-inner ul{margin:0 0 10px; padding-left:20px}
+.acc-body-inner li{margin-bottom:6px}
+.acc-body-inner b{color:var(--ink)}
+.acc-body-inner .mini{
+  display:inline-block; background:var(--bg); border:1px solid var(--line); border-radius:8px;
+  padding:1px 7px; font-size:12.5px; color:var(--ink); font-weight:600;
+}
+
+/* QUIZ SETUP */
+.chip-group{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px}
+.chip{
+  border:1px solid var(--line); background:var(--bg); color:var(--ink);
+  padding:8px 12px; border-radius:999px; font-size:13.5px; cursor:pointer; user-select:none;
+}
+.chip.sel{background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600}
+.row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.btn{
+  border:none; background:var(--brand); color:#fff; font-weight:700; font-size:15px;
+  padding:13px 20px; border-radius:12px; cursor:pointer; width:100%;
+}
+.btn.ghost{background:transparent; color:var(--brand); border:1.5px solid var(--brand)}
+.btn.small{width:auto; padding:9px 16px; font-size:13.5px}
+.btn:disabled{opacity:.5; cursor:not-allowed}
+.stat-row{display:flex; gap:10px; margin:14px 0}
+.stat{flex:1; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:10px; text-align:center}
+.stat b{display:block; font-size:20px}
+.stat span{font-size:12px; color:var(--sub)}
+
+/* QUIZ PLAY */
+.progress-bar{height:6px; background:var(--line); border-radius:99px; overflow:hidden; margin-bottom:16px}
+.progress-fill{height:100%; background:linear-gradient(90deg,var(--brand),var(--brand2)); transition:.25s}
+.q-topic{font-size:12px; font-weight:700; color:var(--brand); text-transform:uppercase; letter-spacing:.04em}
+.q-text{font-size:18px; font-weight:700; margin:8px 0 16px; line-height:1.4}
+.opt{
+  display:flex; align-items:center; gap:10px; border:1.5px solid var(--line); border-radius:12px;
+  padding:13px 14px; margin-bottom:10px; cursor:pointer; font-size:15px; background:var(--card);
+  transition:.12s;
+}
+.opt:hover{border-color:var(--brand)}
+.opt .letter{
+  width:26px;height:26px;border-radius:50%; background:var(--bg); border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; flex:0 0 auto; color:var(--sub);
+}
+.opt.correct{background:var(--ok-bg); border-color:var(--ok)}
+.opt.correct .letter{background:var(--ok); color:#fff; border-color:var(--ok)}
+.opt.wrong{background:var(--bad-bg); border-color:var(--bad)}
+.opt.wrong .letter{background:var(--bad); color:#fff; border-color:var(--bad)}
+.opt.disabled{cursor:default}
+.opt.dim{opacity:.55}
+.feedback{
+  margin-top:6px; padding:14px; border-radius:12px; font-size:14.5px; display:none;
+}
+.feedback.show{display:block}
+.feedback.ok{background:var(--ok-bg); color:var(--ok)}
+.feedback.bad{background:var(--bad-bg); color:var(--bad)}
+.feedback .expl{color:var(--ink); margin-top:8px; font-weight:400; line-height:1.5}
+.feedback .title{font-weight:800; font-size:15px}
+.nextwrap{margin-top:16px}
+
+/* RESULTS */
+.score-ring{
+  width:130px;height:130px;border-radius:50%;margin:8px auto 6px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  background:conic-gradient(var(--brand) calc(var(--pct,0)*1%), var(--line) 0);
+}
+.score-ring .inner{
+  width:104px;height:104px;border-radius:50%;background:var(--card);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+}
+.score-ring .inner b{font-size:26px}
+.score-ring .inner span{font-size:11px;color:var(--sub)}
+.review-item{border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:8px}
+.review-item .rq{font-weight:700; font-size:14px; margin-bottom:6px}
+.review-item .ra{font-size:13.5px; margin:2px 0}
+.review-item .ra.miss{color:var(--bad)}
+.review-item .ra.corr{color:var(--ok)}
+
+/* CROSSWORD */
+.xw-wrap{overflow-x:auto; padding-bottom:6px}
+table.xw{border-collapse:collapse; margin:0 auto; border:2px solid var(--xw-block)}
+table.xw td{
+  width:30px;height:30px; border:1px solid var(--line); position:relative; padding:0;
+  background:var(--grid-bg);
+}
+table.xw td.blank{border:1px solid var(--xw-block); background:var(--xw-block)}
+table.xw td .num{position:absolute; top:1px; left:2px; font-size:8px; color:var(--sub); font-weight:700; pointer-events:none}
+table.xw td input{
+  width:100%;height:100%; border:none; background:transparent; text-align:center;
+  font-size:14px; font-weight:700; text-transform:uppercase; color:var(--grid); outline:none; padding:0;
+}
+table.xw td input.right{background:var(--ok-bg)}
+table.xw td input.wrong{background:var(--bad-bg)}
+.clue-cols{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px}
+@media (max-width:560px){.clue-cols{grid-template-columns:1fr}}
+.clue-cols h3{font-size:13px; text-transform:uppercase; color:var(--sub); margin:0 0 8px}
+.clue-cols ol{margin:0; padding-left:0; list-style:none; font-size:13.5px}
+.clue-cols li{margin-bottom:6px}
+.clue-cols li.active{color:var(--brand); font-weight:700}
+
+.muted{color:var(--sub); font-size:13.5px}
+.center{text-align:center}
+.mb8{margin-bottom:8px}
+.mt16{margin-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">🧬</div>
+      <div>
+        <h1>StudiaPirla</h1>
+        <div class="tag">Immunologia · teoria, quiz e cruciverba</div>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button data-view="teoria" class="active">📖 Teoria</button>
+      <button data-view="quiz">✅ Quiz</button>
+      <button data-view="cruciverba">🧩 Cruciverba</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- TEORIA -->
+    <section id="view-teoria" class="view active">
+      <div class="card mb8">
+        <p class="muted" style="margin:0">Riassunto degli appunti (integrazioni su Abbas, 7ª ed.) organizzato per argomento. Tocca una voce per aprirla.</p>
+      </div>
+      <div id="theory-list"></div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="view-quiz" class="view">
+      <div id="quiz-setup" class="card">
+        <h2 class="section-title" style="margin-top:0">Argomenti</h2>
+        <div class="chip-group" id="topic-chips"></div>
+        <h2 class="section-title">Numero di domande</h2>
+        <div class="chip-group" id="count-chips">
+          <div class="chip" data-count="10">10</div>
+          <div class="chip" data-count="20">20</div>
+          <div class="chip" data-count="30">30</div>
+          <div class="chip" data-count="all">Tutte</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><b id="stat-total">0</b><span>domande disponibili</span></div>
+          <div class="stat"><b id="stat-wrong">0</b><span>da ripassare</span></div>
+          <div class="stat"><b id="stat-best">0%</b><span>miglior punteggio</span></div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button class="btn" id="start-quiz">Inizia quiz</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn ghost" id="start-review">Ripassa solo gli errori</button>
+        </div>
+      </div>
+
+      <div id="quiz-play" class="card" style="display:none">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="q-topic" id="q-topic"></div>
+        <div class="q-text" id="q-text"></div>
+        <div id="q-options"></div>
+        <div class="feedback" id="q-feedback">
+          <div class="title" id="fb-title"></div>
+          <div class="expl" id="fb-expl"></div>
+        </div>
+        <div class="nextwrap">
+          <button class="btn" id="q-next" disabled>Rispondi per continuare</button>
+        </div>
+      </div>
+
+      <div id="quiz-results" class="card" style="display:none">
+        <div class="center">
+          <div class="score-ring" id="score-ring"><div class="inner"><b id="res-pct">0%</b><span id="res-frac">0/0</span></div></div>
+          <div id="res-msg" style="font-weight:700;font-size:16px;margin-top:6px"></div>
+        </div>
+        <div class="row" style="margin-top:16px">
+          <button class="btn" id="res-retry">Nuovo quiz</button>
+        </div>
+        <div id="res-review" class="mt16"></div>
+      </div>
+    </section>
+
+    <!-- CRUCIVERBA -->
+    <section id="view-cruciverba" class="view">
+      <div class="card">
+        <p class="muted mb8" style="margin-top:0">Completa il cruciverba con i termini di immunologia. Tocca una casella per selezionare la definizione, scrivi le lettere e verifica.</p>
+        <h2 class="section-title" style="margin-top:0">Difficoltà</h2>
+        <div class="chip-group mb8" id="xw-level-chips">
+          <div class="chip" data-level="facile">🟢 Facile</div>
+          <div class="chip sel" data-level="medio">🟡 Medio</div>
+          <div class="chip" data-level="difficile">🔴 Difficile</div>
+        </div>
+        <div class="row mb8">
+          <button class="btn small" id="xw-check">Verifica</button>
+          <button class="btn small ghost" id="xw-reveal">Soluzione</button>
+          <button class="btn small ghost" id="xw-reset">Pulisci</button>
+        </div>
+        <div id="xw-score" class="muted mb8"></div>
+        <div class="xw-wrap"><div id="xw-grid"></div></div>
+        <div class="clue-cols">
+          <div>
+            <h3>Orizzontali →</h3>
+            <ol id="xw-across"></ol>
+          </div>
+          <div>
+            <h3>Verticali ↓</h3>
+            <ol id="xw-down"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   DATI: TEORIA
+========================================================= */
+const THEORY = [
+{id:'intro', title:'Introduzione al sistema immune', html:`
+<p>L'<b>immunologia</b> studia i meccanismi che proteggono l'organismo dai patogeni. La <b>risposta immune</b> è l'azione coordinata delle cellule del sistema immunitario contro un <b>antigene</b> (sostanza estranea capace di indurre una risposta specifica).</p>
+<ul>
+<li><b>Immunità attiva</b>: l'organismo genera da sé la risposta (infezione naturale o vaccino) → crea memoria immunologica.</li>
+<li><b>Immunità passiva</b>: anticorpi già formati vengono trasferiti (IgG materne via placenta, siero immune) → risposta immediata ma <b>nessuna memoria</b>.</li>
+<li>Immunopatologia: <b>ipersensibilità</b> (risposta eccessiva), <b>autoimmunità</b> (risposta contro il self), <b>immunodeficienza</b> (risposta assente/insufficiente).</li>
+</ul>
+<p><span class="mini">Organi linfoidi primari</span> midollo osseo e timo: nascita e maturazione dei linfociti.<br>
+<span class="mini">Organi linfoidi secondari</span> milza, linfonodi, placche di Peyer, tonsille: sede di attivazione della risposta.</p>
+`},
+{id:'innata', title:'Immunità innata', html:`
+<p>Prima linea di difesa, immediata, con recettori "germline" a specificità limitata ma non del tutto aspecifica.</p>
+<ul>
+<li><b>Barriere fisico-chimiche</b>: cute integra, lisozima (lacrime, saliva, sudore — degrada il peptidoglicano dei batteri), pH acido di stomaco/vagina, microbiota competitivo.</li>
+<li><b>Fagociti</b>: neutrofili (primi a intervenire) e macrofagi (derivano dai monociti, fungono anche da APC).</li>
+<li><b>Cellule NK</b>: citotossicità naturale contro cellule infettate da virus e cellule tumorali; coinvolte nell'ADCC (citotossicità anticorpo-dipendente, via FcγRIII/CD16).</li>
+<li><b>PAMP e PRR</b>: i patogeni espongono molecole conservate (PAMP: LPS, peptidoglicano, CpG non metilato, acido lipoteicoico) riconosciute da <b>Pattern Recognition Receptor</b> come i Toll-like receptor e le molecole lectino-simili (es. mannose-binding lectin) — sono i PRR a "riconoscere", i PAMP sono i bersagli riconosciuti.</li>
+<li><b>Interferoni di tipo I</b> (α, β): inibiscono la replicazione virale; <b>IFN-γ</b> ("interferone immune") è prodotto dai linfociti/NK e attiva la risposta cellulo-mediata.</li>
+<li><b>Trained immunity</b>: dopo un primo stimolo, cellule innate (monociti/macrofagi) restano "riprogrammate" epigeneticamente e rispondono in modo potenziato a stimoli successivi, anche non correlati — una forma di memoria funzionale non specifica, distinta dalla memoria adattativa.</li>
+</ul>
+`},
+{id:'adattativa', title:'Immunità adattativa', html:`
+<p>Difesa specifica, con enorme diversità recettoriale (repertorio ~10<sup>7</sup>–10<sup>9</sup>) e <b>memoria immunologica</b>.</p>
+<ul>
+<li><b>Specificità e diversità</b>: ogni linfocita esprime un solo recettore, selezione clonale (Burnet) — il clone specifico si espande solo dopo l'incontro con l'antigene.</li>
+<li><b>Memoria</b>: la risposta primaria richiede 7-10 giorni; le cellule di memoria generate rendono la risposta secondaria più rapida, intensa e di maggiore affinità.</li>
+<li><b>Self-tolerance</b>: eliminazione/inattivazione dei linfociti reattivi verso antigeni self.</li>
+<li><b>Immunità umorale</b> (linfociti B → plasmacellule → anticorpi): efficace contro patogeni extracellulari.</li>
+<li><b>Immunità cellulo-mediata</b> (linfociti T helper CD4+ e citotossici CD8+): efficace contro patogeni intracellulari (virus) e cellule infette/tumorali.</li>
+</ul>
+`},
+{id:'anticorpi', title:'Anticorpi (immunoglobuline)', html:`
+<p>Glicoproteine (~20% delle proteine plasmatiche, frazione gamma-globuline) prodotte da linfociti B e plasmacellule.</p>
+<ul>
+<li><b>Struttura</b>: 2 catene pesanti (H) + 2 catene leggere (L, κ o λ), unite da ponti disolfuro. Regione <b>Fab</b> (lega l'antigene, porzione N-terminale, contiene le regioni ipervariabili CDR1-3) e regione <b>Fc</b> (C-terminale, funzioni biologiche: legame a recettori Fc, attivazione complemento).</li>
+<li><b>Papaina</b> → 2 Fab + 1 Fc. <b>Pepsina</b> → 1 F(ab')₂ + peptidi.</li>
+<li><b>5 isotipi</b> (catena pesante): <b>IgG</b> (γ), <b>IgM</b> (μ), <b>IgA</b> (α), <b>IgD</b> (δ), <b>IgE</b> (ε).</li>
+<li><b>IgM</b>: pentamero (+ catena J), prima classe prodotta nella risposta primaria, valenza funzionale 5, ottima attivatrice del complemento.</li>
+<li><b>IgG</b>: più abbondante nel siero, 4 sottoclassi, unica che attraversa la placenta, opsonizzante, attiva complemento (IgG1/3), sensibilizza le NK per ADCC.</li>
+<li><b>IgA</b>: principale anticorpo delle secrezioni (muco, latte, lacrime, saliva); forma secretoria = dimero + catena J + componente secretoria (dal trasporto transcitotico attraverso l'epitelio).</li>
+<li><b>IgE</b>: bassa concentrazione sierica normale; si legano con la <b>regione Fc</b> ai recettori FcεRI su mastociti e basofili → mediano l'ipersensibilità di tipo I (allergie) e la difesa contro i parassiti.</li>
+<li><b>IgD</b>: soprattutto di membrana, funzione recettoriale sul linfocita B naïve (insieme a IgM).</li>
+<li>Funzioni effettrici (dipendono dall'Fc): <b>neutralizzazione</b> (IgG, IgA), <b>opsonizzazione</b> (IgG1/3), <b>attivazione del complemento</b> (IgM, IgG3), sensibilizzazione mastociti (IgE) e NK (IgG).</li>
+</ul>
+`},
+{id:'genetica-b', title:'Linfociti B e genetica della diversità anticorpale', html:`
+<p>I linfociti B maturano nel <b>midollo osseo</b> tramite riarrangiamento somatico dei geni delle immunoglobuline (ricombinasi <b>VDJ</b>, enzimi <b>RAG1/RAG2</b>, <b>TdT</b> per i nucleotidi N, <b>Artemis</b> per l'apertura delle forcine).</p>
+<ul>
+<li><b>Ordine</b>: prima si riarrangia la <b>catena pesante</b> (D-J, poi V-DJ) → se produttivo, catena μ → stimola il riarrangiamento delle catene leggere (prima κ, poi λ se κ fallisce).</li>
+<li><b>Stadi</b>: Pro-B (nessun anticorpo di membrana, esprime Igα/Igβ) → Pre-B (pre-BCR: catena μ + catena leggera surrogata λ5, non funzionale al riconoscimento, dà solo segnali di sopravvivenza; qui agisce la BTK) → <b>B immaturo</b> (prima IgM di membrana completa e funzionante — primo BCR funzionale) → B naïve maturo (IgM + IgD, esce dal midollo verso gli organi linfoidi secondari).</li>
+<li><b>Esclusione allelica</b>: un riarrangiamento produttivo su un allele blocca il riarrangiamento dell'altro → un solo BCR per linfocita.</li>
+<li><b>Editing recettoriale</b>: se il BCR immaturo è autoreattivo, i geni RAG possono riattivarsi per tentare un nuovo riarrangiamento (seconda chance prima dell'apoptosi).</li>
+<li><b>Diversità</b>: combinatoria (combinazioni V×D×J) + giunzionale (nucleotidi N e P aggiunti in giunzione, la fonte di diversità più importante, concentrata nella CDR3).</li>
+<li><b>Attivazione</b>: richiede due segnali — 1) cross-linking del BCR da parte dell'antigene (via Igα/Igβ, ITAM, chinasi Src/Syk); 2) secondo segnale, dato dal linfocita T helper (interazione <b>CD40–CD40L</b>) per antigeni <b>timo-dipendenti</b> (proteici), oppure da antigeni <b>timo-indipendenti</b> (polisaccaridi, LPS) senza aiuto T.</li>
+<li><b>Switch isotipico</b> e <b>maturazione dell'affinità</b> (ipermutazione somatica nei centri germinativi) avvengono solo dopo l'incontro con l'antigene, con la collaborazione dei T helper.</li>
+<li>Il linfocita B attivato diventa <b>plasmacellula</b> (produce un solo isotipo, non ha più anticorpi di membrana né MHC II) oppure cellula di memoria.</li>
+</ul>
+`},
+{id:'tcr-mhc', title:'TCR e linfociti T', html:`
+<p>Il <b>TCR</b> (T-cell receptor) è espresso solo su linfociti T, mai in forma solubile, un solo sito di legame per l'antigene.</p>
+<ul>
+<li><b>TCR αβ</b> (~90% dei linfociti T): riconosce peptidi <b>associati a MHC</b> autologo.</li>
+<li><b>TCR γδ</b> (5-10%): riconosce epitopi non associati a MHC, soprattutto in mucose e cute.</li>
+<li>Il TCR è associato al complesso <b>CD3</b> (catene γ, δ, ε + omodimero ζζ) per la trasduzione del segnale (domini ITAM).</li>
+<li><b>Co-recettori</b>: <b>CD4</b> lega MHC di classe II (linfociti T helper), <b>CD8</b> lega MHC di classe I (linfociti T citotossici) → "restrizione MHC".</li>
+<li><b>Attivazione</b>: 2 segnali — 1) TCR + MHC-peptide; 2) costimolazione <b>CD28–B7</b> (CD80/86). Senza secondo segnale → anergia.</li>
+<li><b>Superantigeni</b>: legano MHC e TCR fuori dal sito antigenico, attivando in modo aspecifico intere famiglie di linfociti T (es. shock tossico da enterotossina stafilococcica).</li>
+<li><b>Marcatori CD utili</b>: CD3 (T), CD4 (T helper), CD8 (T citotossici), CD19 (B), CD14 (monociti), CD16/56 (NK).</li>
+</ul>
+<h3 style="font-size:14px;margin:14px 0 6px">MHC / HLA</h3>
+<ul>
+<li>Locus altamente polimorfo sul <b>cromosoma 6</b>; nell'uomo si chiama <b>HLA</b>.</li>
+<li><b>MHC I</b> (HLA-A,B,C + β2-microglobulina invariante): su <b>tutte le cellule nucleate</b>, presenta antigeni <b>endogeni</b> (citosolici, via proteasoma + trasportatore <b>TAP</b>) ai linfociti T CD8+.</li>
+<li><b>MHC II</b> (HLA-DP,DQ,DR): solo sulle <b>APC</b> (cellule dendritiche, linfociti B, monociti, endotelio attivato), presenta antigeni <b>esogeni/extracellulari</b> (fagocitati, processati negli endolisosomi) ai linfociti T CD4+.</li>
+<li>Il polimorfismo MHC è vantaggio evolutivo di popolazione (evita che un patogeno sfugga a tutti gli aplotipi) ed è alla base del <b>rigetto dei trapianti</b> e della <b>tipizzazione HLA</b> pre-trapianto.</li>
+<li>Regolazione: MHC I upregolato da IFN-α/β/γ; MHC II upregolato soprattutto da IFN-γ.</li>
+</ul>
+`},
+{id:'organi', title:'Organi linfoidi', html:`
+<ul>
+<li><b>Primari</b> — <b>midollo osseo</b> (nascita/maturazione linfociti B, origine di tutte le cellule immunitarie) e <b>timo</b> (maturazione e selezione dei linfociti T).</li>
+<li><b>Secondari</b> — <b>milza</b> (filtra il sangue, risposte contro antigeni ematici), <b>linfonodi</b> (filtrano la linfa, sede classica di attivazione), <b>placche di Peyer</b> e <b>tonsille</b> (immunità delle mucose, MALT/GALT).</li>
+<li>I linfociti ricircolano continuamente tra sangue, linfa e organi secondari, dove avviene il contatto con l'antigene presentato dalle APC.</li>
+<li>Il tratto gastroenterico ospita la <b>maggior parte dei linfociti dell'organismo</b> (stimati intorno al 60-70% dei linfociti CD4+), data l'enorme superficie mucosa esposta ad antigeni.</li>
+</ul>
+`},
+{id:'complemento', title:'Complemento', html:`
+<p>Sistema di ~30 proteine plasmatiche che si attivano a cascata sulle superfici dei patogeni.</p>
+<ul>
+<li><b>Tre vie di attivazione</b>: <b>classica</b> (innescata da immunocomplessi antigene-anticorpo, IgM e IgG1/3), <b>alternativa</b> (attivazione spontanea su superfici microbiche) e <b>lectinica</b> (mannose-binding lectin che riconosce mannosio sui patogeni — un esempio di pattern recognition).</li>
+<li>Tutte convergono sulla formazione della <b>C3 convertasi</b> → scissione di C3 in C3a/C3b.</li>
+<li><b>C3b</b>: principale <b>opsonina</b> del complemento, facilita la fagocitosi.</li>
+<li><b>C3a e C5a</b>: <b>anafilotossine</b>, reclutano e attivano cellule infiammatorie, aumentano permeabilità vascolare.</li>
+<li><b>MAC</b> (complesso di attacco alla membrana, C5b-C9): forma un poro nella membrana del patogeno → lisi osmotica.</li>
+<li><b>Regolazione sulle cellule self</b>: proteine come <b>DAF/CD55</b> (accelera il decadimento delle convertasi) e <b>CD59</b> (blocca l'assemblaggio del MAC) proteggono le cellule dell'ospite dall'attacco del proprio complemento.</li>
+</ul>
+`},
+{id:'antigeni-apc', title:'Antigeni e cellule presentanti (APC)', html:`
+<ul>
+<li>I linfociti B riconoscono antigeni solubili di varia natura (proteici, polisaccaridici, lipidici); i linfociti T riconoscono <b>solo peptidi</b>, e solo se presentati da MHC su una APC.</li>
+<li><b>Antigeni timo-dipendenti</b> (proteici): richiedono l'aiuto dei T helper per attivare i B. <b>Timo-indipendenti</b> (polisaccaridi, LPS): attivano i B direttamente, risposta più debole, solo IgM, poca memoria.</li>
+<li><b>APC principali</b>: <b>cellule dendritiche</b> (le più efficienti: massima espressione di MHC II e molecole costimolatorie B7, captano l'antigene tramite TLR/endocitosi aspecifica, migrano ai linfonodi e presentano ai T naïve — ma NON hanno funzione citotossica/litica, quella è compito di CTL/NK), macrofagi, linfociti B (captazione specifica via BCR).</li>
+<li><b>Cellule di Langerhans</b>: cellule dendritiche residenti nella <b>cute</b> (epidermide).</li>
+</ul>
+`},
+{id:'citochine', title:'Citochine', html:`
+<ul>
+<li>Proteine di segnalazione autocrina/paracrina tra cellule immunitarie.</li>
+<li><b>IL-2</b>: fattore di crescita autocrino dei linfociti T attivati (espansione clonale).</li>
+<li><b>IL-4 e IL-13</b>: inducono la differenziazione dei linfociti T helper verso <b>Th2</b> (risposta umorale, IgE, allergie, difesa antiparassitaria).</li>
+<li><b>IFN-γ</b>: prodotto da linfociti T e NK, guida la differenziazione Th1 e la risposta cellulo-mediata contro patogeni intracellulari, upregola MHC.</li>
+<li><b>TNF-α</b>: citochina pro-infiammatoria chiave, es. nell'infiammazione sinoviale dell'<b>artrite reumatoide</b> (bersaglio dei farmaci anti-TNF).</li>
+<li><b>TGF-β e IL-10</b>: citochine immunosoppressive/regolatorie, tra i meccanismi di evasione immunitaria dei tumori.</li>
+</ul>
+`},
+{id:'tolleranza', title:'Tolleranza immunologica', html:`
+<ul>
+<li><b>Tolleranza centrale</b>: avviene negli organi primari (timo per i T, midollo osseo per i B) tramite <b>delezione clonale</b> dei linfociti autoreattivi o editing recettoriale.</li>
+<li><b>Tolleranza periferica</b>: <b>anergia</b> (segnale TCR/BCR senza costimolazione), delezione periferica, soppressione attiva.</li>
+<li><b>Linfociti T regolatori (Treg)</b>: sopprimono attivamente la risposta immune e mantengono la tolleranza al self; marcatore chiave: fattore di trascrizione <b>FoxP3</b> (oltre a CD4 e CD25).</li>
+</ul>
+`},
+{id:'ipersensibilita', title:'Ipersensibilità', html:`
+<p>Risposte immunitarie eccessive o inappropriate, classificate secondo Gell e Coombs.</p>
+<ul>
+<li><b>Tipo I</b> (immediata, IgE-mediata): allergeni → IgE legate a mastociti/basofili (via Fc) → degranulazione con rilascio di <b>istamina</b> e altri mediatori. Es. rinite allergica, asma, anafilassi. Gli aeroallergeni perenni tipici sono gli acari della polvere (<b>Dermatophagoides</b>), a differenza dei pollini (stagionali).</li>
+<li><b>Tipo II</b> (citotossica, anticorpo-mediata): anticorpi (IgG/IgM) diretti contro antigeni di superficie cellulare → attivazione complemento/fagocitosi. Es. <b>malattia emolitica del neonato</b> (incompatibilità Rh), reazioni trasfusionali.</li>
+<li><b>Tipo III</b> (da immuno­complessi): depositi di immunocomplessi antigene-anticorpo nei tessuti (soprattutto <b>articolazioni e rene</b>) → attivazione del complemento e infiammazione. Es. malattia da siero, alcune vasculiti.</li>
+<li><b>Tipo IV</b> (ritardata, cellulo-mediata): linfociti T (non anticorpi) mediano il danno, 24-72h. Es. dermatite da contatto, test della tubercolina, rigetto cronico.</li>
+<li><b>Terapia desensibilizzante</b>: esposizioni ripetute e controllate all'allergene spostano la risposta verso un profilo <b>Th1/Treg</b>, inducono anticorpi <b>IgG4 "bloccanti"</b> e riducono la risposta IgE-mediata.</li>
+</ul>
+<h3 style="font-size:14px;margin:14px 0 6px">Gruppi sanguigni (esempio di ipersensibilità II)</h3>
+<p>Il siero contiene anticorpi naturali contro gli antigeni ABO assenti sulle proprie emazie. Un soggetto di gruppo <b>B</b> ha nel siero <b>anticorpi anti-A</b>: agglutinerà quindi emazie di gruppo A (indipendentemente dal fattore RhD, poiché l'anti-D non è un anticorpo naturale ma si forma solo dopo sensibilizzazione).</p>
+`},
+{id:'tumori', title:'Risposta immune contro i tumori', html:`
+<ul>
+<li><b>Immunosorveglianza</b>: il sistema immune riconosce e può eliminare cellule tumorali, ma il processo non è sempre efficace.</li>
+<li><b>Neoantigeni tumorali</b>: nuovi epitopi generati da mutazioni somatiche specifiche del tumore, assenti nelle cellule sane.</li>
+<li><b>Antigeni associati al tumore (TAA)</b>: antigeni self normalmente espressi a bassi livelli, ma sovraespressi nelle cellule tumorali.</li>
+<li>Cellule più coinvolte nella distruzione delle cellule tumorali: <b>linfociti T citotossici CD8+</b> e <b>cellule NK</b> (che colpiscono soprattutto le cellule con MHC I ridotto/assente).</li>
+<li><b>Evasione immunitaria</b> del tumore: downregolazione di MHC I, secrezione di citochine immunosoppressive (TGF-β, IL-10), espressione di ligandi inibitori (es. PD-L1).</li>
+<li>Le citochine hanno attività antitumorale <b>aumentando</b> l'attività di CTL, macrofagi, cellule NK, cellule LAK/TIL e l'espressione di MHC I — non diminuendo l'attività delle cellule NK-T.</li>
+</ul>
+`},
+{id:'trapianti', title:'Trapianti', html:`
+<ul>
+<li><b>Rigetto iperacuto</b>: minuti/ore, mediato da <b>anticorpi preformati</b> contro antigeni del donatore (es. incompatibilità ABO).</li>
+<li><b>Rigetto acuto</b>: giorni/settimane, soprattutto cellulo-mediato (linfociti T).</li>
+<li><b>Rigetto cronico</b>: mesi/anni, meccanismi misti, fibrosi progressiva dell'organo.</li>
+<li><b>Presentazione diretta</b>: le APC del <b>donatore</b> presentano direttamente il proprio MHC (con il peptide) ai linfociti T del ricevente → forte risposta, tipica del rigetto acuto precoce. <b>Presentazione indiretta</b>: le APC del ricevente processano antigeni del donatore e li presentano su MHC proprio.</li>
+<li><b>Graft-versus-host disease (GVHD)</b>: problema tipico del <b>trapianto di midollo osseo/cellule staminali ematopoietiche</b> — i linfociti T del donatore attaccano i tessuti del ricevente.</li>
+<li><b>Tipizzazione HLA</b>: fondamentale per ridurre la diversità donatore-ricevente e il rischio di rigetto; nessun trapianto tra non gemelli identici evita comunque la terapia <b>immunosoppressiva</b>.</li>
+<li><b>Immunosoppressori chiave</b>: <b>ciclosporina</b> e <b>tacrolimus</b> inibiscono la <b>calcineurina</b>, bloccando l'attivazione trascrizionale di IL-2 nei linfociti T.</li>
+</ul>
+`},
+{id:'immunodeficienze', title:'Immunodeficienze', html:`
+<ul>
+<li><b>Immunodeficienza combinata grave (SCID)</b>: può derivare da difetti di <b>RAG1/RAG2</b> (impossibile riarrangiare i geni di BCR/TCR → assenza di linfociti B e T maturi) o da difetti del recettore IL-7/catena γ comune (SCID X-linked).</li>
+<li><b>Sindrome da iper-IgM legata all'X</b>: difetto di <b>CD40L</b> sui linfociti T → i linfociti B non riescono a fare switch isotipico, restano bloccati sulla produzione di IgM.</li>
+<li><b>Deficit di adesione leucocitaria (LAD)</b>: difetto delle integrine → i leucociti non riescono ad aderire e migrare nei tessuti infetti.</li>
+</ul>
+`}
+];
+
+/* =========================================================
+   DATI: QUIZ BANK
+========================================================= */
+const QUIZ = [
+{topic:'anticorpi', q:`Quale isotipo anticorpale è il primo a comparire nella risposta immune primaria?`, options:[`IgG`,`IgA`,`IgM`,`IgE`,`IgD`], correct:2, explain:`Il primo esone costante riarrangiato a valle del VDJ è Cμ: per questo il primo anticorpo secreto è sempre l'IgM, seguito eventualmente dallo switch isotipico verso altre classi.`},
+{topic:'anticorpi', q:`Quale porzione dell'anticorpo è responsabile del legame con l'antigene?`, options:[`Regione Fc`,`Regione Fab (CDR)`,`Regione cerniera`,`Dominio CH2`,`Tail piece`], correct:1, explain:`Il sito di legame per l'antigene è dato dall'interazione delle regioni variabili di catena pesante e leggera (VH-VL), in particolare dalle anse ipervariabili CDR, situate nella regione Fab.`},
+{topic:'anticorpi', q:`Le IgA secretorie sono caratterizzate da:`, options:[`Catena J e componente secretoria`,`Struttura pentamerica`,`Legame diretto e immediato con il complemento`,`Assenza della catena leggera`,`Forma esclusivamente monomerica nel siero`], correct:0, explain:`Le IgA secretorie sono dimeri uniti dalla catena J, a cui si aggiunge la componente secretoria acquisita durante la transcitosi attraverso l'epitelio mucosale.`},
+{topic:'anticorpi', q:`Quante sottoclassi di IgG esistono nell'uomo?`, options:[`2`,`3`,`4`,`5`,`6`], correct:2, explain:`Esistono 4 sottoclassi: IgG1, IgG2, IgG3, IgG4, che differiscono per piccole variazioni strutturali nella porzione costante della catena γ (es. numero di ponti disolfuro).`},
+{topic:'anticorpi', q:`La regione Fc dell'anticorpo determina principalmente:`, options:[`La specificità per l'antigene`,`Le funzioni biologiche effettrici`,`La diversità giunzionale`,`Il tipo di catena leggera espressa`,`L'affinità per l'antigene`], correct:1, explain:`La regione Fc (porzione costante C-terminale della catena pesante) non partecipa al legame con l'antigene, ma media le funzioni effettrici: legame ai recettori Fc, attivazione del complemento, trasporto attraverso epiteli/placenta.`},
+{topic:'anticorpi', q:`Il taglio di un anticorpo con papaina genera:`, options:[`2 frammenti Fab e 1 frammento Fc`,`1 frammento F(ab')2 e peptidi`,`2 frammenti Fc`,`Solo catene leggere libere`,`Nessun frammento stabile`], correct:0, explain:`La papaina taglia le catene pesanti prima dei ponti disolfuro della cerniera, generando due Fab (ciascuno con un sito di legame) e un Fc.`},
+{topic:'anticorpi', q:`Quale porzione degli anticorpi IgE è responsabile del legame con mastociti e basofili?`, options:[`Regione Fc`,`Catena leggera lambda`,`Catena leggera kappa`,`Complement binding site`,`Complementarity Determining Region (CDR)`], correct:0, explain:`Le IgE si legano tramite la regione Fc al recettore ad alta affinità FcεRI espresso su mastociti e basofili, sensibilizzandoli per la successiva reazione allergica.`},
+{topic:'anticorpi', q:`I singoli monomeri che costituiscono una IgM pentamerica:`, options:[`Sono prodotti da plasmacellule differenti e assemblati nei linfonodi`,`Sono costituiti da catene leggere differenti tra loro`,`Sono prodotti dalla stessa plasmacellula`,`Sono costituiti da catene pesanti differenti tra loro`,`Hanno specificità anticorpali differenti`], correct:2, explain:`Una singola plasmacellula produce un solo tipo di anticorpo: tutti i monomeri del pentamero IgM hanno identica specificità e sono prodotti dalla stessa cellula, poi uniti da ponti disolfuro tramite la catena J.`},
+{topic:'anticorpi', q:`Gli anticorpi che possono andare incontro a polimerizzazione sono:`, options:[`IgG e IgD`,`IgM e IgA`,`IgE e IgG`,`Solo le IgM`,`Tutte le classi anticorpali`], correct:1, explain:`Solo IgM (pentamero) e IgA (dimero/trimero) presentano la catena J che ne permette la polimerizzazione tramite ponti disolfuro con i tail piece.`},
+
+{topic:'linfocitiB', q:`Il primo gene riarrangiato durante la maturazione dei linfociti B è quello della:`, options:[`Catena leggera κ`,`Catena pesante`,`Catena leggera λ`,`Molecola MHC`,`Catena del TCR`], correct:1, explain:`Il riarrangiamento inizia sempre dalla catena pesante (prima D-J, poi V-DJ); solo se produce una catena μ funzionante si passa al riarrangiamento delle catene leggere.`},
+{topic:'linfocitiB', q:`Il pre-BCR (pre-B cell receptor) è costituito da:`, options:[`Catena μ associata a una catena leggera surrogata (λ5)`,`Una IgM di membrana completa`,`Un TCR alfa/beta immaturo`,`Solo catena leggera κ`,`IgD di membrana`], correct:0, explain:`Il pre-BCR associa la catena pesante μ già riarrangiata a una catena leggera surrogata invariante (λ5); non riconosce antigeni, ma trasduce segnali di sopravvivenza e proliferazione (checkpoint dipendente dalla chinasi BTK).`},
+{topic:'linfocitiB', q:`Quale enzima inserisce nucleotidi N in modo casuale durante il riarrangiamento VDJ?`, options:[`RAG1`,`RAG2`,`TdT`,`Artemis`,`DNA ligasi`], correct:2, explain:`La TdT (terminal deoxynucleotidyl transferase) aggiunge fino a circa 20 nucleotidi senza stampo alle giunzioni V-D-J, generando la diversità giunzionale massima nella regione CDR3.`},
+{topic:'linfocitiB', q:`A quale stadio maturativo viene espresso per la prima volta un BCR funzionale e completo?`, options:[`Pre-B cell`,`Linfocita B attivato`,`Pro-B cell`,`Linfocita B naïve`,`Linfocita B immaturo`], correct:4, explain:`Il linfocita B immaturo esprime la prima IgM di membrana completa (catene pesanti μ + catene leggere κ o λ), il primo BCR realmente in grado di riconoscere l'antigene.`},
+{topic:'linfocitiB', q:`Cosa si intende per "esclusione allelica"?`, options:[`Un linfocita B esprime contemporaneamente entrambi gli alleli`,`Un solo allele viene riarrangiato in modo produttivo, l'altro resta silenziato`,`I geni MHC materni vengono sempre silenziati`,`Solo la catena leggera viene espressa in membrana`,`Nessuna delle precedenti`], correct:1, explain:`Un riarrangiamento produttivo su un allele blocca il riarrangiamento dell'altro: questo garantisce che ogni linfocita B esprima una sola specificità anticorpale per tutta la vita.`},
+{topic:'linfocitiB', q:`L'interazione CD40–CD40L è fondamentale per:`, options:[`L'attivazione dei linfociti B e lo switch isotipico`,`La fagocitosi dei neutrofili`,`L'attivazione della via classica del complemento`,`La selezione negativa timica`,`La degranulazione dei mastociti`], correct:0, explain:`Il linfocita T helper esprime CD40L dopo l'attivazione; il legame con il CD40 del linfocita B fornisce il secondo segnale necessario per l'attivazione completa, la proliferazione e lo switch isotipico.`},
+
+{topic:'tcr_mhc', q:`Il TCR αβ è in grado di riconoscere:`, options:[`Antigeni solubili liberi nel plasma`,`Peptidi associati a molecole MHC autologhe`,`Solo componenti lipidiche microbiche`,`PAMP direttamente, senza intermediari`,`Carboidrati liberi in circolo`], correct:1, explain:`A differenza del BCR, il TCR αβ riconosce solo brevi peptidi presentati all'interno della tasca di una molecola MHC self: non risponde ad antigeni solubili.`},
+{topic:'tcr_mhc', q:`Il co-recettore CD8 riconosce specificamente:`, options:[`Molecole MHC di classe I`,`Molecole MHC di classe II`,`Il TCR γ/δ`,`La molecola CD40L`,`La proteina B7`], correct:0, explain:`Il CD8 lega regioni non polimorfe del dominio α3 dell'MHC I, restringendo il riconoscimento dei linfociti T citotossici alle cellule che espongono MHC I (praticamente tutte le cellule nucleate).`},
+{topic:'tcr_mhc', q:`Il co-recettore CD4 riconosce specificamente:`, options:[`Molecole MHC di classe I`,`Molecole MHC di classe II`,`La molecola CD28`,`Il TCR γ/δ`,`I recettori Fc`], correct:1, explain:`Il CD4 lega l'MHC di classe II, espresso solo dalle APC: per questo i linfociti T helper (CD4+) riconoscono l'antigene solo se presentato da cellule dendritiche, linfociti B, monociti o endotelio attivato.`},
+{topic:'tcr_mhc', q:`Le molecole MHC di classe I sono espresse su:`, options:[`Solo le APC professionali`,`Tutte le cellule nucleate`,`Solo i linfociti B`,`Solo le cellule dendritiche`,`Non sono mai espresse sulle cellule tumorali`], correct:1, explain:`MHC I è espresso costitutivamente su praticamente tutte le cellule nucleate, per permettere la sorveglianza dei linfociti T CD8+ contro infezioni virali o trasformazione tumorale.`},
+{topic:'tcr_mhc', q:`Le molecole MHC di classe II sono espresse principalmente su:`, options:[`Tutte le cellule dell'organismo`,`Le APC: cellule dendritiche, linfociti B, monociti, endotelio attivato`,`Solo i globuli rossi`,`Mai sulle cellule endoteliali`,`Solo nel timo`], correct:1, explain:`MHC II è espresso in modo costitutivo solo dalle cellule presentanti l'antigene professionali; le cellule endoteliali possono esprimerlo dopo stimolazione con IFN-γ.`},
+{topic:'tcr_mhc', q:`Il locus genico che codifica per l'MHC nell'uomo si trova sul cromosoma:`, options:[`Cromosoma 6`,`Cromosoma 14`,`Cromosoma 2`,`Cromosoma 22`,`Cromosoma 7`], correct:0, explain:`Il complesso maggiore di istocompatibilità è codificato da una regione altamente polimorfa sul cromosoma 6; nell'uomo il sistema è denominato HLA.`},
+{topic:'tcr_mhc', q:`Il sistema MHC nell'uomo viene chiamato con la sigla:`, options:[`HLA`,`TCR`,`BCR`,`CD3`,`TAP`], correct:0, explain:`HLA sta per Human Leukocyte Antigens, il nome storico con cui è stato identificato il sistema MHC umano tramite alloantisieri di soggetti trapiantati.`},
+{topic:'tcr_mhc', q:`Il trasportatore TAP ha la funzione di:`, options:[`Trasportare i peptidi dal citosol al reticolo endoplasmatico per l'MHC I`,`Degradare le proteine nel proteasoma`,`Tagliare il DNA nel riarrangiamento VDJ`,`Legare gli antigeni extracellulari negli endolisosomi`,`Attivare direttamente i linfociti B`], correct:0, explain:`TAP1/TAP2 formano un canale ATP-dipendente nella membrana del reticolo endoplasmatico che trasporta i peptidi generati dal proteasoma, permettendone l'associazione con MHC I.`},
+{topic:'tcr_mhc', q:`Il riarrangiamento dei geni delle immunoglobuline (catena pesante) inizia con:`, options:[`L'unione degli esoni V e J della catena leggera`,`L'unione degli esoni D e J della catena pesante`,`La trascrizione diretta dell'esone costante`,`Lo splicing alternativo di IgM e IgD`,`L'editing recettoriale`], correct:1, explain:`Nella catena pesante il primo evento di ricombinazione somatica unisce un esone D e un esone J; solo successivamente un esone V si unisce al complesso DJ per formare VDJ.`},
+
+{topic:'innata', q:`I neutrofili combattono i patogeni principalmente tramite:`, options:[`Presentazione dell'antigene`,`Fagocitosi`,`Attivazione diretta dei linfociti T`,`Secrezione di istamina`,`Produzione di anticorpi`], correct:1, explain:`I neutrofili sono i primi fagociti reclutati nel sito di infezione: internalizzano e distruggono il patogeno tramite fagocitosi e fusione fagosoma-lisosoma.`},
+{topic:'innata', q:`Gli organi linfoidi primari sono:`, options:[`Milza e linfonodi`,`Midollo osseo e timo`,`Tonsille e placche di Peyer`,`Cute e mucose`,`Fegato e reni`], correct:1, explain:`Midollo osseo (linfociti B) e timo (linfociti T) sono le sedi di nascita e maturazione dei linfociti, prima del loro trasferimento agli organi linfoidi secondari.`},
+{topic:'innata', q:`I PAMP (Pathogen-Associated Molecular Patterns) sono riconosciuti da:`, options:[`Il BCR`,`Il TCR`,`I Pattern Recognition Receptor (PRR)`,`Le molecole MHC`,`Gli anticorpi secreti`], correct:2, explain:`I PRR (es. Toll-like receptor, recettori lectino-simili) sono i recettori germline dell'immunità innata che riconoscono strutture molecolari conservate nei patogeni (PAMP), come LPS o CpG non metilato.`},
+{topic:'innata', q:`Quale dei seguenti è un esempio di Pattern Recognition Receptor (PRR)?`, options:[`Il lipopolisaccaride (LPS)`,`Le sequenze CpG non metilate`,`L'acido lipoteicoico`,`Le molecole lectino-simili (es. mannose-binding lectin)`,`I PAMP in generale`], correct:3, explain:`LPS, CpG non metilato e acido lipoteicoico sono PAMP, cioè i bersagli riconosciuti. Le molecole lectino-simili (come la mannose-binding lectin) sono invece esse stesse dei recettori PRR.`},
+{topic:'innata', q:`Il lisozima presente in lacrime, saliva e sudore agisce principalmente su:`, options:[`Le membrane dei virus a envelope`,`Il peptidoglicano delle pareti batteriche`,`Il DNA batterico`,`Le capsule polisaccaridiche`,`Le proteine del complemento`], correct:1, explain:`Il lisozima è un enzima litico che degrada il peptidoglicano, soprattutto efficace contro batteri Gram positivi, impedendone l'adesione e la colonizzazione.`},
+{topic:'innata', q:`Le cellule NK sono particolarmente importanti nella difesa contro:`, options:[`Batteri extracellulari`,`Virus e cellule tumorali`,`Parassiti elminti`,`Allergeni`,`Funghi delle mucose`], correct:1, explain:`Le cellule NK hanno attività citotossica naturale e sono fondamentali contro cellule infettate da virus e cellule tumorali, in particolare quelle con ridotta espressione di MHC I.`},
+{topic:'innata', q:`Quale affermazione è corretta riguardo ai meccanismi dell'immunità innata?`, options:[`Tutte le cellule del sistema immune innato sono fagociti`,`Il sistema immune innato è efficace solo contro i batteri`,`L'attivazione dell'immunità innata dipende dal riconoscimento tramite il TCR`,`L'immunità innata è attivata dal riconoscimento dei PAMP`,`L'attivazione dell'immunità innata dipende dal riconoscimento tramite il BCR`], correct:3, explain:`L'immunità innata si attiva tramite i PRR che riconoscono i PAMP, indipendentemente da TCR e BCR, che sono invece i recettori clonalmente distribuiti dell'immunità adattativa.`},
+{topic:'innata', q:`Quale affermazione descrive meglio la "trained immunity"?`, options:[`È sinonimo di memoria immunologica adattativa mediata da linfociti T`,`Cellule innate (es. monociti/macrofagi) sviluppano, dopo una prima esposizione, una risposta funzionalmente potenziata a stimoli successivi grazie a riprogrammazione epigenetica`,`Riguarda esclusivamente la produzione di anticorpi ad alta affinità`,`È un fenomeno che coinvolge solo i linfociti B di memoria`,`Consiste nella perdita permanente di funzione delle cellule innate dopo l'infezione`], correct:1, explain:`La trained immunity è una forma di memoria funzionale non specifica delle cellule dell'immunità innata, dovuta a riprogrammazione epigenetica e metabolica, distinta dalla memoria clonale/specifica dell'immunità adattativa.`},
+{topic:'innata', q:`Il legame della mannose-binding lectin a molecole contenenti mannosio sulla superficie di un antigene:`, options:[`Causa direttamente il rilascio di istamina`,`È un esempio di pattern recognition`,`Attiva la proliferazione e differenziazione dei linfociti B`,`Inattiva la cascata del complemento`,`Attiva la proliferazione e differenziazione dei linfociti T`], correct:1, explain:`La mannose-binding lectin riconosce pattern molecolari conservati (mannosio) sulla superficie microbica: è un classico esempio di pattern recognition dell'immunità innata, e innesca anche la via lectinica del complemento.`},
+
+{topic:'complemento', q:`Il complemento può essere attivato attraverso tre vie principali:`, options:[`Classica, alternativa e lectinica`,`Classica, cellulare e umorale`,`Diretta, indiretta e mista`,`Solo la via classica e quella alternativa`,`Nessuna delle precedenti`], correct:0, explain:`Le tre vie (classica, alternativa, lectinica) hanno inneschi diversi ma convergono tutte sulla formazione della C3 convertasi e, a valle, del complesso di attacco alla membrana.`},
+{topic:'complemento', q:`La via classica del complemento viene tipicamente attivata da:`, options:[`Il lipopolisaccaride batterico`,`Immunocomplessi antigene-anticorpo (IgM o IgG)`,`Il mannosio sulla superficie microbica`,`Il contatto diretto con superfici microbiche`,`I polisaccaridi capsulari`], correct:1, explain:`La via classica si innesca quando C1q lega la porzione Fc di anticorpi (IgM o IgG) già legati all'antigene, formando un immunocomplesso.`},
+{topic:'complemento', q:`Il complesso di attacco alla membrana (MAC) è formato principalmente da:`, options:[`Le frazioni C1-C4`,`Le frazioni C5b-C9`,`C3a e C5a`,`Solo C3b`,`Il fattore B`], correct:1, explain:`Il MAC (C5b-C9) si inserisce nella membrana del patogeno formando un poro che causa lisi osmotica della cellula bersaglio.`},
+{topic:'complemento', q:`Quale proteina inibitoria impedisce la formazione del complesso di attacco alla membrana sulle cellule self?`, options:[`Decay-accelerating factor (DAF, CD55)`,`C3 convertasi`,`Properdina`,`Mannose-binding lectin`,`C1q`], correct:0, explain:`DAF/CD55 accelera il decadimento delle convertasi del complemento sulle cellule self, proteggendole dall'attivazione della cascata (accanto a CD59, che blocca più direttamente l'assemblaggio del MAC).`},
+{topic:'complemento', q:`Le frazioni C3a e C5a agiscono principalmente come:`, options:[`Opsonine`,`Anafilotossine, mediatori dell'infiammazione`,`Inibitori del complemento`,`Anticorpi solubili`,`Chemochine linfocitarie specifiche`], correct:1, explain:`C3a e C5a sono anafilotossine: reclutano e attivano leucociti, aumentano la permeabilità vascolare e contribuiscono all'infiammazione acuta.`},
+{topic:'complemento', q:`L'opsonizzazione mediata dal complemento è svolta principalmente da:`, options:[`C3b`,`C1q`,`C9`,`Fattore D`,`Properdina`], correct:0, explain:`C3b si lega covalentemente alla superficie del patogeno e viene riconosciuto dai recettori per il complemento sui fagociti, facilitando la fagocitosi.`},
+
+{topic:'citochine', q:`Le citochine IL-4 e IL-13 inducono la differenziazione dei linfociti T helper verso:`, options:[`Th33`,`Th4`,`Th13`,`Treg`,`Th2`], correct:4, explain:`IL-4 e IL-13 promuovono la differenziazione verso il fenotipo Th2, associato a risposta umorale, produzione di IgE e reazioni allergiche.`},
+{topic:'citochine', q:`Nell'artrite reumatoide, quale citochina ha un ruolo chiave nell'infiammazione sinoviale?`, options:[`IL-10`,`IL-2`,`IL-4`,`TNF-α`,`IFN-β`], correct:3, explain:`Il TNF-α è centrale nella patogenesi dell'infiammazione sinoviale dell'artrite reumatoide, tanto da essere il bersaglio dei farmaci biologici anti-TNF.`},
+{topic:'citochine', q:`L'interferone gamma (IFN-γ) è prodotto principalmente da:`, options:[`Linfociti B`,`Linfociti T e cellule NK`,`Mastociti`,`Eosinofili`,`Piastrine`], correct:1, explain:`L'IFN-γ, detto anche "interferone immune", è secreto da linfociti T attivati e cellule NK ed è cruciale per l'attivazione della risposta cellulo-mediata.`},
+{topic:'citochine', q:`Le citochine di tipo Th1 (es. IFN-γ) favoriscono principalmente:`, options:[`La risposta umorale IgE-mediata`,`La risposta cellulo-mediata contro patogeni intracellulari`,`Le reazioni allergiche di tipo I`,`La tolleranza immunitaria periferica`,`L'attivazione selettiva degli eosinofili`], correct:1, explain:`Il profilo Th1 (IFN-γ) potenzia macrofagi e linfociti T citotossici, fondamentale contro patogeni intracellulari come virus e micobatteri.`},
+
+{topic:'tolleranza', q:`I linfociti T regolatori (Treg) esprimono quale fattore di trascrizione chiave?`, options:[`GATA-3`,`T-bet`,`FoxP3`,`RORγt`,`Bcl-6`], correct:2, explain:`FoxP3 è il fattore di trascrizione master dei linfociti T regolatori, essenziale per il loro sviluppo e per la loro funzione soppressiva nel mantenimento della tolleranza al self.`},
+{topic:'tolleranza', q:`La tolleranza centrale avviene principalmente:`, options:[`Nel sangue periferico`,`Nel timo e nel midollo osseo`,`Nella milza`,`Nei linfonodi`,`Nella cute`], correct:1, explain:`La tolleranza centrale, basata soprattutto sulla delezione clonale dei linfociti autoreattivi, avviene negli organi linfoidi primari: timo per i T, midollo osseo per i B.`},
+{topic:'tolleranza', q:`L'anergia linfocitaria si instaura tipicamente quando:`, options:[`Il linfocita riceve solo il primo segnale (TCR/BCR) senza il secondo segnale costimolatorio`,`Il linfocita riceve entrambi i segnali di attivazione`,`Il linfocita incontra l'antigene self nel timo con altissima affinità (delezione)`,`È un fenomeno irreversibile che riguarda solo i linfociti NK`,`Riguarda esclusivamente i linfociti B maturi`], correct:0, explain:`Senza il secondo segnale costimolatorio, il riconoscimento dell'antigene tramite TCR o BCR porta il linfocita in uno stato funzionalmente inattivo (anergia) invece che all'attivazione.`},
+
+{topic:'ipersensibilita', q:`La malattia emolitica del neonato è un esempio di:`, options:[`Ipersensibilità di tipo II`,`Ipersensibilità di tipo I`,`Tolleranza centrale`,`Ipersensibilità di tipo III`,`Ipersensibilità di tipo IV`], correct:0, explain:`Gli anticorpi materni anti-Rh(D) attraversano la placenta e distruggono gli eritrociti fetali Rh+ tramite un meccanismo citotossico anticorpo-mediato: è la classica ipersensibilità di tipo II.`},
+{topic:'ipersensibilita', q:`Le reazioni di ipersensibilità di tipo I sono mediate principalmente da:`, options:[`IgG`,`IgE`,`Immunocomplessi`,`Linfociti T citotossici`,`Il solo complemento`], correct:1, explain:`Nell'ipersensibilità immediata di tipo I, le IgE legate a mastociti e basofili scatenano, dopo un secondo contatto con l'allergene, la degranulazione e il rilascio di istamina.`},
+{topic:'ipersensibilita', q:`Le reazioni di ipersensibilità di tipo III sono causate principalmente da:`, options:[`IgE libere in circolo`,`Deposizione di immunocomplessi nei tessuti`,`Linfociti T citotossici diretti contro il self`,`Autoanticorpi anti-recettore`,`Fagocitosi diretta di batteri`], correct:1, explain:`Gli immunocomplessi antigene-anticorpo non adeguatamente rimossi si depositano nei tessuti (tipicamente articolazioni e rene) attivando il complemento e causando infiammazione locale.`},
+{topic:'ipersensibilita', q:`Le reazioni di ipersensibilità di tipo IV sono mediate da:`, options:[`Anticorpi IgE`,`Linfociti T (risposta cellulo-mediata ritardata)`,`Il complemento`,`I mastociti`,`Gli eosinofili`], correct:1, explain:`È l'unica forma di ipersensibilità non mediata da anticorpi: i linfociti T sensibilizzati causano il danno tissutale in 24-72 ore (es. test della tubercolina, dermatite da contatto).`},
+{topic:'ipersensibilita', q:`Quale organo/i risulta/no principalmente colpito/i nella malattia da siero eterologo?`, options:[`Le cornee`,`Le articolazioni`,`Il timo`,`Il rene`,`Le articolazioni e il rene`], correct:4, explain:`La malattia da siero è un'ipersensibilità di tipo III: gli immunocomplessi circolanti si depositano preferenzialmente a livello di articolazioni e rene, causando artrite e glomerulonefrite.`},
+{topic:'ipersensibilita', q:`Tra questi aeroallergeni, quale causa frequentemente rinite perenne (non stagionale)?`, options:[`Polline della betulla`,`Pollini delle graminacee`,`Pollini della parietaria`,`Pollini di Lolium`,`Dermatophagoides (acaro della polvere)`], correct:4, explain:`A differenza dei pollini, che causano riniti stagionali, gli acari della polvere (Dermatophagoides) sono presenti tutto l'anno negli ambienti chiusi e causano rinite allergica perenne.`},
+{topic:'ipersensibilita', q:`Quale mediatore chimico viene rilasciato rapidamente dai mastociti durante l'attivazione IgE-mediata?`, options:[`Interferone gamma`,`Istamina`,`IL-2`,`C3b`,`Lisozima`], correct:1, explain:`L'istamina, contenuta preformata nei granuli dei mastociti, è il principale mediatore rilasciato rapidamente dopo il cross-linking delle IgE di membrana da parte dell'allergene.`},
+{topic:'ipersensibilita', q:`La terapia desensibilizzante in un soggetto allergico induce principalmente:`, options:[`Un aumento delle IgE specifiche per l'allergene`,`Uno spostamento della risposta verso Th1/Treg, con produzione di IgG4 "bloccanti" e riduzione dei sintomi`,`Il blocco irreversibile e permanente dei mastociti`,`Un aumento diretto del rilascio di istamina`,`Nessun effetto sul sistema immunitario`], correct:1, explain:`L'esposizione ripetuta e controllata all'allergene riprogramma la risposta immunitaria verso un profilo meno allergico, con comparsa di anticorpi IgG4 "bloccanti" che competono con le IgE.`},
+{topic:'ipersensibilita', q:`Il siero di un soggetto di gruppo sanguigno B RhD+ agglutinerà emazie:`, options:[`A RhD+`,`Nessuna risposta è corretta`,`B RhD+`,`A RhD+ e B RhD+`,`Non determinerà agglutinazione ma precipitazione`], correct:0, explain:`Un soggetto di gruppo B ha nel siero anticorpi naturali anti-A: agglutina quindi le emazie A RhD+. L'anti-D non è un anticorpo naturale (compare solo dopo sensibilizzazione), quindi le emazie B RhD+ non vengono agglutinate.`},
+
+{topic:'tumori', q:`I neoantigeni tumorali sono:`, options:[`Antigeni condivisi con patogeni virali`,`Componenti del complemento attivato`,`Nuovi epitopi generati da mutazioni tumorali`,`Antigeni derivati dal microbioma intestinale`,`Autoantigeni espressi normalmente da cellule sane`], correct:2, explain:`I neoantigeni derivano da mutazioni somatiche specifiche del tumore: sono strutture nuove, mai viste dal sistema immunitario, e per questo particolarmente immunogeniche.`},
+{topic:'tumori', q:`Gli antigeni associati al tumore (TAA) sono generalmente:`, options:[`Presenti esclusivamente sulle cellule tumorali`,`Self-antigeni normalmente espressi a bassi livelli, sovraespressi nelle cellule tumorali`,`Sempre di origine virale`,`Mai riconosciuti dal sistema immunitario`,`Prodotti esclusivamente dai linfociti`], correct:1, explain:`A differenza dei neoantigeni, i TAA sono proteine self già presenti nell'organismo (spesso in fase di sviluppo o in tessuti specifici) ma sovraespresse dal tumore.`},
+{topic:'tumori', q:`Le cellule tumorali possono evadere la risposta immunitaria attraverso:`, options:[`Un aumento marcato dell'espressione di MHC I`,`La downregolazione di MHC I e la produzione di citochine immunosoppressive (es. TGF-β)`,`Un aumento delle molecole costimolatorie B7`,`Un aumento della presentazione antigenica alle APC`,`Nessuno di questi meccanismi`], correct:1, explain:`Riducendo l'espressione di MHC I il tumore diventa meno visibile ai CTL; inoltre, secernendo citochine immunosoppressive come TGF-β e IL-10 inibisce l'attivazione immunitaria locale.`},
+{topic:'tumori', q:`Quale meccanismo NON è coinvolto nell'attività antitumorale delle citochine?`, options:[`Incremento dell'attività di linfociti T citotossici, macrofagi e cellule NK`,`Attivazione delle cellule LAK e dei TIL`,`Attività antitumorale diretta`,`Diminuzione dell'attività delle cellule NK-T`,`Incrementata espressione di molecole MHC di classe I`], correct:3, explain:`Le citochine antitumorali potenziano, non riducono, l'attività delle cellule NK-T: la diminuzione della loro attività andrebbe anzi a favore del tumore, non contro di esso.`},
+{topic:'tumori', q:`Quale popolazione linfocitaria è più direttamente coinvolta nella distruzione delle cellule tumorali?`, options:[`Linfociti T citotossici CD8+ e cellule NK`,`Linfociti B`,`Eosinofili`,`Neutrofili`,`Linfociti T regolatori`], correct:0, explain:`I CTL CD8+ riconoscono peptidi tumorali su MHC I, mentre le NK colpiscono le cellule con MHC I ridotto/assente: insieme rappresentano le principali cellule effettrici dell'immunità antitumorale.`},
+
+{topic:'trapianti', q:`Il rigetto iperacuto di un trapianto è mediato da:`, options:[`Anticorpi preformati contro antigeni del donatore`,`Linfociti T citotossici`,`Macrofagi`,`Eosinofili`,`Complemento attivato senza alcun anticorpo`], correct:0, explain:`Il rigetto iperacuto si verifica entro minuti/ore dal trapianto, causato da anticorpi preesistenti nel ricevente (es. anti-ABO) che attivano immediatamente il complemento.`},
+{topic:'trapianti', q:`Quale delle seguenti immunodeficienze è causata da un deficit del gene RAG-1?`, options:[`Sindrome iper-IgM legata al cromosoma X`,`Immunodeficienza combinata grave (SCID)`,`Deficit di adesione leucocitaria`,`Deficit selettivo di IgA`,`Sindrome di DiGeorge`], correct:1, explain:`Senza RAG1 (o RAG2) non può avvenire il riarrangiamento VDJ dei geni di BCR e TCR: non si formano linfociti B e T maturi, causando una immunodeficienza combinata grave (SCID).`},
+{topic:'trapianti', q:`La graft-versus-host disease (GVHD) è un problema tipico del trapianto di:`, options:[`Cornea`,`Midollo osseo / cellule staminali ematopoietiche`,`Rene`,`Trasfusione di sangue intero standard`,`Vaccinazione`], correct:1, explain:`Nel trapianto di midollo osseo i linfociti T maturi contenuti nell'innesto del donatore possono riconoscere come estranei i tessuti del ricevente e attaccarli, causando GVHD.`},
+{topic:'trapianti', q:`Quale farmaco immunosoppressore inibisce la calcineurina, bloccando l'attivazione trascrizionale dell'IL-2?`, options:[`Ciclosporina`,`Aspirina`,`Paracetamolo`,`Amoxicillina`,`Eparina`], correct:0, explain:`Ciclosporina e tacrolimus inibiscono la calcineurina, impedendo l'attivazione del fattore di trascrizione NFAT necessario per la trascrizione dell'IL-2 nei linfociti T attivati.`},
+{topic:'trapianti', q:`La tipizzazione HLA prima di un trapianto serve principalmente a:`, options:[`Ridurre il rischio di rigetto scegliendo il donatore più compatibile`,`Diagnosticare le allergie del paziente`,`Misurare direttamente la funzione renale`,`Valutare la glicemia del ricevente`,`Nessuna delle precedenti`], correct:0, explain:`Confrontando gli aplotipi HLA di donatore e ricevente si sceglie la coppia più compatibile possibile, riducendo (senza azzerare) il rischio di rigetto.`},
+{topic:'trapianti', q:`Il meccanismo "diretto" di presentazione dell'antigene nel rigetto dei trapianti prevede che:`, options:[`Le APC del donatore presentino direttamente il proprio MHC ai linfociti T del ricevente`,`Le APC del ricevente processino e presentino peptidi del donatore sul proprio MHC`,`Non sia coinvolta alcuna molecola MHC`,`Sia coinvolto solo il complemento`,`Avvenga esclusivamente nel rigetto cronico`], correct:0, explain:`Nella via diretta, le cellule dendritiche "passeggere" del donatore, presenti nell'organo trapiantato, presentano direttamente il proprio MHC ai linfociti T del ricevente, generando una risposta molto forte tipica del rigetto acuto precoce.`},
+
+{topic:'antigeni_apc', q:`Gli antigeni timo-dipendenti sono generalmente di natura:`, options:[`Polisaccaridica`,`Proteica`,`Lipidica`,`Di acidi nucleici liberi`,`Lipopolisaccaridica`], correct:1, explain:`Solo gli antigeni proteici possono essere processati e presentati su MHC II ai linfociti T helper, che quindi forniscono il secondo segnale necessario all'attivazione B (collaborazione T-B).`},
+{topic:'antigeni_apc', q:`Le cellule dendritiche sono considerate le APC più efficienti perché:`, options:[`Esprimono pochissimo MHC`,`Esprimono alti livelli di MHC e un ampio corredo di molecole costimolatorie`,`Non migrano mai dai tessuti periferici`,`Non sono in grado di processare gli antigeni`,`Sono presenti solo nel sangue`], correct:1, explain:`Le cellule dendritiche captano l'antigene in periferia, lo processano e migrano ai linfonodi esprimendo elevate quantità di MHC II e molecole B7, ottimizzando l'attivazione dei linfociti T naïve.`},
+{topic:'antigeni_apc', q:`Quale di queste funzioni NON è caratteristica delle cellule dendritiche?`, options:[`Produzione di interferoni`,`Captazione dell'antigene tramite TLR`,`Presentazione dell'antigene ai linfociti T`,`Lisi diretta di cellule autologhe infettate da virus`,`Attivazione della trascrizione di geni ad azione antivirale`], correct:3, explain:`La lisi diretta di cellule infette è tipica dei linfociti T citotossici e delle cellule NK, non delle cellule dendritiche, il cui ruolo principale è catturare, processare e presentare l'antigene.`},
+{topic:'antigeni_apc', q:`Le cellule di Langerhans sono localizzate principalmente:`, options:[`Nelle mucose`,`Nella milza`,`In tutte le sedi elencate`,`Nella cute`,`Nel timo`], correct:3, explain:`Le cellule di Langerhans sono cellule dendritiche residenti nell'epidermide, dove svolgono sorveglianza immunitaria continua contro antigeni che penetrano attraverso la cute.`},
+{topic:'antigeni_apc', q:`La percentuale di linfociti CD4+ residenti nel tratto gastroenterico è stimata intorno a:`, options:[`Meno del 5%`,`Circa il 20%`,`Circa il 60-70%`,`Il 100%`,`Praticamente 0%`], correct:2, explain:`Data l'enorme superficie mucosa esposta ad antigeni alimentari e microbici, il tratto gastroenterico ospita la quota più consistente dei linfociti dell'intero organismo, stimata attorno al 60-70%.`},
+{topic:'antigeni_apc', q:`Le cellule T helper follicolari (Tfh):`, options:[`Risiedono nei centri germinativi e aiutano i linfociti B (secernono IL-21, esprimono CXCR5)`,`Uccidono direttamente le cellule infette da virus`,`Sono i progenitori diretti dei mastociti`,`Esprimono costitutivamente FoxP3`,`Non interagiscono mai con i linfociti B`], correct:0, explain:`Le Tfh migrano nei centri germinativi dei follicoli linfoidi, dove supportano la maturazione dell'affinità e lo switch isotipico dei linfociti B secernendo IL-21 e tramite CD40L.`}
+];
+
+/* =========================================================
+   DATI: CRUCIVERBA
+========================================================= */
+const XW_WORDS_FACILE = [
+{word:'TIMO', clue:`Organo dove maturano i linfociti T`},
+{word:'MILZA', clue:`Organo che filtra il sangue`},
+{word:'VIRUS', clue:`Patogeno responsabile, ad esempio, dell'influenza`},
+{word:'VACCINO', clue:`Si inietta per prevenire una malattia infettiva`},
+{word:'FEBBRE', clue:`Sintomo comune quando è in corso un'infezione`},
+{word:'PELLE', clue:`Prima barriera fisica del corpo contro i patogeni`},
+{word:'SANGUE', clue:`Liquido in cui circolano i globuli bianchi`},
+{word:'GLOBULO', clue:`Cellula del sangue, può essere bianco o rosso`},
+{word:'ANTICORPO', clue:`Proteina che riconosce e blocca un antigene`},
+{word:'BATTERIO', clue:`Microrganismo che può causare un'infezione`},
+{word:'IGG', clue:`Sigla dell'anticorpo più abbondante nel sangue`},
+{word:'IGE', clue:`Sigla dell'anticorpo coinvolto nelle allergie`},
+{word:'NK', clue:`Sigla della cellula "natural killer"`}
+];
+
+const XW_WORDS_MEDIO = [
+{word:'OPSONIZZAZIONE', clue:`Rivestimento del patogeno con anticorpi/complemento per facilitarne la fagocitosi`},
+{word:'ANTICORPO', clue:`Proteina prodotta dai linfociti B che lega in modo specifico l'antigene`},
+{word:'COMPLEMENTO', clue:`Sistema di proteine plasmatiche che culmina nella formazione del MAC`},
+{word:'TOLLERANZA', clue:`Capacità del sistema immunitario di non reagire contro il self`},
+{word:'ANTIGENE', clue:`Sostanza estranea in grado di indurre una risposta immunitaria specifica`},
+{word:'MACROFAGO', clue:`Fagocita derivato dal monocita, funge anche da cellula presentante l'antigene`},
+{word:'NEUTROFILO', clue:`Primo fagocita a intervenire nell'infiammazione acuta`},
+{word:'FAGOCITOSI', clue:`Processo di internalizzazione e distruzione del patogeno`},
+{word:'ISTAMINA', clue:`Mediatore rilasciato rapidamente dai mastociti nelle reazioni allergiche`},
+{word:'TRAPIANTO', clue:`Sostituzione di un organo malato con uno proveniente da un donatore`},
+{word:'EPITOPO', clue:`Determinante antigenico riconosciuto da un anticorpo o da un TCR`},
+{word:'CITOCHINA', clue:`Proteina di segnalazione tra cellule del sistema immunitario`},
+{word:'ALLERGENE', clue:`Antigene innocuo che scatena una reazione IgE-mediata`},
+{word:'VACCINO', clue:`Induce memoria immunitaria senza causare la malattia`},
+{word:'MEMORIA', clue:`Tipo di cellula che rende la risposta secondaria più rapida ed efficace`},
+{word:'RIGETTO', clue:`Risposta immunitaria contro un organo trapiantato`},
+{word:'TIMO', clue:`Organo linfoide primario dove maturano i linfociti T`},
+{word:'MILZA', clue:`Organo linfoide secondario che filtra il sangue`},
+{word:'MHC', clue:`Sigla del complesso maggiore di istocompatibilità`},
+{word:'TCR', clue:`Sigla del recettore dei linfociti T`},
+{word:'IGE', clue:`Isotipo anticorpale legato ai mastociti nelle allergie`},
+{word:'IGM', clue:`Primo anticorpo prodotto nella risposta primaria, forma pentamerica`},
+{word:'IGA', clue:`Anticorpo principale delle secrezioni mucose`},
+{word:'TREG', clue:`Linfociti T regolatori, esprimono il fattore FoxP3`},
+{word:'NK', clue:`Sigla della cellula "natural killer"`}
+];
+
+const XW_WORDS_DIFFICILE = [
+{word:'IMMUNOGLOBULINA', clue:`Nome tecnico completo dell'anticorpo`},
+{word:'IMMUNODEFICIENZA', clue:`Condizione di risposta immunitaria assente o insufficiente`},
+{word:'IMMUNOSORVEGLIANZA', clue:`Compito del sistema immunitario nel riconoscere ed eliminare le cellule tumorali`},
+{word:'OPSONIZZAZIONE', clue:`Rivestimento del patogeno con anticorpi/complemento per facilitarne la fagocitosi`},
+{word:'IPERSENSIBILITA', clue:`Categoria di risposta immunitaria eccessiva, classificata da Gell e Coombs`},
+{word:'ANAFILOTOSSINA', clue:`Funzione svolta da C3a e C5a nell'infiammazione`},
+{word:'DEGRANULAZIONE', clue:`Processo con cui i mastociti rilasciano istamina`},
+{word:'AUTOIMMUNITA', clue:`Risposta immunitaria diretta contro antigeni self`},
+{word:'CHEMIOTASSI', clue:`Movimento cellulare guidato da un gradiente di segnale chimico`},
+{word:'RICOMBINASI', clue:`Complesso enzimatico (RAG1/RAG2) che regola il riarrangiamento VDJ`},
+{word:'CALCINEURINA', clue:`Enzima inibito da ciclosporina e tacrolimus`},
+{word:'ALLOANTIGENE', clue:`Antigene che distingue individui della stessa specie, alla base del rigetto`},
+{word:'PROTEASOMA', clue:`Complesso multienzimatico che degrada le proteine citosoliche per l'MHC I`},
+{word:'IDIOTIPO', clue:`Configurazione delle anse CDR che determina la specificità di un anticorpo`},
+{word:'ANERGIA', clue:`Stato di inattività di un linfocita che riceve solo il primo segnale`},
+{word:'EPITOPO', clue:`Determinante antigenico riconosciuto da un anticorpo o da un TCR`}
+];
+
+const XW_LEVELS = { facile: XW_WORDS_FACILE, medio: XW_WORDS_MEDIO, difficile: XW_WORDS_DIFFICILE };
+
+/* =========================================================
+   STATE
+========================================================= */
+const LS_WRONG = 'sp_wrong_v1';
+const LS_BEST = 'sp_best_v1';
+const LS_XW = 'sp_xw_v1';
+
+function lsGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
+function lsSet(key,val){ try{ localStorage.setItem(key,val); }catch(e){ /* storage unavailable, ignore */ } }
+function lsRemove(key){ try{ localStorage.removeItem(key); }catch(e){ /* storage unavailable, ignore */ } }
+
+function getWrongIds(){ try{ return JSON.parse(lsGet(LS_WRONG)||'[]'); }catch(e){ return []; } }
+function setWrongIds(arr){ lsSet(LS_WRONG, JSON.stringify(arr)); }
+function markWrong(idx){ const w = getWrongIds(); if(!w.includes(idx)){ w.push(idx); setWrongIds(w); } }
+function markRight(idx){ const w = getWrongIds(); const i = w.indexOf(idx); if(i>-1){ w.splice(i,1); setWrongIds(w); } }
+function getBest(){ return parseInt(lsGet(LS_BEST)||'0',10); }
+function setBestIfHigher(pct){ if(pct>getBest()) lsSet(LS_BEST, String(pct)); }
+
+QUIZ.forEach((q,i)=>q._id=i);
+
+/* =========================================================
+   TABS
+========================================================= */
+const views = document.querySelectorAll('.view');
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    views.forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  });
+});
+
+/* =========================================================
+   TEORIA
+========================================================= */
+const theoryList = document.getElementById('theory-list');
+THEORY.forEach(t=>{
+  const item = document.createElement('div');
+  item.className = 'acc-item';
+  item.innerHTML = `
+    <div class="acc-head"><span>${t.title}</span><span class="chev">▾</span></div>
+    <div class="acc-body"><div class="acc-body-inner">${t.html}</div></div>
+  `;
+  const head = item.querySelector('.acc-head');
+  const body = item.querySelector('.acc-body');
+  head.addEventListener('click', ()=>{
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.acc-item.open').forEach(o=>{
+      if(o!==item){ o.classList.remove('open'); o.querySelector('.acc-body').style.maxHeight = null; }
+    });
+    if(isOpen){ item.classList.remove('open'); body.style.maxHeight = null; }
+    else { item.classList.add('open'); body.style.maxHeight = body.scrollHeight + 'px'; }
+  });
+  theoryList.appendChild(item);
+});
+
+/* =========================================================
+   QUIZ SETUP
+========================================================= */
+const TOPIC_LABELS = {
+  anticorpi:'Anticorpi', linfocitiB:'Linfociti B', tcr_mhc:'TCR / MHC', innata:'Immunità innata',
+  complemento:'Complemento', citochine:'Citochine', tolleranza:'Tolleranza', ipersensibilita:'Ipersensibilità',
+  tumori:'Tumori', trapianti:'Trapianti', antigeni_apc:'Antigeni / APC'
+};
+let selectedTopics = new Set(Object.keys(TOPIC_LABELS));
+let selectedCount = 20;
+
+const topicChips = document.getElementById('topic-chips');
+Object.entries(TOPIC_LABELS).forEach(([key,label])=>{
+  const chip = document.createElement('div');
+  chip.className = 'chip sel';
+  chip.textContent = label;
+  chip.dataset.topic = key;
+  chip.addEventListener('click', ()=>{
+    if(selectedTopics.has(key)){ selectedTopics.delete(key); chip.classList.remove('sel'); }
+    else { selectedTopics.add(key); chip.classList.add('sel'); }
+    refreshStats();
+  });
+  topicChips.appendChild(chip);
+});
+
+document.querySelectorAll('#count-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#count-chips .chip').forEach(c=>c.classList.remove('sel'));
+    chip.classList.add('sel');
+    selectedCount = chip.dataset.count;
+  });
+});
+document.querySelector('#count-chips .chip[data-count="20"]').classList.add('sel');
+
+function filteredPool(){
+  return QUIZ.filter(q=>selectedTopics.has(q.topic));
+}
+function refreshStats(){
+  document.getElementById('stat-total').textContent = filteredPool().length;
+  document.getElementById('stat-wrong').textContent = getWrongIds().length;
+  document.getElementById('stat-best').textContent = getBest()+'%';
+}
+refreshStats();
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+/* =========================================================
+   QUIZ PLAY ENGINE
+========================================================= */
+let session = { queue:[], idx:0, correctCount:0, wrongList:[], answered:false };
+
+function startSession(pool){
+  if(pool.length===0){ alert('Nessuna domanda disponibile con questi filtri.'); return; }
+  session = { queue: shuffle(pool), idx:0, correctCount:0, wrongList:[], answered:false };
+  document.getElementById('quiz-setup').style.display='none';
+  document.getElementById('quiz-results').style.display='none';
+  document.getElementById('quiz-play').style.display='block';
+  renderQuestion();
+}
+
+document.getElementById('start-quiz').addEventListener('click', ()=>{
+  let pool = filteredPool();
+  pool = shuffle(pool);
+  if(selectedCount!=='all'){ pool = pool.slice(0, parseInt(selectedCount,10)); }
+  startSession(pool);
+});
+document.getElementById('start-review').addEventListener('click', ()=>{
+  const ids = new Set(getWrongIds());
+  const pool = QUIZ.filter(q=>ids.has(q._id));
+  if(pool.length===0){ alert('Non hai ancora errori da ripassare. Bravissima!'); return; }
+  startSession(shuffle(pool));
+});
+
+function renderQuestion(){
+  const q = session.queue[session.idx];
+  session.answered = false;
+  document.getElementById('progress-fill').style.width = (session.idx/session.queue.length*100)+'%';
+  document.getElementById('q-topic').textContent = (TOPIC_LABELS[q.topic]||q.topic) + ' · '+ (session.idx+1) + '/' + session.queue.length;
+  document.getElementById('q-text').textContent = q.q;
+  const optsWrap = document.getElementById('q-options');
+  optsWrap.innerHTML = '';
+  const letters = ['A','B','C','D','E'];
+  q.options.forEach((opt,i)=>{
+    const div = document.createElement('div');
+    div.className = 'opt';
+    div.innerHTML = `<span class="letter">${letters[i]}</span><span>${opt}</span>`;
+    div.addEventListener('click', ()=> selectOption(i));
+    optsWrap.appendChild(div);
+  });
+  const fb = document.getElementById('q-feedback');
+  fb.className = 'feedback';
+  document.getElementById('q-next').disabled = true;
+  document.getElementById('q-next').textContent = 'Rispondi per continuare';
+}
+
+function selectOption(i){
+  if(session.answered) return;
+  session.answered = true;
+  const q = session.queue[session.idx];
+  const opts = document.querySelectorAll('#q-options .opt');
+  const isCorrect = i===q.correct;
+  opts.forEach((el,idx)=>{
+    el.classList.add('disabled');
+    if(idx===q.correct) el.classList.add('correct');
+    else if(idx===i) el.classList.add('wrong');
+    else el.classList.add('dim');
+  });
+  const fb = document.getElementById('q-feedback');
+  fb.className = 'feedback show ' + (isCorrect?'ok':'bad');
+  document.getElementById('fb-title').textContent = isCorrect ? '✅ Esatto!' : '❌ Sbagliato';
+  document.getElementById('fb-expl').textContent = q.explain;
+
+  if(isCorrect){ session.correctCount++; markRight(q._id); }
+  else { session.wrongList.push(q); markWrong(q._id); }
+
+  const nextBtn = document.getElementById('q-next');
+  nextBtn.disabled = false;
+  nextBtn.textContent = (session.idx < session.queue.length-1) ? 'Prossima domanda →' : 'Vedi risultati';
+  refreshStats();
+}
+
+document.getElementById('q-next').addEventListener('click', ()=>{
+  if(!session.answered) return;
+  if(session.idx < session.queue.length-1){
+    session.idx++;
+    renderQuestion();
+  } else {
+    finishSession();
+  }
+});
+
+function finishSession(){
+  document.getElementById('quiz-play').style.display='none';
+  document.getElementById('quiz-results').style.display='block';
+  const total = session.queue.length;
+  const correct = session.correctCount;
+  const pct = Math.round(correct/total*100);
+  setBestIfHigher(pct);
+  document.getElementById('score-ring').style.setProperty('--pct', pct);
+  document.getElementById('res-pct').textContent = pct+'%';
+  document.getElementById('res-frac').textContent = correct+'/'+total;
+  let msg;
+  if(pct===100) msg = "🏆 Perfetto, sei pronta per l'esame!";
+  else if(pct>=80) msg = '💪 Ottimo lavoro!';
+  else if(pct>=60) msg = '🙂 Bene, ripassa i punti deboli.';
+  else msg = "📚 Serve ancora un po' di ripasso.";
+  document.getElementById('res-msg').textContent = msg;
+
+  const reviewWrap = document.getElementById('res-review');
+  reviewWrap.innerHTML = '';
+  if(session.wrongList.length){
+    const h = document.createElement('h2');
+    h.className = 'section-title';
+    h.textContent = 'Domande da rivedere';
+    reviewWrap.appendChild(h);
+    session.wrongList.forEach(q=>{
+      const div = document.createElement('div');
+      div.className = 'review-item';
+      div.innerHTML = `
+        <div class="rq">${q.q}</div>
+        <div class="ra corr">✅ ${q.options[q.correct]}</div>
+        <div class="muted" style="margin-top:6px">${q.explain}</div>
+      `;
+      reviewWrap.appendChild(div);
+    });
+  }
+  refreshStats();
+}
+
+document.getElementById('res-retry').addEventListener('click', ()=>{
+  document.getElementById('quiz-results').style.display='none';
+  document.getElementById('quiz-setup').style.display='block';
+  refreshStats();
+});
+
+/* =========================================================
+   CRUCIVERBA
+========================================================= */
+function buildCrossword(entries){
+  const words = entries.map(e=>({word:e.word.toUpperCase(), clue:e.clue}))
+                        .sort((a,b)=> b.word.length - a.word.length);
+  const grid = {};
+  const placements = [];
+
+  function cell(x,y){ return grid[x+','+y]; }
+  function setCell(x,y,ch){ grid[x+','+y]=ch; }
+
+  function canPlace(word,x,y,dir){
+    for(let i=0;i<word.length;i++){
+      const cx = dir==='H'? x+i : x;
+      const cy = dir==='H'? y : y+i;
+      const existing = cell(cx,cy);
+      if(existing && existing!==word[i]) return false;
+      if(!existing){
+        if(dir==='H'){ if(cell(cx,cy-1) || cell(cx,cy+1)) return false; }
+        else { if(cell(cx-1,cy) || cell(cx+1,cy)) return false; }
+      }
+    }
+    const bx = dir==='H'? x-1 : x, by = dir==='H'? y : y-1;
+    const ax = dir==='H'? x+word.length : x, ay = dir==='H'? y : y+word.length;
+    if(cell(bx,by) || cell(ax,ay)) return false;
+    return true;
+  }
+  function place(word,x,y,dir){
+    for(let i=0;i<word.length;i++){
+      const cx = dir==='H'? x+i : x;
+      const cy = dir==='H'? y : y+i;
+      setCell(cx,cy,word[i]);
+    }
+  }
+
+  const first = words[0];
+  place(first.word, 0, 0, 'H');
+  placements.push({word:first.word, clue:first.clue, x:0, y:0, dir:'H'});
+
+  for(let idx=1; idx<words.length; idx++){
+    const {word,clue} = words[idx];
+    let found = null;
+    outer:
+    for(let i=0;i<word.length;i++){
+      for(const p of placements){
+        for(let j=0;j<p.word.length;j++){
+          if(p.word[j]!==word[i]) continue;
+          const newDir = p.dir==='H' ? 'V' : 'H';
+          let x,y;
+          if(p.dir==='H'){ x = p.x+j; y = p.y-i; }
+          else { x = p.x-i; y = p.y+j; }
+          if(canPlace(word,x,y,newDir)){ found = {x,y,dir:newDir}; break outer; }
+        }
+      }
+    }
+    if(found){ place(word,found.x,found.y,found.dir); placements.push({word,clue,...found}); }
+  }
+
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  Object.keys(grid).forEach(k=>{
+    const [x,y] = k.split(',').map(Number);
+    if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y;
+  });
+  placements.forEach(p=>{ p.x -= minX; p.y -= minY; });
+  const norm = {};
+  Object.entries(grid).forEach(([k,v])=>{
+    const [x,y] = k.split(',').map(Number);
+    norm[(x-minX)+','+(y-minY)] = v;
+  });
+  return { grid:norm, placements, w:maxX-minX+1, h:maxY-minY+1 };
+}
+
+function numberClues(xw){
+  const starts = {};
+  xw.placements.forEach(p=>{
+    const key = p.x+','+p.y;
+    if(!starts[key]) starts[key] = {x:p.x,y:p.y};
+  });
+  const list = Object.values(starts).sort((a,b)=> a.y-b.y || a.x-b.x);
+  const numMap = {};
+  list.forEach((s,i)=>{ numMap[s.x+','+s.y] = i+1; });
+  xw.placements.forEach(p=>{ p.num = numMap[p.x+','+p.y]; });
+}
+
+const XW_BY_LEVEL = {};
+Object.entries(XW_LEVELS).forEach(([level,words])=>{
+  const xw = buildCrossword(words);
+  numberClues(xw);
+  XW_BY_LEVEL[level] = xw;
+});
+
+let xwLevel = 'medio';
+function xwStorageKey(){ return LS_XW + '_' + xwLevel; }
+
+function renderCrossword(){
+  const XW = XW_BY_LEVEL[xwLevel];
+  const gridWrap = document.getElementById('xw-grid');
+  const table = document.createElement('table');
+  table.className = 'xw';
+  for(let y=0;y<XW.h;y++){
+    const tr = document.createElement('tr');
+    for(let x=0;x<XW.w;x++){
+      const td = document.createElement('td');
+      const letter = XW.grid[x+','+y];
+      if(letter){
+        const num = XW.placements.find(p=>p.x===x && p.y===y && p.num)?.num;
+        td.dataset.x=x; td.dataset.y=y;
+        td.innerHTML = (num? `<span class="num">${num}</span>` : '') + `<input maxlength="1" autocomplete="off" data-x="${x}" data-y="${y}" data-answer="${letter}">`;
+      } else {
+        td.className = 'blank';
+      }
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+  gridWrap.innerHTML = '';
+  gridWrap.appendChild(table);
+  document.getElementById('xw-score').textContent = '';
+
+  // restore saved state
+  try{
+    const saved = JSON.parse(lsGet(xwStorageKey())||'{}');
+    table.querySelectorAll('input').forEach(inp=>{
+      const k = inp.dataset.x+','+inp.dataset.y;
+      if(saved[k]) inp.value = saved[k];
+    });
+  }catch(e){}
+
+  table.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      inp.value = inp.value.toUpperCase().slice(-1);
+      inp.classList.remove('right','wrong');
+      saveXwState();
+      if(inp.value){
+        const all = Array.from(table.querySelectorAll('input'));
+        const idx = all.indexOf(inp);
+        if(idx>-1 && idx<all.length-1) all[idx+1].focus();
+      }
+    });
+  });
+
+  const acrossList = document.getElementById('xw-across');
+  const downList = document.getElementById('xw-down');
+  acrossList.innerHTML=''; downList.innerHTML='';
+  XW.placements.slice().sort((a,b)=>a.num-b.num).forEach(p=>{
+    const li = document.createElement('li');
+    li.textContent = `${p.num}. ${p.clue} (${p.word.length})`;
+    (p.dir==='H'?acrossList:downList).appendChild(li);
+  });
+}
+function saveXwState(){
+  const state = {};
+  document.querySelectorAll('#xw-grid input').forEach(inp=>{
+    if(inp.value) state[inp.dataset.x+','+inp.dataset.y] = inp.value;
+  });
+  lsSet(xwStorageKey(), JSON.stringify(state));
+}
+renderCrossword();
+
+document.querySelectorAll('#xw-level-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#xw-level-chips .chip').forEach(c=>c.classList.remove('sel'));
+    chip.classList.add('sel');
+    xwLevel = chip.dataset.level;
+    renderCrossword();
+  });
+});
+
+document.getElementById('xw-check').addEventListener('click', ()=>{
+  let correct=0, total=0;
+  document.querySelectorAll('#xw-grid input').forEach(inp=>{
+    total++;
+    inp.classList.remove('right','wrong');
+    if(!inp.value) return;
+    if(inp.value.toUpperCase()===inp.dataset.answer.toUpperCase()){ inp.classList.add('right'); correct++; }
+    else inp.classList.add('wrong');
+  });
+  document.getElementById('xw-score').textContent = `${correct}/${total} caselle corrette`;
+});
+document.getElementById('xw-reveal').addEventListener('click', ()=>{
+  document.querySelectorAll('#xw-grid input').forEach(inp=>{
+    inp.value = inp.dataset.answer;
+    inp.classList.remove('wrong'); inp.classList.add('right');
+  });
+  saveXwState();
+  document.getElementById('xw-score').textContent = 'Soluzione mostrata';
+});
+document.getElementById('xw-reset').addEventListener('click', ()=>{
+  document.querySelectorAll('#xw-grid input').forEach(inp=>{ inp.value=''; inp.classList.remove('right','wrong'); });
+  lsRemove(xwStorageKey());
+  document.getElementById('xw-score').textContent = '';
+});
+</script>
+</body>
+</html>
