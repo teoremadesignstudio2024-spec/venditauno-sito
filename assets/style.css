@@ -215,7 +215,7 @@ h3 { font-size: 1.2rem; }
 .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 40px -6px rgba(60, 131, 245, 0.7); }
 .btn-money {
   background: linear-gradient(135deg, var(--money), #0284c7);
-  color: #041a2e;
+  color: #fff;
   box-shadow: 0 8px 30px -6px rgba(56,189,248, 0.5);
 }
 .btn-money:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 40px -6px rgba(56,189,248, 0.75); }
@@ -867,9 +867,11 @@ footer .foot-links a:hover { color: var(--foreground); }
   background: #25d366; color: #04150a;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 8px 24px -4px rgba(0,0,0,0.5);
-  transition: transform 0.25s ease;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  opacity: 0; transform: scale(0.7); pointer-events: none;
 }
-.whatsapp-float:hover { transform: scale(1.08); }
+.whatsapp-float.visible { opacity: 1; transform: scale(1); pointer-events: auto; }
+.whatsapp-float.visible:hover { transform: scale(1.08); }
 .whatsapp-float svg { width: 28px; height: 28px; }
 .whatsapp-float::before {
   content: ""; position: absolute; inset: 0; border-radius: 50%;
