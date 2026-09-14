@@ -87,6 +87,16 @@ html { scroll-behavior: smooth; }
   100% { transform: translateY(680px) translateX(var(--drift, 24px)) rotate(10deg); }
 }
 @media (prefers-reduced-motion: reduce) { .rain-house { animation: none; display: none; } }
+.rain-section {
+  position: relative; overflow: hidden;
+  height: 220px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--muted);
+}
+.rain-caption {
+  position: relative; z-index: 1;
+  font-size: 1.1rem; font-weight: 600; color: var(--muted-foreground);
+}
 
 body {
   font-family: var(--font);
@@ -161,6 +171,7 @@ h3 { font-size: 1.2rem; }
 @media (min-width: 640px) { h3 { font-size: 1.3rem; } }
 .section-head { max-width: 760px; margin: 0 auto 56px; text-align: center; }
 .section-head p { color: var(--muted-foreground); font-size: 1.1rem; margin-top: 16px; }
+.section-mascot { width: 72px; height: 72px; margin: 0 auto 16px; border-radius: 50%; box-shadow: 0 6px 18px -4px rgba(12,28,55,0.2); }
 .text-muted { color: var(--muted-foreground); }
 .text-money { color: var(--money-bright); font-weight: 800; }
 .text-accent { color: var(--accent-bright); }
@@ -571,11 +582,11 @@ footer .foot-links a:hover { color: var(--foreground); }
 }
 .phone-notif.show { opacity: 1; transform: translateY(0) scale(1); }
 .phone-notif .notif-ico {
-  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
-  background: linear-gradient(160deg, #5b8dff, var(--accent-bright) 55%, var(--money-bright));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(29,78,216,0.4);
-  display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 900; color: #fff;
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(29,78,216,0.3);
+  overflow: hidden;
 }
+.phone-notif .notif-ico img { width: 100%; height: 100%; object-fit: cover; }
 .phone-notif .notif-body { flex: 1; min-width: 0; }
 .phone-notif .notif-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.72rem; color: rgba(255,255,255,0.55); font-weight: 600; }
 .phone-notif .notif-title { font-size: 0.85rem; font-weight: 700; color: #fff; margin-top: 2px; }
