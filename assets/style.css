@@ -282,16 +282,13 @@ h3 { font-size: 1.2rem; }
   .nav-toggle { display: none; }
 }
 
-/* ---------- Mascot placeholder (in attesa del PNG definitivo) ---------- */
-.mascot-placeholder {
-  width: 240px; height: 300px; margin: 0 auto 8px;
-  border: 2px dashed var(--border-accent); border-radius: var(--radius-lg);
-  background: var(--card);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+/* ---------- Mascotte del brand ---------- */
+.hero-mascot {
+  height: 340px; width: auto; margin: 0 auto 8px;
   position: relative; z-index: 1;
+  filter: drop-shadow(0 20px 30px rgba(12,28,55,0.14));
 }
-.mascot-ph-icon { font-size: 3.4rem; }
-.mascot-ph-label { font-size: 0.75rem; color: var(--muted-foreground); text-align: center; line-height: 1.35; }
+@media (min-width: 640px) { .hero-mascot { height: 420px; } }
 .hero-logo { height: 54px; width: auto; margin: 0 auto 28px; position: relative; z-index: 1; }
 @media (min-width: 640px) { .hero-logo { height: 68px; } }
 
