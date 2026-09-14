@@ -95,13 +95,16 @@ if (window.matchMedia('(hover: hover)').matches) {
   });
 }
 
-// Sticky CTA appears after hero
+// Sticky CTA + WhatsApp float appear after hero (avoids covering the hero buttons)
 const stickyCta = document.querySelector('[data-sticky-cta]');
-if (stickyCta) {
+const waFloat = document.querySelector('.whatsapp-float');
+if (stickyCta || waFloat) {
   const hero = document.querySelector('.hero');
   const stickyObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
-      stickyCta.classList.toggle('visible', !entry.isIntersecting && entry.boundingClientRect.top < 0);
+      const show = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+      if (stickyCta) stickyCta.classList.toggle('visible', show);
+      if (waFloat) waFloat.classList.toggle('visible', show);
     });
   }, { threshold: 0 });
   if (hero) stickyObserver.observe(hero);
