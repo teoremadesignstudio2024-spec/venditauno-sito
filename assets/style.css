@@ -282,15 +282,29 @@ h3 { font-size: 1.2rem; }
   .nav-toggle { display: none; }
 }
 
-/* ---------- Mascotte del brand ---------- */
-.hero-mascot {
-  height: 340px; width: auto; margin: 0 auto 8px;
+/* ---------- Mascotte del brand: esce da dietro il pannello del logo ---------- */
+.mascot-stage {
   position: relative; z-index: 1;
-  filter: drop-shadow(0 20px 30px rgba(12,28,55,0.14));
+  width: 300px; height: 300px; margin: 0 auto 28px;
 }
-@media (min-width: 640px) { .hero-mascot { height: 420px; } }
-.hero-logo { height: 54px; width: auto; margin: 0 auto 28px; position: relative; z-index: 1; }
-@media (min-width: 640px) { .hero-logo { height: 68px; } }
+@media (min-width: 640px) { .mascot-stage { width: 360px; height: 360px; } }
+.hero-mascot-bust {
+  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  height: 300px; width: auto; z-index: 1;
+  filter: drop-shadow(0 16px 24px rgba(12,28,55,0.16));
+}
+@media (min-width: 640px) { .hero-mascot-bust { height: 360px; } }
+.brand-panel {
+  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  z-index: 2;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 18px 28px 22px;
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-logo { height: 40px; width: auto; display: block; }
+@media (min-width: 640px) { .hero-logo { height: 50px; } }
 
 /* ---------- Hero ---------- */
 .hero { padding: 72px 0 56px; text-align: center; position: relative; }
