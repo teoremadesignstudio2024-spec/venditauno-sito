@@ -188,7 +188,9 @@ h3 { font-size: 1.2rem; }
   padding: 16px 32px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   transition: var(--transition);
   white-space: nowrap;
   position: relative;
