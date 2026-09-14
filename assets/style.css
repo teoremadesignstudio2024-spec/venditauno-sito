@@ -1,10 +1,10 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --background: #f5f8fc;
+  --background: #ffffff;
   --card: #ffffff;
-  --card-hover: #eef4fc;
-  --muted: #eef2f8;
+  --card-hover: #f5f7fb;
+  --muted: #f3f5f9;
   --foreground: #0c1c37;
   --muted-foreground: #5b6b84;
   --primary: #1d4ed8;
@@ -90,12 +90,7 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font);
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(79, 143, 247, 0.10) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 30%, rgba(56,189,248, 0.06) 0%, transparent 45%),
-    radial-gradient(ellipse at 10% 90%, rgba(60, 131, 245, 0.07) 0%, transparent 50%),
-    var(--background);
-  background-attachment: fixed;
+  background: var(--background);
   color: var(--foreground);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -180,7 +175,7 @@ h3 { font-size: 1.2rem; }
   justify-content: center;
   gap: 10px;
   padding: 16px 32px;
-  border-radius: var(--radius);
+  border-radius: 999px;
   font-weight: 700;
   font-size: 1rem;
   transition: var(--transition);
@@ -211,7 +206,8 @@ h3 { font-size: 1.2rem; }
 }
 .btn-money:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 40px -6px rgba(56,189,248, 0.75); }
 .btn-ghost {
-  background: var(--card);
+  background: rgba(243,245,249,0.7);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   color: var(--foreground);
 }
@@ -282,29 +278,34 @@ h3 { font-size: 1.2rem; }
   .nav-toggle { display: none; }
 }
 
-/* ---------- Mascotte del brand: esce da dietro il pannello del logo ---------- */
+/* ---------- Mascotte del brand: esce da dietro il pannello del logo (liquid glass) ---------- */
 .mascot-stage {
   position: relative; z-index: 1;
-  width: 300px; height: 300px; margin: 0 auto 28px;
+  width: 320px; height: 320px; margin: 0 auto 32px;
 }
-@media (min-width: 640px) { .mascot-stage { width: 360px; height: 360px; } }
+@media (min-width: 640px) { .mascot-stage { width: 380px; height: 380px; } }
 .hero-mascot-bust {
-  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
   height: 300px; width: auto; z-index: 1;
-  filter: drop-shadow(0 16px 24px rgba(12,28,55,0.16));
+  filter: drop-shadow(0 16px 24px rgba(12,28,55,0.14));
 }
-@media (min-width: 640px) { .hero-mascot-bust { height: 360px; } }
+@media (min-width: 640px) { .hero-mascot-bust { height: 360px; bottom: 40px; } }
 .brand-panel {
   position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
   z-index: 2;
-  background: var(--card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  padding: 18px 28px 22px;
+  width: 220px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45));
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.9);
+  border-radius: 999px;
+  box-shadow: 0 12px 28px -8px rgba(12,28,55,0.18), inset 0 1px 0 rgba(255,255,255,0.9);
+  padding: 16px 20px;
   display: flex; align-items: center; justify-content: center;
 }
-.hero-logo { height: 40px; width: auto; display: block; }
-@media (min-width: 640px) { .hero-logo { height: 50px; } }
+@media (min-width: 640px) { .brand-panel { width: 260px; padding: 18px 24px; } }
+.hero-logo { height: 32px; width: auto; display: block; }
+@media (min-width: 640px) { .hero-logo { height: 38px; } }
 
 /* ---------- Hero ---------- */
 .hero { padding: 72px 0 56px; text-align: center; position: relative; }
