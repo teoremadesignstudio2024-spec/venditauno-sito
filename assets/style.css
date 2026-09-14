@@ -231,6 +231,10 @@ h3 { font-size: 1.2rem; }
 .btn-ghost:hover { background: var(--card-hover); border-color: var(--border-accent); transform: translateY(-2px); }
 .btn-block { width: 100%; }
 .btn-lg { padding: 20px 40px; font-size: 1.1rem; }
+@media (max-width: 560px) {
+  .btn { max-width: 100%; box-sizing: border-box; white-space: normal; text-align: center; }
+  .btn-lg { width: 100%; padding: 16px 20px; font-size: 0.85rem; letter-spacing: 0.02em; }
+}
 
 /* ---------- Nav ---------- */
 .nav {
@@ -298,12 +302,12 @@ h3 { font-size: 1.2rem; }
 /* ---------- Mascotte del brand: esce da dietro il pannello del logo (liquid glass) ---------- */
 .mascot-stage {
   position: relative; z-index: 1;
-  width: 320px; height: 320px; margin: 0 auto 32px;
+  width: 100%; max-width: 360px; height: 360px; margin: 0 auto 32px;
 }
-@media (min-width: 640px) { .mascot-stage { width: 380px; height: 380px; } }
+@media (min-width: 640px) { .mascot-stage { max-width: 380px; height: 380px; } }
 .hero-mascot-bust {
   position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
-  height: 300px; width: auto; z-index: 1;
+  height: 340px; width: auto; z-index: 1;
   filter: drop-shadow(0 16px 24px rgba(12,28,55,0.14));
 }
 @media (min-width: 640px) { .hero-mascot-bust { height: 360px; bottom: 40px; } }
@@ -335,6 +339,10 @@ h3 { font-size: 1.2rem; }
 .hero h1 { margin-bottom: 22px; }
 .hero-sub { max-width: 700px; margin: 0 auto 36px; font-size: 1.15rem; color: var(--muted-foreground); }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-bottom: 36px; }
+@media (max-width: 560px) {
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .hero-actions .btn { width: 100%; }
+}
 .trust-row {
   display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: center;
   font-size: 0.92rem; font-weight: 500; color: var(--muted-foreground);
