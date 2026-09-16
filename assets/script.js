@@ -220,10 +220,21 @@ document.querySelectorAll('[data-yt-facade]').forEach((el) => {
 });
 
 // Click-to-play local video facade (loads the <video> only after a click)
+// Click anywhere on the video toggles play/pause, like a YouTube embed,
+// instead of relying on the native control bar (which was hard to hit and
+// felt like the video "couldn't be stopped").
 document.querySelectorAll('[data-video-trigger]').forEach((el) => {
   el.addEventListener('click', () => {
     const src = el.dataset.videoTrigger || 'assets/video/tg7-servizio.mp4';
-    el.innerHTML = `<video src="${src}" controls autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
+    el.innerHTML = `<video src="${src}" autoplay playsinline style="cursor:pointer;"></video><button type="button" class="video-toggle" aria-label="Pausa / Riproduci">⏸</button>`;
+    const video = el.querySelector('video');
+    const toggleBtn = el.querySelector('.video-toggle');
+    const sync = () => { toggleBtn.textContent = video.paused ? '▶' : '⏸'; };
+    const toggle = (e) => { e.stopPropagation(); video.paused ? video.play() : video.pause(); };
+    video.addEventListener('click', toggle);
+    toggleBtn.addEventListener('click', toggle);
+    video.addEventListener('play', sync);
+    video.addEventListener('pause', sync);
   }, { once: true });
 });
 

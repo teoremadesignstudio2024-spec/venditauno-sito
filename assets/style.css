@@ -207,22 +207,22 @@ h3 { font-size: 1.2rem; }
 .text-money { color: var(--money-bright); font-weight: 800; }
 .text-accent { color: var(--accent-bright); }
 .gradient-text {
-  background-image: linear-gradient(100deg,
-    var(--accent-bright) 0%, var(--foreground) 14%, var(--money-bright) 30%,
-    #eaf7ff 48%, var(--money-bright) 66%, var(--foreground) 84%, var(--accent-bright) 100%);
-  background-size: 250% 100%;
+  background-image: linear-gradient(to right,
+    var(--navy) 0%, var(--primary-dark) 12.5%, var(--money-bright) 32.5%,
+    var(--accent-bright) 50%, var(--primary-dark) 67.5%, var(--navy) 87.5%, var(--navy) 100%);
+  background-size: 200%;
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: shineSweep 5.5s linear infinite;
+  animation: shineSweep 6s linear infinite;
 }
 @keyframes shineSweep {
-  0% { background-position: 200% 0; }
-  100% { background-position: -50% 0; }
+  0% { background-position: -200%; }
+  100% { background-position: 200%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .gradient-text { animation: none; background-position: 0 0; }
+  .gradient-text { animation: none; background-position: 50%; }
 }
 
 /* ---------- Method wheel: cerchio animato con le 4 fasi del metodo ---------- */
@@ -326,14 +326,14 @@ h3 { font-size: 1.2rem; }
 }
 .btn-ghost:hover { background: var(--card-hover); border-color: var(--border-accent); transform: translateY(-2px); }
 .btn-pulse {
-  animation: btnPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: btnPulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   letter-spacing: 0.05em;
   text-shadow: 0 1px rgba(255,255,255,0.55), 0 2px rgba(2,132,199,0.35), 0 4px 10px rgba(2,132,199,0.3);
 }
 @keyframes btnPulse {
-  0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.55), 0 8px 30px -6px rgba(56,189,248, 0.5); }
-  70% { box-shadow: 0 0 0 16px rgba(56,189,248,0), 0 8px 30px -6px rgba(56,189,248, 0.5); }
-  100% { box-shadow: 0 0 0 0 rgba(56,189,248,0), 0 8px 30px -6px rgba(56,189,248, 0.5); }
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56,189,248,0.55), 0 8px 30px -6px rgba(56,189,248, 0.5); }
+  70% { transform: scale(1.02); box-shadow: 0 0 0 18px rgba(56,189,248,0), 0 8px 30px -6px rgba(56,189,248, 0.5); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56,189,248,0), 0 8px 30px -6px rgba(56,189,248, 0.5); }
 }
 @media (prefers-reduced-motion: reduce) { .btn-pulse { animation: none; } }
 .btn-block { width: 100%; }
@@ -801,13 +801,26 @@ footer .foot-links a:hover { color: var(--foreground); }
   content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.25); transition: background 0.25s ease;
 }
 .case-video:hover::before { background: rgba(0,0,0,0.4); }
+.case-video:has(video)::before { display: none; }
 .case-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.case-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .case-play {
   position: relative; z-index: 1;
   width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.12);
   backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.25);
   display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.4rem;
 }
+.video-toggle {
+  position: absolute; z-index: 2; bottom: 14px; right: 14px;
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.case-video:hover .video-toggle { opacity: 1; }
 .case-content { padding: 0; }
 @media (min-width: 800px) { .case-content { padding: 40px 40px 40px 0; } }
 .case-badge { display: inline-block; background: rgba(56,189,248,0.12); color: var(--money-bright); font-weight: 800; font-size: 0.85rem; padding: 6px 14px; border-radius: 999px; margin-bottom: 14px; }
