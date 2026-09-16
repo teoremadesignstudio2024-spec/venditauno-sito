@@ -193,27 +193,6 @@ document.querySelectorAll('[data-phone]').forEach((phone) => {
   phoneObserver.observe(phone);
 });
 
-// ROI calculator
-const calcSlider = document.querySelector('[data-calc-input]');
-if (calcSlider) {
-  const currentLabel = document.querySelector('[data-calc-current]');
-  const outMandati = document.querySelector('[data-calc-mandati]');
-  const outFatturato = document.querySelector('[data-calc-fatturato]');
-  const outSpesaAnnua = document.querySelector('[data-calc-spesa-annua]');
-  const COMMISSIONE_MEDIA = 7000;
-  const COSTO_PER_INCARICO = 250;
-  const update = () => {
-    const investimento = parseInt(calcSlider.value, 10);
-    currentLabel.textContent = investimento.toLocaleString('it-IT');
-    const incarichi = Math.floor(investimento / COSTO_PER_INCARICO);
-    outMandati.textContent = incarichi + ' incarichi/mese';
-    outFatturato.textContent = '+' + (incarichi * 12 * COMMISSIONE_MEDIA).toLocaleString('it-IT') + '€/anno';
-    if (outSpesaAnnua) outSpesaAnnua.textContent = (investimento * 12).toLocaleString('it-IT') + '€/anno';
-  };
-  calcSlider.addEventListener('input', update);
-  update();
-}
-
 // FAQ accordion
 document.querySelectorAll('.faq-item').forEach((item) => {
   const q = item.querySelector('.faq-q');
