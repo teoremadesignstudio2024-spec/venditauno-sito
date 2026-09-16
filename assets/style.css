@@ -179,13 +179,14 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent-bright);
-  padding: 0 0 0 14px;
+  padding: 8px 18px 8px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: color-mix(in srgb, currentColor 10%, transparent);
   margin-bottom: 22px;
-  position: relative;
 }
 .eyebrow::before {
-  content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0;
 }
 .eyebrow.money { color: var(--money-bright); }
 
@@ -205,7 +206,22 @@ h3 { font-size: 1.2rem; }
 .text-money { color: var(--money-bright); font-weight: 800; }
 .text-accent { color: var(--accent-bright); }
 .gradient-text {
-  color: var(--primary);
+  background-image: linear-gradient(100deg,
+    var(--accent-bright) 0%, var(--foreground) 14%, var(--money-bright) 30%,
+    #eaf7ff 48%, var(--money-bright) 66%, var(--foreground) 84%, var(--accent-bright) 100%);
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: shineSweep 5.5s linear infinite;
+}
+@keyframes shineSweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -50% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gradient-text { animation: none; background-position: 0 0; }
 }
 
 /* ---------- Method wheel: cerchio animato con le 4 fasi del metodo ---------- */
