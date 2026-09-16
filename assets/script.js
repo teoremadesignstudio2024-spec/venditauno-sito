@@ -206,6 +206,14 @@ document.querySelectorAll('[data-yt-facade]').forEach((el) => {
   }, { once: true });
 });
 
+// Click-to-play local video facade (loads the <video> only after a click)
+document.querySelectorAll('[data-video-trigger]').forEach((el) => {
+  el.addEventListener('click', () => {
+    const src = el.dataset.videoTrigger || 'assets/video/tg7-servizio.mp4';
+    el.innerHTML = `<video src="${src}" controls autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
+  }, { once: true });
+});
+
 // Mandate signing animation
 document.querySelectorAll('[data-sign-anim]').forEach((el) => {
   const obs = new IntersectionObserver((entries) => {
