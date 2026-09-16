@@ -31,6 +31,7 @@
 }
 
 html { scroll-behavior: smooth; }
+::selection { background: rgba(59, 130, 246, 0.35); color: var(--foreground); }
 
 /* ---------- Top alert bar ---------- */
 .top-alert {
@@ -324,6 +325,13 @@ h3 { font-size: 1.2rem; }
   color: var(--foreground);
 }
 .btn-ghost:hover { background: var(--card-hover); border-color: var(--border-accent); transform: translateY(-2px); }
+.btn-pulse { animation: btnPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes btnPulse {
+  0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.55), 0 8px 30px -6px rgba(56,189,248, 0.5); }
+  70% { box-shadow: 0 0 0 16px rgba(56,189,248,0), 0 8px 30px -6px rgba(56,189,248, 0.5); }
+  100% { box-shadow: 0 0 0 0 rgba(56,189,248,0), 0 8px 30px -6px rgba(56,189,248, 0.5); }
+}
+@media (prefers-reduced-motion: reduce) { .btn-pulse { animation: none; } }
 .btn-block { width: 100%; }
 .btn-lg { padding: 20px 40px; font-size: 1.1rem; }
 @media (max-width: 560px) {
