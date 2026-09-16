@@ -53,24 +53,6 @@ html { scroll-behavior: smooth; }
   z-index: 100; transition: width 0.1s linear;
 }
 
-/* ---------- Floating background blobs ---------- */
-.blob-field { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
-.blob {
-  position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.16;
-  animation: blobFloat 16s ease-in-out infinite;
-}
-.blob-1 { width: 380px; height: 380px; top: -120px; left: -80px; background: radial-gradient(circle, rgba(60,131,245,0.5), transparent 70%); animation-duration: 18s; }
-.blob-2 { width: 320px; height: 320px; top: 40%; right: -100px; background: radial-gradient(circle, rgba(56,189,248,0.32), transparent 70%); animation-duration: 22s; animation-delay: -6s; }
-.blob-3 { width: 260px; height: 260px; bottom: -100px; left: 30%; background: radial-gradient(circle, rgba(96,165,250,0.28), transparent 70%); animation-duration: 20s; animation-delay: -3s; }
-@keyframes blobFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -40px) scale(1.08); }
-  66% { transform: translate(-24px, 24px) scale(0.95); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .blob { animation: none; }
-}
-
 /* ---------- Falling houses ("rain of mandates") ---------- */
 .rain-field { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
 .rain-house {
@@ -111,28 +93,10 @@ body {
   position: relative;
 }
 
-/* Sfondo animato: aurora scura che si muove lentamente dietro tutto il contenuto */
-body::before {
-  content: "";
-  position: fixed;
-  inset: -15%;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(640px circle at 18% 22%, rgba(59,130,246,0.4), transparent 62%),
-    radial-gradient(560px circle at 84% 28%, rgba(56,189,248,0.32), transparent 60%),
-    radial-gradient(620px circle at 30% 88%, rgba(99,102,241,0.3), transparent 62%),
-    radial-gradient(500px circle at 78% 82%, rgba(14,165,233,0.26), transparent 60%);
-  filter: blur(60px);
-  animation: auroraDrift 24s ease-in-out infinite alternate;
-  will-change: transform;
+/* Sfondo animato: macchie di luce colorate che si muovono e si fondono, disegnate su canvas (assets/script.js) */
+#bg-canvas {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; display: block;
 }
-@keyframes auroraDrift {
-  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  50% { transform: translate(-4%, 3%) scale(1.1) rotate(4deg); }
-  100% { transform: translate(4%, -3%) scale(1) rotate(-3deg); }
-}
-@media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
 
 body::after {
   content: "";
