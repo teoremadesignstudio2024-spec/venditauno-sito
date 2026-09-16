@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -22,7 +24,8 @@
   --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.45);
   --shadow-lg: 0 20px 50px -12px rgb(0 0 0 / 0.6);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: "Space Grotesk", "Inter", -apple-system, sans-serif;
   --navy: #070b16;
   --navy-2: #1a2340;
 }
@@ -170,9 +173,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-family: var(--font-display);
   font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent-bright);
   padding: 0 0 0 14px;
@@ -185,7 +189,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .eyebrow.money { color: var(--money-bright); }
 
-h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.02em; line-height: 1.12; }
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; }
 h1 { font-size: clamp(1.9rem, 7.5vw, 3.8rem); line-height: 1.16; }
 h2 { font-size: clamp(1.5rem, 6vw, 2.6rem); }
 h3 { font-size: 1.2rem; }
@@ -265,7 +269,8 @@ h3 { font-size: 1.2rem; }
   gap: 10px;
   padding: 16px 32px;
   border-radius: 999px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 600;
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -455,7 +460,7 @@ h3 { font-size: 1.2rem; }
   padding: 28px 16px; text-align: center; transition: transform 0.25s ease, border-color 0.25s ease;
 }
 .counter-card:hover { transform: translateY(-4px); border-color: var(--border-accent); }
-.counter-num { font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 900; color: var(--foreground); }
+.counter-num { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 700; color: var(--foreground); }
 .counter-num.money { color: var(--money-bright); }
 .counter-num.pop, .zona-stat .num.pop { animation: counterPop 0.5s ease; }
 @keyframes counterPop {
