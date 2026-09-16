@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -22,8 +24,8 @@
   --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.45);
   --shadow-lg: 0 20px 50px -12px rgb(0 0 0 / 0.6);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --navy: #070b16;
   --navy-2: #1a2340;
 }
@@ -323,7 +325,11 @@ h3 { font-size: 1.2rem; }
   color: var(--foreground);
 }
 .btn-ghost:hover { background: var(--card-hover); border-color: var(--border-accent); transform: translateY(-2px); }
-.btn-pulse { animation: btnPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.btn-pulse {
+  animation: btnPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px rgba(255,255,255,0.55), 0 2px rgba(2,132,199,0.35), 0 4px 10px rgba(2,132,199,0.3);
+}
 @keyframes btnPulse {
   0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.55), 0 8px 30px -6px rgba(56,189,248, 0.5); }
   70% { box-shadow: 0 0 0 16px rgba(56,189,248,0), 0 8px 30px -6px rgba(56,189,248, 0.5); }
@@ -407,11 +413,17 @@ h3 { font-size: 1.2rem; }
 }
 @media (min-width: 640px) { .mascot-stage { max-width: 500px; height: 500px; } }
 .hero-mascot-bust {
-  position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: 34px;
   height: 420px; width: auto; z-index: 1;
   filter: drop-shadow(0 16px 24px rgba(12,28,55,0.14));
+  animation: mascotFloat 5.5s ease-in-out infinite;
 }
 @media (min-width: 640px) { .hero-mascot-bust { height: 470px; bottom: 40px; } }
+@keyframes mascotFloat {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  50% { transform: translateX(-50%) translateY(-14px) rotate(-1deg); }
+}
+@media (prefers-reduced-motion: reduce) { .hero-mascot-bust { animation: none; transform: translateX(-50%); } }
 .speech-bubble {
   position: absolute; z-index: 3;
   top: 6%; right: 4px;
