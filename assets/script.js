@@ -1,3 +1,58 @@
+// Sfondo animato: macchie di luce colorate che si muovono e si fondono (canvas)
+(() => {
+  const canvas = document.getElementById('bg-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let w = 0, h = 0;
+
+  const resize = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = window.innerWidth; h = window.innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  const blobs = [
+    { color: 'rgba(59,130,246,0.55)', rx: 0.28, ry: 0.22, r: 0.42, sx: 0.00021, sy: 0.00017, phx: 0.0, phy: 1.6 },
+    { color: 'rgba(56,189,248,0.48)', rx: 0.78, ry: 0.28, r: 0.36, sx: 0.00017, sy: 0.00023, phx: 2.1, phy: 0.4 },
+    { color: 'rgba(99,102,241,0.42)', rx: 0.18, ry: 0.82, r: 0.40, sx: 0.00025, sy: 0.00019, phx: 4.2, phy: 3.1 },
+    { color: 'rgba(14,165,233,0.40)', rx: 0.85, ry: 0.80, r: 0.34, sx: 0.00019, sy: 0.00021, phx: 1.1, phy: 5.0 },
+    { color: 'rgba(96,165,250,0.30)', rx: 0.50, ry: 0.50, r: 0.30, sx: 0.00015, sy: 0.00013, phx: 3.0, phy: 2.4 },
+  ];
+
+  const draw = (t) => {
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+    blobs.forEach((b) => {
+      const cx = (b.rx + Math.sin(t * b.sx + b.phx) * 0.1) * w;
+      const cy = (b.ry + Math.cos(t * b.sy + b.phy) * 0.1) * h;
+      const r = b.r * Math.max(w, h);
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0, b.color);
+      g.addColorStop(1, 'rgba(7,11,22,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalCompositeOperation = 'source-over';
+  };
+
+  if (reduceMotion) { draw(0); return; }
+
+  let rafId = null;
+  const loop = (t) => { draw(t); rafId = requestAnimationFrame(loop); };
+  rafId = requestAnimationFrame(loop);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(rafId); rafId = null; }
+    else if (!rafId) { rafId = requestAnimationFrame(loop); }
+  });
+})();
+
 // Mobile nav toggle
 document.querySelectorAll('[data-nav-toggle]').forEach((btn) => {
   btn.addEventListener('click', () => {
