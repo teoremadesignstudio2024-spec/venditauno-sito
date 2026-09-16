@@ -1,32 +1,30 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --background: #ffffff;
-  --card: #ffffff;
-  --card-hover: #f5f7fb;
-  --muted: #f3f5f9;
-  --foreground: #0c1c37;
-  --muted-foreground: #5b6b84;
-  --primary: #1d4ed8;
-  --primary-hover: #2f62f0;
-  --primary-dark: #14309e;
-  --accent: #1d4ed8;
-  --accent-bright: #2f62f0;
-  --money: #0369a1;
-  --money-bright: #0ea5e9;
-  --border: #dde4ef;
-  --border-accent: rgba(29, 78, 216, 0.3);
-  --warn: #92400e;
+  --background: #070b16;
+  --card: #111729;
+  --card-hover: #182038;
+  --muted: #131a2d;
+  --foreground: #f5f7fb;
+  --muted-foreground: #93a0bd;
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-dark: #1d4ed8;
+  --accent: #3b82f6;
+  --accent-bright: #60a5fa;
+  --money: #0ea5e9;
+  --money-bright: #38bdf8;
+  --border: #232c48;
+  --border-accent: rgba(96, 165, 250, 0.35);
+  --warn: #fbbf24;
   --radius: 0.75rem;
   --radius-lg: 1.25rem;
-  --shadow-md: 0 8px 24px -6px rgb(12 28 55 / 0.12);
-  --shadow-lg: 0 20px 50px -12px rgb(12 28 55 / 0.16);
+  --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 20px 50px -12px rgb(0 0 0 / 0.6);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
-  /* fascia blu navy di header/footer — resta scura anche nel tema chiaro:
-     il logo ("Vendita" in outline chiaro) e' leggibile solo su fondo scuro. */
-  --navy: #0b1830;
-  --navy-2: #142a54;
+  --navy: #070b16;
+  --navy-2: #1a2340;
 }
 
 html { scroll-behavior: smooth; }
@@ -109,14 +107,37 @@ body {
   position: relative;
 }
 
+/* Sfondo animato: aurora scura che si muove lentamente dietro tutto il contenuto */
 body::before {
+  content: "";
+  position: fixed;
+  inset: -15%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(640px circle at 18% 22%, rgba(59,130,246,0.4), transparent 62%),
+    radial-gradient(560px circle at 84% 28%, rgba(56,189,248,0.32), transparent 60%),
+    radial-gradient(620px circle at 30% 88%, rgba(99,102,241,0.3), transparent 62%),
+    radial-gradient(500px circle at 78% 82%, rgba(14,165,233,0.26), transparent 60%);
+  filter: blur(60px);
+  animation: auroraDrift 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes auroraDrift {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(-4%, 3%) scale(1.1) rotate(4deg); }
+  100% { transform: translate(4%, -3%) scale(1) rotate(-3deg); }
+}
+@media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+
+body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/></svg>");
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 img { max-width: 100%; height: auto; display: block; }
@@ -223,7 +244,7 @@ h3 { font-size: 1.2rem; }
 }
 .btn-money:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 40px -6px rgba(56,189,248, 0.75); }
 .btn-ghost {
-  background: rgba(243,245,249,0.7);
+  background: rgba(255,255,255,0.06);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   color: var(--foreground);
@@ -239,7 +260,7 @@ h3 { font-size: 1.2rem; }
 /* ---------- Nav ---------- */
 .nav {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(7, 11, 22, 0.8);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
@@ -269,7 +290,7 @@ h3 { font-size: 1.2rem; }
   .nav-links {
     display: flex; flex-direction: column; gap: 4px; align-items: stretch;
     position: absolute; top: 100%; left: 0; right: 0;
-    background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(14px);
+    background: rgba(7, 11, 22, 0.98); backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border);
     padding: 8px 20px 20px;
     max-height: 0; overflow: hidden; opacity: 0;
@@ -315,12 +336,12 @@ h3 { font-size: 1.2rem; }
   position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
   z-index: 2;
   width: 220px;
-  background: linear-gradient(160deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45));
+  background: linear-gradient(160deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05));
   backdrop-filter: blur(18px) saturate(180%);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.22);
   border-radius: 999px;
-  box-shadow: 0 12px 28px -8px rgba(12,28,55,0.18), inset 0 1px 0 rgba(255,255,255,0.9);
+  box-shadow: 0 12px 28px -8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
   padding: 16px 20px;
   display: flex; align-items: center; justify-content: center;
 }
