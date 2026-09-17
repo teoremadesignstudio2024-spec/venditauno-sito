@@ -53,6 +53,24 @@ html { scroll-behavior: smooth; }
   z-index: 100; transition: width 0.1s linear;
 }
 
+/* ---------- Floating background blobs (used by agenti/garanzia/metodo/risultati/chi-siamo/lavora-con-noi/grazie/stefanobonuccelli) ---------- */
+.blob-field { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+.blob {
+  position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.16;
+  animation: blobFloat 16s ease-in-out infinite;
+}
+.blob-1 { width: 380px; height: 380px; top: -120px; left: -80px; background: radial-gradient(circle, rgba(60,131,245,0.5), transparent 70%); animation-duration: 18s; }
+.blob-2 { width: 320px; height: 320px; top: 40%; right: -100px; background: radial-gradient(circle, rgba(56,189,248,0.32), transparent 70%); animation-duration: 22s; animation-delay: -6s; }
+.blob-3 { width: 260px; height: 260px; bottom: -100px; left: 30%; background: radial-gradient(circle, rgba(96,165,250,0.28), transparent 70%); animation-duration: 20s; animation-delay: -3s; }
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.08); }
+  66% { transform: translate(-24px, 24px) scale(0.95); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .blob { animation: none; }
+}
+
 /* ---------- Falling houses ("rain of mandates") ---------- */
 .rain-field { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
 .rain-house {
