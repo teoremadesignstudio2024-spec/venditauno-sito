@@ -30,7 +30,7 @@
   --navy-2: #1a2340;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 ::selection { background: rgba(59, 130, 246, 0.35); color: var(--foreground); }
 
 /* ---------- Top alert bar ---------- */
