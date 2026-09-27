@@ -468,6 +468,14 @@ h3 { font-size: 1.2rem; }
   .hero-actions { flex-direction: column; align-items: stretch; }
   .hero-actions .btn { width: 100%; }
 }
+@media (max-width: 640px) {
+  .hero { text-align: left; }
+  .hero-sub { margin: 0 0 32px; max-width: 100%; }
+  .hero-actions { justify-content: flex-start; }
+  .trust-row { justify-content: flex-start; }
+  .section-head { text-align: left; margin-left: 0; margin-right: 0; max-width: 100%; }
+  .section-presenter { margin: 0 0 18px; }
+}
 .trust-row {
   display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: center;
   font-size: 0.92rem; font-weight: 500; color: var(--muted-foreground);
