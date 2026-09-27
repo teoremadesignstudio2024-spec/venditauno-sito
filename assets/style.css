@@ -135,18 +135,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .section { padding: 100px 0; position: relative; z-index: 1; }
 .section-tight { padding: 64px 0; }
 
-/* ---------- Alternating light sections ---------- */
+/* ---------- Sezioni alternate: stesso sfondo nero di tutto il sito, niente più sezioni chiare ---------- */
 .section-light {
-  --background: #f4f7fb;
-  --card: #ffffff;
-  --card-hover: #eaf1fb;
-  --muted: #eef3fa;
-  --foreground: #0b1a2e;
-  --muted-foreground: #52607a;
-  --border: #e1e8f2;
-  --border-accent: rgba(37, 99, 235, 0.35);
-  --accent-bright: #2563eb;
-  --money-bright: #0284c7;
   background: var(--background);
   color: var(--foreground);
 }
@@ -190,8 +180,8 @@ h3 { font-size: 1.2rem; }
 .text-accent { color: var(--accent-bright); }
 .gradient-text {
   background-image: linear-gradient(to right,
-    var(--navy) 0%, var(--primary-dark) 12.5%, var(--money-bright) 32.5%,
-    var(--accent-bright) 50%, var(--primary-dark) 67.5%, var(--navy) 87.5%, var(--navy) 100%);
+    var(--primary-dark) 0%, var(--money-bright) 25%,
+    var(--accent-bright) 50%, var(--money-bright) 75%, var(--primary-dark) 100%);
   background-size: 200%;
   background-clip: text;
   -webkit-background-clip: text;
