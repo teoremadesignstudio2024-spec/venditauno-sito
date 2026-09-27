@@ -472,10 +472,10 @@ h3 { font-size: 1.2rem; }
 @media (max-width: 640px) {
   .hero { text-align: left; }
   .hero-sub { margin: 0 0 32px; max-width: 100%; }
-  .hero-actions { justify-content: flex-start; }
-  .trust-row { justify-content: flex-start; }
+  .hero-actions { justify-content: center; }
+  .trust-row { justify-content: center; }
   .section-head { text-align: left; margin-left: 0; margin-right: 0; max-width: 100%; }
-  .section-presenter { margin: 0 0 18px; }
+  .section-presenter { margin: 0 auto 18px; }
 }
 .trust-row {
   display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: center;
