@@ -165,6 +165,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .eyebrow.money { color: var(--money-bright); }
 
 h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; }
+h1, h2 { font-weight: 900; }
 h1 { font-size: clamp(1.9rem, 7.5vw, 3.8rem); line-height: 1.16; }
 h2 { font-size: clamp(1.5rem, 6vw, 2.6rem); }
 h3 { font-size: 1.2rem; }
