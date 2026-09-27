@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AHMIS – Amici Hospice Malattie Infettive Sacco</title>
+<meta name="description" content="AHMIS ODV: dal 2008 i nostri volontari sostengono i pazienti dell'Hospice Malattie Infettive dell'Ospedale Luigi Sacco di Milano e le loro famiglie.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --surface:#ffffff; --ink:#0f2340; --muted:#4a5d78;
+  --brand:#0a6fd6; --brand-2:#00a6c7; --accent:#ff4d5a; --accent-2:#ff8a3d; --soft:#e8f3ff; --line:#dbe7f5;
+  --radius:20px; --max:1160px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Poppins,Inter,sans-serif;font-weight:700;line-height:1.15;letter-spacing:-.01em}
+a{color:inherit}
+img,svg{display:block;max-width:100%}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+.eyebrow{display:inline-block;font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--brand-2);margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;font-weight:600;text-decoration:none;transition:transform .2s,box-shadow .2s,background .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 10px 24px -10px rgba(10,111,214,.55)}
+.btn-primary:hover{background:#0858ab}
+.btn-ghost{border:1.5px solid var(--brand);color:var(--brand)}
+.btn-ghost:hover{background:var(--soft)}
+
+/* Header */
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
+header.scrolled{border-color:var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:74px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:Poppins,sans-serif;font-weight:600;font-size:1.4rem;color:var(--brand)}
+.logo small{display:block;font-family:Inter,sans-serif;font-size:.68rem;font-weight:500;color:var(--muted);letter-spacing:.02em;line-height:1.2}
+.menu{display:flex;align-items:center;gap:30px;list-style:none}
+.menu a{text-decoration:none;font-weight:500;font-size:.95rem;color:var(--ink)}
+.menu a:not(.btn):hover{color:var(--brand-2)}
+.menu .btn{padding:10px 20px;color:#fff}
+.burger{display:none;background:none;border:0;width:44px;height:44px;cursor:pointer}
+.burger span{display:block;width:24px;height:2px;background:var(--ink);margin:5px auto;transition:.3s}
+
+/* Hero */
+.hero{padding:80px 0 100px;position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center}
+.hero h1{font-size:clamp(2.3rem,5vw,3.9rem);margin-bottom:22px}
+.hero h1 em{font-style:italic;color:var(--brand-2)}
+.hero p.lead{font-size:1.15rem;color:var(--muted);max-width:540px;margin-bottom:34px}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:14px}
+.hero-art{position:relative;aspect-ratio:1;max-width:460px;justify-self:center;width:100%}
+.hero-art .blob{position:absolute;inset:0;border-radius:46% 54% 42% 58%/55% 45% 55% 45%;background:linear-gradient(145deg,var(--brand-2),var(--brand));animation:morph 14s ease-in-out infinite}
+.hero-art .blob.b2{inset:14% -6% -4% 18%;background:var(--accent);opacity:.35;animation-duration:18s;animation-direction:reverse}
+.hero-art svg{position:absolute;inset:18%;width:64%;height:64%;color:#fff}
+.hero-card{position:absolute;left:-8%;bottom:8%;background:var(--surface);padding:16px 20px;border-radius:16px;box-shadow:0 20px 40px -18px rgba(0,0,0,.25);font-size:.9rem}
+.hero-card strong{display:block;font-family:Poppins,sans-serif;font-size:1.6rem;color:var(--brand)}
+@keyframes morph{50%{border-radius:58% 42% 55% 45%/42% 58% 42% 58%;transform:rotate(8deg)}}
+
+/* Sections */
+section{padding:100px 0}
+.sec-head{max-width:680px;margin-bottom:56px}
+.sec-head h2{font-size:clamp(1.9rem,3.6vw,2.8rem);margin-bottom:16px}
+.sec-head p{color:var(--muted);font-size:1.08rem}
+.center{text-align:center;margin-left:auto;margin-right:auto}
+
+/* Stats */
+.stats{background:var(--brand);color:#fff;padding:60px 0}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+.stats b{display:block;font-family:Poppins,sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:600}
+.stats span{opacity:.85;font-size:.95rem}
+
+/* About */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
+.about p{color:var(--muted);margin-bottom:18px}
+.timeline{list-style:none;border-left:2px solid var(--line);padding-left:28px}
+.timeline li{position:relative;padding-bottom:28px}
+.timeline li::before{content:"";position:absolute;left:-36px;top:6px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:3px solid var(--brand-2)}
+.timeline b{font-family:Poppins,sans-serif;color:var(--brand);font-size:1.25rem}
+.timeline p{margin:4px 0 0;color:var(--muted)}
+
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:32px 28px;transition:transform .3s,box-shadow .3s}
+.card:hover{transform:translateY(-6px);box-shadow:0 24px 40px -24px rgba(10,111,214,.3)}
+.card .ic{width:52px;height:52px;border-radius:14px;background:var(--soft);color:var(--brand);display:grid;place-items:center;margin-bottom:20px}
+.card h3{font-size:1.3rem;margin-bottom:10px}
+.card p{color:var(--muted);font-size:.97rem}
+
+/* Hospice band */
+.hospice{background:var(--soft)}
+.hospice-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:60px;align-items:center}
+.quote{background:var(--surface);border-radius:var(--radius);padding:44px 40px;position:relative}
+.quote::before{content:"“";position:absolute;top:-10px;left:28px;font-family:Poppins,sans-serif;font-size:7rem;color:var(--accent);line-height:1}
+.quote p{font-family:Poppins,sans-serif;font-size:1.35rem;line-height:1.5;padding-top:30px}
+.hospice ul{list-style:none;margin-top:22px}
+.hospice li{display:flex;gap:12px;margin-bottom:14px;color:var(--muted)}
+.hospice li::before{content:"";flex:0 0 22px;height:22px;border-radius:50%;background:var(--brand-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/14px no-repeat;margin-top:2px}
+
+/* Support */
+.support-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.support .card{display:flex;flex-direction:column}
+.support .card .btn{margin-top:auto;align-self:flex-start}
+.support .card.feat{background:var(--brand);color:#fff;border-color:var(--brand)}
+.support .card.feat p{color:rgba(255,255,255,.85)}
+.support .card.feat .ic{background:rgba(255,255,255,.15);color:#fff}
+.code{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,.06);border-radius:12px;padding:12px 14px;margin:16px 0 22px;font-family:ui-monospace,Menlo,monospace;font-size:.95rem;word-break:break-all}
+.feat .code{background:rgba(255,255,255,.14)}
+.copy{flex:0 0 auto;border:0;background:var(--surface);color:var(--brand);font:600 .78rem Inter,sans-serif;padding:6px 12px;border-radius:999px;cursor:pointer}
+
+/* Contact */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.info-list{list-style:none;display:grid;gap:18px}
+.info-list li{display:flex;gap:16px;align-items:flex-start}
+.info-list .ic{flex:0 0 46px;height:46px;border-radius:12px;background:var(--soft);color:var(--brand);display:grid;place-items:center}
+.info-list small{display:block;color:var(--muted);font-size:.82rem}
+.info-list a{text-decoration:none;font-weight:600}
+.map{border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);min-height:320px}
+.map iframe{width:100%;height:100%;min-height:320px;border:0}
+
+/* Footer */
+footer{background:#0b1f3a;color:#c7d6ea;padding:60px 0 30px;font-size:.92rem}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:40px}
+footer .logo{color:#fff;margin-bottom:14px}
+footer h4{color:#fff;font-size:.95rem;margin-bottom:14px}
+footer ul{list-style:none;display:grid;gap:8px}
+footer a{text-decoration:none}
+footer a:hover{color:#fff}
+.foot-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:.84rem;opacity:.8}
+
+/* Photos */
+.ph{background:linear-gradient(145deg,var(--soft),#cfe6ff);overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-art .photo{position:absolute;inset:6%;border-radius:46% 54% 42% 58%/55% 45% 55% 45%;animation:morph 14s ease-in-out infinite;box-shadow:0 30px 60px -30px rgba(10,111,214,.55)}
+.about-photo{margin-top:34px;border-radius:var(--radius);aspect-ratio:16/10}
+.card .ph{margin:-32px -28px 22px;height:190px;border-radius:var(--radius) var(--radius) 0 0}
+.card.has-ph .ic{margin-top:-48px;position:relative;background:var(--surface);box-shadow:0 8px 18px -8px rgba(0,0,0,.25)}
+.hospice-media{position:relative}
+.hospice-media .ph{border-radius:var(--radius);aspect-ratio:4/5;max-height:560px;width:100%}
+.hospice-media .quote{position:absolute;right:-30px;bottom:-30px;max-width:340px;box-shadow:0 24px 50px -24px rgba(0,0,0,.35);padding:34px 28px}
+.hospice-media .quote p{font-size:1.12rem;padding-top:22px}
+.hospice-media .quote::before{font-size:5rem;top:-6px}
+.support-banner{position:relative;border-radius:28px;overflow:hidden;margin-bottom:40px;min-height:320px;display:grid;place-items:center;text-align:center;color:#fff;padding:60px 24px}
+.support-banner .ph{position:absolute;inset:0;z-index:0;background:var(--brand)}
+.support-banner::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,111,214,.55),rgba(11,31,58,.8))}
+.support-banner>div:not(.ph){position:relative;z-index:2;max-width:640px}
+.support-banner .eyebrow{color:#ffd0d3}
+.support-banner h2{font-size:clamp(1.9rem,3.6vw,2.8rem);margin-bottom:14px}
+.support-banner p{opacity:.9;font-size:1.08rem}
+.photo-credit{font-size:.75rem;opacity:.6;margin-top:10px}
+
+
+/* Vivid theme */
+.btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 12px 26px -10px rgba(255,77,90,.7)}
+.btn-accent:hover{filter:brightness(1.05)}
+.menu .btn-accent{color:#fff}
+.hero{background:radial-gradient(900px 500px at 85% 20%,#d9ecff 0,transparent 60%),radial-gradient(700px 400px at 0% 100%,#ffe6e8 0,transparent 60%),linear-gradient(180deg,#f3f9ff,#fff)}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--brand),var(--brand-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-art .blob{background:linear-gradient(145deg,var(--brand-2),var(--brand))}
+.hero-art .blob.b2{background:var(--accent);opacity:.25}
+.hero-card strong{color:var(--accent)}
+.stats{background:linear-gradient(120deg,var(--brand),var(--brand-2))}
+.eyebrow{color:var(--brand)}
+.card .ic{background:linear-gradient(135deg,#e3f0ff,#dff7fb)}
+.cards .card:nth-child(1) .ic{color:var(--accent)}
+.cards .card:nth-child(3) .ic{color:var(--brand-2)}
+.hospice{background:linear-gradient(180deg,#eef6ff,#e6f9fc)}
+.quote::before{color:var(--accent)}
+.hospice li::before{background-color:var(--brand)}
+.support .card.feat{background:linear-gradient(145deg,var(--accent),var(--accent-2));border-color:transparent}
+.support .card.feat .copy{color:var(--accent)}
+.timeline li::before{border-color:var(--brand)}
+.badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;font-size:.82rem;font-weight:600;color:var(--brand);margin-bottom:18px;box-shadow:0 6px 16px -10px rgba(10,111,214,.5)}
+.badge i{width:22px;height:22px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;font-style:normal;font-size:.9rem}
+
+/* Reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+/* Responsive */
+@media (max-width:960px){
+  .hero-grid,.about-grid,.hospice-grid,.contact-grid{grid-template-columns:1fr;gap:44px}
+  .hero-art{max-width:340px;order:-1}
+  .support-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .foot-grid{grid-template-columns:1fr}
+}
+@media (max-width:820px){
+  .burger{display:block}
+  .menu{position:fixed;inset:74px 0 auto 0;flex-direction:column;align-items:stretch;gap:0;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 24px 24px;transform:translateY(-120%);transition:transform .35s;z-index:-1}
+  .menu.open{transform:none}
+  .menu li a:not(.btn){display:block;padding:14px 0;border-bottom:1px solid var(--line)}
+  .menu .btn{margin-top:16px;justify-content:center}
+  .burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .burger.open span:nth-child(2){opacity:0}
+  .burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+}
+@media (max-width:960px){.hospice-media .quote{position:relative;right:auto;bottom:auto;margin:-60px 16px 0;max-width:none}.hospice-media .ph{aspect-ratio:4/3}}
+@media (max-width:520px){
+  .wrap{padding:0 16px}
+  section{padding:72px 0}
+  .hero{padding:40px 0 70px}
+  .hero-card{left:0}
+  .quote{padding:36px 24px}
+}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div class="wrap nav">
+    <a href="#top" class="logo" aria-label="AHMIS home">
+      <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="20" fill="#0a6fd6"/><path d="M20 29s-9-5.4-9-11.5A4.9 4.9 0 0 1 20 15a4.9 4.9 0 0 1 9 2.5C29 23.6 20 29 20 29z" fill="#ff4d5a"/><path d="M20 18.2v5M17.5 20.7h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>AHMIS<small>Amici Hospice Malattie Infettive Sacco</small></span>
+    </a>
+    <button class="burger" aria-label="Apri menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <ul class="menu">
+      <li><a href="#chi-siamo">Chi siamo</a></li>
+      <li><a href="#cosa-facciamo">Cosa facciamo</a></li>
+      <li><a href="#hospice">L'hospice</a></li>
+      <li><a href="#sostienici">Sostienici</a></li>
+      <li><a href="#contatti">Contatti</a></li>
+      <li><a href="#sostienici" class="btn btn-accent">♥ Dona ora</a></li>
+    </ul>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="reveal">
+        <span class="badge"><i>+</i>ODV (già ONLUS) · Ospedale Luigi Sacco · dal 2008</span>
+        <h1>Nessuno deve affrontare la malattia <em>da solo</em>.</h1>
+        <p class="lead">Siamo i volontari dell'Hospice Malattie Infettive dell'Ospedale Luigi Sacco di Milano. Ogni giorno portiamo ascolto, presenza e dignità ai pazienti e alle loro famiglie.</p>
+        <div class="ctas">
+          <a href="#sostienici" class="btn btn-accent">Sostieni AHMIS
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a href="#volontari" class="btn btn-ghost">Diventa volontario</a>
+        </div>
+      </div>
+      <div class="hero-art reveal" aria-hidden="true">
+        <div class="blob b2"></div>
+        <div class="blob"></div>
+        <div class="photo ph"><img src="https://images.pexels.com/photos/7551677/pexels-photo-7551677.jpeg?auto=compress&cs=tinysrgb&w=1200" onerror="this.remove()" alt="Una mano giovane stringe la mano di una persona anziana" fetchpriority="high"></div>
+        <svg style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/><path d="m2 15 6 6"/><path d="M19.5 8.5c.7-.7 1.5-1.6 1.5-2.7A2.73 2.73 0 0 0 16 4a2.78 2.78 0 0 0-5 1.8c0 1.2.8 2 1.5 2.8L16 12Z"/></svg>
+        <div class="hero-card"><strong>+15 anni</strong>accanto a pazienti e famiglie</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="wrap stats-grid">
+      <div class="reveal"><b>2008</b><span>anno di fondazione</span></div>
+      <div class="reveal"><b>14</b><span>soci fondatori</span></div>
+      <div class="reveal"><b>2016</b><span>attivi anche in Dialisi</span></div>
+      <div class="reveal"><b>ODV</b><span>ente del Terzo Settore</span></div>
+    </div>
+  </div>
+
+  <!-- CHI SIAMO -->
+  <section id="chi-siamo" class="about">
+    <div class="wrap about-grid">
+      <div class="reveal">
+        <span class="eyebrow">Chi siamo</span>
+        <h2 style="font-size:clamp(1.9rem,3.6vw,2.8rem);margin-bottom:20px">Una comunità che non lascia indietro nessuno</h2>
+        <p>AHMIS è un'associazione senza fini di lucro, fondata il 5 marzo 2008 da quattordici soci. I nostri volontari prestano la loro opera presso l'Hospice Malattie Infettive dell'Ospedale Luigi Sacco di Milano.</p>
+        <p>Il nostro obiettivo è offrire una migliore qualità di vita ai pazienti con malattie croniche e in fase terminale, dare sostegno psicologico ai loro familiari e diffondere la cultura delle cure palliative nella società civile, negli ospedali e tra il personale sanitario.</p>
+        <a href="#contatti" class="btn btn-ghost" style="margin-top:10px">Parla con noi</a>
+        <div class="about-photo ph"><img src="https://images.pexels.com/photos/6646949/pexels-photo-6646949.jpeg?auto=compress&cs=tinysrgb&w=1200" onerror="this.remove()" alt="Un gruppo di volontari sorridenti" loading="lazy"></div>
+      </div>
+      <ol class="timeline reveal">
+        <li><b>2008</b><p>Nasce AHMIS. Il 16 settembre ottiene il riconoscimento ONLUS dalla Provincia di Milano (decreto n° 588).</p></li>
+        <li><b>2016</b><p>Estendiamo la nostra presenza al Servizio di Nefrologia e Dialisi, per portare il sollievo delle cure palliative anche ai pazienti dializzati.</p></li>
+        <li><b>2019</b><p>Attiviamo in Dialisi la presenza di una psicologa dedicata ai casi più complessi.</p></li>
+        <li><b>Oggi</b><p>Con la riforma del Terzo Settore AHMIS è una ODV – Organizzazione di Volontariato.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- COSA FACCIAMO -->
+  <section id="cosa-facciamo" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Cosa facciamo</span>
+        <h2>Presenza, competenza, cura</h2>
+        <p>Integriamo il lavoro dell'ospedale con persone e professionalità che fanno la differenza nella vita quotidiana dei pazienti.</p>
+      </div>
+      <div class="cards">
+        <article class="card has-ph reveal" id="volontari">
+          <div class="ph"><img src="https://images.pexels.com/photos/6129689/pexels-photo-6129689.jpeg?auto=compress&cs=tinysrgb&w=800" onerror="this.remove()" alt="Una volontaria parla con una paziente" loading="lazy"></div>
+          <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>Volontari in reparto</h3>
+          <p>Stiamo accanto ai pazienti e ai familiari nell'affrontare la malattia e la perdita, con ascolto e compagnia.</p>
+        </article>
+        <article class="card has-ph reveal">
+          <div class="ph"><img src="https://images.pexels.com/photos/6129197/pexels-photo-6129197.jpeg?auto=compress&cs=tinysrgb&w=800" onerror="this.remove()" alt="Medici accanto al letto di un paziente" loading="lazy"></div>
+          <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg></div>
+          <h3>Figure professionali</h3>
+          <p>Mettiamo a disposizione dell'Hospice medici palliativisti, psicologi, animatori, fisioterapisti e OSS.</p>
+        </article>
+        <article class="card has-ph reveal">
+          <div class="ph"><img src="https://images.pexels.com/photos/6129685/pexels-photo-6129685.jpeg?auto=compress&cs=tinysrgb&w=800" onerror="this.remove()" alt="Un'operatrice sanitaria tiene la mano di un paziente" loading="lazy"></div>
+          <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg></div>
+          <h3>Nefrologia e Dialisi</h3>
+          <p>Dal 2016 portiamo le cure palliative ai pazienti dializzati, con il supporto di una psicologa dal 2019.</p>
+        </article>
+        <article class="card has-ph reveal">
+          <div class="ph"><img src="https://images.pexels.com/photos/8636601/pexels-photo-8636601.jpeg?auto=compress&cs=tinysrgb&w=800" onerror="this.remove()" alt="Professionisti sanitari durante un incontro di formazione" loading="lazy"></div>
+          <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+          <h3>Formazione</h3>
+          <p>Organizziamo corsi sulle cure palliative per volontari, operatori sanitari e cittadini.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOSPICE -->
+  <section id="hospice" class="hospice">
+    <div class="wrap hospice-grid">
+      <div class="hospice-media reveal">
+        <div class="ph"><img src="https://images.pexels.com/photos/4966406/pexels-photo-4966406.jpeg?auto=compress&cs=tinysrgb&w=1200" onerror="this.remove()" alt="Stanza di degenza luminosa con letto accanto alla finestra" loading="lazy"></div>
+        <div class="quote">
+          <p>Quando non si può più guarire, si può ancora curare. Ogni giorno conta, ogni persona conta.</p>
+        </div>
+      </div>
+      <div class="reveal">
+        <span class="eyebrow">L'hospice</span>
+        <h2 style="font-size:clamp(1.9rem,3.6vw,2.8rem);margin-bottom:16px">Hospice Malattie Infettive dell'Ospedale Sacco</h2>
+        <p style="color:var(--muted)">L'Hospice accoglie pazienti con malattie croniche e in fase avanzata, offrendo cure palliative che mettono al centro la persona, il controllo del dolore e il benessere della famiglia.</p>
+        <ul>
+          <li>Padiglione 17, II° piano – Ospedale Luigi Sacco</li>
+          <li>Via G.B. Grassi 74, 20157 Milano</li>
+          <li>Assistenza integrata tra équipe ospedaliera e volontari AHMIS</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOSTIENICI -->
+  <section id="sostienici" class="support">
+    <div class="wrap">
+      <div class="support-banner reveal">
+        <div class="ph"><img src="https://images.pexels.com/photos/9666380/pexels-photo-9666380.jpeg?auto=compress&cs=tinysrgb&w=1600" onerror="this.remove()" alt="Due mani che stringono un cuore" loading="lazy"></div>
+        <div>
+          <span class="eyebrow">Sostienici</span>
+          <h2>Il tuo gesto diventa cura</h2>
+          <p>Ogni contributo ci permette di garantire professionisti, attività e presenza accanto a chi ne ha più bisogno.</p>
+        </div>
+      </div>
+      <div class="support-grid">
+        <article class="card feat reveal">
+          <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg></div>
+          <h3>Dona il 5×1000</h3>
+          <p>Non costa nulla: firma nel riquadro del Terzo Settore della tua dichiarazione dei redditi e indica il nostro codice fiscale.</p>
+          <!-- TODO: verificare il codice fiscale sul sito attuale prima della pubblicazione -->
+          <div class="code"><span id="cf">97490460157</span><button class="copy" data-copy="cf">Copia</button></div>
+        </article>
+        <article class="card reveal">
+          <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+          <h3>Bonifico bancario</h3>
+          <p>Intestato ad AHMIS – Amici Hospice Malattie Infettive Sacco ODV. Le donazioni sono fiscalmente detraibili.</p>
+          <!-- TODO: verificare l'IBAN sul sito attuale prima della pubblicazione -->
+          <div class="code"><span id="iban">IT04W0306901603100000046207</span><button class="copy" data-copy="iban">Copia</button></div>
+        </article>
+        <article class="card reveal">
+          <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></svg></div>
+          <h3>Dona il tuo tempo</h3>
+          <p>Diventa volontario: ti formiamo con un percorso dedicato alle cure palliative e all'accompagnamento.</p>
+          <a href="mailto:ahmis@asst-fbf-sacco.it?subject=Voglio%20diventare%20volontario" class="btn btn-ghost">Candidati</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTATTI -->
+  <section id="contatti" style="padding-top:0">
+    <div class="wrap contact-grid">
+      <div class="reveal">
+        <span class="eyebrow">Contatti</span>
+        <h2 style="font-size:clamp(1.9rem,3.6vw,2.8rem);margin-bottom:28px">Siamo qui per te</h2>
+        <ul class="info-list">
+          <li><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+            <div><small>Indirizzo</small>Ospedale Luigi Sacco, Pad. 17 – II° piano<br>Via G.B. Grassi 74, 20157 Milano</div></li>
+          <li><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span>
+            <div><small>Telefono</small><a href="tel:+390239043159">02 3904 3159</a></div></li>
+          <li><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span>
+            <div><small>Email</small><a href="mailto:ahmis@asst-fbf-sacco.it">ahmis@asst-fbf-sacco.it</a></div></li>
+        </ul>
+      </div>
+      <div class="map reveal">
+        <iframe title="Mappa Ospedale Luigi Sacco" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.google.com/maps?q=Ospedale+Luigi+Sacco,+Via+G.B.+Grassi+74,+Milano&output=embed"></iframe>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a href="#top" class="logo"><span>AHMIS</span></a>
+        <p>Amici Hospice Malattie Infettive Sacco ODV.<br>Dal 2008 accanto ai pazienti dell'Hospice dell'Ospedale Luigi Sacco di Milano e alle loro famiglie.</p>
+      </div>
+      <div>
+        <h4>Associazione</h4>
+        <ul><li><a href="#chi-siamo">Chi siamo</a></li><li><a href="#cosa-facciamo">Cosa facciamo</a></li><li><a href="#hospice">L'hospice</a></li></ul>
+      </div>
+      <div>
+        <h4>Partecipa</h4>
+        <ul><li><a href="#sostienici">5×1000</a></li><li><a href="#sostienici">Dona</a></li><li><a href="#volontari">Diventa volontario</a></li></ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© <span id="y">2026</span> AHMIS ODV – Via G.B. Grassi 74, 20157 Milano</span>
+      <span>Foto: <a href="https://www.pexels.com" target="_blank" rel="noopener">Pexels</a> · Privacy · Cookie</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const header=document.querySelector('header'),burger=document.querySelector('.burger'),menu=document.querySelector('.menu');
+  addEventListener('scroll',()=>header.classList.toggle('scrolled',scrollY>10),{passive:true});
+  burger.addEventListener('click',()=>{const o=menu.classList.toggle('open');burger.classList.toggle('open',o);burger.setAttribute('aria-expanded',o)});
+  menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{menu.classList.remove('open');burger.classList.remove('open');burger.setAttribute('aria-expanded',false)}));
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{
+    try{await navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent);b.textContent='Copiato!';setTimeout(()=>b.textContent='Copia',1800)}catch(e){}
+  }));
+  document.getElementById('y').textContent=new Date().getFullYear();
+</script>
+</body>
+</html>
