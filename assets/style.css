@@ -16,6 +16,7 @@
   --accent-bright: #60a5fa;
   --money: #0ea5e9;
   --money-bright: #38bdf8;
+  --electric-blue: #0066ff;
   --border: #262626;
   --border-accent: rgba(96, 165, 250, 0.35);
   --warn: #fbbf24;
@@ -176,12 +177,12 @@ h3 { font-size: 1.2rem; }
 }
 @media (min-width: 640px) { .section-presenter { height: 190px; } }
 .text-muted { color: var(--muted-foreground); }
-.text-money { color: var(--money-bright); font-weight: 800; }
+.text-money { color: var(--electric-blue); font-weight: 800; }
 .text-accent { color: var(--accent-bright); }
 .gradient-text {
   background-image: linear-gradient(to right,
-    var(--primary-dark) 0%, var(--money-bright) 25%,
-    var(--accent-bright) 50%, var(--money-bright) 75%, var(--primary-dark) 100%);
+    var(--electric-blue) 0%, #4d94ff 25%,
+    var(--electric-blue) 50%, #4d94ff 75%, var(--electric-blue) 100%);
   background-size: 200%;
   background-clip: text;
   -webkit-background-clip: text;
