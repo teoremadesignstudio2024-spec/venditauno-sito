@@ -141,6 +141,7 @@ section { position: relative; padding: 110px 0; }
   background: linear-gradient(145deg, #3a3f47, #16191e);
   box-shadow: 0 40px 80px -20px rgba(0,0,0,.8), 0 0 60px -20px var(--accent-glow);
 }
+.phone-photo { width: 100%; max-width: 420px; margin: 0 auto; filter: drop-shadow(0 30px 50px rgba(0,0,0,.6)); }
 .phone-screen { border-radius: 44px; overflow: hidden; background: var(--wa-bg); position: relative; }
 .phone-status { display: flex; justify-content: space-between; padding: 16px 30px 6px; font-size: 15px; font-weight: 600; }
 .island { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 110px; height: 30px; background: #000; border-radius: 20px; }
@@ -344,27 +345,8 @@ footer p { margin-top: 8px; }
       </div>
 
       <div class="order-first-mobile">
-        <div class="phone" aria-label="Esempio di chat tra titolare e collaboratore">
-          <div class="phone-screen">
-            <div class="island"></div>
-            <div class="phone-status"><span>18:42</span><span>●●● ▮</span></div>
-            <div class="wa-head">
-              <div class="wa-avatar">L</div>
-              <div><div class="wa-name">Luca – Collaboratore</div><div class="wa-status">ultimo accesso oggi alle 18:40</div></div>
-            </div>
-            <div class="wa-body">
-              <div class="wa-day">Lunedì</div>
-              <div class="msg out">Luca, com'è andata oggi in zona?<small>18:02 ✓✓</small></div>
-              <div class="msg in">Fatti circa 80 citofoni. Mi hanno aperto in 3, nessuno vende.<small>18:15</small></div>
-              <div class="wa-day">Mercoledì</div>
-              <div class="msg in">Oggi cosa faccio? Riprendo le liste da chiamare?<small>09:04</small></div>
-              <div class="msg out">Sì, intanto chiama quelle. Poi vediamo.<small>09:31 ✓✓</small></div>
-              <div class="msg in">Fatte 60 chiamate. Due mi hanno mandato a quel paese 😅<small>17:48</small></div>
-              <div class="wa-day">Venerdì</div>
-              <div class="msg in">Capo, domani ti posso parlare? Mi hanno fatto un'altra proposta…<small>18:40</small></div>
-              <div class="msg out fade">…<small>✓</small></div>
-            </div>
-          </div>
+        <div class="phone-photo">
+          <img src="assets/img/phone-mockup-luca.png" alt="Chat WhatsApp tra un titolare e il suo collaboratore Luca sulla zona">
         </div>
       </div>
     </div>
