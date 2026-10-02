@@ -277,6 +277,7 @@ input,select,textarea{font:inherit;color:inherit}
     </button>
     <div class="side-foot">
       <div class="credits"><span>Crediti sblocco</span><b id="credits">12</b><span>contatti sbloccabili</span></div>
+      <button class="btn btn-ghost" id="resetDemo" style="padding:8px 12px;font-size:12px">↺ Ricomincia la demo</button>
       <div class="user"><div class="av" style="background:#2563eb">AR</div><div>Agenzia Rossi<small>Piano Partner</small></div></div>
     </div>
   </aside>
@@ -487,13 +488,9 @@ function urgTag(l){return l.urg===3?'<span class="tag red">Urgente</span>':l.urg
 function toast(msg){const t=$("#toast");t.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>'+msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2800)}
 
 let credits = 12;
-const store = {
-  get(k,d){try{const v=localStorage.getItem("vu_gest_"+k);return v?JSON.parse(v):d}catch(e){return d}},
-  set(k,v){try{localStorage.setItem("vu_gest_"+k,JSON.stringify(v))}catch(e){}}
-};
-credits = store.get("credits", 12);
-store.get("unlocked", []).forEach(id => { const l = byId(id); if (l) l.unlocked = true; });
-function saveUnlocks(){store.set("unlocked", ALL.filter(l=>l.unlocked).map(l=>l.id)); store.set("credits", credits)}
+// Demo: ogni apertura della pagina riparte da zero (nessun dato salvato).
+try { Object.keys(localStorage).filter(k => k.startsWith("vu_gest_")).forEach(k => localStorage.removeItem(k)); } catch(e) {}
+function saveUnlocks(){}
 
 /* ---------------- Navigation ---------------- */
 const TITLES = {
@@ -728,7 +725,6 @@ const SEED_EV = [
   [-1,3,15,1,"fir","Firma incarico esclusiva","G. Ricci — Bilocale"]
 ];
 let EVENTS = SEED_EV.map(([w,d,s,dur,type,title,sub],i) => ({id:"s"+i, date:dayOf(w,d), start:s, dur, type, title, sub}));
-EVENTS = EVENTS.concat(store.get("events", []));
 let booking = null; // lead in fase di prenotazione
 
 function fmtH(h){ const hh = Math.floor(h), mm = Math.round((h-hh)*60); return `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`; }
@@ -809,7 +805,6 @@ function openBookModal(date, h, busy){
     const ev = {id:"u"+Date.now(), date, start:+$("#bTime").value, dur:+$("#bDur").value, type:"new",
       title:`${names[type]} · ${l.tipo}`, sub:`${l.nome} ${l.cognome} — ${l.via}, ${l.city}`};
     EVENTS.push(ev);
-    store.set("events", EVENTS.filter(e => e.id[0] === "u"));
     booking = null; $("#bookingHint").classList.remove("show");
     closeModal(); renderCal(); updateCounters();
     toast(`Appuntamento fissato con ${l.nome} ${l.cognome} — ${label}, ${fmtH(ev.start)}`);
@@ -843,6 +838,7 @@ function updateCounters(){
   $("#kApp").textContent = n; $("#navAgenda").textContent = n;
 }
 updateCounters();
+$("#resetDemo").onclick = () => location.reload();
 </script>
 </body>
 </html>
