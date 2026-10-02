@@ -278,6 +278,14 @@ export default {
       });
     }
 
+    // La demo del gestionale cambia spesso: niente cache, così si vede sempre l'ultima versione.
+    if (url.pathname.startsWith("/provegestionale")) {
+      const res = await env.ASSETS.fetch(request);
+      const out = new Response(res.body, res);
+      out.headers.set("Cache-Control", "no-store, max-age=0");
+      return out;
+    }
+
     return env.ASSETS.fetch(request);
   },
 };
