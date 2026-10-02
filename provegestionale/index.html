@@ -29,7 +29,7 @@ input,select,textarea{font:inherit;color:inherit}
 .brand{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:4px 8px 18px}
 .brand img{height:30px;width:auto;max-width:100%}
 .brand small{display:block;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
-.nav-btn{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);font-weight:600;text-align:left;width:100%;transition:background .15s,color .15s}
+.nav-btn{white-space:nowrap;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);font-weight:600;text-align:left;width:100%;transition:background .15s,color .15s}
 .nav-btn svg{width:18px;height:18px;flex:none}
 .nav-btn:hover{background:var(--panel-2);color:var(--text)}
 .nav-btn.active{background:rgba(59,130,246,.14);color:var(--blue-2)}
@@ -79,11 +79,11 @@ input,select,textarea{font:inherit;color:inherit}
 .reg.heat-1:hover,.reg.heat-2:hover,.reg.heat-3:hover{fill:#24438a}
 .reg.sel{fill:#2563eb}
 .pin{cursor:pointer}
-.pin circle{fill:#0b1222;stroke:var(--sky);stroke-width:1.6;transition:all .15s}
-.pin text{fill:#fff;font-size:11px;font-weight:800;text-anchor:middle;dominant-baseline:central;pointer-events:none}
-.pin:hover circle,.pin.sel circle{fill:var(--sky);stroke:#fff}
+.pin rect{fill:#0b1222;stroke:var(--sky);stroke-width:1.5;transition:all .15s}
+.pin text{fill:#fff;font-size:10.5px;font-weight:800;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pin:hover rect,.pin.sel rect{fill:var(--sky);stroke:#fff}
 .pin.sel text,.pin:hover text{fill:#04101f}
-.pin .ring{fill:none;stroke:var(--sky);stroke-width:1;opacity:.5;animation:ring 2.4s infinite;transform-box:fill-box;transform-origin:center}
+.pin .ring{fill:none!important;stroke:var(--sky);stroke-width:1;opacity:.5;animation:ring 2.4s infinite;transform-box:fill-box;transform-origin:center}
 @keyframes ring{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.9);opacity:0}}
 .map-legend{display:flex;gap:16px;align-items:center;padding:6px 18px 16px;color:var(--muted);font-size:12px;flex-wrap:wrap}
 .map-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
@@ -100,6 +100,7 @@ input,select,textarea{font:inherit;color:inherit}
 .search{margin-left:auto;background:var(--panel-2);border:1px solid var(--line-2);border-radius:99px;padding:6px 12px;font-size:12px;min-width:0;width:150px;outline:none}
 .search:focus{border-color:var(--blue)}
 .leads{overflow-y:auto;flex:1}
+.leads-more{padding:14px 18px;text-align:center;color:var(--muted);font-size:12px}
 .lead{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);width:100%;text-align:left;transition:background .12s}
 .lead:hover{background:var(--panel-2)}
 .lead .info{flex:1;min-width:0}
@@ -467,7 +468,7 @@ input,select,textarea{font:inherit;color:inherit}
       <!-- ============ MAPPA ============ -->
       <section class="view active" id="view-mappa">
         <div class="kpis">
-          <div class="kpi"><span>Incarichi disponibili</span><b id="kTot">0</b><em><span id="kNew">+14</span> nelle ultime 24h</em></div>
+          <div class="kpi"><span>Incarichi disponibili</span><b id="kTot">0</b><em><span id="kNew">+186</span> nelle ultime 24h</em></div>
           <div class="kpi"><span>Urgenti (vendita &lt; 60 gg)</span><b id="kUrg">0</b><em>alta priorità</em></div>
           <div class="kpi"><span>Mai fatto una valutazione</span><b id="kMai">0</b><em>nessun’altra agenzia</em></div>
           <div class="kpi"><span>Appuntamenti questa settimana</span><b id="kApp">0</b><em id="kAppSub">in agenda</em></div>
@@ -578,7 +579,7 @@ const R = rng(20261002);
 const pick = a => a[Math.floor(R()*a.length)];
 const between = (a,b) => a + Math.floor(R()*(b-a+1));
 
-const COUNTS = {"Piemonte":17,"Valle d'Aosta":3,"Liguria":9,"Lombardia":28,"Trentino-Alto Adige":6,"Veneto":19,"Friuli-Venezia Giulia":7,"Emilia-Romagna":21,"Marche":8,"Toscana":18,"Umbria":5,"Lazio":24,"Campania":20,"Abruzzo":7,"Molise":2,"Puglia":15,"Basilicata":4,"Calabria":9,"Sicilia":16,"Sardegna":8};
+const COUNTS = {"Piemonte":1284,"Valle d'Aosta":52,"Liguria":471,"Lombardia":3007,"Trentino-Alto Adige":333,"Veneto":1460,"Friuli-Venezia Giulia":372,"Emilia-Romagna":1355,"Marche":458,"Toscana":1124,"Umbria":267,"Lazio":1786,"Campania":1707,"Abruzzo":398,"Molise":90,"Puglia":1210,"Basilicata":164,"Calabria":585,"Sicilia":1445,"Sardegna":500};
 const CITIES = {
   "Piemonte":["Torino","Novara","Asti","Cuneo","Alessandria","Moncalieri"],
   "Valle d'Aosta":["Aosta","Saint-Vincent","Courmayeur"],
@@ -703,7 +704,13 @@ const NS = "http://www.w3.org/2000/svg";
 const svg = $("#map");
 svg.setAttribute("viewBox", `-10 -10 ${MAP.w+20} ${MAP.h+20}`);
 // Aggiustamenti posizione del badge per le regioni piccole/strette
-const NUDGE = {"Valle d'Aosta":[-6,-8],"Liguria":[8,6],"Molise":[4,-2],"Umbria":[0,2],"Friuli-Venezia Giulia":[2,4],"Campania":[-4,4],"Basilicata":[-2,0],"Calabria":[-6,10],"Lombardia":[0,4],"Emilia-Romagna":[0,-4],"Lazio":[-8,4],"Piemonte":[4,6]};
+const fmt = n => n.toLocaleString("it-IT");
+function pinHTML(c, delay){
+  const s = fmt(c), w = 10 + s.length*6.3, h = 19;
+  const box = `x="${-w/2}" y="${-h/2}" width="${w}" height="${h}" rx="${h/2}"`;
+  return `<g class="pin-in"><g class="pin-pop" style="animation-delay:${delay}ms"><rect class="ring" ${box}></rect><rect ${box}></rect><text>${s}</text></g></g>`;
+}
+const NUDGE = {"Valle d'Aosta":[-6,-8],"Liguria":[8,6],"Molise":[4,-2],"Umbria":[0,2],"Friuli-Venezia Giulia":[2,4],"Campania":[-4,4],"Basilicata":[4,10],"Calabria":[-6,10],"Lombardia":[0,4],"Emilia-Romagna":[0,-4],"Lazio":[-8,4],"Piemonte":[4,6]};
 let selReg = null, filter = "all", query = "";
 const maxC = Math.max(...Object.values(COUNTS));
 const gRegs = document.createElementNS(NS,"g"), gPins = document.createElementNS(NS,"g");
@@ -720,8 +727,7 @@ MAP.r.forEach((reg, i) => {
   const g = document.createElementNS(NS,"g");
   g.setAttribute("class","pin"); g.dataset.reg = reg.n;
   g.setAttribute("transform", `translate(${reg.x+dx},${reg.y+dy})`);
-  const r = c >= 10 ? 13 : 11;
-  g.innerHTML = `<g class="pin-in"><g class="pin-pop" style="animation-delay:${400+i*45}ms"><circle class="ring" r="${r}"></circle><circle r="${r}"></circle><text>${c}</text></g></g>`;
+  g.innerHTML = pinHTML(c, 400+i*45);
   gPins.append(g);
 });
 const tip = $("#tip");
@@ -729,7 +735,7 @@ svg.addEventListener("mousemove", e => {
   const t = e.target.closest("[data-reg]");
   if (!t) { tip.style.opacity = 0; return; }
   const box = $("#mapBox").getBoundingClientRect();
-  tip.textContent = `${t.dataset.reg} · ${LEADS[t.dataset.reg].length} incarichi`;
+  tip.textContent = `${t.dataset.reg} · ${fmt(LEADS[t.dataset.reg].length)} incarichi`;
   tip.style.left = (e.clientX - box.left) + "px"; tip.style.top = (e.clientY - box.top) + "px"; tip.style.opacity = 1;
 });
 svg.addEventListener("mouseleave", () => tip.style.opacity = 0);
@@ -749,7 +755,7 @@ function selectRegion(name){
 }
 function renderRegChips(){
   $("#regChips").innerHTML = Object.keys(LEADS).sort((a,b) => LEADS[b].length - LEADS[a].length)
-    .map(r => `<button class="${r === selReg ? "sel" : ""}" data-r="${esc(r)}">${esc(r)} <b>${LEADS[r].length}</b></button>`).join("");
+    .map(r => `<button class="${r === selReg ? "sel" : ""}" data-r="${esc(r)}">${esc(r)} <b>${fmt(LEADS[r].length)}</b></button>`).join("");
 }
 $("#regChips").addEventListener("click", e => { const b = e.target.closest("[data-r]"); if (b) selectRegion(b.dataset.r); });
 renderRegChips();
@@ -758,14 +764,36 @@ $$(".chip").forEach(c => c.addEventListener("click", () => {
 }));
 $("#search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); renderLeads(); });
 
+let curList = [], shown = 0;
+const PAGE = 40;
 function renderLeads(){
   let list = LEADS[selReg];
-  $("#regCount").textContent = list.length + " incarichi";
+  $("#regCount").textContent = fmt(list.length) + " incarichi";
   if (filter === "urg") list = list.filter(l => l.urg === 3);
   if (filter === "mai") list = list.filter(l => l.mai);
   if (query) list = list.filter(l => (l.nome+" "+l.cognome+" "+l.city).toLowerCase().includes(query));
-  $("#leads").innerHTML = list.length ? list.map((l, i) => `
-    <button class="lead ${l.fresh ? "fresh" : ""}" data-id="${l.id}" style="animation-delay:${l.fresh ? 0 : Math.min(i*35, 500)}ms">
+  curList = list; shown = 0;
+  $("#leads").scrollTop = 0;
+  $("#leads").innerHTML = list.length ? "" : '<div class="empty" style="padding:32px">Nessun risultato con questi filtri.</div>';
+  moreLeads();
+}
+function moreLeads(){
+  if (shown >= curList.length) return;
+  const first = shown === 0;
+  const slice = curList.slice(shown, shown + PAGE);
+  $("#leadsMore")?.remove();
+  $("#leads").insertAdjacentHTML("beforeend", slice.map((l, i) => leadRow(l, first ? i : -1)).join(""));
+  shown += slice.length;
+  if (shown < curList.length) $("#leads").insertAdjacentHTML("beforeend",
+    `<div class="leads-more" id="leadsMore">Mostrati ${fmt(shown)} di ${fmt(curList.length)} · scorri per vederne altri</div>`);
+}
+$("#leads").addEventListener("scroll", e => {
+  const el = e.currentTarget;
+  if (el.scrollTop + el.clientHeight > el.scrollHeight - 400) moreLeads();
+});
+function leadRow(l, i){
+  return `
+    <button class="lead ${l.fresh ? "fresh" : ""}" data-id="${l.id}" style="${i < 0 ? "animation:none" : `animation-delay:${l.fresh ? 0 : Math.min(i*35, 500)}ms`}">
       <div class="av" style="background:${l.color}">${initials(l)}</div>
       <div class="info">
         <div class="nm">${esc(l.nome)} ${esc(l.cognome)} ${l.nuovo ? '<span class="new-dot" title="Nuovo"></span>' : ""}</div>
@@ -775,7 +803,7 @@ function renderLeads(){
         ${urgTag(l)}
         ${l.unlocked ? `<span class="tag green">${UNLOCK} Sbloccato</span>` : `<span class="tag gray">${LOCK} Bloccato</span>`}
       </div>
-    </button>`).join("") : '<div class="empty" style="padding:32px">Nessun risultato con questi filtri.</div>';
+    </button>`;
 }
 $("#leads").addEventListener("click", e => { const b = e.target.closest(".lead"); if (b) openLead(+b.dataset.id); });
 
@@ -1108,12 +1136,12 @@ $("#acqTable").innerHTML = `<thead><tr><th>Proprietario</th><th>Immobile</th><th
 
 /* ---------------- Counters ---------------- */
 function countTo(el, to){
-  const from = parseInt(el.textContent, 10) || 0;
+  const from = parseInt(el.textContent.replace(/\D/g, ""), 10) || 0;
   if (from === to) return;
   cancelAnimationFrame(el._raf);
   const t0 = performance.now(), D = from ? 600 : 1100;
   const step = t => { const p = Math.min(1, (t-t0)/D), e = 1 - Math.pow(1-p, 3);
-    el.textContent = Math.round(from + (to-from)*e); if (p < 1) el._raf = requestAnimationFrame(step); };
+    el.textContent = fmt(Math.round(from + (to-from)*e)); if (p < 1) el._raf = requestAnimationFrame(step); };
   el._raf = requestAnimationFrame(step);
   if (from) { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
 }
@@ -1132,7 +1160,7 @@ $("#credits").textContent = 0; $("#mCredits").textContent = 0;
 updateCounters();
 
 /* ---------------- Nuovi incarichi in tempo reale (finti) ---------------- */
-let spawned = 0, newToday = 14;
+let spawned = 0, newToday = 186;
 function flash(el){ el.classList.remove("flash"); void el.getBoundingClientRect(); el.classList.add("flash"); }
 function spawnLead(){
   const regs = Object.keys(COUNTS), tot = regs.reduce((s,r) => s + COUNTS[r], 0);
@@ -1141,7 +1169,7 @@ function spawnLead(){
   const l = makeLead(reg, 0); l.fresh = true;
   LEADS[reg].unshift(l); ALL.push(l);
   $$(".pin,.reg").filter(el => el.dataset.reg === reg).forEach(el => {
-    flash(el); const t = el.querySelector("text"); if (t) t.textContent = LEADS[reg].length;
+    flash(el); const pp = el.querySelector(".pin-in"); if (pp) el.innerHTML = pinHTML(LEADS[reg].length, 0);
   });
   if (selReg === reg) renderLeads();
   renderRegChips();
