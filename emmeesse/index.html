@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emmeesse Immobiliare – Compravendita e affitti</title>
+<meta name="description" content="Emmeesse Immobiliare: vendiamo e affittiamo case con professionalità. Valutazione gratuita del tuo immobile, consulenza su mutui, pratiche e accompagnamento fino al rogito.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf8f4; --surface:#ffffff; --ink:#1b2430; --muted:#5d6876;
+  --brand:#14324f; --brand-2:#1f4a73; --gold:#c49a52; --gold-2:#e2c48d; --soft:#f1ece2; --line:#e6dfd1;
+  --radius:18px; --max:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Playfair Display",Georgia,serif;font-weight:700;line-height:1.15;letter-spacing:-.01em}
+a{color:inherit}
+img,svg{display:block;max-width:100%}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
+.eyebrow{display:inline-block;font-size:.78rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 26px;border-radius:999px;font-weight:600;text-decoration:none;border:0;cursor:pointer;font:inherit;font-weight:600;transition:transform .2s,box-shadow .2s,background .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-gold{background:var(--gold);color:#fff;box-shadow:0 10px 24px -10px rgba(196,154,82,.7)}
+.btn-gold:hover{background:#b0873f}
+.btn-line{border:1.5px solid rgba(255,255,255,.6);color:#fff}
+.btn-line:hover{background:rgba(255,255,255,.1)}
+.btn-dark{background:var(--brand);color:#fff}
+.btn-dark:hover{background:var(--brand-2)}
+
+/* Header */
+header{position:sticky;top:0;z-index:50;background:rgba(250,248,244,.92);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
+header.scrolled{border-color:var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo-mark{width:44px;height:44px;border-radius:12px;background:var(--brand);color:var(--gold-2);display:grid;place-items:center;font-family:"Playfair Display",serif;font-weight:700;font-size:1.15rem;letter-spacing:.02em}
+.logo b{display:block;font-family:"Playfair Display",serif;font-size:1.25rem;color:var(--brand);line-height:1.1}
+.logo small{display:block;font-size:.66rem;font-weight:600;letter-spacing:.22em;color:var(--gold);text-transform:uppercase}
+.menu{display:flex;align-items:center;gap:28px;list-style:none}
+.menu a{text-decoration:none;font-weight:500;font-size:.95rem}
+.menu a:not(.btn):hover{color:var(--gold)}
+.menu .btn{padding:10px 20px}
+.burger{display:none;background:none;border:0;width:44px;height:44px;cursor:pointer}
+.burger span{display:block;width:24px;height:2px;background:var(--ink);margin:5px auto;transition:.3s}
+
+/* Hero */
+.hero{position:relative;color:#fff;background:linear-gradient(135deg,#0e2438 0%,#14324f 55%,#1f4a73 100%);overflow:hidden}
+.hero::after{content:"";position:absolute;inset:auto -10% -40% auto;width:620px;height:620px;border-radius:50%;background:radial-gradient(circle,rgba(196,154,82,.28),transparent 65%)}
+.hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding:90px 0 110px}
+.hero h1{font-size:clamp(2.2rem,5vw,3.6rem);margin-bottom:20px}
+.hero h1 em{font-style:normal;color:var(--gold-2)}
+.hero p.lead{font-size:1.12rem;color:rgba(255,255,255,.82);max-width:540px;margin-bottom:32px}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:14px}
+.hero-art{position:relative}
+.hero-art svg{width:100%;height:auto;filter:drop-shadow(0 30px 40px rgba(0,0,0,.35))}
+.badge-float{position:absolute;left:-10px;bottom:24px;background:#fff;color:var(--ink);border-radius:14px;padding:14px 18px;box-shadow:0 20px 40px -18px rgba(0,0,0,.45);display:flex;gap:12px;align-items:center;font-size:.9rem}
+.badge-float strong{display:block;font-size:1.05rem;color:var(--brand)}
+.badge-dot{width:38px;height:38px;border-radius:50%;background:var(--soft);display:grid;place-items:center;color:var(--gold);font-size:1.2rem}
+
+/* Search bar */
+.search{position:relative;z-index:2;margin-top:-46px}
+.search form{background:var(--surface);border-radius:var(--radius);box-shadow:0 24px 50px -24px rgba(20,50,79,.35);padding:18px;display:grid;grid-template-columns:repeat(4,1fr) auto;gap:12px;align-items:end}
+.search label{display:block;font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.search select,.search input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
+.search .btn{height:48px}
+
+section{padding:96px 0}
+.sec-head{max-width:640px;margin-bottom:46px}
+.sec-head h2{font-size:clamp(1.8rem,3.4vw,2.6rem);margin-bottom:12px;color:var(--brand)}
+.sec-head p{color:var(--muted)}
+.center{text-align:center;margin-left:auto;margin-right:auto}
+
+/* Listings */
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px}
+.chip{border:1px solid var(--line);background:var(--surface);padding:9px 18px;border-radius:999px;font:inherit;font-size:.9rem;font-weight:500;cursor:pointer;transition:.2s}
+.chip.active,.chip:hover{background:var(--brand);border-color:var(--brand);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.card{background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);transition:transform .25s,box-shadow .25s;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-6px);box-shadow:0 26px 50px -28px rgba(20,50,79,.45)}
+.card-img{position:relative;aspect-ratio:4/3}
+.card-img svg{width:100%;height:100%}
+.tag{position:absolute;top:14px;left:14px;background:var(--gold);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border-radius:999px}
+.tag.rent{background:var(--brand-2)}
+.card-body{padding:22px;display:flex;flex-direction:column;flex:1}
+.price{font-family:"Playfair Display",serif;font-size:1.5rem;color:var(--brand);font-weight:700}
+.card h3{font-family:Inter,sans-serif;font-size:1.05rem;font-weight:600;margin:6px 0 4px}
+.place{color:var(--muted);font-size:.9rem;margin-bottom:16px}
+.specs{display:flex;gap:16px;border-top:1px solid var(--line);padding-top:14px;margin-top:auto;font-size:.88rem;color:var(--muted)}
+.specs span{display:flex;align-items:center;gap:6px}
+.card a.more{margin-top:14px;font-weight:600;color:var(--gold);text-decoration:none;font-size:.92rem}
+.empty{display:none;text-align:center;color:var(--muted);padding:30px}
+
+/* Services */
+.services{background:var(--surface)}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.svc{padding:30px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--line)}
+.svc .ico{width:52px;height:52px;border-radius:14px;background:var(--brand);color:var(--gold-2);display:grid;place-items:center;margin-bottom:18px}
+.svc h3{font-family:Inter,sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:8px;color:var(--brand)}
+.svc p{color:var(--muted);font-size:.95rem}
+
+/* Valuation */
+.valuta{background:linear-gradient(135deg,#14324f,#0e2438);color:#fff;border-radius:28px;padding:56px;display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+.valuta h2{font-size:clamp(1.8rem,3.4vw,2.5rem);margin-bottom:14px}
+.valuta p{color:rgba(255,255,255,.8)}
+.valuta ul{list-style:none;margin-top:22px;display:grid;gap:10px}
+.valuta li{display:flex;gap:10px;align-items:flex-start}
+.valuta li::before{content:"✓";color:var(--gold-2);font-weight:700}
+.form{background:#fff;color:var(--ink);border-radius:20px;padding:28px;display:grid;gap:12px}
+.form .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form label{font-size:.78rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
+.form input,.form select,.form textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
+.form textarea{min-height:90px;resize:vertical}
+.form .privacy{font-size:.78rem;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.form .privacy input{width:auto;margin-top:3px}
+.form-ok{display:none;background:#e9f6ee;color:#1d6b3a;padding:14px;border-radius:10px;font-weight:600}
+
+/* Why us */
+.why{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+.stat b{display:block;font-family:"Playfair Display",serif;font-size:2.4rem;color:var(--gold)}
+.stat span{color:var(--muted);font-size:.92rem}
+.steps{list-style:none;display:grid;gap:18px;counter-reset:s}
+.steps li{display:flex;gap:16px;counter-increment:s}
+.steps li::before{content:counter(s);flex:0 0 38px;height:38px;border-radius:50%;background:var(--soft);color:var(--brand);font-weight:700;display:grid;place-items:center}
+.steps h3{font-family:Inter,sans-serif;font-size:1rem;font-weight:700;color:var(--brand)}
+.steps p{color:var(--muted);font-size:.93rem}
+
+/* Testimonials */
+.testi{background:var(--soft)}
+.t-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.t{background:var(--surface);border-radius:var(--radius);padding:28px;border:1px solid var(--line)}
+.t .stars{color:var(--gold);letter-spacing:2px;margin-bottom:12px}
+.t p{font-size:.97rem;margin-bottom:16px}
+.t cite{font-style:normal;font-weight:600;color:var(--brand);font-size:.9rem}
+
+/* Contact */
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.c-list{list-style:none;display:grid;gap:18px;margin-top:10px}
+.c-list li{display:flex;gap:14px;align-items:flex-start}
+.c-list .ico{flex:0 0 46px;height:46px;border-radius:12px;background:var(--brand);color:var(--gold-2);display:grid;place-items:center}
+.c-list b{display:block;color:var(--brand)}
+.c-list a{text-decoration:none}
+.c-list span{color:var(--muted)}
+.map{border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);min-height:340px;background:var(--surface)}
+.map iframe{width:100%;height:100%;min-height:340px;border:0}
+
+footer{background:#0e2438;color:rgba(255,255,255,.75);padding:56px 0 30px;font-size:.92rem}
+.f-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:36px}
+footer .logo b{color:#fff}
+footer h4{color:#fff;font-size:.95rem;margin-bottom:12px}
+footer ul{list-style:none;display:grid;gap:8px}
+footer a{text-decoration:none}
+footer a:hover{color:var(--gold-2)}
+.f-bottom{border-top:1px solid rgba(255,255,255,.12);padding-top:22px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:.82rem}
+
+.wa{position:fixed;right:20px;bottom:20px;z-index:60;width:58px;height:58px;border-radius:50%;background:#25d366;color:#fff;display:grid;place-items:center;box-shadow:0 14px 30px -10px rgba(0,0,0,.4);transition:transform .2s}
+.wa:hover{transform:scale(1.08)}
+
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:980px){
+  .hero-grid,.valuta,.why,.contact{grid-template-columns:1fr}
+  .hero-art{max-width:460px}
+  .grid,.svc-grid,.t-grid{grid-template-columns:1fr 1fr}
+  .search form{grid-template-columns:1fr 1fr}
+  .search .btn{grid-column:1/-1}
+  .f-grid{grid-template-columns:1fr 1fr}
+  .f-grid > div:first-child{grid-column:1/-1}
+}
+@media (max-width:760px){
+  .burger{display:block}
+  .menu{position:fixed;top:72px;left:0;right:0;flex-direction:column;gap:0;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 20px 20px;transform:translateY(-130%);transition:transform .35s;align-items:stretch}
+  .menu.open{transform:none}
+  .menu li a{display:block;padding:12px 0}
+  .menu .btn{margin-top:8px}
+  section{padding:72px 0}
+  .hero-grid{padding:60px 0 100px}
+  .valuta{padding:32px 22px}
+  .form .row{grid-template-columns:1fr}
+}
+@media (max-width:600px){
+  .grid,.svc-grid,.t-grid,.stats,.search form,.f-grid{grid-template-columns:1fr}
+  .badge-float{left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!--
+  ============================================================
+  DATI DELL'AGENZIA — da sostituire con quelli reali del cliente.
+  Cerca "[DA COMPLETARE]" nel file per trovarli tutti.
+  ============================================================
+-->
+
+<header id="top">
+  <div class="wrap nav">
+    <a href="#" class="logo" aria-label="Emmeesse Immobiliare – home">
+      <span class="logo-mark">MS</span>
+      <span><b>Emmeesse</b><small>Immobiliare</small></span>
+    </a>
+    <button class="burger" aria-label="Apri menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <ul class="menu">
+      <li><a href="#immobili">Immobili</a></li>
+      <li><a href="#servizi">Servizi</a></li>
+      <li><a href="#chi-siamo">Chi siamo</a></li>
+      <li><a href="#contatti">Contatti</a></li>
+      <li><a href="#valutazione" class="btn btn-gold">Valuta casa</a></li>
+    </ul>
+  </div>
+</header>
+
+<main>
+<section class="hero" style="padding:0">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Agenzia immobiliare</span>
+      <h1>La casa giusta,<br>al <em>prezzo giusto</em>.</h1>
+      <p class="lead">Vendiamo, acquistiamo e affittiamo immobili seguendoti passo dopo passo: dalla valutazione gratuita fino alla firma dal notaio. Senza sorprese.</p>
+      <div class="hero-ctas">
+        <a href="#immobili" class="btn btn-gold">Scopri gli immobili</a>
+        <a href="#valutazione" class="btn btn-line">Quanto vale la mia casa?</a>
+      </div>
+    </div>
+    <div class="hero-art">
+      <svg viewBox="0 0 480 400" role="img" aria-label="Illustrazione di una casa moderna">
+        <defs>
+          <linearGradient id="hw" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ece5d6"/></linearGradient>
+          <linearGradient id="hg" x1="0" x2="1"><stop offset="0" stop-color="#e2c48d"/><stop offset="1" stop-color="#c49a52"/></linearGradient>
+          <linearGradient id="hwin" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffe7b0"/><stop offset="1" stop-color="#f3c46e"/></linearGradient>
+        </defs>
+        <ellipse cx="240" cy="372" rx="210" ry="18" fill="rgba(0,0,0,.25)"/>
+        <rect x="60" y="170" width="230" height="200" rx="6" fill="url(#hw)"/>
+        <polygon points="40,180 175,80 310,180" fill="#1f4a73"/>
+        <rect x="290" y="210" width="140" height="160" rx="6" fill="#f6f1e7"/>
+        <rect x="280" y="196" width="160" height="18" rx="4" fill="url(#hg)"/>
+        <rect x="90" y="215" width="70" height="60" rx="4" fill="url(#hwin)"/>
+        <rect x="190" y="215" width="70" height="60" rx="4" fill="url(#hwin)"/>
+        <rect x="125" y="295" width="50" height="75" rx="4" fill="#14324f"/>
+        <circle cx="165" cy="335" r="3" fill="#e2c48d"/>
+        <rect x="310" y="235" width="100" height="70" rx="4" fill="url(#hwin)"/>
+        <line x1="360" y1="235" x2="360" y2="305" stroke="#f6f1e7" stroke-width="4"/>
+        <rect x="310" y="320" width="100" height="50" rx="4" fill="#d9cfbd"/>
+        <rect x="150" y="110" width="30" height="50" fill="#14324f"/>
+        <circle cx="430" cy="90" r="34" fill="url(#hg)" opacity=".9"/>
+        <g fill="#3f7a55"><circle cx="40" cy="330" r="26"/><circle cx="62" cy="345" r="20"/></g>
+        <rect x="36" y="345" width="6" height="25" fill="#5b4632"/>
+      </svg>
+      <div class="badge-float">
+        <span class="badge-dot">★</span>
+        <span><strong>Valutazione gratuita</strong>risposta entro 24 ore</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap search">
+  <form id="searchForm" aria-label="Cerca immobili">
+    <div>
+      <label for="s-contract">Contratto</label>
+      <select id="s-contract"><option value="all">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></select>
+    </div>
+    <div>
+      <label for="s-type">Tipologia</label>
+      <select id="s-type"><option value="all">Tutte</option><option value="appartamento">Appartamento</option><option value="villa">Villa / Casa indipendente</option><option value="attico">Attico</option><option value="commerciale">Commerciale</option></select>
+    </div>
+    <div>
+      <label for="s-price">Prezzo massimo</label>
+      <select id="s-price"><option value="0">Nessun limite</option><option value="150000">150.000 €</option><option value="250000">250.000 €</option><option value="400000">400.000 €</option></select>
+    </div>
+    <div>
+      <label for="s-rooms">Locali minimi</label>
+      <select id="s-rooms"><option value="0">Qualsiasi</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select>
+    </div>
+    <button class="btn btn-dark" type="submit">Cerca</button>
+  </form>
+</div>
+
+<section id="immobili">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">In evidenza</span>
+      <h2>Immobili selezionati per te</h2>
+      <p>Ogni immobile è visitato, fotografato e verificato dai nostri agenti prima di essere proposto.</p>
+    </div>
+    <div class="filters" role="group" aria-label="Filtra per contratto">
+      <button class="chip active" data-f="all">Tutti</button>
+      <button class="chip" data-f="vendita">In vendita</button>
+      <button class="chip" data-f="affitto">In affitto</button>
+    </div>
+    <div class="grid" id="listings"></div>
+    <p class="empty" id="empty">Nessun immobile corrisponde alla ricerca. <a href="#contatti">Scrivici</a>: ti avvisiamo appena arriva quello giusto.</p>
+  </div>
+</section>
+
+<section class="services" id="servizi">
+  <div class="wrap">
+    <div class="sec-head center reveal" style="text-align:center">
+      <span class="eyebrow">Servizi</span>
+      <h2>Un unico referente, dall'inizio alla fine</h2>
+      <p>Ci occupiamo di tutto quello che serve per vendere, comprare o affittare con tranquillità.</p>
+    </div>
+    <div class="svc-grid">
+      <div class="svc reveal"><div class="ico"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div><h3>Vendita</h3><p>Valutazione accurata, servizio fotografico, pubblicazione sui principali portali e selezione degli acquirenti.</p></div>
+      <div class="svc reveal"><div class="ico"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><h3>Ricerca e acquisto</h3><p>Ascoltiamo le tue esigenze e ti proponiamo solo immobili in linea con budget, zona e stile di vita.</p></div>
+      <div class="svc reveal"><div class="ico"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg></div><h3>Affitti</h3><p>Selezione degli inquilini, verifica delle garanzie, redazione e registrazione del contratto.</p></div>
+      <div class="svc reveal"><div class="ico"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg></div><h3>Consulenza mutui</h3><p>Ti mettiamo in contatto con consulenti creditizi per trovare il finanziamento più adatto.</p></div>
+      <div class="svc reveal"><div class="ico"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></div><h3>Pratiche e documenti</h3><p>Verifiche urbanistiche e catastali, APE, visure e preparazione di tutto il necessario per il rogito.</p></div>
+      <div class="svc reveal"><div class="ico"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></div><h3>Home staging</h3><p>Valorizziamo l'immobile perché faccia la migliore impressione già dalla prima foto.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="valutazione">
+  <div class="wrap">
+    <div class="valuta reveal">
+      <div>
+        <span class="eyebrow">Stai pensando di vendere?</span>
+        <h2>Scopri quanto vale davvero la tua casa</h2>
+        <p>Un nostro agente analizza l'immobile, le compravendite recenti in zona e la domanda attuale, poi ti consegna una valutazione realistica. Gratis e senza impegno.</p>
+        <ul>
+          <li>Sopralluogo e analisi di mercato inclusi</li>
+          <li>Strategia di prezzo per vendere in tempi rapidi</li>
+          <li>Nessun costo e nessun obbligo di incarico</li>
+        </ul>
+      </div>
+      <form class="form" id="valForm">
+        <div class="row">
+          <div><label for="v-name">Nome e cognome</label><input id="v-name" required autocomplete="name"></div>
+          <div><label for="v-phone">Telefono</label><input id="v-phone" type="tel" required autocomplete="tel"></div>
+        </div>
+        <div><label for="v-email">Email</label><input id="v-email" type="email" autocomplete="email"></div>
+        <div class="row">
+          <div><label for="v-type">Tipo di immobile</label><select id="v-type"><option>Appartamento</option><option>Villa / Casa indipendente</option><option>Attico</option><option>Terreno</option><option>Commerciale</option></select></div>
+          <div><label for="v-mq">Superficie (mq)</label><input id="v-mq" type="number" min="10" inputmode="numeric"></div>
+        </div>
+        <div><label for="v-addr">Indirizzo / zona</label><input id="v-addr" required></div>
+        <label class="privacy"><input type="checkbox" required> Acconsento al trattamento dei dati personali per essere ricontattato.</label>
+        <button class="btn btn-gold" type="submit">Richiedi la valutazione gratuita</button>
+        <div class="form-ok" role="status">Grazie! Ti ricontatteremo entro 24 ore.</div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section id="chi-siamo" style="padding-top:20px">
+  <div class="wrap why">
+    <div class="reveal">
+      <span class="eyebrow">Chi siamo</span>
+      <h2 style="font-size:clamp(1.8rem,3.4vw,2.6rem);color:var(--brand);margin-bottom:16px">Professionisti del territorio, prima ancora che agenti</h2>
+      <p style="color:var(--muted);margin-bottom:28px">Emmeesse Immobiliare nasce dalla passione per la casa e dalla conoscenza profonda del territorio. Ogni cliente ha un unico agente di riferimento, sempre raggiungibile, che lo segue con trasparenza in ogni fase della trattativa.</p>
+      <ol class="steps">
+        <li><div><h3>Ascolto</h3><p>Capiamo obiettivi, tempi e budget prima di proporre qualsiasi soluzione.</p></div></li>
+        <li><div><h3>Strategia</h3><p>Prezzo corretto, marketing mirato e visite solo con persone realmente interessate.</p></div></li>
+        <li><div><h3>Trattativa</h3><p>Gestiamo proposte e controproposte tutelando i tuoi interessi.</p></div></li>
+        <li><div><h3>Rogito</h3><p>Coordiniamo notaio, banca e documenti fino alla consegna delle chiavi.</p></div></li>
+      </ol>
+    </div>
+    <div class="stats reveal">
+      <div class="stat"><b data-count="350">0</b><span>immobili venduti e affittati*</span></div>
+      <div class="stat"><b data-count="98" data-suffix="%">0</b><span>clienti soddisfatti*</span></div>
+      <div class="stat"><b data-count="15" data-suffix="+">0</b><span>anni di esperienza*</span></div>
+      <div class="stat"><b data-count="24" data-suffix="h">0</b><span>tempo di risposta medio</span></div>
+      <p style="grid-column:1/-1;font-size:.75rem;color:var(--muted)">* [DA COMPLETARE] valori indicativi, da aggiornare con i dati reali dell'agenzia.</p>
+    </div>
+  </div>
+</section>
+
+<section class="testi">
+  <div class="wrap">
+    <div class="sec-head reveal" style="text-align:center;margin-left:auto;margin-right:auto">
+      <span class="eyebrow">Dicono di noi</span>
+      <h2>La fiducia dei nostri clienti</h2>
+      <p>[DA COMPLETARE] Inserire recensioni reali (es. da Google o Facebook) con il consenso dei clienti.</p>
+    </div>
+    <div class="t-grid">
+      <div class="t reveal"><div class="stars">★★★★★</div><p>“Professionali e sempre disponibili. Hanno venduto il nostro appartamento in poche settimane, seguendoci fino al rogito.”</p><cite>— Recensione di esempio</cite></div>
+      <div class="t reveal"><div class="stars">★★★★★</div><p>“Cercavamo casa da mesi: ci hanno proposto solo immobili davvero in linea con quello che volevamo.”</p><cite>— Recensione di esempio</cite></div>
+      <div class="t reveal"><div class="stars">★★★★★</div><p>“Valutazione onesta e realistica, comunicazione chiara in ogni passaggio. Li consiglio.”</p><cite>— Recensione di esempio</cite></div>
+    </div>
+  </div>
+</section>
+
+<section id="contatti">
+  <div class="wrap contact">
+    <div class="reveal">
+      <span class="eyebrow">Contatti</span>
+      <h2 style="font-size:clamp(1.8rem,3.4vw,2.6rem);color:var(--brand);margin-bottom:12px">Passa a trovarci o chiamaci</h2>
+      <p style="color:var(--muted)">Siamo a disposizione per visite, valutazioni e qualsiasi domanda sul mercato immobiliare.</p>
+      <ul class="c-list">
+        <li><span class="ico"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><b>Indirizzo</b><span>[DA COMPLETARE] Via ..., Città</span></div></li>
+        <li><span class="ico"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span><div><b>Telefono</b><a href="tel:+390000000000" data-phone>[DA COMPLETARE] +39 000 000 0000</a></div></li>
+        <li><span class="ico"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div><b>Email</b><a href="mailto:info@example.com">[DA COMPLETARE] info@...</a></div></li>
+        <li><span class="ico"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><b>Orari</b><span>Lun–Ven 9:00–13:00 / 15:00–19:00 · Sab su appuntamento</span></div></li>
+        <li><span class="ico"><svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H8v4h2v8h4v-8h3l1-4h-4V8z"/></svg></span><div><b>Facebook</b><a href="https://www.facebook.com/emmeesseIMMOBILIARE/" target="_blank" rel="noopener">facebook.com/emmeesseIMMOBILIARE</a></div></li>
+      </ul>
+    </div>
+    <div class="map reveal">
+      <!-- [DA COMPLETARE] sostituire "q=" con l'indirizzo reale dell'agenzia -->
+      <iframe title="Mappa della sede" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Italia&z=5&output=embed"></iframe>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <a href="#" class="logo" style="margin-bottom:14px"><span class="logo-mark">MS</span><span><b>Emmeesse</b><small>Immobiliare</small></span></a>
+        <p style="max-width:360px">Compravendite, affitti e consulenza immobiliare con un unico agente di riferimento.</p>
+      </div>
+      <div><h4>Navigazione</h4><ul><li><a href="#immobili">Immobili</a></li><li><a href="#servizi">Servizi</a></li><li><a href="#valutazione">Valutazione gratuita</a></li><li><a href="#contatti">Contatti</a></li></ul></div>
+      <div><h4>Seguici</h4><ul><li><a href="https://www.facebook.com/emmeesseIMMOBILIARE/" target="_blank" rel="noopener">Facebook</a></li></ul></div>
+    </div>
+    <div class="f-bottom">
+      <span>© <span id="year"></span> Emmeesse Immobiliare · P.IVA [DA COMPLETARE]</span>
+      <span>Iscrizione ruolo agenti d'affari in mediazione: [DA COMPLETARE]</span>
+    </div>
+  </div>
+</footer>
+
+<!-- [DA COMPLETARE] numero WhatsApp in formato internazionale senza + (es. 393331234567) -->
+<a class="wa" href="https://wa.me/390000000000" target="_blank" rel="noopener" aria-label="Scrivici su WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.4-.3z"/></svg>
+</a>
+
+<script>
+// ============================================================
+// ANNUNCI — modifica questo elenco per aggiornare gli immobili.
+// [DA COMPLETARE] gli annunci qui sotto sono ESEMPI: sostituirli con quelli reali.
+// Per usare una foto vera aggiungi  foto: "/emmeesse/img/nomefile.jpg"
+// ============================================================
+const IMMOBILI = [
+  { titolo:"Trilocale luminoso con balcone", zona:"Zona centro", contratto:"vendita", tipo:"appartamento", prezzo:189000, mq:85, locali:3, bagni:1, scena:0 },
+  { titolo:"Villa indipendente con giardino", zona:"Zona residenziale", contratto:"vendita", tipo:"villa", prezzo:420000, mq:210, locali:6, bagni:3, scena:1 },
+  { titolo:"Bilocale arredato", zona:"Vicino stazione", contratto:"affitto", tipo:"appartamento", prezzo:650, mq:55, locali:2, bagni:1, scena:2 },
+  { titolo:"Attico con terrazzo panoramico", zona:"Zona collinare", contratto:"vendita", tipo:"attico", prezzo:315000, mq:120, locali:4, bagni:2, scena:3 },
+  { titolo:"Quadrilocale con box auto", zona:"Zona servizi e scuole", contratto:"vendita", tipo:"appartamento", prezzo:245000, mq:110, locali:4, bagni:2, scena:0 },
+  { titolo:"Negozio fronte strada", zona:"Via principale", contratto:"affitto", tipo:"commerciale", prezzo:1200, mq:70, locali:2, bagni:1, scena:4 }
+];
+
+const SCENE = [
+  ["#cfe0ef","#1f4a73","#f6f1e7"],
+  ["#d9ead7","#3f6b4f","#fbf6ec"],
+  ["#f2e3cc","#14324f","#ffffff"],
+  ["#dbe3f3","#c49a52","#f4efe6"],
+  ["#eadfd3","#5b3f2c","#fbf8f2"]
+];
+function art(i){
+  const [sky,roof,wall]=SCENE[i%SCENE.length];
+  return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="400" height="300" fill="${sky}"/>
+    <circle cx="330" cy="70" r="28" fill="#fff" opacity=".7"/>
+    <rect y="235" width="400" height="65" fill="#9bbf8a"/>
+    <rect x="110" y="130" width="180" height="110" fill="${wall}"/>
+    <polygon points="95,135 200,65 305,135" fill="${roof}"/>
+    <rect x="135" y="155" width="40" height="34" rx="3" fill="#f3c46e"/>
+    <rect x="225" y="155" width="40" height="34" rx="3" fill="#f3c46e"/>
+    <rect x="182" y="190" width="36" height="50" rx="3" fill="${roof}"/>
+    <circle cx="60" cy="215" r="24" fill="#5f8d5c"/><rect x="57" y="225" width="6" height="18" fill="#6b4f36"/>
+  </svg>`;
+}
+const fmt=n=>n.toLocaleString("it-IT");
+const ico={
+  mq:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+  loc:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></svg>',
+  bag:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12h16v3a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM6 12V5a2 2 0 0 1 4 0"/></svg>'
+};
+const box=document.getElementById("listings"), empty=document.getElementById("empty");
+function render(list){
+  box.innerHTML=list.map(p=>`
+    <article class="card">
+      <div class="card-img">${p.foto?`<img src="${p.foto}" alt="${p.titolo}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`:art(p.scena)}
+        <span class="tag ${p.contratto==="affitto"?"rent":""}">${p.contratto==="affitto"?"Affitto":"Vendita"}</span></div>
+      <div class="card-body">
+        <div class="price">€ ${fmt(p.prezzo)}${p.contratto==="affitto"?'<small style="font-size:.9rem;font-family:Inter"> /mese</small>':""}</div>
+        <h3>${p.titolo}</h3>
+        <div class="place">${p.zona}</div>
+        <div class="specs"><span>${ico.mq}${p.mq} mq</span><span>${ico.loc}${p.locali} locali</span><span>${ico.bag}${p.bagni} bagn${p.bagni>1?"i":"o"}</span></div>
+        <a class="more" href="#contatti" data-ref="${p.titolo}">Richiedi informazioni →</a>
+      </div>
+    </article>`).join("");
+  empty.style.display=list.length?"none":"block";
+}
+const state={contratto:"all",tipo:"all",prezzo:0,locali:0};
+function apply(){
+  render(IMMOBILI.filter(p=>
+    (state.contratto==="all"||p.contratto===state.contratto)&&
+    (state.tipo==="all"||p.tipo===state.tipo)&&
+    (!state.prezzo||p.contratto==="affitto"||p.prezzo<=state.prezzo)&&
+    p.locali>=state.locali));
+}
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+  document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===c));
+  state.contratto=c.dataset.f; document.getElementById("s-contract").value=c.dataset.f; apply();
+}));
+document.getElementById("searchForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  state.contratto=document.getElementById("s-contract").value;
+  state.tipo=document.getElementById("s-type").value;
+  state.prezzo=+document.getElementById("s-price").value;
+  state.locali=+document.getElementById("s-rooms").value;
+  document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x.dataset.f===state.contratto));
+  apply(); document.getElementById("immobili").scrollIntoView({behavior:"smooth"});
+});
+apply();
+
+// Form valutazione: [DA COMPLETARE] collegare a un servizio di invio (es. Formspree o email dell'agenzia)
+document.getElementById("valForm").addEventListener("submit",e=>{
+  e.preventDefault(); const f=e.target;
+  f.querySelector(".form-ok").style.display="block"; f.querySelector("button").disabled=true;
+});
+
+// Menu mobile
+const burger=document.querySelector(".burger"), menu=document.querySelector(".menu");
+burger.addEventListener("click",()=>{const o=menu.classList.toggle("open");burger.setAttribute("aria-expanded",o)});
+menu.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>{menu.classList.remove("open");burger.setAttribute("aria-expanded",false)}));
+const header=document.querySelector("header");
+addEventListener("scroll",()=>header.classList.toggle("scrolled",scrollY>10),{passive:true});
+
+// Animazioni
+const io=new IntersectionObserver(es=>es.forEach(en=>{
+  if(!en.isIntersecting)return; en.target.classList.add("in"); io.unobserve(en.target);
+  en.target.querySelectorAll("[data-count]").forEach(el=>{
+    const end=+el.dataset.count, suf=el.dataset.suffix||"", t0=performance.now();
+    (function step(t){const k=Math.min(1,(t-t0)/1400);el.textContent=Math.round(end*(1-Math.pow(1-k,3)))+suf;if(k<1)requestAnimationFrame(step)})(t0);
+  });
+}),{threshold:.15});
+document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+document.getElementById("year").textContent=new Date().getFullYear();
+</script>
+</body>
+</html>
