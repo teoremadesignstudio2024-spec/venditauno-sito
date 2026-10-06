@@ -1,4 +1,5 @@
 import usersData from "./academy-users.json";
+import { DASH_PATH, handleDashboard } from "./dashboard.js";
 
 const MODULES = [
   {
@@ -276,6 +277,16 @@ export default {
       return new Response(await academyPage(username, env, request), {
         headers: { "Content-Type": "text/html;charset=UTF-8" },
       });
+    }
+
+    // Dashboard fatturato del giorno (accetta anche /dashboardvenditatopù digitato per errore)
+    let decodedPath = url.pathname;
+    try { decodedPath = decodeURIComponent(url.pathname); } catch (e) {}
+    if (decodedPath.startsWith(`${DASH_PATH}ù`)) {
+      return Response.redirect(`${url.origin}${DASH_PATH}`, 302);
+    }
+    if (url.pathname === DASH_PATH || url.pathname.startsWith(`${DASH_PATH}/`)) {
+      return handleDashboard(request, env, url);
     }
 
     // La demo del gestionale cambia spesso: niente cache, così si vede sempre l'ultima versione.
