@@ -1,5 +1,6 @@
 // Dashboard "Fatturato del giorno" per la TV dell'ufficio.
-// Pagina: /dashboardvenditatop  (sulla TV mostra il totale, dal PC si aggiunge con il tasto "+")
+// Pagine: /dashboardvenditatop    = PC, per inserire il fatturato
+//         /dashboardvenditatop/tv = TV, mostra il totale che arriva in tempo reale
 // I dati stanno nel KV ACADEMY_PROGRESS con chiave "fatturato:AAAA-MM-GG" (giorno di Roma).
 
 export const DASH_PATH = "/dashboardvenditatop";
@@ -75,7 +76,7 @@ const BASE_HEAD = `<meta charset="utf-8">
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" href="/assets/img/logo.png">`;
 
-function loginPage(error) {
+function loginPage(error, tv = false) {
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -92,7 +93,7 @@ ${BASE_HEAD}
 </style>
 </head>
 <body>
-<form method="POST" action="${DASH_PATH}/login">
+<form method="POST" action="${DASH_PATH}/login${tv ? "?tv=1" : ""}">
   <h1>Fatturato del giorno</h1>
   ${error ? `<p class="err">${error}</p>` : ""}
   <input type="password" name="password" placeholder="Password" required autofocus autocomplete="current-password">
@@ -102,12 +103,13 @@ ${BASE_HEAD}
 </html>`;
 }
 
-function dashboardPage() {
+// tv = true: solo visualizzazione (per la TV). tv = false: pagina del PC per inserire.
+function dashboardPage(tv) {
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
 ${BASE_HEAD}
-<title>Fatturato del giorno</title>
+<title>Fatturato del giorno${tv ? " — TV" : ""}</title>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
@@ -125,11 +127,8 @@ ${BASE_HEAD}
   .status { position: fixed; bottom: 2vh; left: 3vw; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; }
   .status.offline { opacity: 0.6; }
 
-  /* Pannello per aggiungere: visibile solo muovendo il mouse (sulla TV resta nascosto) */
-  .add-btn { position: fixed; bottom: 3vh; right: 3vw; width: 64px; height: 64px; border-radius: 50%; background: #fff; color: #000; border: 0; font-size: 2.2rem; font-weight: 700; cursor: pointer; opacity: 0; transition: opacity 0.4s; }
-  body.mouse .add-btn { opacity: 1; }
-  .panel { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
-  .panel.open { display: flex; }
+  /* Pannello per aggiungere (solo pagina del PC) */
+  .panel { display: flex; justify-content: center; }
   .card { width: 100%; max-width: 440px; background: #000; border: 1px solid #333; border-radius: 16px; padding: 28px; }
   .card h2 { margin: 0 0 20px; font-size: 1.2rem; letter-spacing: 0.1em; text-transform: uppercase; }
   .card label { display: block; font-size: 0.85rem; opacity: 0.7; margin-bottom: 6px; }
@@ -137,7 +136,6 @@ ${BASE_HEAD}
   .card .row { display: flex; gap: 10px; }
   .card button { flex: 1; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer; border: 1px solid #fff; }
   .btn-main { background: #fff; color: #000; }
-  .btn-ghost { background: #000; color: #fff; border-color: #444 !important; }
   .msg { min-height: 1.3em; font-size: 0.9rem; margin: 4px 0 10px; }
   .list { margin-top: 22px; border-top: 1px solid #222; padding-top: 14px; max-height: 34vh; overflow-y: auto; }
   .list h3 { margin: 0 0 10px; font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
@@ -145,10 +143,18 @@ ${BASE_HEAD}
   .item .amt { font-weight: 700; font-variant-numeric: tabular-nums; }
   .item .note { flex: 1; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .item .time { opacity: 0.5; font-size: 0.8rem; }
+  /* Pagina del PC: pannello sempre aperto sotto il totale */
+  body.pc { overflow: auto; height: auto; }
+  body.pc .screen { height: auto; padding-top: 8vh; padding-bottom: 2vh; }
+  body.pc .label { font-size: clamp(1.2rem, 3vw, 2.2rem); }
+  body.pc .total { font-size: clamp(3rem, 11vw, 8rem); margin: 3vh 0 2vh; }
+  body.pc .panel { padding: 16px 16px 48px; }
+  body.pc .flash { display: none; }
+  .tv-link { display: block; text-align: center; color: #fff; opacity: 0.6; font-size: 0.9rem; margin-top: 18px; }
   .item .del { background: none; border: 0; color: #f87171; cursor: pointer; font-size: 1rem; padding: 4px 6px; flex: none; }
 </style>
 </head>
-<body>
+<body${tv ? "" : ' class="pc"'}>
 <div class="clock" id="clock"></div>
 <div class="screen" id="screen">
   <div class="label">Fatturato del giorno</div>
@@ -159,8 +165,7 @@ ${BASE_HEAD}
 <div class="flash" id="flash"></div>
 <div class="status" id="status">Connessione persa, riprovo…</div>
 
-<button class="add-btn" id="addBtn" title="Aggiungi fatturato">+</button>
-<div class="panel" id="panel">
+${tv ? "" : `<div class="panel" id="panel">
   <form class="card" id="addForm">
     <h2>Aggiungi fatturato</h2>
     <label for="amount">Importo (€)</label>
@@ -169,15 +174,15 @@ ${BASE_HEAD}
     <input id="note" maxlength="80" placeholder="es. Cliente Rossi" autocomplete="off">
     <div class="msg" id="msg"></div>
     <div class="row">
-      <button type="button" class="btn-ghost" id="closeBtn">Chiudi</button>
       <button type="submit" class="btn-main">Aggiungi</button>
     </div>
     <div class="list">
       <h3>Ultimi inserimenti di oggi</h3>
       <div id="items"></div>
     </div>
+    <a class="tv-link" href="${DASH_PATH}/tv" target="_blank">Apri la schermata della TV ↗</a>
   </form>
-</div>
+</div>`}
 
 <script>
 const API = '${DASH_PATH}/api';
@@ -215,7 +220,7 @@ function render(d) {
     animateTo(d.total);
   }
   lastTotal = d.total;
-  $('items').innerHTML = d.entries.length ? d.entries.map((e) =>
+  if ($('items')) $('items').innerHTML = d.entries.length ? d.entries.map((e) =>
     '<div class="item"><span class="amt">' + eur2.format(e.amount) + '</span><span class="note">' + esc(e.note || '') +
     '</span><span class="time">' + new Date(e.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) +
     '</span><button type="button" class="del" data-id="' + e.id + '" title="Elimina">✕</button></div>'
@@ -242,26 +247,12 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 async function keepAwake() { try { await navigator.wakeLock?.request('screen'); } catch (e) {} }
 keepAwake(); document.addEventListener('visibilitychange', () => { if (!document.hidden) keepAwake(); });
 
-// Mostra il "+" solo quando si usa il mouse
-let mouseTimer;
-document.addEventListener('mousemove', () => {
-  document.body.classList.add('mouse');
-  clearTimeout(mouseTimer);
-  mouseTimer = setTimeout(() => document.body.classList.remove('mouse'), 3000);
-});
 // Doppio clic sul totale = schermo intero (comodo sulla TV)
 $('screen').addEventListener('dblclick', () => document.documentElement.requestFullscreen?.());
 
-function openPanel() { $('panel').classList.add('open'); $('msg').textContent = ''; $('amount').focus(); }
-function closePanel() { $('panel').classList.remove('open'); }
-$('addBtn').onclick = openPanel;
-$('closeBtn').onclick = closePanel;
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closePanel();
-  else if (!$('panel').classList.contains('open') && (e.key === '+' || /^[0-9]$/.test(e.key))) {
-    openPanel(); if (/^[0-9]$/.test(e.key)) { $('amount').value = e.key; e.preventDefault(); }
-  }
-});
+// Solo nella pagina del PC: modulo per inserire il fatturato
+if ($('addForm')) {
+$('amount').focus();
 
 function parseAmount(s) {
   s = s.replace(/[€\\s]/g, '');
@@ -291,6 +282,7 @@ $('items').onclick = async (e) => {
   const r = await fetch(API + '?id=' + encodeURIComponent(id), { method: 'DELETE' });
   if (r.ok) render(await r.json());
 };
+}
 </script>
 </body>
 </html>`;
@@ -310,7 +302,7 @@ export async function handleDashboard(request, env, url) {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: DASH_PATH,
+        Location: url.searchParams.get("tv") ? `${DASH_PATH}/tv` : DASH_PATH,
         "Set-Cookie": `${DASH_COOKIE}=${token}; Path=${DASH_PATH}; HttpOnly; Secure; SameSite=Lax; Max-Age=${DASH_SESSION_DAYS * 86400}`,
       },
     });
@@ -352,7 +344,11 @@ export async function handleDashboard(request, env, url) {
   }
 
   if (path === DASH_PATH || path === `${DASH_PATH}/login`) {
-    return html(loggedIn ? dashboardPage() : loginPage(null));
+    return html(loggedIn ? dashboardPage(false) : loginPage(null));
+  }
+
+  if (path === `${DASH_PATH}/tv`) {
+    return html(loggedIn ? dashboardPage(true) : loginPage(null, true));
   }
 
   return new Response(null, { status: 302, headers: { Location: DASH_PATH } });
