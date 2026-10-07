@@ -82,8 +82,31 @@ async function api(path, body) {
     location.hash = "#/accedi";
     throw new Error(data.error || "Accedi per continuare");
   }
-  if (!res.ok) throw new Error(data.error || "Qualcosa è andato storto. Riprova.");
+  if (!res.ok) throw new Error(data.error || serverError(res.status));
   return data;
+}
+function serverError(status) {
+  if (status === 413) return "File troppo grande per il server";
+  if (status >= 500) return `Il server non ce l'ha fatta (errore ${status}). Riprova tra poco.`;
+  return `Qualcosa è andato storto (errore ${status}). Riprova.`;
+}
+// Invia un file così com'è (video, foto o PDF) e restituisce il suo codice. onProgress riceve la percentuale.
+function uploadBlob(blob, type, onProgress) {
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open("POST", "/api/app/upload");
+    x.withCredentials = true;
+    x.setRequestHeader("Content-Type", type);
+    if (onProgress) x.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+    x.onload = () => {
+      let data = {};
+      try { data = JSON.parse(x.responseText); } catch {}
+      if (x.status >= 200 && x.status < 300 && data.id) resolve(data.id);
+      else reject(new Error(data.error || serverError(x.status)));
+    };
+    x.onerror = () => reject(new Error("Connessione persa durante il caricamento. Riprova."));
+    x.send(blob);
+  });
 }
 
 // Ridimensiona una foto nel browser prima di caricarla (JPEG leggero).
@@ -412,12 +435,6 @@ function openStories(groups, gi, si = 0) {
   show();
 }
 
-// Data URL con un tipo video "pulito" (il server accetta mp4, webm, quicktime)
-function videoDataUrl(blob) {
-  const t = /webm/.test(blob.type) ? "video/webm" : /quicktime/.test(blob.type) ? "video/quicktime" : "video/mp4";
-  return new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).replace(/^data:.*?;base64,/, `data:${t};base64,`)); r.onerror = ko; r.readAsDataURL(blob); });
-}
-
 // Fotocamera dentro l'app: registra la storia (fino a 60 secondi), come su Instagram.
 async function recordStory() {
   const MAX = 60;
@@ -502,7 +519,7 @@ async function recordStory() {
   };
   $o("[data-use]").onclick = () => {
     if (!blob) return;
-    if (blob.size > 15 * 1024 * 1024) { toast("Il video è troppo lungo: registrane uno più breve"); return; }
+    if (blob.size > 24 * 1024 * 1024) { toast("Il video è troppo lungo: registrane uno più breve"); return; }
     const file = blob; close(); newStory(file, prev.classList.contains("mirror"));
   };
   start();
@@ -536,12 +553,13 @@ function newStory(preset, mirrored = false) {
     root.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => { bg = b.dataset.c; root.querySelectorAll("[data-c]").forEach((x) => x.classList.toggle("on", x === b)); paint(); }));
     const useFile = async (f) => {
       try {
-        if (f.type.startsWith("video/")) {
-          if (f.size > 15 * 1024 * 1024) throw new Error("Il video è troppo grande (massimo 15 MB, circa 30-60 secondi)");
-          media = { kind: "video", data: await videoDataUrl(f), url: URL.createObjectURL(f) };
+        if (f.type.startsWith("video/") || /\.(mp4|mov|webm|m4v)$/i.test(f.name || "")) {
+          if (f.size > 24 * 1024 * 1024) throw new Error("Il video è troppo grande (massimo 24 MB, circa 1 minuto): registrane uno più breve");
+          const t = /webm/.test(f.type) ? "video/webm" : /quicktime|\.mov$/i.test(f.type + (f.name || "")) ? "video/quicktime" : "video/mp4";
+          media = { kind: "video", blob: f, type: t, url: URL.createObjectURL(f) };
         } else {
           const data = await resizeImage(f, 1600, 0.82);
-          media = { kind: "image", data, url: data };
+          media = { kind: "image", blob: await (await fetch(data)).blob(), type: "image/jpeg", url: data };
         }
         paint();
       } catch (err) { root.querySelector("#serr2").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
@@ -553,7 +571,8 @@ function newStory(preset, mirrored = false) {
       btn.disabled = true; btn.textContent = media && media.kind === "video" ? "Carico il video…" : "Pubblico…";
       try {
         const body = { text: tx.value.trim(), bg, mirror: !!(media && media.kind === "video" && mirrored) };
-        if (media) body[media.kind] = media.data;
+        if (media) body[media.kind + "Id"] = await uploadBlob(media.blob, media.type, (pc) => { btn.textContent = `${media.kind === "video" ? "Carico il video" : "Carico la foto"}… ${pc}%`; });
+        btn.textContent = "Pubblico…";
         const d = await api("/stories", body);
         S.stories.push(d.story);
         closeSheet(); toast("Storia pubblicata");
@@ -1661,12 +1680,11 @@ function admHome() {
   $("#pdfUp").onchange = async (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    if (f.size > 12 * 1024 * 1024) { toast("Il PDF è troppo grande (massimo 12 MB)"); return; }
+    if (f.size > 20 * 1024 * 1024) { toast("Il PDF è troppo grande (massimo 20 MB)"); return; }
     toast("Carico il PDF…");
     try {
-      const dataUrl = await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(f); });
-      const d = await api("/admin/file", { dataUrl });
-      await savePdf(d.url, "PDF di presentazione caricato");
+      const id = await uploadBlob(f, "application/pdf");
+      await savePdf(`/api/app/file/${id}`, "PDF di presentazione caricato");
     } catch (err) { toast(err.message); }
   };
   const pd = $("#pdfDel");

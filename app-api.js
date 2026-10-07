@@ -415,6 +415,9 @@ export async function handleAppApi(request, env) {
   const path = url.pathname.replace(/^\/api\/app/, "") || "/";
   const method = request.method;
 
+  // Caricamento diretto di video/foto delle storie: il file arriva così com'è (niente conversioni, poco calcolo).
+  if (path === "/upload" && method === "POST") return uploadMedia(request, env, kv, url);
+
   // Le richieste che scrivono devono essere JSON: blocca i form inviati da altri siti.
   let body = {};
   if (method === "POST") {
@@ -633,8 +636,10 @@ export async function handleAppApi(request, env) {
     if (!edu && !isAdmin) return fail("Le storie le pubblicano gli educatori", 403);
     const TTL = 2 * 86400;
     let image = "", video = "";
-    if (body.image) { image = await storeImage(kv, body.image, 900 * 1024, TTL); if (!image) return fail("Foto non valida o troppo grande"); }
-    if (body.video) { video = await storeVideo(kv, body.video, TTL); if (!video) return fail("Video non valido o troppo grande (massimo 15 MB)"); }
+    if (/^[a-f0-9]{24}$/.test(body.imageId || "")) image = body.imageId;
+    else if (body.image) { image = await storeImage(kv, body.image, 900 * 1024, TTL); if (!image) return fail("Foto non valida o troppo grande"); }
+    if (/^[a-f0-9]{24}$/.test(body.videoId || "")) video = body.videoId;
+    else if (body.video) { video = await storeVideo(kv, body.video, TTL); if (!video) return fail("Video non valido o troppo grande"); }
     const text = str(body.text, 300);
     if (!image && !video && !text) return fail("Aggiungi una foto, un video o del testo");
     const bg = /^#[0-9a-f]{6}$/i.test(body.bg) ? body.bg : "#2f6bff";
@@ -889,6 +894,38 @@ async function storeImage(kv, dataUrl, maxBytes = MAX_IMG_BYTES, ttl = 0) {
   const id = rid(12);
   await kv.put(`app:img:${id}`, bin, ttl ? { expirationTtl: ttl } : undefined);
   return id;
+}
+
+// File caricati per le storie: il corpo della richiesta è il file stesso (video/mp4, video/webm, video/quicktime, image/jpeg).
+// I tipi video/* e image/* non possono essere inviati da form di altri siti senza permesso, quindi la richiesta è sicura.
+async function uploadMedia(request, env, kv, url) {
+  const uid = await readToken(request, env);
+  const me = uid ? await getJSON(kv, `app:user:${uid}`) : null;
+  if (!me) return fail("Non autenticato", 401);
+  const content = await getContent(kv);
+  if (me.role !== "admin" && !content.educators.some((e) => e.email && e.email === me.email)) return fail("Le storie le pubblicano gli educatori", 403);
+  const type = (request.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase();
+  if (type === "application/pdf") {
+    // PDF di presentazione: solo l'admin, file permanente
+    if (me.role !== "admin") return fail("Solo per amministratori", 403);
+    const pdf = await request.arrayBuffer();
+    if (pdf.byteLength > 20 * 1024 * 1024) return fail("Il PDF è troppo grande (massimo 20 MB)");
+    if (String.fromCharCode(...new Uint8Array(pdf.slice(0, 4))) !== "%PDF") return fail("Il file non è un PDF valido");
+    const pid = rid(12);
+    await kv.put(`app:file:${pid}`, pdf, { metadata: { type } });
+    return json({ id: pid, url: `/api/app/file/${pid}` });
+  }
+  const isVideo = ["video/mp4", "video/webm", "video/quicktime"].includes(type), isImage = type === "image/jpeg";
+  if (!isVideo && !isImage) return fail("Formato non supportato: usa un video (mp4, mov, webm) o una foto", 415);
+  const len = Number(request.headers.get("Content-Length") || 0), max = isVideo ? 24 * 1024 * 1024 : 3 * 1024 * 1024;
+  if (len > max) return fail(isVideo ? "Il video è troppo grande (massimo 24 MB): registrane uno più breve" : "Foto troppo grande");
+  const buf = await request.arrayBuffer();
+  if (!buf.byteLength) return fail("File vuoto");
+  if (buf.byteLength > max) return fail(isVideo ? "Il video è troppo grande (massimo 24 MB): registrane uno più breve" : "Foto troppo grande");
+  const id = rid(12), TTL = 2 * 86400;
+  if (isVideo) await kv.put(`app:file:${id}`, buf, { expirationTtl: TTL, metadata: { type } });
+  else await kv.put(`app:img:${id}`, buf, { expirationTtl: TTL });
+  return json({ id, kind: isVideo ? "video" : "image" });
 }
 
 // Video delle storie (mp4/webm/mov), salvati come file che scadono da soli.
