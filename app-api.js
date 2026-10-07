@@ -601,6 +601,12 @@ export async function handleAppApi(request, env) {
     return json({ content });
   }
 
+  if (path === "/refcode" && method === "POST") {
+    const err = await setRefCode(kv, me, body.code);
+    if (err) return fail(err);
+    return json({ user: publicUser(me), refCode: me.refCode });
+  }
+
   // ----- notifiche -----
   if (path === "/notifications" && method === "GET") {
     const [all, mine, read] = await Promise.all([getJSON(kv, "app:notif:all", []), getJSON(kv, `app:notif:u:${me.id}`, []), kv.get(`app:notifread:${me.id}`)]);
@@ -724,6 +730,14 @@ export async function handleAppApi(request, env) {
       return json({ content });
     }
 
+    if (path === "/admin/refcode" && method === "POST") {
+      const u = await getJSON(kv, `app:user:${str(body.id, 40)}`);
+      if (!u) return fail("Utente non trovato", 404);
+      const err = await setRefCode(kv, u, body.code);
+      if (err) return fail(err);
+      return json({ refCode: u.refCode });
+    }
+
     if (path === "/admin/notify" && method === "POST") {
       const title = str(body.title, 120);
       if (!title) return fail("Scrivi il titolo dell'avviso");
@@ -769,6 +783,19 @@ function linkEducator(content, u, academyId, specialty) {
   if (academyId && content.academies.some((a) => a.id === academyId)) edu.academyId = academyId;
   if (specialty) edu.role = str(specialty, 80);
   return edu;
+}
+
+// Cambia il codice del link invito. Il vecchio codice resta valido, così i link già condivisi funzionano ancora.
+async function setRefCode(kv, u, raw) {
+  const code = str(raw, 30).toUpperCase().replace(/\s+/g, "");
+  if (!/^[A-Z0-9_-]{3,20}$/.test(code)) return "Usa da 3 a 20 caratteri: lettere, numeri, - o _";
+  if (code === u.refCode) return null;
+  const owner = await kv.get(`app:ref:${code}`);
+  if (owner && owner !== u.id) return "Questo link è già usato da un'altra persona";
+  await kv.put(`app:ref:${code}`, u.id);
+  u.refCode = code;
+  await saveUser(kv, u);
+  return null;
 }
 
 // ---------- notifiche ----------

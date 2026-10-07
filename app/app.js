@@ -617,9 +617,9 @@ function drawLive() {
   const hasLive = (e) => lives.some((l) => l.educatorId === e.id);
   const groups = [...S.content.academies, { id: "", name: "Altri educatori" }]
     .map((a) => ({ a, list: eds.filter((e) => (a.id ? e.academyId === a.id : !academyById(e.academyId))) }))
-    .filter((g) => g.list.length)
+    .filter((g) => g.list.length || (g.a.id && (!acad || g.a.id === acad)))
     .map((g) => ({ ...g, list: [...g.list.filter(hasLive), ...g.list.filter((e) => !hasLive(e))] }));
-  const usedAcads = S.content.academies.filter((a) => S.content.educators.some((e) => e.academyId === a.id));
+  const usedAcads = S.content.academies;
   if (!lives.some((l) => l.id === S.selLive)) S.selLive = (lives.find((l) => liveState(l) === "now") || lives.find((l) => liveState(l) === "up") || lives[0] || {}).id;
   const end = new Date(we.getTime() - 1);
   const range = ws.getMonth() === end.getMonth() ? `${ws.getDate()} – ${end.getDate()} ${end.toLocaleDateString("it-IT", { month: "long" })}` : `${ws.getDate()} ${ws.toLocaleDateString("it-IT", { month: "short" })} – ${end.getDate()} ${end.toLocaleDateString("it-IT", { month: "short" })}`;
@@ -634,10 +634,10 @@ function drawLive() {
       <div><h3>${S.week === 0 ? "Live della settimana" : S.week === 1 ? "Settimana prossima" : S.week === -1 ? "Settimana scorsa" : "Live"}</h3><p>${range} · tocca una live</p></div>
       <div class="arr"><button data-w="-1" aria-label="Settimana precedente">${icon("back")}</button><button data-w="1" aria-label="Settimana successiva">${icon("chev")}</button></div>
     </div>
-    ${usedAcads.length > 1 ? `<div class="fchips"><button data-la="" class="${!acad ? "on" : ""}">Tutte</button>${usedAcads.map((a) => `<button data-la="${esc(a.id)}" class="${acad === a.id ? "on" : ""}" style="--c:${accColor(a)}"><i></i>${esc(a.name)}</button>`).join("")}</div>` : ""}
+    ${usedAcads.length ? `<div class="fchips"><button data-la="" class="${!acad ? "on" : ""}">Tutte</button>${usedAcads.map((a) => `<button data-la="${esc(a.id)}" class="${acad === a.id ? "on" : ""}" style="--c:${accColor(a)}"><i></i>${esc(a.name)}</button>`).join("")}</div>` : ""}
     <div class="card cal">
       <div class="r hd"><span></span>${days.map((d) => `<div class="d ${sameDay(d, today) ? "today" : ""}">${DOW[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}</div>
-      ${groups.map((g) => `${groups.length > 1 || !acad ? `<div class="cal-grp" style="--c:${g.a.id ? accColor(g.a) : "#64748b"}"><i></i>${esc(g.a.name)}</div>` : ""}${g.list.map((e) => `<div class="r rw"><a class="ed" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}${esc(e.name.split(" ")[0])}</a>${days.map((d) => {
+      ${groups.map((g) => `<div class="cal-grp" style="--c:${g.a.id ? accColor(g.a) : "#64748b"}"><i></i>${esc(g.a.name)}</div>${g.list.length ? "" : `<div class="cal-none">Nessun educatore ancora</div>`}${g.list.map((e) => `<div class="r rw"><a class="ed" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}${esc(e.name.split(" ")[0])}</a>${days.map((d) => {
         const ll = lives.filter((l) => l.educatorId === e.id && sameDay(new Date(l.start), d));
         return `<div class="cell ${sameDay(d, today) ? "today" : ""}">${ll.slice(0, 2).map(slot).join("")}</div>`;
       }).join("")}</div>`).join("")}`).join("") || `<div class="empty">${acad ? "Nessun educatore in questa accademia." : "Aggiungi gli educatori dal pannello admin."}</div>`}
@@ -1072,6 +1072,7 @@ async function viewEarn() {
       <h2 class="sec" style="margin:0">Il tuo link invito</h2>
       <p class="small muted" style="margin-top:4px">Chi si registra con il tuo link entra nella tua rete. Guadagni una parte su quello che acquista.</p>
       <div class="link">${icon("link", "sm")}<span>${esc(link.replace(/^https?:\/\//, ""))}</span><button id="copy">Copia</button></div>
+      <button class="small" id="myref" style="color:var(--blue-2);font-weight:700;margin-top:8px">Personalizza il link</button>
       ${navigator.share ? `<button class="btn sec block" id="share" style="margin-top:8px">${icon("share", "sm")}Condividi su WhatsApp e altre app</button>` : ""}
     </div>
     <div class="card pad" style="margin-top:12px">
@@ -1093,6 +1094,16 @@ async function viewEarn() {
   const sh = $("#share");
   if (sh) sh.onclick = () => navigator.share({ title: "Vendita Uno", text: "Entra nell'accademia Vendita Uno per agenti immobiliari:", url: link }).catch(() => {});
   $("#pdf").onclick = (e) => downloadPresentation(link, fullName(S.user), e.currentTarget);
+  $("#myref").onclick = () => {
+    formSheet("Personalizza il tuo link",
+      `<p class="small muted" style="margin-bottom:10px">Scegli la parte finale del link, per esempio il tuo nome. Il link vecchio continua a funzionare.</p>` +
+      field("Link", "code", d.refCode, "text", 'required autocapitalize="characters" autocomplete="off" maxlength="20"') +
+      `<p class="small" style="margin:-4px 0 12px;color:var(--blue-3)" id="refPrev"></p>`,
+      async (f) => { S.user = (await api("/refcode", { code: f.code })).user; closeSheet(); toast("Link aggiornato"); viewEarn(); });
+    const inp = $("#sf [name=code]"), pv = $("#refPrev");
+    const show = () => (pv.textContent = `${location.host}/app/?ref=${inp.value.toUpperCase().replace(/\s+/g, "")}`);
+    inp.oninput = show; show();
+  };
 }
 
 // =====================================================================
@@ -1611,12 +1622,23 @@ async function admUsers() {
     if (content) { S.content = content; toast("Creati i profili educatore mancanti"); }
     const draw = (t = "") => {
       const list = users.filter((u) => `${u.name} ${u.email} ${u.city}`.toLowerCase().includes(t.toLowerCase()));
-      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button></p>` : ""}</div>
+      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button><button data-ref="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Modifica</button></p>` : ""}</div>
         <select data-role="${esc(u.id)}">${[["agent", "Agente"], ["educator", "Educatore"], ["admin", "Admin"]].map(([v, n]) => `<option value="${v}" ${u.role === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>`).join("") || `<div class="empty">Nessun utente</div>`;
       $("#ulist").querySelectorAll("[data-mkedu]").forEach((b) => (b.onclick = () => {
         const sel = $(`#ulist [data-role="${b.dataset.mkedu}"]`);
         const u = users.find((x) => x.id === b.dataset.mkedu); u.role = "agent";
         sel.value = "educator"; sel.onchange();
+      }));
+      $("#ulist").querySelectorAll("[data-ref]").forEach((b) => (b.onclick = () => {
+        const u = users.find((x) => x.id === b.dataset.ref);
+        formSheet(`Link invito di ${u.name}`,
+          `<p class="small muted" style="margin-bottom:10px">Scegli la parte finale del link (es. il nome). Il link vecchio continua a funzionare.</p>` +
+          field("Link", "code", u.refCode, "text", 'required autocapitalize="characters" autocomplete="off" maxlength="20"') +
+          `<p class="small" style="margin:-4px 0 12px;color:var(--blue-3)" id="refPrev"></p>`,
+          async (f) => { const d = await api("/admin/refcode", { id: u.id, code: f.code }); u.refCode = d.refCode; closeSheet(); toast("Link invito aggiornato"); draw($("#uq").value); });
+        const inp = $("#sf [name=code]"), pv = $("#refPrev");
+        const show = () => (pv.textContent = `${location.host}/app/?ref=${inp.value.toUpperCase().replace(/\s+/g, "")}`);
+        inp.oninput = show; show();
       }));
       $("#ulist").querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => {
         const l = `${location.origin}/app/?ref=${b.dataset.copy}`;
