@@ -536,7 +536,7 @@ function newStory(preset, mirrored = false) {
     <div class="scolors" id="scolors">${COLORS_S.map((c, i) => `<button type="button" data-c="${c}" class="${i ? "" : "on"}" style="background:${c}"></button>`).join("")}</div>
     <div id="serr2"></div>
     <button class="btn pri block" id="spub" style="margin-top:12px">${icon("plus", "sm")}Pubblica la storia</button>
-    <p class="small muted" style="margin-top:8px;text-align:center">La storia sparisce da sola dopo 24 ore.</p>`, (root) => {
+    <p class="small muted" style="margin-top:8px;text-align:center">Pubblichi come <b style="color:var(--text)">${esc(myEducator() ? myEducator().name : "Vendita Uno")}</b> · sparisce dopo 24 ore.</p>`, (root) => {
     let bg = COLORS_S[0];
     const pv = root.querySelector("#spv"), pt = root.querySelector("#spvt"), tx = root.querySelector("#stext");
     const paint = () => {
@@ -1829,7 +1829,7 @@ function admOverview() {
 function admEducators() {
   const eds = S.content.educators;
   $("#adm").innerHTML = `<button class="btn pri block" id="add">${icon("plus", "sm")}Nuovo educatore</button>
-    <div class="card" style="margin-top:14px">${eds.map((e, i) => `<div class="adm-item">${face(e.name, e.photo)}<div class="grow"><h4>${esc(e.name)}</h4><p>${esc((academyById(e.academyId) || {}).name || "—")}${e.email ? " · " + esc(e.email) : ""}</p></div>${itemActs(i, eds.length)}</div>`).join("") || `<div class="empty">Nessun educatore</div>`}</div>`;
+    <div class="card" style="margin-top:14px">${eds.map((e, i) => `<div class="adm-item">${face(e.name, e.photo)}<div class="grow"><h4>${esc(e.name)}</h4><p>${esc((academyById(e.academyId) || {}).name || "—")}</p><p>${e.email ? `<span style="color:#5ee08f">✓ Account collegato: ${esc(e.email)}</span>` : `<span style="color:var(--warn)">Nessun account collegato: premi ✏️ e scegli chi è</span>`}</p></div>${itemActs(i, eds.length)}</div>`).join("") || `<div class="empty">Nessun educatore</div>`}</div>`;
   $("#adm").querySelectorAll(".adm-item .av,.adm-item .ini").forEach((x) => (x.style.cssText = "width:40px;height:40px;font-size:13px"));
   const edit = async (i) => {
     const e = i >= 0 ? eds[i] : { name: "", academyId: (S.content.academies[0] || {}).id, role: "", bio: "", photo: "", email: "" };
