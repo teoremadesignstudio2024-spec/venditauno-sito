@@ -1,4 +1,5 @@
 import usersData from "./academy-users.json";
+import { handleAppApi } from "./app-api.js";
 
 const MODULES = [
   {
@@ -224,6 +225,20 @@ async function academyPage(username, env, request) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // App Vendita Uno: API e pagine (/app). Niente cache, così ogni aggiornamento si vede subito.
+    if (url.pathname.startsWith("/api/app/")) {
+      return handleAppApi(request, env);
+    }
+    if (url.pathname === "/app-api.js" || url.pathname === "/worker.js") {
+      return new Response("Not found", { status: 404 });
+    }
+    if (url.pathname === "/app" || url.pathname.startsWith("/app/")) {
+      const res = await env.ASSETS.fetch(request);
+      const out = new Response(res.body, res);
+      out.headers.set("Cache-Control", "no-cache");
+      return out;
+    }
 
     if (url.pathname === "/academy" && request.method === "POST") {
       const form = await request.formData();
