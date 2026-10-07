@@ -40,6 +40,29 @@ function ytId(s) {
   return m ? m[1] : "";
 }
 
+// Video: YouTube, Loom, Vimeo, Google Drive o file .mp4 → indirizzo da mostrare dentro l'app.
+function videoSrc(url, autoplay = false) {
+  const u = (url || "").trim();
+  if (!u) return null;
+  const y = ytId(u);
+  if (y) return { kind: "YouTube", src: `https://www.youtube-nocookie.com/embed/${y}?rel=0&modestbranding=1${autoplay ? "&autoplay=1" : ""}` };
+  let m = u.match(/loom\.com\/(?:share|embed)\/([a-f0-9]{32})/i);
+  if (m) return { kind: "Loom", src: `https://www.loom.com/embed/${m[1]}?hideEmbedTopBar=true${autoplay ? "&autoplay=1" : ""}` };
+  m = u.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-f0-9]+))?/i);
+  if (m) return { kind: "Vimeo", src: `https://player.vimeo.com/video/${m[1]}${m[2] ? "?h=" + m[2] + "&" : "?"}title=0&byline=0${autoplay ? "&autoplay=1" : ""}` };
+  m = u.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
+  if (m) return { kind: "Google Drive", src: `https://drive.google.com/file/d/${m[1]}/preview` };
+  if (/^https:\/\/\S+\.(mp4|webm|mov)(\?|$)/i.test(u)) return { kind: "File video", src: u, file: true };
+  return null;
+}
+function playerHtml(url, title = "", autoplay = false) {
+  const v = videoSrc(url, autoplay);
+  if (!v) return `<div class="player"><div class="ph">${icon("play")}Video in arrivo</div></div>`;
+  if (v.file) return `<div class="player"><video src="${esc(v.src)}" controls playsinline ${autoplay ? "autoplay" : ""} style="position:absolute;inset:0;width:100%;height:100%;background:#000"></video></div>`;
+  return `<div class="player"><iframe src="${esc(v.src)}" title="${esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+}
+const lessonVideo = (l) => l.video || l.youtubeId || "";
+
 let toastT;
 function toast(msg) {
   const t = $("#toast");
@@ -372,7 +395,7 @@ function viewHome() {
   const nl = nextLesson(), now = liveNow(), next = nextLives(8);
   const banners = S.content.banners || [];
   const started = S.content.modules.filter((m) => courseStats(m).done && courseStats(m).done < m.lessons.length);
-  const vid = ytId(set.onboardingVideo);
+  const vid = set.onboardingVideo;
   view.innerHTML = `
     <section class="home-hero"><picture><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture></section>
     <div class="home-top">
@@ -486,12 +509,12 @@ function viewLesson([id]) {
   const ls = allLessons(), i = ls.findIndex((l) => l.id === id);
   if (i < 0) { location.hash = "#/accademia"; return; }
   const l = ls[i], prev = ls[i - 1], next = ls[i + 1];
-  const yid = ytId(l.youtubeId);
+  const vurl = lessonVideo(l);
   const draw = () => {
     const done = !!S.progress[l.id];
     view.innerHTML = `
       <div class="les-wrap"><a class="back" href="#/corso/${esc(l.module.id)}">${icon("back", "sm")} ${esc(l.module.title)}</a>
-      <div class="player">${yid ? `<iframe src="https://www.youtube-nocookie.com/embed/${yid}?rel=0&modestbranding=1" title="${esc(l.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : `<div class="ph">${icon("play")}Video in arrivo</div>`}</div>
+      ${playerHtml(vurl, l.title)}
       <div class="small" style="color:var(--blue-3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:16px">${esc(l.module.title)} · lezione ${l.module.lessons.indexOf(S.content.modules[l.mi].lessons.find((x) => x.id === l.id)) + 1} di ${l.module.lessons.length}</div>
       <h1 class="h1" style="font-size:22px;margin-top:4px">${esc(l.title)}</h1>
       ${l.desc ? `<p class="lead-tx" style="line-height:1.55;white-space:pre-wrap">${esc(l.desc)}</p>` : ""}
@@ -607,8 +630,7 @@ function drawDetail() {
     } catch (err) { toast(err.message); }
   };
   const open = (u, title) => {
-    const y = ytId(u);
-    if (y) openSheet(title, `<div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${y}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div><p class="small muted" style="margin-top:10px">${esc(l.title)}</p>`);
+    if (videoSrc(u)) openSheet(title, `${playerHtml(u, l.title, true)}<p class="small muted" style="margin-top:10px">${esc(l.title)}</p><a class="btn sec block" href="${esc(u)}" target="_blank" rel="noopener" style="margin-top:10px">${icon("link", "sm")}Apri a schermo intero</a>`);
     else window.open(u, "_blank", "noopener");
   };
   const en = box.querySelector("[data-enter]");
@@ -956,7 +978,7 @@ function viewProfile() {
       <a href="#/guadagni">${icon("wallet")}Guadagni e inviti${icon("chev", "chev")}</a>
       <a href="#/educatori?tab=seguiti">${icon("users")}Educatori che segui${icon("chev", "chev")}</a>
       <a href="#/notizie">${icon("lock")}Notizie esclusive${icon("chev", "chev")}</a>
-      ${u.role === "admin" ? `<a href="#/admin">${icon("shield")}Pannello admin${icon("chev", "chev")}</a>` : ""}
+      ${u.role === "admin" ? `<a href="#/admin">${icon("shield")}Pannello admin${icon("chev", "chev")}</a>` : `<button id="claim">${icon("key")}Ho un codice amministratore${icon("chev", "chev")}</button>`}
     </div>
     <h2 class="sec">I tuoi dati</h2>
     <form class="card pad" id="pf">
@@ -973,6 +995,13 @@ function viewProfile() {
       <button class="btn sec block">Cambia password</button>
     </form>
     <button class="btn danger block" id="logout" style="margin-top:20px">${icon("logout", "sm")}Esci</button>`;
+  const cl = $("#claim");
+  if (cl) cl.onclick = () => formSheet("Accesso amministratore", field("Codice amministratore", "code", "", "text", 'required autocomplete="off" placeholder="VU-XXXX-XXXX-XXXX" style="text-transform:uppercase"'), async (f) => {
+    S.user = (await api("/admin-claim", { code: f.code })).user;
+    closeSheet();
+    toast("Ora sei amministratore");
+    location.hash = "#/admin";
+  });
   $("#avf").onchange = async (e) => {
     const f = e.target.files[0];
     if (!f) return;
@@ -997,14 +1026,14 @@ function viewProfile() {
 // ADMIN
 // =====================================================================
 const ICONS = ["key", "handshake", "phone", "mega", "brain", "euro", "doc", "spark", "trend", "tool", "home2", "cap", "camera", "users", "live"];
-let adminTab = "live";
+let adminTab = "overview";
 
 function viewAdmin() {
-  const tabs = [["live", "Live"], ["home", "Home"], ["accademia", "Corsi"], ["educatori", "Educatori"], ["percorsi", "Accademie"], ["utenti", "Utenti"], ["zone", "Richieste zona"]];
+  const tabs = [["overview", "Panoramica"], ["live", "Live"], ["home", "Home"], ["accademia", "Corsi"], ["educatori", "Educatori"], ["percorsi", "Accademie"], ["utenti", "Utenti"], ["zone", "Richieste zona"]];
   view.innerHTML = `<h1 class="h1">Pannello admin</h1><p class="lead-tx" style="margin-bottom:14px">Qui gestisci contenuti, live e utenti dell'app.</p>
     <div class="tabs">${tabs.map(([k, n]) => `<button data-a="${k}" class="${adminTab === k ? "on" : ""}">${n}</button>`).join("")}</div><div id="adm"></div>`;
   view.querySelectorAll("[data-a]").forEach((b) => (b.onclick = () => { adminTab = b.dataset.a; viewAdmin(); }));
-  ({ live: admLives, home: admHome, accademia: admModules, educatori: admEducators, percorsi: admAcademies, utenti: admUsers, zone: admZones })[adminTab]();
+  ({ overview: admOverview, live: admLives, home: admHome, accademia: admModules, educatori: admEducators, percorsi: admAcademies, utenti: admUsers, zone: admZones })[adminTab]();
 }
 
 async function saveSection(section, data, msg = "Salvato") {
@@ -1081,7 +1110,9 @@ function admLives() {
   const lives = sortedLives();
   const upcoming = lives.filter((l) => liveState(l) !== "past"), past = lives.filter((l) => liveState(l) === "past").reverse();
   const row = (l) => { const i = lives.indexOf(l), d = new Date(l.start), e = eduById(l.educatorId); return `<div class="adm-item"><div class="grow"><h4>${esc(l.title)}</h4><p>${DOW[d.getDay()]} ${d.toLocaleDateString("it-IT")} ${fmtTime(d)} · ${esc(e ? e.name : "—")}${l.url ? "" : ' · <span style="color:var(--warn)">manca link</span>'}</p></div>${itemActs(i, lives.length, false)}</div>`; };
-  $("#adm").innerHTML = `<button class="btn pri block" id="add">${icon("plus", "sm")}Nuova live</button>
+  const nowL = liveNow();
+  $("#adm").innerHTML = `<div class="btns" style="margin-top:0"><button class="btn live" id="goNow">${icon("live", "sm")}Vai in diretta ora</button><button class="btn pri" id="add">${icon("plus", "sm")}Programma live</button></div>
+    ${nowL ? `<div class="card pad" style="margin-top:12px;border-color:rgba(255,59,59,.5)"><div class="row"><span class="pulse"></span><div class="grow"><b>In diretta:</b> ${esc(nowL.title)}</div><button class="btn danger" id="endNow" style="padding:8px 12px">Termina</button></div></div>` : ""}
     <h2 class="sec">In programma</h2><div class="card">${upcoming.map(row).join("") || `<div class="empty">Nessuna live in programma</div>`}</div>
     ${past.length ? `<h2 class="sec">Passate</h2><div class="card">${past.slice(0, 30).map(row).join("")}</div>` : ""}`;
   const edit = (i) => {
@@ -1092,7 +1123,7 @@ function admLives() {
       `<div class="two">${field("Data e ora", "start", toLocalInput(l.start), "datetime-local", "required")}${field("Durata (minuti)", "minutes", l.minutes, "number", 'min="5" max="600"')}</div>` +
       field("Descrizione", "desc", l.desc, "textarea") +
       field("Link della diretta (YouTube, Zoom…)", "url", l.url, "url", 'placeholder="https://"') +
-      field("Link del replay (dopo la live)", "replayUrl", l.replayUrl, "url", 'placeholder="https://"') +
+      field("Link del replay (Loom, YouTube, Vimeo…)", "replayUrl", l.replayUrl, "url", 'placeholder="https://"') +
       `<p class="small muted" style="margin-bottom:12px">Le dirette YouTube si vedono dentro l'app. Gli altri link (Zoom, Meet) si aprono a parte.</p>`,
       async (f) => {
         const item = { ...l, ...f, start: new Date(f.start).toISOString(), minutes: Number(f.minutes) };
@@ -1103,6 +1134,13 @@ function admLives() {
       i >= 0 ? async () => { const copy = lives.slice(); copy.splice(i, 1); await saveSection("lives", copy, "Eliminata"); } : null);
   };
   $("#add").onclick = () => edit(-1);
+  $("#goNow").onclick = goLiveNow;
+  const en = $("#endNow");
+  if (en) en.onclick = () => {
+    // Termina adesso: la durata finisce in questo momento, poi si può aggiungere il link del replay.
+    const copy = lives.map((l) => (l.id === nowL.id ? { ...l, minutes: Math.max(1, Math.floor((Date.now() - new Date(l.start).getTime()) / 60000)) } : l));
+    saveSection("lives", copy, "Diretta terminata: aggiungi il link del replay modificando la live").catch((e) => toast(e.message));
+  };
   bindList($("#adm"), lives, "lives", edit);
 }
 
@@ -1113,7 +1151,7 @@ function admHome() {
       <div class="two">${field("Titolo grande", "welcomeTitle", st.welcomeTitle)}${field("Sottotitolo", "welcomeSub", st.welcomeSub)}</div>
       ${field("Titolo del video", "onboardingTitle", st.onboardingTitle)}
       ${field("Testo sotto il titolo", "onboardingText", st.onboardingText)}
-      ${field("Video YouTube (link o codice)", "onboardingVideo", st.onboardingVideo, "text", 'placeholder="https://youtu.be/…"')}
+      ${field("Video (link Loom, YouTube, Vimeo o Google Drive)", "onboardingVideo", st.onboardingVideo, "text", 'placeholder="https://www.loom.com/share/…"')}
       <button class="btn pri block">Salva</button>
     </form>
     <h2 class="sec">Banner a scorrimento <button id="addB">+ Nuovo</button></h2>
@@ -1121,7 +1159,7 @@ function admHome() {
   $("#setf").onsubmit = async (e) => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target));
-    f.onboardingVideo = ytId(f.onboardingVideo) || f.onboardingVideo;
+    if (f.onboardingVideo && !videoSrc(f.onboardingVideo)) { toast("Link video non riconosciuto"); return; }
     try { S.content = (await api("/admin/settings", f)).content; toast("Salvato"); } catch (err) { toast(err.message); }
   };
   const edit = (i) => {
@@ -1143,8 +1181,8 @@ function admModules() {
   $("#adm").innerHTML = `<button class="btn pri block" id="add">${icon("plus", "sm")}Nuovo corso</button>
     <div style="margin-top:14px">${mods.map((m, i) => `<div class="card" style="margin-bottom:10px;overflow:hidden">
       <div class="adm-item"><span class="ini" style="width:30px;height:30px;font-size:12px;border-radius:9px;background:${accColor(academyById(m.academyId))}">${i + 1}</span><div class="grow"><h4>${esc(m.title)}</h4><p>${m.lessons.length} lezioni · ${esc((academyById(m.academyId) || {}).name || "—")}${subOf(m) ? " › " + esc(subOf(m).name) : ""} · ${m.level === "premium" ? "Premium" : "Base"}</p></div>${itemActs(i, mods.length)}</div>
-      ${m.lessons.map((l, j) => `<div class="sub-l">${icon("play", "sm")}<span class="grow ell">${esc(l.title)}</span>${l.youtubeId ? "" : '<span class="chip warn">no video</span>'}<button data-les="${i}.${j}" aria-label="Modifica lezione">${icon("edit", "sm")}</button></div>`).join("")}
-      <div class="sub-l"><button data-les="${i}.-1" style="color:var(--blue-2);font-weight:600;display:flex;gap:6px;align-items:center">${icon("plus", "sm")}Aggiungi lezione</button></div>
+      ${m.lessons.map((l, j) => `<div class="sub-l">${icon("play", "sm")}<span class="grow ell">${esc(l.title)}</span>${lessonVideo(l) ? `<span class="chip ghost">${esc((videoSrc(lessonVideo(l)) || { kind: "link" }).kind)}</span>` : '<span class="chip warn">no video</span>'}<button data-les="${i}.${j}" aria-label="Modifica lezione">${icon("edit", "sm")}</button></div>`).join("")}
+      <div class="sub-l" style="gap:16px"><button data-les="${i}.-1" style="color:var(--blue-2);font-weight:600;display:flex;gap:6px;align-items:center">${icon("plus", "sm")}Aggiungi lezione</button><button data-bulk="${i}" style="color:var(--blue-2);font-weight:600;display:flex;gap:6px;align-items:center">${icon("doc", "sm")}Aggiungi più lezioni</button></div>
     </div>`).join("")}</div>`;
   const edit = (i) => {
     const m = i >= 0 ? mods[i] : { title: "", desc: "", lessons: [], academyId: (S.content.academies[0] || {}).id, educatorId: "", level: "base", cover: "" };
@@ -1159,26 +1197,100 @@ function admModules() {
   };
   $("#add").onclick = () => edit(-1);
   bindList($("#adm"), mods, "modules", edit);
+  $("#adm").querySelectorAll("[data-bulk]").forEach((b) => (b.onclick = () => bulkLessons(Number(b.dataset.bulk))));
   $("#adm").querySelectorAll("[data-les]").forEach((b) => (b.onclick = () => {
     const [i, j] = b.dataset.les.split(".").map(Number), m = mods[i];
-    const l = j >= 0 ? m.lessons[j] : { title: "", youtubeId: "", minutes: "", desc: "", pdf: "" };
+    const l = j >= 0 ? m.lessons[j] : { title: "", youtubeId: "", video: "", minutes: "", desc: "", pdf: "" };
     const withLessons = (lessons) => mods.map((x, k) => (k === i ? { ...x, lessons } : x));
     formSheet(j >= 0 ? "Modifica lezione" : "Nuova lezione",
       field("Titolo", "title", l.title, "text", "required") +
-      field("Video YouTube (link o codice)", "youtubeId", l.youtubeId, "text", 'placeholder="https://youtu.be/…"') +
+      field("Video (link Loom, YouTube, Vimeo o Google Drive)", "video", lessonVideo(l), "text", 'placeholder="https://www.loom.com/share/…"') +
+      `<p class="small muted" id="vkind" style="margin:-6px 0 12px"></p>` +
       field("Durata (minuti)", "minutes", l.minutes, "number", 'min="0"') +
       field("Descrizione", "desc", l.desc, "textarea") +
       field("Link PDF (facoltativo)", "pdf", l.pdf, "text", 'placeholder="/assets/pdf/… oppure https://"') +
       (j > 0 ? `<button type="button" class="btn sec block" id="lup" style="margin-bottom:8px">${icon("up", "sm")}Sposta su</button>` : ""),
       async (f) => {
-        const ls = m.lessons.slice(), item = { ...l, ...f, youtubeId: ytId(f.youtubeId) || f.youtubeId, minutes: Number(f.minutes) || 0 };
+        if (f.video && !videoSrc(f.video)) throw new Error("Link video non riconosciuto: usa un link Loom, YouTube, Vimeo o Google Drive");
+        const ls = m.lessons.slice(), item = { ...l, ...f, video: f.video.trim(), youtubeId: ytId(f.video), minutes: Number(f.minutes) || 0 };
         if (j >= 0) ls[j] = item; else ls.push(item);
         await saveSection("modules", withLessons(ls));
       },
       j >= 0 ? async () => { const ls = m.lessons.slice(); ls.splice(j, 1); await saveSection("modules", withLessons(ls), "Lezione eliminata"); } : null);
+    const vin = $("#sf [name=video]"), vk = $("#vkind");
+    const showKind = () => { const v = videoSrc(vin.value); vk.textContent = vin.value.trim() ? (v ? `✓ Video ${v.kind} riconosciuto` : "Link non riconosciuto") : ""; vk.style.color = v ? "#5ee08f" : "var(--warn)"; };
+    vin.oninput = showKind; showKind();
     const up = $("#lup");
     if (up) up.onclick = () => { const ls = m.lessons.slice(); [ls[j - 1], ls[j]] = [ls[j], ls[j - 1]]; saveSection("modules", withLessons(ls), "Ordine aggiornato").catch((e) => toast(e.message)); };
   }));
+}
+
+// Tante lezioni in una volta: una riga per lezione, "Titolo | link video".
+function bulkLessons(i) {
+  const mods = S.content.modules, m = mods[i];
+  formSheet(`Aggiungi lezioni a "${m.title}"`,
+    `<p class="small muted" style="margin-bottom:10px">Una lezione per riga: <b>Titolo | link del video</b>. Il link può essere Loom, YouTube, Vimeo o Google Drive. Se manca il link, la lezione resta "Video in arrivo".</p>` +
+    field("Lezioni", "lines", "", "textarea", 'rows="8" placeholder="Come presentarsi al telefono | https://www.loom.com/share/…\nGestire le obiezioni | https://www.loom.com/share/…"'),
+    async (f) => {
+      const rows = f.lines.split("\n").map((r) => r.trim()).filter(Boolean);
+      if (!rows.length) throw new Error("Scrivi almeno una lezione");
+      const bad = [];
+      const added = rows.map((r, k) => {
+        const [title, link = ""] = r.split("|").map((x) => x.trim());
+        if (link && !videoSrc(link)) bad.push(k + 1);
+        return { title: title || `Lezione ${m.lessons.length + k + 1}`, video: link, youtubeId: ytId(link), minutes: 0, desc: "", pdf: "" };
+      });
+      if (bad.length) throw new Error(`Link non riconosciuto alla riga ${bad.join(", ")}`);
+      await saveSection("modules", mods.map((x, k) => (k === i ? { ...x, lessons: [...x.lessons, ...added] } : x)), `${added.length} lezioni aggiunte`);
+    });
+}
+
+// Crea una live che parte adesso: compare subito in rosso "In diretta" per tutti.
+function goLiveNow() {
+  formSheet("Vai in diretta ora",
+    `<p class="small muted" style="margin-bottom:10px">Avvia la diretta su YouTube, Zoom, Google Meet o StreamYard e incolla qui il link. Le dirette YouTube si vedono dentro l'app, gli altri link si aprono a parte.</p>` +
+    field("Titolo della live", "title", "", "text", "required") +
+    select("Educatore", "educatorId", S.content.educators.map((e) => [e.id, e.name]), (S.content.educators[0] || {}).id) +
+    field("Link della diretta", "url", "", "url", 'required placeholder="https://"') +
+    field("Durata prevista (minuti)", "minutes", 60, "number", 'min="5" max="600"') +
+    field("Descrizione (facoltativa)", "desc", "", "textarea"),
+    async (f) => {
+      const live = { ...f, minutes: Number(f.minutes) || 60, start: new Date(Date.now() - 60000).toISOString(), replayUrl: "" };
+      await saveSection("lives", [...S.content.lives, live], "Sei in diretta: la live è visibile a tutti");
+    });
+}
+
+function admOverview() {
+  const c = S.content, lessons = c.modules.reduce((n, m) => n + m.lessons.length, 0);
+  const noVideo = c.modules.reduce((n, m) => n + m.lessons.filter((l) => !lessonVideo(l)).length, 0);
+  const up = c.lives.filter((l) => liveState(l) !== "past").length, now = liveNow();
+  $("#adm").innerHTML = `
+    ${now ? `<div class="card pad" style="border-color:rgba(255,59,59,.5);margin-bottom:12px"><div class="row"><span class="pulse"></span><div class="grow"><b>Sei in diretta:</b> ${esc(now.title)}</div><a class="btn sec" href="#/live/${esc(now.id)}" style="padding:8px 12px">Apri</a></div></div>` : ""}
+    <div class="qs" style="grid-template-columns:repeat(2,1fr)">
+      <div class="card q"><b>${c.modules.length}</b><span>Corsi</span></div>
+      <div class="card q"><b>${lessons}</b><span>Lezioni${noVideo ? ` · ${noVideo} senza video` : ""}</span></div>
+      <div class="card q"><b>${up}</b><span>Live in programma</span></div>
+      <div class="card q" id="ucount"><b>…</b><span>Utenti</span></div>
+    </div>
+    <h2 class="sec">Azioni rapide</h2>
+    <div class="grid" style="margin-top:0">
+      <button class="acad" data-q="live" style="--c:#ff3b3b"><span class="ic">${icon("live")}</span><h4>Vai in diretta ora</h4><div class="ct">Live che parte adesso</div></button>
+      <button class="acad" data-q="plan" style="--c:#2f6bff"><span class="ic">${icon("cal")}</span><h4>Programma una live</h4><div class="ct">Data, ora e link</div></button>
+      <button class="acad" data-q="course" style="--c:#22c55e"><span class="ic">${icon("cap")}</span><h4>Nuovo corso</h4><div class="ct">Poi aggiungi le lezioni</div></button>
+      <button class="acad" data-q="lessons" style="--c:#7c5cff"><span class="ic">${icon("play")}</span><h4>Carica lezioni</h4><div class="ct">Link Loom, YouTube…</div></button>
+      <button class="acad" data-q="banner" style="--c:#eab308"><span class="ic">${icon("image")}</span><h4>Banner e Home</h4><div class="ct">Immagini e video di benvenuto</div></button>
+      <button class="acad" data-q="zone" style="--c:#0ea5e9"><span class="ic">${icon("pin")}</span><h4>Richieste zona</h4><div class="ct">Chi vuole le notizie</div></button>
+    </div>`;
+  const go = (tab, after) => { adminTab = tab; viewAdmin(); if (after) after(); };
+  $("#adm").querySelectorAll("[data-q]").forEach((b) => (b.onclick = () => ({
+    live: goLiveNow,
+    plan: () => go("live", () => $("#add").click()),
+    course: () => go("accademia", () => $("#add").click()),
+    lessons: () => go("accademia", () => toast("Scegli il corso e premi \"Aggiungi più lezioni\"")),
+    banner: () => go("home"),
+    zone: () => go("zone"),
+  })[b.dataset.q]()));
+  api("/admin/users").then((d) => { const el = $("#ucount b"); if (el) el.textContent = d.users.length; }).catch(() => {});
 }
 
 function admEducators() {

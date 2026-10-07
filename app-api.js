@@ -9,6 +9,8 @@ const SESSION_DAYS = 30;
 const FALLBACK_SECRET = "vendita-uno-app-temp-secret-change-me-2026";
 const PBKDF2_ITER = 100000;
 const MAX_IMG_BYTES = 400 * 1024;
+// Codice per diventare amministratore dall'app (si può usare una sola volta). Qui c'è solo l'impronta, non il codice.
+const ADMIN_CLAIM_HASH = "9c66fa87d953e698e3a3681f8179447dab06044cc173f35bcd820c24fe7bde91";
 
 // ---------- utility ----------
 
@@ -106,7 +108,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 11;
+const CATALOG_V = 12;
 
 function catalogAcademies() {
   return [
@@ -130,14 +132,17 @@ function catalogAcademies() {
       { id: "prezzi", name: "Prezzi e guadagni", icon: "trend" },
       { id: "regole", name: "Regole e fisco", icon: "doc" },
     ] },
-    { id: "mkt", name: "Marketing immobiliare", icon: "mega", color: "#ef4444", cover: "", subs: [
-      { id: "social", name: "Social media", icon: "mega" },
-      { id: "foto", name: "Foto e video", icon: "camera" },
-      { id: "ai", name: "AI per agenti", icon: "spark" },
+    { id: "cond", name: "Amministratore di condominio", icon: "users", color: "#0ea5e9", cover: "", subs: [
+      { id: "diventare", name: "Diventare amministratore", icon: "cap" },
+      { id: "clienti", name: "Trovare i condomini", icon: "handshake" },
+      { id: "assemblee", name: "Assemblee e bilanci", icon: "doc" },
+      { id: "manutenzioni", name: "Manutenzioni e fornitori", icon: "tool" },
     ] },
-    { id: "fin", name: "Mutui e finanza", icon: "euro", color: "#7c5cff", cover: "", subs: [
-      { id: "mutui", name: "Mutui per i clienti", icon: "euro" },
-      { id: "capitali", name: "Finanziare le operazioni", icon: "trend" },
+    { id: "hs", name: "Home stager", icon: "home2", color: "#ec4899", cover: "", subs: [
+      { id: "diventare", name: "Diventare home stager", icon: "cap" },
+      { id: "allestire", name: "Allestire per vendere", icon: "home2" },
+      { id: "foto", name: "Foto e presentazione", icon: "camera" },
+      { id: "clienti", name: "Trovare clienti", icon: "handshake" },
     ] },
   ];
 }
@@ -222,32 +227,47 @@ function catalogModules() {
       ["Tasse sugli affitti brevi", "Cedolare secca, fatture e cosa cambia se lo fai come attività."],
       ["Assicurazioni e tutele", "Come proteggere te, il proprietario e la casa."],
     ]),
-    // Marketing immobiliare
-    C("mk1", "mkt", "social", "base", "Instagram e TikTok per agenti", "Farti conoscere nella tua zona e far arrivare i clienti da soli.", [
-      ["Il profilo che porta clienti", "Foto, bio e contenuti in evidenza."],
-      ["Cosa pubblicare ogni settimana", "Tre formati che funzionano, con esempi veri."],
-      ["Dai commenti all'appuntamento", "Come trasformare chi ti segue in clienti."],
+    // Amministratore di condominio
+    C("cond1", "cond", "diventare", "base", "Diventare amministratore di condominio", "Cosa fa, quanto guadagna e cosa serve per iniziare in regola.", [
+      ["Il lavoro e quanto si guadagna", "Compiti, compensi e quanti condomini servono per viverci."],
+      ["Requisiti e formazione obbligatoria", "Il corso iniziale, l'aggiornamento annuale e i requisiti di legge."],
+      ["Aprire l'attività", "Partita IVA, assicurazione, software e organizzazione dello studio."],
     ]),
-    C("mk2", "mkt", "foto", "premium", "Foto e video degli immobili con il telefono", "Immobili che si fanno notare, senza attrezzatura costosa.", [
-      ["Foto che vendono", "Luce, angolazioni e preparazione della casa."],
-      ["Il video tour in 20 minuti", "Riprendere e montare un video con il telefono."],
-      ["Pubblicare sui portali e sui social", "Formati e trucchi per ogni piattaforma."],
+    C("cond2", "cond", "clienti", "premium", "Trovare i primi condomini", "Come farsi scegliere dall'assemblea e far crescere il portafoglio.", [
+      ["Dove nascono le opportunità", "Condomini scontenti, nuovi edifici, piccoli stabili senza amministratore."],
+      ["Il preventivo che vince", "Cosa mettere nell'offerta e come presentarla in assemblea."],
+      ["Passaparola e collaborazioni", "Agenzie, imprese e professionisti che ti segnalano nuovi condomini."],
     ]),
-    C("mk3", "mkt", "ai", "base", "AI per agenti immobiliari", "Usare l'intelligenza artificiale per risparmiare ore ogni settimana.", [
-      ["Scrivere annunci con l'AI", "Descrizioni migliori in due minuti."],
-      ["Rispondere ai clienti più in fretta", "Messaggi, email e follow-up pronti."],
-      ["Contenuti social in 10 minuti", "Idee, testi e video per tutta la settimana."],
+    C("cond3", "cond", "assemblee", "premium", "Assemblee, bilanci e riparti", "Gestire i conti e le assemblee senza litigi.", [
+      ["Convocare e condurre l'assemblea", "Ordine del giorno, maggioranze e verbale."],
+      ["Bilancio e rendiconto", "Preventivo, consuntivo e come presentarli ai condòmini."],
+      ["Ripartire le spese e recuperare i crediti", "Tabelle millesimali, morosi e solleciti."],
     ]),
-    // Mutui e finanza
-    C("fin1", "fin", "mutui", "base", "Mutui spiegati ai tuoi clienti", "Aiutare chi compra a ottenere il mutuo e chiudere prima.", [
-      ["Come funziona un mutuo", "Tasso, durata, rata e anticipo spiegati semplici."],
-      ["Pre-delibera e tempi", "Cosa serve e quanto ci vuole, per non far saltare la vendita."],
-      ["Lavorare con un mediatore creditizio", "Quando conviene e come collaborare."],
+    C("cond4", "cond", "manutenzioni", "premium", "Manutenzioni, fornitori e urgenze", "Tenere l'edificio in ordine e i condòmini tranquilli.", [
+      ["Scegliere e gestire i fornitori", "Pulizie, ascensore, caldaia: contratti e controlli."],
+      ["Lavori straordinari", "Preventivi, approvazione e controllo del cantiere."],
+      ["Urgenze e sinistri", "Cosa fare subito e come gestire l'assicurazione."],
     ]),
-    C("fin2", "fin", "capitali", "premium", "Finanziare le operazioni immobiliari", "Dove trovare i soldi per le tue operazioni.", [
-      ["Capitale proprio e leva", "Quanto mettere tu e quanto farti prestare."],
-      ["Soci e investitori", "Come presentare un'operazione e dividere i guadagni."],
-      ["Prestiti e alternative", "Le strade possibili e i rischi di ognuna."],
+    // Home stager
+    C("hs1", "hs", "diventare", "base", "Diventare home stager", "Il lavoro di chi prepara le case per venderle o affittarle meglio.", [
+      ["Cos'è l'home staging e quanto si guadagna", "Servizi, prezzi e chi sono i clienti."],
+      ["Gli attrezzi del mestiere", "Magazzino, arredi in noleggio, accessori e trasporto."],
+      ["Aprire l'attività", "Come partire con poco e lavorare in regola."],
+    ]),
+    C("hs2", "hs", "allestire", "premium", "Allestire una casa per venderla", "Gli interventi che fanno vendere prima e a un prezzo migliore.", [
+      ["Il sopralluogo e il progetto", "Cosa togliere, cosa spostare, cosa aggiungere."],
+      ["Colori, luci e arredi", "Le scelte che piacciono alla maggior parte degli acquirenti."],
+      ["Allestire con un budget piccolo", "Come ottenere il massimo spendendo poco."],
+    ]),
+    C("hs3", "hs", "foto", "premium", "Foto e presentazione dell'immobile", "Far risaltare il lavoro di staging su portali e social.", [
+      ["Preparare la casa per le foto", "Ordine, luce e dettagli che fanno la differenza."],
+      ["Foto e video con il telefono", "Inquadrature, luce e montaggio veloce."],
+      ["Prima e dopo", "Usare le foto per vendere il tuo servizio."],
+    ]),
+    C("hs4", "hs", "clienti", "premium", "Trovare clienti: agenzie e privati", "Costruire un flusso di lavori costante.", [
+      ["Lavorare con le agenzie immobiliari", "Come proporsi e quali accordi fare."],
+      ["Privati e costruttori", "Chi ha più bisogno di te e come raggiungerlo."],
+      ["Prezzi e preventivi", "Quanto chiedere e come presentarlo."],
     ]),
   ];
 }
@@ -289,7 +309,7 @@ function defaultBanners() {
 const defaultSettings = () => ({ welcomeTitle: "Benvenuto!", welcomeSub: "Scopri Vendita Uno", onboardingTitle: "Inizia da qui", onboardingText: "Scopri come usare l'app e tutto quello che offre", onboardingVideo: "jqOjebgNQvk" });
 
 // Vecchie accademie (versioni 1 e 2) → nuova accademia e sottocategoria.
-const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["mkt", "social"], min: ["agenti", ""], fin: ["fin", "mutui"], leg: ["agenti", ""], ai: ["mkt", "ai"], inv: ["inv", ""] };
+const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["agenti", ""], min: ["agenti", ""], fin: ["agenti", ""], leg: ["agenti", ""], ai: ["agenti", ""], inv: ["inv", ""] };
 
 // Porta i contenuti salvati con una versione precedente alla struttura con sottocategorie.
 // Mantiene video, copertine e modifiche fatte dall'admin; aggiunge solo ciò che manca.
@@ -350,6 +370,14 @@ async function getContent(kv) {
     const inv = c.academies.find((a) => a.id === "inv");
     if (inv && inv.card === "/app/academies/investimenti.jpg") inv.card = "/app/academies/investimenti-immobiliari.jpg";
   }
+  if ((c.seedV || 1) < 12) {
+    // Tolte Marketing immobiliare e Mutui e finanza; aggiunte Amministratore di condominio e Home stager.
+    c.academies = c.academies.filter((a) => a.id !== "mkt" && a.id !== "fin");
+    c.modules = c.modules.filter((m) => m.academyId !== "mkt" && m.academyId !== "fin");
+    const catA = catalogAcademies(), catM = catalogModules();
+    for (const id of ["cond", "hs"]) if (!c.academies.some((a) => a.id === id)) c.academies.push(catA.find((a) => a.id === id));
+    for (const m of catM) if ((m.academyId === "cond" || m.academyId === "hs") && !c.modules.some((x) => x.id === m.id)) c.modules.push(m);
+  }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
     await putJSON(kv, "app:content", c);
@@ -368,13 +396,13 @@ const SECTIONS = {
     id: str(m.id, 40) || rid(4), title: str(m.title, 120), desc: str(m.desc, 400),
     academyId: str(m.academyId, 40), subId: str(m.subId, 40), educatorId: str(m.educatorId, 40), level: m.level === "premium" ? "premium" : "base", cover: str(m.cover, 300),
     lessons: (Array.isArray(m.lessons) ? m.lessons : []).slice(0, 100).map((l) => ({
-      id: str(l.id, 40) || rid(4), title: str(l.title, 140), youtubeId: str(l.youtubeId, 20), minutes: Math.max(0, Math.min(600, Number(l.minutes) || 0)), desc: str(l.desc, 1000), pdf: str(l.pdf, 300),
+      id: str(l.id, 40) || rid(4), title: str(l.title, 140), youtubeId: str(l.youtubeId, 20), video: str(l.video, 400), minutes: Math.max(0, Math.min(600, Number(l.minutes) || 0)), desc: str(l.desc, 1000), pdf: str(l.pdf, 300),
     })),
   }),
   lives: (l) => ({
     id: str(l.id, 40) || rid(4), educatorId: str(l.educatorId, 40), title: str(l.title, 140), desc: str(l.desc, 600),
     start: isNaN(Date.parse(l.start)) ? new Date().toISOString() : new Date(l.start).toISOString(),
-    minutes: Math.max(5, Math.min(600, Number(l.minutes) || 60)), url: str(l.url, 300), replayUrl: str(l.replayUrl, 300),
+    minutes: Math.max(1, Math.min(600, Number(l.minutes) || 60)), url: str(l.url, 300), replayUrl: str(l.replayUrl, 300),
   }),
 };
 
@@ -443,6 +471,21 @@ export async function handleAppApi(request, env) {
     me.pass = { salt, iter: PBKDF2_ITER, hash: await hashPassword(str(body.password, 200), salt) };
     await saveUser(kv, me);
     return json({ ok: true });
+  }
+
+  if (path === "/admin-claim" && method === "POST") {
+    if (await kv.get("app:adminClaimed")) return fail("Il codice amministratore è già stato usato. Chiedi a un admin di darti l'accesso.", 403);
+    const rl = `app:rlc:${me.id}`, tries = Number(await kv.get(rl)) || 0;
+    if (tries >= 5) return fail("Troppi tentativi. Riprova tra un'ora.", 429);
+    const h = toHex(await crypto.subtle.digest("SHA-256", enc.encode(str(body.code, 40).toUpperCase())));
+    if (!safeEqual(h, ADMIN_CLAIM_HASH)) {
+      await kv.put(rl, String(tries + 1), { expirationTtl: 3600 });
+      return fail("Codice non valido");
+    }
+    me.role = "admin";
+    await saveUser(kv, me);
+    await kv.put("app:adminClaimed", me.id);
+    return json({ user: publicUser(me) });
   }
 
   if (path === "/progress" && method === "POST") {
@@ -575,7 +618,7 @@ export async function handleAppApi(request, env) {
 
     if (path === "/admin/settings" && method === "POST") {
       const content = await getContent(kv);
-      for (const k of Object.keys(defaultSettings())) if (k in body) content.settings[k] = str(body[k], 300);
+      for (const k of Object.keys(defaultSettings())) if (k in body) content.settings[k] = str(body[k], 400);
       await putJSON(kv, "app:content", content);
       return json({ content });
     }
