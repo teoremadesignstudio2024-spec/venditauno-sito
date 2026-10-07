@@ -417,6 +417,8 @@ function viewHome() {
     ${now ? `<h2 class="sec">In diretta ora</h2>${lvItem(now)}` : ""}
     ${secHd("Scegli come guadagnare", null, carouselArrows("hAcc"))}
     <div class="acards" id="hAcc">${S.content.academies.map(academyCard).join("")}</div>
+    ${S.content.educators.length ? `${secHd("I nostri educatori", null, `<a href="#/educatori">Tutti</a>`)}
+    <div class="edus">${S.content.educators.map((e) => `<a class="edu-pill" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}<b>${esc(e.name)}</b><small>${esc(e.role || (academyById(e.academyId) || {}).name || "")}</small></a>`).join("")}</div>` : ""}
     ${secHd(started.length ? "Continua i tuoi corsi" : "Corsi di avvio rapido", null, `<a href="#/accademia">Tutti</a>`)}
     <div class="hcourses" id="hCourses">${(started.length ? started : S.content.modules).map(courseCard).join("") || `<div class="card empty">I corsi arrivano presto.</div>`}</div>
     <div class="hide-desk">
@@ -562,9 +564,9 @@ function drawLive() {
   const days = [...Array(7)].map((_, i) => new Date(ws.getFullYear(), ws.getMonth(), ws.getDate() + i));
   const lives = sortedLives().filter((l) => { const d = new Date(l.start); return d >= ws && d < we; });
   const today = new Date();
-  // Righe: educatori con live in settimana; se non ce ne sono, tutti (fino a 6).
-  const withLive = S.content.educators.filter((e) => lives.some((l) => l.educatorId === e.id));
-  const rows = withLive.length ? withLive : S.content.educators.slice(0, 6);
+  // Righe: tutti gli educatori, prima quelli che hanno live in questa settimana.
+  const hasLive = (e) => lives.some((l) => l.educatorId === e.id);
+  const rows = [...S.content.educators.filter(hasLive), ...S.content.educators.filter((e) => !hasLive(e))];
   if (!lives.some((l) => l.id === S.selLive)) S.selLive = (lives.find((l) => liveState(l) === "now") || lives.find((l) => liveState(l) === "up") || lives[0] || {}).id;
   const end = new Date(we.getTime() - 1);
   const range = ws.getMonth() === end.getMonth() ? `${ws.getDate()} – ${end.getDate()} ${end.toLocaleDateString("it-IT", { month: "long" })}` : `${ws.getDate()} ${ws.toLocaleDateString("it-IT", { month: "short" })} – ${end.getDate()} ${end.toLocaleDateString("it-IT", { month: "short" })}`;

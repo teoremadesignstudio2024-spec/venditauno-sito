@@ -708,3 +708,12 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .acard.boxed h4{margin:0;font-size:21px;line-height:1.05;text-shadow:0 2px 12px rgba(0,0,0,.6)}
 .acard .tag,.acard.boxed .tag{margin-top:8px;background:none;color:var(--muted);padding:0;font-size:12px}
 @media (min-width:1024px){.acard.boxed h4{font-size:22px}}
+
+/* Educatori in Home */
+.edus{display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
+.edus::-webkit-scrollbar{display:none}
+.edu-pill{flex:none;width:118px;text-align:center;text-decoration:none;padding:14px 8px;border-radius:18px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--glass-hi)}
+.edu-pill .av,.edu-pill .ini{width:72px;height:72px;margin:0 auto;font-size:22px;outline:2px solid var(--blue);outline-offset:2px}
+.edu-pill b{display:block;font-family:var(--display);font-size:14px;margin-top:10px;line-height:1.15}
+.edu-pill small{display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.25;max-height:2.5em;overflow:hidden}
+@media (min-width:1024px){.edus{margin:0;padding:2px 0 6px}.edu-pill{width:140px}}
