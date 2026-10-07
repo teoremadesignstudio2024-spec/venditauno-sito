@@ -672,3 +672,10 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .nav .bar a svg{width:40px;height:40px;padding:9px}
 .uno{top:-4px}
 .toast{bottom:calc(130px + env(safe-area-inset-bottom))}
+
+/* Immagine verticale su telefono: si vede intera */
+@media (max-width:1023px){.splash img,.home-hero img{height:auto;object-fit:initial}}
+.splash picture,.home-hero picture{display:block}
+/* Banner: formato unico 4:3 (1200 × 900 px) su telefono e computer */
+.bn,.home-top .bn{aspect-ratio:4/3}
+.bn.plain::after{display:none}

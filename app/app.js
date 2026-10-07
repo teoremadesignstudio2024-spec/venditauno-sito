@@ -296,7 +296,7 @@ function viewAuth() {
   let mode = ref ? "reg" : "login";
   const draw = () => {
     view.innerHTML = `<section class="splash">
-        <img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare.">
+        <picture><source media="(max-width:1023px)" srcset="/app/splash-mobile.webp"><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture>
         <div class="splash-cta"><button class="btn pri" data-cta="reg">Inizia gratis</button><button class="btn sec" data-cta="login">Accedi</button></div>
       </section>
       <div class="auth" id="authBox">
@@ -371,7 +371,7 @@ function viewHome() {
   const started = S.content.modules.filter((m) => courseStats(m).done && courseStats(m).done < m.lessons.length);
   const vid = ytId(set.onboardingVideo);
   view.innerHTML = `
-    <section class="home-hero"><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></section>
+    <section class="home-hero"><picture><source media="(max-width:1023px)" srcset="/app/splash-mobile.webp"><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture></section>
     <div class="home-top">
       <div>
         <p class="hi-name">Ciao ${esc(S.user.name)}, ${esc((set.welcomeSub || "scopri Vendita Uno").replace(/^./, (c) => c.toLowerCase()))}</p>
@@ -385,7 +385,7 @@ function viewHome() {
           <div class="prog"><i style="width:${Math.round((done / ls.length) * 100)}%"></i></div>
           <a class="btn pri block" href="#/lezione/${esc(nl.id)}">${icon("play", "sm")}Continua da dove eri</a></div>` : ""}
       </div>
-      ${banners.length ? `<div class="banners" id="bnr"><div class="track">${banners.map((bn) => `<a class="bn" href="${esc(bn.link && /^(#\/|\/|https:\/\/)/.test(bn.link) ? bn.link : "#/home")}">${coverBg(bn.cover, "#2f6bff", "spark")}<h3>${esc(bn.title)}</h3><p>${esc(bn.text)}</p></a>`).join("")}</div>
+      ${banners.length ? `<div class="banners" id="bnr"><div class="track">${banners.map((bn) => `<a class="bn ${!bn.title && !bn.text && safeUrl(bn.cover) ? "plain" : ""}" href="${esc(bn.link && /^(#\/|\/|https:\/\/)/.test(bn.link) ? bn.link : "#/home")}">${coverBg(bn.cover, "#2f6bff", "spark")}<h3>${esc(bn.title)}</h3><p>${esc(bn.text)}</p></a>`).join("")}</div>
         ${banners.length > 1 ? `<div class="ctl"><button data-b="-1" aria-label="Precedente">${icon("back")}</button><span class="dots">${banners.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</span><button data-b="1" aria-label="Successivo">${icon("chev")}</button></div>` : ""}</div>` : ""}
     </div>
     ${now ? `<h2 class="sec">In diretta ora</h2>${lvItem(now)}` : ""}
@@ -1124,8 +1124,9 @@ function admHome() {
   const edit = (i) => {
     const b = i >= 0 ? bns[i] : { title: "", text: "", cover: "", link: "#/accademia" };
     formSheet(i >= 0 ? "Modifica banner" : "Nuovo banner",
-      field("Titolo", "title", b.title, "text", "required") + field("Testo", "text", b.text, "textarea") +
-      imgField("Immagine di sfondo", "cover", b.cover, true) +
+      imgField("Immagine (1200 × 900 px)", "cover", b.cover, true) +
+      `<p class="small muted" style="margin:-4px 0 12px">Se il testo è già nell'immagine, lascia vuoti Titolo e Testo.</p>` +
+      field("Titolo (facoltativo)", "title", b.title) + field("Testo (facoltativo)", "text", b.text, "textarea") +
       select("Quando lo toccano, apre", "link", [["#/accademia", "Accademia"], ["#/live", "Calendario live"], ["#/educatori", "Educatori"], ["#/community", "Community"], ["#/notizie", "Servizio Notizie"], ["#/guadagni", "Guadagni e inviti"]], b.link),
       async (f) => { const copy = bns.slice(); if (i >= 0) copy[i] = { ...b, ...f }; else copy.push({ ...b, ...f }); await saveSection("banners", copy); },
       i >= 0 ? async () => { const copy = bns.slice(); copy.splice(i, 1); await saveSection("banners", copy, "Eliminato"); } : null);
