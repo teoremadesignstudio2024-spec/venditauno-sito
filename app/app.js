@@ -296,10 +296,11 @@ function viewAuth() {
   let mode = ref ? "reg" : "login";
   const draw = () => {
     view.innerHTML = `<section class="splash">
-        <picture><source media="(max-width:1023px)" srcset="/app/splash-mobile.webp"><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture>
+        <picture><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture>
         <div class="splash-cta"><button class="btn pri" data-cta="reg">Inizia gratis</button><button class="btn sec" data-cta="login">Accedi</button></div>
       </section>
       <div class="auth" id="authBox">
+      <div class="wm hide-desk" style="font-size:22px;margin-bottom:18px"><span class="v">Vendita</span><span class="u">UNO</span></div>
       <h1 class="hero">${mode === "reg" ? "Crea il tuo <span>account gratuito.</span>" : "Bentornato, <span>accedi.</span>"}</h1>
       <div class="perks">
         <div>${icon("cap")} Corsi passo passo, dalla chiamata al rogito</div>
@@ -371,7 +372,7 @@ function viewHome() {
   const started = S.content.modules.filter((m) => courseStats(m).done && courseStats(m).done < m.lessons.length);
   const vid = ytId(set.onboardingVideo);
   view.innerHTML = `
-    <section class="home-hero"><picture><source media="(max-width:1023px)" srcset="/app/splash-mobile.webp"><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture></section>
+    <section class="home-hero"><picture><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture></section>
     <div class="home-top">
       <div>
         <p class="hi-name">Ciao ${esc(S.user.name)}, ${esc((set.welcomeSub || "scopri Vendita Uno").replace(/^./, (c) => c.toLowerCase()))}</p>

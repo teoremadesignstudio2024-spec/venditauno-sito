@@ -679,3 +679,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 /* Banner: formato unico 4:3 (1200 × 900 px) su telefono e computer */
 .bn,.home-top .bn{aspect-ratio:4/3}
 .bn.plain::after{display:none}
+
+/* Su telefono niente immagine grande: si parte subito dai contenuti */
+@media (max-width:1023px){.splash,.home-hero{display:none}.auth{padding-top:28px}}
