@@ -111,6 +111,7 @@ function nextLesson() {
   return ls.find((l) => !S.progress[l.id]) || ls[0];
 }
 const courseById = (id) => S.content.modules.find((m) => m.id === id);
+const subOf = (m) => { const a = academyById(m.academyId); return a && (a.subs || []).find((x) => x.id === m.subId); };
 const accColor = (a) => (a && /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff");
 // Sfondo: foto caricata, altrimenti copertina generata con colore e icona dell'accademia.
 function coverBg(url, color, ic) {
@@ -130,7 +131,7 @@ function courseCard(m) {
         <h3>${esc(m.title)}</h3>
         ${e ? `<div class="by">${face(e.name, e.photo)}${esc(e.name)}</div>` : ""}
         <div class="meta">
-          ${a ? `<div class="ac" style="--c:${c}"><span class="tile">${icon(a.icon || "cap")}</span><span>${esc(a.name)}<small>Accademia</small></span></div>` : ""}
+          ${a ? `<div class="ac" style="--c:${c}"><span class="tile">${icon((subOf(m) || a).icon || "cap")}</span><span>${esc(subOf(m) ? subOf(m).name : a.name)}<small>${esc(subOf(m) ? a.name : "Accademia")}</small></span></div>` : ""}
           <span class="lvl ${m.level === "premium" ? "premium" : "base"}"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.6 7 .7-5.3 4.7 1.6 7L12 17.3 5.7 21l1.6-7L2 9.3l7-.7z"/></svg>${m.level === "premium" ? "Premium" : "Base"}</span>
           <span class="acts"><button data-play="${esc(m.id)}" aria-label="Inizia">${icon("play")}</button><button data-save="${esc(m.id)}" class="${saved ? "saved" : ""}" aria-label="Salva">${icon(saved ? "check" : "plus")}</button></span>
         </div>
@@ -163,7 +164,7 @@ function academyCard(a) {
     <div class="ph">${coverBg(a.cover, c, a.icon)}</div>
     <span class="tile">${icon(a.icon || "cap")}</span>
     <h4>${esc(a.name)}</h4>
-    <span class="tag">Accademia</span>
+    <span class="tag">${(a.subs || []).length ? `${a.subs.length} sezioni · ` : ""}${S.content.modules.filter((m) => m.academyId === a.id).length} corsi</span>
     <div class="bar"></div>
   </a>`;
 }
@@ -427,8 +428,9 @@ function viewAcademy() {
     else if (acFilter) list = list.filter((m) => m.academyId === acFilter);
     const used = S.content.academies.filter((a) => S.content.modules.some((m) => m.academyId === a.id));
     body = `<div class="fchips"><button data-f="" class="${!acFilter ? "on" : ""}">Tutti</button>${saved.length ? `<button data-f="_saved" class="${acFilter === "_saved" ? "on" : ""}">${icon("check", "sm")}Salvati</button>` : ""}${used.map((a) => `<button data-f="${esc(a.id)}" class="${acFilter === a.id ? "on" : ""}" style="--c:${accColor(a)}"><i></i>${esc(a.name)}</button>`).join("")}</div>
-      <div class="sec-hd" style="margin-top:4px"><h2>${icon("cap")} ${acFilter === "_saved" ? "I tuoi corsi" : "Corsi di avvio rapido"}</h2><span class="ln"></span><span class="small muted">${done}/${ls.length} lezioni fatte</span></div>
-      <div class="courses">${list.map(courseCard).join("") || `<div class="card empty">${icon("cap")}Nessun corso qui, per ora.</div>`}</div>
+      ${acFilter ? `<div class="sec-hd" style="margin-top:4px"><h2>${acFilter === "_saved" ? "I tuoi corsi" : esc((academyById(acFilter) || {}).name || "")}</h2><span class="ln"></span><span class="small muted">${list.length} corsi</span></div>` : `<p class="small muted" style="margin:-4px 0 4px">${done} lezioni completate su ${ls.length}</p>`}
+      ${!acFilter ? S.content.academies.filter((a) => S.content.modules.some((m) => m.academyId === a.id)).map((a) => `${secHd(a.name, S.content.modules.filter((m) => m.academyId === a.id).length, `<a href="#/percorso/${esc(a.id)}">Apri</a>`)}<div class="hcourses">${S.content.modules.filter((m) => m.academyId === a.id).map(courseCard).join("")}</div>`).join("")
+        : `<div class="courses">${list.map(courseCard).join("") || `<div class="card empty">${icon("cap")}Nessun corso qui, per ora.</div>`}</div>`}
       ${secHd("Accademie", S.content.academies.length, carouselArrows("aAcc"))}
       <div class="acards" id="aAcc">${S.content.academies.map(academyCard).join("")}</div>`;
   } else if (acTab === "educatori") {
@@ -454,7 +456,7 @@ function viewCourse([id]) {
     <div class="chero">${coverBg(m.cover, c, a ? a.icon : "cap")}
       <a class="back" href="#/accademia">${icon("back", "sm")} Accademia</a>
       <div class="info">
-        <div class="row" style="gap:8px">${a ? `<span class="chip" style="background:${c};color:#fff">${esc(a.name)}</span>` : ""}<span class="lvl ${m.level === "premium" ? "premium" : "base"}">${m.level === "premium" ? "Premium" : "Base"}</span></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">${a ? `<a class="chip" href="#/percorso/${esc(a.id)}" style="background:${c};color:#fff;text-decoration:none">${esc(a.name)}${subOf(m) ? " › " + esc(subOf(m).name) : ""}</a>` : ""}<span class="lvl ${m.level === "premium" ? "premium" : "base"}">${m.level === "premium" ? "Premium" : "Base"}</span></div>
         <h1>${esc(m.title)}</h1>
         ${e ? `<a class="row" href="#/educatore/${esc(e.id)}" style="gap:8px;margin-top:10px;text-decoration:none;font-size:13px;color:#d3dcef">${face(e.name, e.photo)}${esc(e.name)}</a>` : ""}
       </div>
@@ -668,27 +670,33 @@ function viewEducators(_, q) {
   draw();
 }
 
-let pTab = "corsi";
+let pTab = "corsi", pSub = "";
 function viewAcademyEdu([id]) {
   const a = academyById(id);
   if (!a) { location.hash = "#/accademia"; return; }
-  const c = accColor(a);
+  if (S.pAcad !== id) { S.pAcad = id; pSub = ""; }
+  const c = accColor(a), subs = a.subs || [];
   const eds = S.content.educators.filter((e) => e.academyId === id);
   const mods = S.content.modules.filter((m) => m.academyId === id);
   const lives = sortedLives().filter((l) => liveState(l) !== "past" && eds.some((e) => e.id === l.educatorId));
   const tabs = [["corsi", `Corsi · ${mods.length}`], ["educatori", `Educatori · ${eds.length}`], ["live", `Live · ${lives.length}`]];
-  const body = pTab === "corsi" ? `<div class="courses">${mods.map(courseCard).join("") || `<div class="card empty">${icon("cap")}I corsi di questa accademia arrivano presto.</div>`}</div>`
-    : pTab === "educatori" ? eds.map(eduRow).join("") || `<div class="card empty">${icon("users")}Presto nuovi educatori in questa accademia.</div>`
-    : `<div class="lv-list">${lives.map(lvItem).join("") || `<div class="card empty">${icon("cal")}Nessuna live in programma.</div>`}</div>`;
+  let body;
+  if (pTab === "corsi") {
+    const groups = [...subs.map((sb) => ({ sb, list: mods.filter((m) => m.subId === sb.id) })), { sb: null, list: mods.filter((m) => !subs.some((x) => x.id === m.subId)) }].filter((g) => g.list.length && (!pSub || (g.sb && g.sb.id === pSub)));
+    body = `${subs.length ? `<div class="subs">${subs.map((sb) => { const n = mods.filter((m) => m.subId === sb.id).length; return `<button class="subt ${pSub === sb.id ? "on" : ""}" data-sub="${esc(sb.id)}" style="--c:${c}"><span class="ic">${icon(sb.icon || "cap")}</span><span class="grow"><b>${esc(sb.name)}</b><small>${n} ${n === 1 ? "corso" : "corsi"}</small></span></button>`; }).join("")}</div>` : ""}
+      ${groups.map((g) => `${secHd(g.sb ? g.sb.name : "Altri corsi", g.list.length)}<div class="courses">${g.list.map(courseCard).join("")}</div>`).join("") || `<div class="card empty">${icon("cap")}I corsi di questa sezione arrivano presto.</div>`}`;
+  } else if (pTab === "educatori") body = eds.map(eduRow).join("") || `<div class="card empty">${icon("users")}Presto nuovi educatori in questa accademia.</div>`;
+  else body = `<div class="lv-list">${lives.map(lvItem).join("") || `<div class="card empty">${icon("cal")}Nessuna live in programma.</div>`}</div>`;
   view.innerHTML = `
     <div class="ahero">${coverBg(a.cover, c, a.icon)}
       <a class="back" href="#/accademia" style="position:absolute;top:24px;left:16px;margin:0">${icon("back", "sm")} Accademie</a>
       <span class="tile" style="--c:${c}">${icon(a.icon || "cap")}</span>
-      <h1>${esc(a.name)}</h1><p>${eds.length} ${eds.length === 1 ? "educatore" : "educatori"} · ${mods.length} ${mods.length === 1 ? "corso" : "corsi"}</p>
+      <h1>${esc(a.name)}</h1><p>${subs.length ? `${subs.length} sezioni · ` : ""}${mods.length} ${mods.length === 1 ? "corso" : "corsi"} · ${eds.length} ${eds.length === 1 ? "educatore" : "educatori"}</p>
     </div>
     <div class="utabs">${tabs.map(([k, n]) => `<button data-t="${k}" class="${pTab === k ? "on" : ""}">${n}</button>`).join("")}</div>
     ${body}`;
   view.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => { pTab = b.dataset.t; viewAcademyEdu([id]); }));
+  view.querySelectorAll("[data-sub]").forEach((b) => (b.onclick = () => { pSub = pSub === b.dataset.sub ? "" : b.dataset.sub; viewAcademyEdu([id]); }));
   bindCourses(view);
 }
 
@@ -1125,7 +1133,7 @@ function admModules() {
   const mods = S.content.modules;
   $("#adm").innerHTML = `<button class="btn pri block" id="add">${icon("plus", "sm")}Nuovo corso</button>
     <div style="margin-top:14px">${mods.map((m, i) => `<div class="card" style="margin-bottom:10px;overflow:hidden">
-      <div class="adm-item"><span class="ini" style="width:30px;height:30px;font-size:12px;border-radius:9px;background:${accColor(academyById(m.academyId))}">${i + 1}</span><div class="grow"><h4>${esc(m.title)}</h4><p>${m.lessons.length} lezioni · ${esc((academyById(m.academyId) || {}).name || "—")} · ${m.level === "premium" ? "Premium" : "Base"}</p></div>${itemActs(i, mods.length)}</div>
+      <div class="adm-item"><span class="ini" style="width:30px;height:30px;font-size:12px;border-radius:9px;background:${accColor(academyById(m.academyId))}">${i + 1}</span><div class="grow"><h4>${esc(m.title)}</h4><p>${m.lessons.length} lezioni · ${esc((academyById(m.academyId) || {}).name || "—")}${subOf(m) ? " › " + esc(subOf(m).name) : ""} · ${m.level === "premium" ? "Premium" : "Base"}</p></div>${itemActs(i, mods.length)}</div>
       ${m.lessons.map((l, j) => `<div class="sub-l">${icon("play", "sm")}<span class="grow ell">${esc(l.title)}</span>${l.youtubeId ? "" : '<span class="chip warn">no video</span>'}<button data-les="${i}.${j}" aria-label="Modifica lezione">${icon("edit", "sm")}</button></div>`).join("")}
       <div class="sub-l"><button data-les="${i}.-1" style="color:var(--blue-2);font-weight:600;display:flex;gap:6px;align-items:center">${icon("plus", "sm")}Aggiungi lezione</button></div>
     </div>`).join("")}</div>`;
@@ -1133,10 +1141,11 @@ function admModules() {
     const m = i >= 0 ? mods[i] : { title: "", desc: "", lessons: [], academyId: (S.content.academies[0] || {}).id, educatorId: "", level: "base", cover: "" };
     formSheet(i >= 0 ? "Modifica corso" : "Nuovo corso",
       field("Titolo", "title", m.title, "text", "required") + field("Descrizione", "desc", m.desc, "textarea") +
-      `<div class="two">${select("Accademia", "academyId", S.content.academies.map((a) => [a.id, a.name]), m.academyId)}${select("Livello", "level", [["base", "Base"], ["premium", "Premium"]], m.level)}</div>` +
+      select("Accademia e sezione", "place", S.content.academies.flatMap((a) => [[`${a.id}|`, `${a.name}`], ...(a.subs || []).map((sb) => [`${a.id}|${sb.id}`, `${a.name} › ${sb.name}`])]), `${m.academyId}|${m.subId || ""}`) +
+      select("Livello", "level", [["base", "Base"], ["premium", "Premium"]], m.level) +
       select("Educatore", "educatorId", [["", "Nessuno"], ...S.content.educators.map((e) => [e.id, e.name])], m.educatorId) +
       imgField("Copertina (se vuota la creiamo noi)", "cover", m.cover, true),
-      async (f) => { const copy = mods.slice(); if (i >= 0) copy[i] = { ...m, ...f }; else copy.push({ ...m, ...f }); await saveSection("modules", copy); },
+      async (f) => { [f.academyId, f.subId] = f.place.split("|"); delete f.place; const copy = mods.slice(); if (i >= 0) copy[i] = { ...m, ...f }; else copy.push({ ...m, ...f }); await saveSection("modules", copy); },
       i >= 0 ? async () => { const copy = mods.slice(); copy.splice(i, 1); await saveSection("modules", copy, "Eliminato"); } : null);
   };
   $("#add").onclick = () => edit(-1);
@@ -1187,13 +1196,22 @@ function admEducators() {
 function admAcademies() {
   const acs = S.content.academies;
   $("#adm").innerHTML = `<button class="btn pri block" id="add">${icon("plus", "sm")}Nuova accademia</button>
-    <div class="card" style="margin-top:14px">${acs.map((a, i) => `<div class="adm-item"><span class="acad" style="padding:0;border:0;background:none;--c:${accColor(a)}"><span class="ic">${icon(a.icon)}</span></span><div class="grow"><h4>${esc(a.name)}</h4><p>${S.content.educators.filter((e) => e.academyId === a.id).length} educatori</p></div>${itemActs(i, acs.length)}</div>`).join("")}</div>`;
+    <div class="card" style="margin-top:14px">${acs.map((a, i) => `<div class="adm-item"><span class="acad" style="padding:0;border:0;background:none;--c:${accColor(a)}"><span class="ic">${icon(a.icon)}</span></span><div class="grow"><h4>${esc(a.name)}</h4><p>${(a.subs || []).map((x) => esc(x.name)).join(" · ") || "Nessuna sottocategoria"}</p></div>${itemActs(i, acs.length)}</div>`).join("")}</div>`;
   const edit = (i) => {
     const a = i >= 0 ? acs[i] : { name: "", icon: "cap", color: "#2f6bff", cover: "" };
     formSheet(i >= 0 ? "Modifica accademia" : "Nuova accademia", field("Nome", "name", a.name, "text", "required") +
       `<div class="two">${select("Icona", "icon", ICONS.map((x) => [x, x]), a.icon)}${select("Colore", "color", COLORS, a.color)}</div>` +
-      imgField("Foto di copertina", "cover", a.cover, true),
-      async (f) => { const copy = acs.slice(); if (i >= 0) copy[i] = { ...a, ...f }; else copy.push({ ...a, ...f }); await saveSection("academies", copy); },
+      imgField("Foto di copertina", "cover", a.cover, true) +
+      field("Sottocategorie (una per riga)", "subsText", (a.subs || []).map((x) => x.name).join("\n"), "textarea", 'rows="5" placeholder="Acquisizione\nTrattativa\nChiusura"'),
+      async (f) => {
+        // Tiene lo stesso codice per le sottocategorie con lo stesso nome, così i corsi restano collegati.
+        const old = a.subs || [];
+        const subs = f.subsText.split("\n").map((x) => x.trim()).filter(Boolean).map((name) => old.find((o) => o.name.toLowerCase() === name.toLowerCase()) || { id: name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24) + "-" + Math.random().toString(16).slice(2, 6), name, icon: "cap" });
+        delete f.subsText;
+        const item = { ...a, ...f, subs };
+        const copy = acs.slice(); if (i >= 0) copy[i] = item; else copy.push(item);
+        await saveSection("academies", copy);
+      },
       i >= 0 ? async () => { const copy = acs.slice(); copy.splice(i, 1); await saveSection("academies", copy, "Eliminato"); } : null);
   };
   $("#add").onclick = () => edit(-1);

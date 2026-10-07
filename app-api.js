@@ -104,43 +104,168 @@ function publicUser(u) {
 }
 
 // ---------- contenuti iniziali ----------
+// Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
+
+const CATALOG_V = 3;
+
+function catalogAcademies() {
+  return [
+    { id: "agenti", name: "Agenti immobiliari", icon: "handshake", color: "#2f6bff", cover: "", subs: [
+      { id: "acq", name: "Acquisizione", icon: "key" },
+      { id: "tra", name: "Trattativa", icon: "handshake" },
+      { id: "chiu", name: "Chiusura", icon: "doc" },
+      { id: "chi", name: "Chiamate a freddo", icon: "phone" },
+    ] },
+    { id: "inv", name: "Investimenti immobiliari", icon: "trend", color: "#eab308", cover: "", subs: [
+      { id: "affari", name: "Trovare gli affari", icon: "search" },
+      { id: "numeri", name: "Numeri e analisi", icon: "euro" },
+      { id: "ristr", name: "Ristrutturazione e materiali", icon: "tool" },
+      { id: "aste", name: "Aste", icon: "doc" },
+      { id: "affitti", name: "Affitti e rendita", icon: "home2" },
+    ] },
+    { id: "pm", name: "Property manager", icon: "key", color: "#22c55e", cover: "", subs: [
+      { id: "diventare", name: "Diventare property manager", icon: "cap" },
+      { id: "piattaforme", name: "Airbnb e Booking", icon: "home2" },
+      { id: "gestione", name: "Ospiti, pulizie e check-in", icon: "users" },
+      { id: "prezzi", name: "Prezzi e guadagni", icon: "trend" },
+      { id: "regole", name: "Regole e fisco", icon: "doc" },
+    ] },
+    { id: "mkt", name: "Marketing immobiliare", icon: "mega", color: "#ef4444", cover: "", subs: [
+      { id: "social", name: "Social media", icon: "mega" },
+      { id: "foto", name: "Foto e video", icon: "camera" },
+      { id: "ai", name: "AI per agenti", icon: "spark" },
+    ] },
+    { id: "fin", name: "Mutui e finanza", icon: "euro", color: "#7c5cff", cover: "", subs: [
+      { id: "mutui", name: "Mutui per i clienti", icon: "euro" },
+      { id: "capitali", name: "Finanziare le operazioni", icon: "trend" },
+    ] },
+  ];
+}
+
+function catalogModules() {
+  const yt = "jqOjebgNQvk";
+  const C = (id, academyId, subId, level, title, desc, lessons) => ({
+    id, academyId, subId, level, title, desc, educatorId: "", cover: "",
+    lessons: lessons.map(([t, d], i) => ({ id: `${id}v${i + 1}`, title: t, youtubeId: "", minutes: 0, desc: d || "", pdf: "" })),
+  });
+  return [
+    // Agenti immobiliari (i primi tre corsi esistevano già)
+    { id: "m1", title: "Introduzione al metodo", desc: "Come funziona Vendita Uno e come usare l'accademia.", academyId: "agenti", subId: "acq", educatorId: "sd", level: "base", cover: "", lessons: [{ id: "m1v1", title: "Introduzione al metodo Vendita Uno", youtubeId: yt, minutes: 6, desc: "", pdf: "" }] },
+    { id: "m2", title: "Acquisizione mandati", desc: "Dal primo contatto all'incarico in esclusiva.", academyId: "agenti", subId: "acq", educatorId: "sd", level: "premium", cover: "", lessons: [{ id: "m2v1", title: "Come acquisire mandati in esclusiva", youtubeId: yt, minutes: 18, desc: "", pdf: "" }] },
+    C("ag-tra1", "agenti", "tra", "premium", "Trattativa senza sconti", "Difendere il prezzo e la provvigione portando le parti all'accordo.", [
+      ["Preparare la trattativa", "Cosa sapere di venditore e acquirente prima di sederti al tavolo."],
+      ["Le obiezioni sul prezzo", "Come rispondere a \"è troppo\" senza abbassare subito."],
+      ["Portare le parti all'accordo", "Proposta, controproposta e quando fermarsi."],
+    ]),
+    { id: "m3", title: "Chiusura e firma", desc: "Portare il cliente alla firma senza pressioni.", academyId: "agenti", subId: "chiu", educatorId: "md", level: "premium", cover: "", lessons: [{ id: "m3v1", title: "Chiusura e firma del mandato", youtubeId: yt, minutes: 15, desc: "", pdf: "" }] },
+    C("ag-chi1", "agenti", "chi", "base", "Chiamate a freddo che funzionano", "Lo script, il tono e i numeri per trasformare le chiamate in appuntamenti.", [
+      ["I primi 30 secondi", "Come presentarti senza farti attaccare il telefono."],
+      ["Chiamare i privati che vendono da soli", "La telefonata completa, frase per frase."],
+      ["Gestire il \"non mi interessa\"", "Le risposte che riaprono la conversazione."],
+      ["Quante chiamate fare ogni giorno", "I numeri che servono per arrivare ai tuoi incarichi."],
+    ]),
+    // Investimenti immobiliari
+    C("inv1", "inv", "affari", "base", "Le case che profumano di soldi", "Come riconoscere e trovare gli immobili che nascondono un guadagno, prima degli altri.", [
+      ["Cosa rende un immobile un affare", "Prezzo, zona, stato e motivazione del venditore: i quattro segnali da guardare sempre."],
+      ["Dove cercarle", "Aste, successioni, immobili da ristrutturare, privati che devono vendere in fretta: dove nascono le occasioni."],
+      ["Leggere un annuncio come un investitore", "Cosa dicono davvero foto, descrizione e tempo online di un annuncio."],
+      ["Il primo sopralluogo: la checklist", "Impianti, strutture, documenti e difetti nascosti da controllare prima di fare un'offerta."],
+      ["Fare l'offerta giusta", "Come arrivare al prezzo che ti lascia margine, senza far saltare la trattativa."],
+    ]),
+    C("inv2", "inv", "numeri", "premium", "Calcolare se l'operazione conviene", "I numeri da fare prima di comprare: costi, tasse, valore finale e margine.", [
+      ["Prezzo, costi e tasse di acquisto", "Notaio, imposte, agenzia, mutuo: tutto quello che si aggiunge al prezzo."],
+      ["Stimare il valore dopo i lavori", "Come usare le vendite vicine per capire quanto varrà l'immobile finito."],
+      ["Margine e rendimento: il foglio di calcolo", "Il modello da compilare per ogni operazione, passo per passo."],
+      ["Gli errori che mangiano il guadagno", "Tempi lunghi, lavori sottostimati, imprevisti: come proteggersi."],
+    ]),
+    C("inv3", "inv", "ristr", "premium", "Ristrutturare: materiali e fornitori", "Dove comprare i materiali, come scegliere le imprese e tenere sotto controllo costi e tempi.", [
+      ["Dove comprare i materiali e a che prezzo", "Grossisti, outlet, fornitori diretti: come spendere meno senza perdere qualità."],
+      ["Scegliere imprese e artigiani", "Le domande da fare, i lavori da controllare e i segnali di allarme."],
+      ["Capitolato e preventivi", "Come scrivere cosa vuoi e confrontare i preventivi alla pari."],
+      ["Tempi di cantiere e controllo dei costi", "Pianificare i lavori e tenere il budget giorno per giorno."],
+      ["Home staging per vendere prima", "Pochi interventi e allestimento per vendere più in fretta e a un prezzo migliore."],
+    ]),
+    C("inv4", "inv", "aste", "premium", "Aste immobiliari da zero", "Come funzionano le aste, come leggere la perizia e come partecipare senza rischi.", [
+      ["Come funziona un'asta", "Tribunale, delegato, offerta minima e rilanci spiegati semplici."],
+      ["Leggere la perizia", "Abusi, occupanti, spese condominiali: cosa cercare prima di partecipare."],
+      ["Partecipare e aggiudicarsi l'immobile", "Cauzione, offerta, saldo prezzo e liberazione dell'immobile."],
+    ]),
+    C("inv5", "inv", "affitti", "premium", "Affitti e rendita", "Mettere a reddito un immobile: quale affitto scegliere e quanto rende davvero.", [
+      ["Affitto lungo, breve o a studenti", "Pro e contro di ogni formula, con i numeri."],
+      ["Calcolare il rendimento netto", "Dall'affitto lordo a quello che ti resta davvero in tasca."],
+      ["Contratti e tutele per il proprietario", "Garanzie, cauzioni e come scegliere l'inquilino."],
+    ]),
+    // Property manager
+    C("pm1", "pm", "diventare", "base", "Diventare property manager: il corso completo", "Dal primo proprietario all'attività avviata: tutto quello che serve per partire.", [
+      ["Cos'è un property manager e quanto guadagna", "Il lavoro, i servizi che offri e come vieni pagato."],
+      ["Trovare i primi proprietari", "Dove cercarli e cosa proporre per convincerli ad affidarti la casa."],
+      ["Il contratto di gestione e la percentuale", "Cosa scrivere, quanto chiedere e cosa è a carico di chi."],
+      ["Aprire l'attività", "Le scelte da fare all'inizio per lavorare in regola."],
+    ]),
+    C("pm2", "pm", "piattaforme", "premium", "Airbnb e Booking: annunci che si prenotano", "Creare e gestire annunci che riempiono il calendario.", [
+      ["Creare l'annuncio", "Titolo, descrizione e servizi che fanno la differenza."],
+      ["Foto e recensioni", "Le foto che fanno cliccare e come arrivare a 5 stelle."],
+      ["Calendario e regole della casa", "Soggiorno minimo, orari e regole che evitano problemi."],
+    ]),
+    C("pm3", "pm", "gestione", "premium", "Ospiti, pulizie e check-in", "L'organizzazione di tutti i giorni, senza correre da una casa all'altra.", [
+      ["Check-in autonomo e serrature smart", "Far entrare gli ospiti senza essere presente."],
+      ["Pulizie e biancheria", "Trovare, organizzare e controllare chi pulisce."],
+      ["Problemi e reclami", "Cosa fare quando qualcosa va storto, prima che arrivi la recensione."],
+    ]),
+    C("pm4", "pm", "prezzi", "premium", "Prezzi e guadagni", "Fare rendere ogni casa il più possibile.", [
+      ["Prezzi dinamici", "Alzare e abbassare i prezzi in base a stagione ed eventi."],
+      ["Calcolare il guadagno per ogni casa", "Incassi, costi e quanto resta a te e al proprietario."],
+      ["Il report al proprietario", "Cosa mandare ogni mese per tenerlo contento."],
+    ]),
+    C("pm5", "pm", "regole", "premium", "Regole e fisco degli affitti brevi", "Le regole da rispettare per lavorare tranquillo.", [
+      ["Codice CIN, comunicazioni e tassa di soggiorno", "Gli obblighi per ogni casa in affitto breve."],
+      ["Tasse sugli affitti brevi", "Cedolare secca, fatture e cosa cambia se lo fai come attività."],
+      ["Assicurazioni e tutele", "Come proteggere te, il proprietario e la casa."],
+    ]),
+    // Marketing immobiliare
+    C("mk1", "mkt", "social", "base", "Instagram e TikTok per agenti", "Farti conoscere nella tua zona e far arrivare i clienti da soli.", [
+      ["Il profilo che porta clienti", "Foto, bio e contenuti in evidenza."],
+      ["Cosa pubblicare ogni settimana", "Tre formati che funzionano, con esempi veri."],
+      ["Dai commenti all'appuntamento", "Come trasformare chi ti segue in clienti."],
+    ]),
+    C("mk2", "mkt", "foto", "premium", "Foto e video degli immobili con il telefono", "Immobili che si fanno notare, senza attrezzatura costosa.", [
+      ["Foto che vendono", "Luce, angolazioni e preparazione della casa."],
+      ["Il video tour in 20 minuti", "Riprendere e montare un video con il telefono."],
+      ["Pubblicare sui portali e sui social", "Formati e trucchi per ogni piattaforma."],
+    ]),
+    C("mk3", "mkt", "ai", "base", "AI per agenti immobiliari", "Usare l'intelligenza artificiale per risparmiare ore ogni settimana.", [
+      ["Scrivere annunci con l'AI", "Descrizioni migliori in due minuti."],
+      ["Rispondere ai clienti più in fretta", "Messaggi, email e follow-up pronti."],
+      ["Contenuti social in 10 minuti", "Idee, testi e video per tutta la settimana."],
+    ]),
+    // Mutui e finanza
+    C("fin1", "fin", "mutui", "base", "Mutui spiegati ai tuoi clienti", "Aiutare chi compra a ottenere il mutuo e chiudere prima.", [
+      ["Come funziona un mutuo", "Tasso, durata, rata e anticipo spiegati semplici."],
+      ["Pre-delibera e tempi", "Cosa serve e quanto ci vuole, per non far saltare la vendita."],
+      ["Lavorare con un mediatore creditizio", "Quando conviene e come collaborare."],
+    ]),
+    C("fin2", "fin", "capitali", "premium", "Finanziare le operazioni immobiliari", "Dove trovare i soldi per le tue operazioni.", [
+      ["Capitale proprio e leva", "Quanto mettere tu e quanto farti prestare."],
+      ["Soci e investitori", "Come presentare un'operazione e dividere i guadagni."],
+      ["Prestiti e alternative", "Le strade possibili e i rischi di ognuna."],
+    ]),
+  ];
+}
 
 function seedContent() {
   // Settimana corrente (lunedì) in ora italiana approssimata: le live di esempio partono da qui.
   const d = new Date();
   const monday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - ((d.getUTCDay() + 6) % 7)));
   const at = (day, hh, mm) => new Date(monday.getTime() + day * 86400000 + (hh - 2) * 3600000 + mm * 60000).toISOString();
-  const yt = "jqOjebgNQvk";
   return {
-    academies: [
-      { id: "acq", name: "Acquisizione", icon: "key", color: "#2f6bff", cover: "" },
-      { id: "tra", name: "Trattativa e chiusura", icon: "handshake", color: "#7c5cff", cover: "" },
-      { id: "chi", name: "Chiamate a freddo", icon: "phone", color: "#0ea5e9", cover: "" },
-      { id: "soc", name: "Social e pubblicità", icon: "mega", color: "#ef4444", cover: "" },
-      { id: "min", name: "Mindset", icon: "brain", color: "#64748b", cover: "" },
-      { id: "fin", name: "Mutui e finanza", icon: "euro", color: "#22c55e", cover: "" },
-      { id: "leg", name: "Contratti e legale", icon: "doc", color: "#eab308", cover: "" },
-      { id: "ai", name: "AI per agenti", icon: "spark", color: "#06b6d4", cover: "" },
-      ...investAcademies(),
-    ],
+    seedV: CATALOG_V,
+    academies: catalogAcademies(),
     educators: [
-      { id: "sd", name: "Samuele Diotti", academyId: "acq", role: "Acquisizione in esclusiva", bio: "Insegna come arrivare al primo appuntamento e uscire con l'incarico firmato.", photo: "/assets/img/samuele-diotti.jpg", email: "" },
-      { id: "md", name: "Marco Diotti", academyId: "tra", role: "Trattativa e chiusura", bio: "Script, obiezioni e chiusura: tutto quello che serve dal sopralluogo al rogito.", photo: "/assets/img/marco-diotti.jpg", email: "" },
-      { id: "sb", name: "Stefano Bonuccelli", academyId: "min", role: "Mindset e organizzazione", bio: "Numeri, abitudini e metodo per lavorare con costanza ogni settimana.", photo: "/assets/img/stefano-bonuccelli.png", email: "" },
+      { id: "sd", name: "Samuele Diotti", academyId: "agenti", role: "Acquisizione in esclusiva", bio: "Insegna come arrivare al primo appuntamento e uscire con l'incarico firmato.", photo: "/assets/img/samuele-diotti.jpg", email: "" },
+      { id: "md", name: "Marco Diotti", academyId: "agenti", role: "Trattativa e chiusura", bio: "Script, obiezioni e chiusura: tutto quello che serve dal sopralluogo al rogito.", photo: "/assets/img/marco-diotti.jpg", email: "" },
+      { id: "sb", name: "Stefano Bonuccelli", academyId: "agenti", role: "Mindset e organizzazione", bio: "Numeri, abitudini e metodo per lavorare con costanza ogni settimana.", photo: "/assets/img/stefano-bonuccelli.png", email: "" },
     ],
-    modules: [
-      { id: "m1", title: "Introduzione al metodo", desc: "Come funziona Vendita Uno e come usare l'accademia.", academyId: "acq", educatorId: "sd", level: "base", cover: "", lessons: [
-        { id: "m1v1", title: "Introduzione al metodo Vendita Uno", youtubeId: yt, minutes: 6, desc: "" },
-      ] },
-      { id: "m2", title: "Acquisizione mandati", desc: "Dal primo contatto all'incarico in esclusiva.", academyId: "acq", educatorId: "sd", level: "premium", cover: "", lessons: [
-        { id: "m2v1", title: "Come acquisire mandati in esclusiva", youtubeId: yt, minutes: 18, desc: "" },
-      ] },
-      { id: "m3", title: "Chiusura e firma", desc: "Portare il cliente alla firma senza pressioni.", academyId: "tra", educatorId: "md", level: "premium", cover: "", lessons: [
-        { id: "m3v1", title: "Chiusura e firma del mandato", youtubeId: yt, minutes: 15, desc: "" },
-      ] },
-      ...investModules(),
-    ],
-    seedV: 2,
+    modules: catalogModules(),
     banners: defaultBanners(),
     settings: defaultSettings(),
     lives: [
@@ -154,44 +279,6 @@ function seedContent() {
   };
 }
 
-// Accademia Investimenti immobiliari: corsi e lezioni già impostati, i video si aggiungono dal pannello admin.
-const investAcademies = () => [{ id: "inv", name: "Investimenti immobiliari", icon: "trend", color: "#eab308", cover: "" }];
-function investModules() {
-  const L = (prefix, titles) => titles.map(([title, desc], i) => ({ id: `${prefix}v${i + 1}`, title, youtubeId: "", minutes: 0, desc, pdf: "" }));
-  return [
-    { id: "inv1", title: "Le case che profumano di soldi", desc: "Come riconoscere e trovare gli immobili che nascondono un guadagno, prima degli altri.", academyId: "inv", educatorId: "", level: "base", cover: "", lessons: L("inv1", [
-      ["Cosa rende un immobile un affare", "Prezzo, zona, stato e motivazione del venditore: i quattro segnali da guardare sempre."],
-      ["Dove cercarle", "Aste, successioni, immobili da ristrutturare, privati che devono vendere in fretta: dove nascono le occasioni."],
-      ["Leggere un annuncio come un investitore", "Cosa dicono davvero foto, descrizione e tempo online di un annuncio."],
-      ["Il primo sopralluogo: la checklist", "Impianti, strutture, documenti e difetti nascosti da controllare prima di fare un'offerta."],
-      ["Fare l'offerta giusta", "Come arrivare al prezzo che ti lascia margine, senza far saltare la trattativa."],
-    ]) },
-    { id: "inv2", title: "Calcolare se l'operazione conviene", desc: "I numeri da fare prima di comprare: costi, tasse, valore finale e margine.", academyId: "inv", educatorId: "", level: "premium", cover: "", lessons: L("inv2", [
-      ["Prezzo, costi e tasse di acquisto", "Notaio, imposte, agenzia, mutuo: tutto quello che si aggiunge al prezzo."],
-      ["Stimare il valore dopo i lavori", "Come usare le vendite vicine per capire quanto varrà l'immobile finito."],
-      ["Margine e rendimento: il foglio di calcolo", "Il modello da compilare per ogni operazione, passo per passo."],
-      ["Gli errori che mangiano il guadagno", "Tempi lunghi, lavori sottostimati, imprevisti: come proteggersi."],
-    ]) },
-    { id: "inv3", title: "Ristrutturare: materiali e fornitori", desc: "Dove comprare i materiali, come scegliere le imprese e tenere sotto controllo costi e tempi.", academyId: "inv", educatorId: "", level: "premium", cover: "", lessons: L("inv3", [
-      ["Dove comprare i materiali e a che prezzo", "Grossisti, outlet, fornitori diretti: come spendere meno senza perdere qualità."],
-      ["Scegliere imprese e artigiani", "Le domande da fare, i lavori da controllare e i segnali di allarme."],
-      ["Capitolato e preventivi", "Come scrivere cosa vuoi e confrontare i preventivi alla pari."],
-      ["Tempi di cantiere e controllo dei costi", "Pianificare i lavori e tenere il budget giorno per giorno."],
-      ["Home staging per vendere prima", "Pochi interventi e allestimento per vendere più in fretta e a un prezzo migliore."],
-    ]) },
-    { id: "inv4", title: "Aste immobiliari da zero", desc: "Come funzionano le aste, come leggere la perizia e come partecipare senza rischi.", academyId: "inv", educatorId: "", level: "premium", cover: "", lessons: L("inv4", [
-      ["Come funziona un'asta", "Tribunale, delegato, offerta minima e rilanci spiegati semplici."],
-      ["Leggere la perizia", "Abusi, occupanti, spese condominiali: cosa cercare prima di partecipare."],
-      ["Partecipare e aggiudicarsi l'immobile", "Cauzione, offerta, saldo prezzo e liberazione dell'immobile."],
-    ]) },
-    { id: "inv5", title: "Affitti e rendita", desc: "Mettere a reddito un immobile: quale affitto scegliere e quanto rende davvero.", academyId: "inv", educatorId: "", level: "premium", cover: "", lessons: L("inv5", [
-      ["Affitto lungo, breve o a studenti", "Pro e contro di ogni formula, con i numeri."],
-      ["Calcolare il rendimento netto", "Dall'affitto lordo a quello che ti resta davvero in tasca."],
-      ["Contratti e tutele per il proprietario", "Garanzie, cauzioni e come scegliere l'inquilino."],
-    ]) },
-  ];
-}
-
 function defaultBanners() {
   return [
     { id: "b1", title: "Accademia Vendita Uno", text: "Il metodo completo per acquisire incarichi in esclusiva, passo dopo passo.", cover: "", link: "#/accademia" },
@@ -201,19 +288,36 @@ function defaultBanners() {
 }
 const defaultSettings = () => ({ welcomeTitle: "Benvenuto!", welcomeSub: "Scopri Vendita Uno", onboardingTitle: "Inizia da qui", onboardingText: "Scopri come usare l'app e tutto quello che offre", onboardingVideo: "jqOjebgNQvk" });
 
+// Vecchie accademie (versioni 1 e 2) → nuova accademia e sottocategoria.
+const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["mkt", "social"], min: ["agenti", ""], fin: ["fin", "mutui"], leg: ["agenti", ""], ai: ["mkt", "ai"], inv: ["inv", ""] };
+
+// Porta i contenuti salvati con una versione precedente alla struttura con sottocategorie.
+// Mantiene video, copertine e modifiche fatte dall'admin; aggiunge solo ciò che manca.
+function migrateContent(c) {
+  const catA = catalogAcademies(), catM = catalogModules();
+  const custom = c.academies.filter((a) => !OLD_ACADEMIES[a.id] && !catA.some((x) => x.id === a.id));
+  c.academies = [...catA.map((a) => ({ ...a, ...(c.academies.find((x) => x.id === a.id) || {}), subs: a.subs })), ...custom];
+  for (const e of c.educators) if (OLD_ACADEMIES[e.academyId]) e.academyId = OLD_ACADEMIES[e.academyId][0];
+  for (const m of c.modules) {
+    const cat = catM.find((x) => x.id === m.id);
+    if (cat) { m.academyId = cat.academyId; m.subId = cat.subId; }
+    else if (OLD_ACADEMIES[m.academyId]) [m.academyId, m.subId] = OLD_ACADEMIES[m.academyId];
+  }
+  for (const m of catM) if (!c.modules.some((x) => x.id === m.id)) c.modules.push(m);
+  c.seedV = CATALOG_V;
+  return c;
+}
+
 async function getContent(kv) {
   let c = await getJSON(kv, "app:content");
   if (!c) {
     c = seedContent();
     await putJSON(kv, "app:content", c);
   }
-  // Contenuti salvati con una versione precedente: aggiunge i campi e i corsi nuovi una volta sola.
   c.banners = c.banners || defaultBanners();
   c.settings = { ...defaultSettings(), ...(c.settings || {}) };
-  if ((c.seedV || 1) < 2) {
-    for (const a of investAcademies()) if (!c.academies.some((x) => x.id === a.id)) c.academies.push(a);
-    for (const m of investModules()) if (!c.modules.some((x) => x.id === m.id)) c.modules.push(m);
-    c.seedV = 2;
+  if ((c.seedV || 1) < CATALOG_V) {
+    migrateContent(c);
     await putJSON(kv, "app:content", c);
   }
   return c;
@@ -222,12 +326,13 @@ async function getContent(kv) {
 // ---------- validazione contenuti admin ----------
 
 const SECTIONS = {
-  academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap", color: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff", cover: str(a.cover, 300) }),
+  academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap", color: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff", cover: str(a.cover, 300),
+    subs: (Array.isArray(a.subs) ? a.subs : []).slice(0, 40).map((x) => ({ id: str(x.id, 40) || rid(4), name: str(x.name, 60), icon: str(x.icon, 20) || "cap" })).filter((x) => x.name) }),
   banners: (b) => ({ id: str(b.id, 40) || rid(4), title: str(b.title, 80), text: str(b.text, 200), cover: str(b.cover, 300), link: str(b.link, 300) }),
   educators: (e) => ({ id: str(e.id, 40) || rid(4), name: str(e.name, 80), academyId: str(e.academyId, 40), role: str(e.role, 80), bio: str(e.bio, 600), photo: str(e.photo, 300), email: str(e.email, 120).toLowerCase() }),
   modules: (m) => ({
     id: str(m.id, 40) || rid(4), title: str(m.title, 120), desc: str(m.desc, 400),
-    academyId: str(m.academyId, 40), educatorId: str(m.educatorId, 40), level: m.level === "premium" ? "premium" : "base", cover: str(m.cover, 300),
+    academyId: str(m.academyId, 40), subId: str(m.subId, 40), educatorId: str(m.educatorId, 40), level: m.level === "premium" ? "premium" : "base", cover: str(m.cover, 300),
     lessons: (Array.isArray(m.lessons) ? m.lessons : []).slice(0, 100).map((l) => ({
       id: str(l.id, 40) || rid(4), title: str(l.title, 140), youtubeId: str(l.youtubeId, 20), minutes: Math.max(0, Math.min(600, Number(l.minutes) || 0)), desc: str(l.desc, 1000), pdf: str(l.pdf, 300),
     })),

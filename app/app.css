@@ -570,3 +570,14 @@ h2.sec{font-size:19px;font-weight:700;letter-spacing:-.01em}
 .radial.open .it:nth-child(4){transform:translate(84px,-132px)}
 .radial.open .it:nth-child(5){transform:translate(132px,-46px)}
 .radial::before{bottom:calc(290px + env(safe-area-inset-bottom))}
+
+/* Sottocategorie dentro un'accademia */
+.subs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.subt{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:var(--panel);border:1px solid var(--line);text-align:left;transition:border-color .15s,background .15s}
+.subt .ic{width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,var(--c) 22%,transparent);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.subt .ic svg{width:18px;height:18px}
+.subt b{display:block;font-family:var(--display);font-size:14px;font-weight:700;line-height:1.15}
+.subt small{font-size:11.5px;color:var(--muted)}
+.subt.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.subt.on .ic{background:var(--c)}
+@media (min-width:1024px){.subs{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
