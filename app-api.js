@@ -651,6 +651,17 @@ export async function handleAppApi(request, env) {
       u.role = body.role;
       await saveUser(kv, u);
       let content = null;
+      if (u.role === "agent") {
+        // Non è più educatore: via il profilo collegato, le sue live e il collegamento ai corsi.
+        content = await getContent(kv);
+        const edu = content.educators.find((e) => e.email && e.email === u.email);
+        if (edu) {
+          content.educators = content.educators.filter((e) => e !== edu);
+          content.lives = content.lives.filter((l) => l.educatorId !== edu.id);
+          for (const m of content.modules) if (m.educatorId === edu.id) m.educatorId = "";
+          await putJSON(kv, "app:content", content);
+        }
+      }
       if (u.role === "educator") {
         // Collega l'account al profilo educatore: stessa email, oppure stesso nome senza email, altrimenti ne crea uno nuovo.
         content = await getContent(kv);
@@ -670,6 +681,14 @@ export async function handleAppApi(request, env) {
       if (section === "lives") { content.lives.sort((a, b) => a.start.localeCompare(b.start)); await notifyLives(kv, before, content.lives, content.educators); }
       if (section === "modules") await notifyModules(kv, before, content.modules);
       if (section === "educators") {
+        // Chi viene tolto dagli educatori torna Agente (gli admin restano admin).
+        const kept = new Set(content.educators.map((e) => e.email).filter(Boolean));
+        for (const e of before) {
+          if (!e.email || kept.has(e.email)) continue;
+          const uid = await kv.get(`app:email:${e.email}`);
+          const u = uid ? await getJSON(kv, `app:user:${uid}`) : null;
+          if (u && u.role === "educator") { u.role = "agent"; await saveUser(kv, u); }
+        }
         // Chi viene collegato a un profilo educatore diventa Educatore (gli admin restano admin).
         for (const e of content.educators) {
           if (!e.email) continue;

@@ -36,7 +36,7 @@ function ago(ts) {
 function ytId(s) {
   s = (s || "").trim();
   if (/^[\w-]{11}$/.test(s)) return s;
-  const m = s.match(/(?:youtu\.be\/|v=|\/embed\/|\/live\/|\/shorts\/)([\w-]{11})/);
+  const m = s.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/live\/|\/shorts\/|\/v\/|youtube\.com\/e\/)([\w-]{11})(?![\w-])/);
   return m ? m[1] : "";
 }
 
@@ -1203,7 +1203,7 @@ function viewAdmin() {
   const tabs = [["overview", "Panoramica"], ["live", "Live"], ["home", "Home"], ["accademia", "Corsi"], ["educatori", "Educatori"], ["percorsi", "Accademie"], ["utenti", "Utenti"], ["zone", "Richieste zona"]];
   view.innerHTML = `<h1 class="h1">Pannello admin</h1><p class="lead-tx" style="margin-bottom:14px">Qui gestisci contenuti, live e utenti dell'app.</p>
     <div class="tabs">${tabs.map(([k, n]) => `<button data-a="${k}" class="${adminTab === k ? "on" : ""}">${n}</button>`).join("")}</div><div id="adm"></div>`;
-  view.querySelectorAll("[data-a]").forEach((b) => (b.onclick = () => { adminTab = b.dataset.a; viewAdmin(); }));
+  view.querySelectorAll("[data-a]").forEach((b) => (b.onclick = async () => { adminTab = b.dataset.a; await loadMe(); viewAdmin(); }));
   ({ overview: admOverview, live: admLives, home: admHome, accademia: admModules, educatori: admEducators, percorsi: admAcademies, utenti: admUsers, zone: admZones })[adminTab]();
 }
 
@@ -1248,12 +1248,22 @@ const COLORS = [["#2f6bff", "Blu"], ["#7c5cff", "Viola"], ["#0ea5e9", "Azzurro"]
 const itemActs = (i, n, extraUp = true) => `<div class="acts">${extraUp && i > 0 ? `<button data-up="${i}" aria-label="Su">${icon("up")}</button>` : ""}<button data-edit="${i}" aria-label="Modifica">${icon("edit")}</button><button data-del="${i}" aria-label="Elimina">${icon("trash")}</button></div>`;
 
 function formSheet(title, html, onSave, onDelete) {
-  openSheet(title, `<form id="sf">${html}<div id="serr"></div><button class="btn pri block">Salva</button>${onDelete ? `<button type="button" class="btn danger block" id="sdel" style="margin-top:8px">${icon("trash", "sm")}Elimina</button>` : ""}</form>`, (root) => {
+  openSheet(title, `<form id="sf" novalidate>${html}<div id="serr"></div><button class="btn pri block">Salva</button>${onDelete ? `<button type="button" class="btn danger block" id="sdel" style="margin-top:8px">${icon("trash", "sm")}Elimina</button>` : ""}</form>`, (root) => {
     root.querySelector("#sf").onsubmit = async (e) => {
       e.preventDefault();
-      const btn = e.target.querySelector("button.pri");
+      const form = e.target, serr = root.querySelector("#serr");
+      // Link scritti senza https:// (es. youtube.com/...): li completa l'app
+      form.querySelectorAll('[inputmode="url"], [name=video], [name=onboardingVideo]').forEach((i) => { const v = i.value.trim(); i.value = v && !/^https?:\/\//i.test(v) && /^[\w-]+(\.[\w-]+)+\//.test(v) ? "https://" + v : v; });
+      const bad = [...form.elements].find((i) => i.willValidate && !i.checkValidity());
+      if (bad) {
+        const label = (bad.closest(".field") || {}).querySelector ? bad.closest(".field").querySelector("span").textContent : "un campo";
+        serr.innerHTML = `<div class="err">Controlla il campo "${esc(label)}": ${esc(bad.validationMessage)}</div>`;
+        bad.focus();
+        return;
+      }
+      const btn = form.querySelector("button.pri");
       btn.disabled = true;
-      try { await onSave(Object.fromEntries(new FormData(e.target)), e.target); } catch (err) { root.querySelector("#serr").innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; }
+      try { await onSave(Object.fromEntries(new FormData(form)), form); } catch (err) { root.querySelector("#serr").innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; }
     };
     bindImgFields(root);
     if (onDelete) root.querySelector("#sdel").onclick = () => { if (confirm("Sicuro di voler eliminare?")) onDelete().catch((err) => toast(err.message)); };
@@ -1296,10 +1306,10 @@ function livesManager(root, opts) {
     const l = i >= 0 ? lives[i] : { title: "", desc: "", educatorId: opts.eduId || (S.content.educators[0] || {}).id, start: new Date(Date.now() + 86400000).toISOString(), minutes: 60, url: "", replayUrl: "" };
     formSheet(i >= 0 ? "Modifica live" : "Nuova live",
       field("Titolo", "title", l.title, "text", "required") + eduSel(l.educatorId) +
-      `<div class="two">${field("Data e ora", "start", toLocalInput(l.start), "datetime-local", "required")}${field("Durata (minuti)", "minutes", l.minutes, "number", 'min="5" max="600"')}</div>` +
+      `<div class="two">${field("Data e ora", "start", toLocalInput(l.start), "datetime-local", "required")}${field("Durata (minuti)", "minutes", l.minutes, "number", 'min="1" max="600"')}</div>` +
       field("Descrizione", "desc", l.desc, "textarea") +
-      field("Link della diretta (YouTube, Zoom…)", "url", l.url, "url", 'placeholder="https://"') +
-      field("Link del replay (Loom, YouTube, Vimeo…)", "replayUrl", l.replayUrl, "url", 'placeholder="https://"') +
+      field("Link della diretta (YouTube, Zoom…)", "url", l.url, "text", 'placeholder="https://" inputmode="url" autocapitalize="off"') +
+      field("Link del replay (Loom, YouTube, Vimeo…)", "replayUrl", l.replayUrl, "text", 'placeholder="https://" inputmode="url" autocapitalize="off"') +
       `<p class="small muted" style="margin-bottom:12px">Le dirette YouTube si vedono dentro l'app. Gli altri link (Zoom, Meet) si aprono a parte.</p>`,
       async (f) => {
         const item = { ...l, ...f, start: new Date(f.start).toISOString(), minutes: Number(f.minutes) };
@@ -1313,8 +1323,8 @@ function livesManager(root, opts) {
   root.querySelector("#goNow").onclick = () => formSheet("Vai in diretta ora",
     `<p class="small muted" style="margin-bottom:10px">Avvia la diretta su YouTube, Zoom, Google Meet o StreamYard e incolla qui il link. Le dirette YouTube si vedono dentro l'app, gli altri link si aprono a parte.</p>` +
     field("Titolo della live", "title", "", "text", "required") + eduSel((S.content.educators[0] || {}).id) +
-    field("Link della diretta", "url", "", "url", 'required placeholder="https://"') +
-    field("Durata prevista (minuti)", "minutes", 60, "number", 'min="5" max="600"') +
+    field("Link della diretta", "url", "", "text", 'required placeholder="https://" inputmode="url" autocapitalize="off"') +
+    field("Durata prevista (minuti)", "minutes", 60, "number", 'min="1" max="600"') +
     field("Descrizione (facoltativa)", "desc", "", "textarea"),
     async (f) => {
       const live = { educatorId: opts.eduId, ...f, minutes: Number(f.minutes) || 60, start: new Date(Date.now() - 60000).toISOString(), replayUrl: "" };
@@ -1614,6 +1624,7 @@ async function admUsers() {
       }));
       $("#ulist").querySelectorAll("[data-role]").forEach((s) => (s.onchange = async () => {
         const prev = (users.find((x) => x.id === s.dataset.role) || {}).role || "agent";
+        if (prev === "educator" && s.value === "agent" && !confirm("Togliendolo dagli educatori si eliminano anche il suo profilo educatore e le sue live. Continuare?")) { s.value = prev; return; }
         let extra = {};
         if (s.value === "educator") {
           extra = await new Promise((ok) => {
@@ -1629,13 +1640,13 @@ async function admUsers() {
         }
         try {
           const d = await api("/admin/role", { id: s.dataset.role, role: s.value, ...extra });
-          if (d.content) S.content = d.content;
+          if (d.content) S.content = d.content; else await loadMe();
           const u = users.find((x) => x.id === s.dataset.role);
           u.role = s.value;
           if (s.value === "educator") {
             u.educatorId = (S.content.educators.find((e) => e.email === u.email) || {}).id || "";
             toast("Ora è educatore: completa il suo profilo in Educatori");
-          } else toast("Ruolo aggiornato");
+          } else { if (s.value === "agent") u.educatorId = ""; toast(s.value === "agent" && prev === "educator" ? "Non è più educatore: tolto anche il suo profilo" : "Ruolo aggiornato"); }
           draw($("#uq").value);
         } catch (e) { toast(e.message); s.value = (users.find((x) => x.id === s.dataset.role) || {}).role || "agent"; }
       }));
