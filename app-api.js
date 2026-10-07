@@ -306,7 +306,7 @@ function defaultBanners() {
     { id: "b3", title: "Notizie esclusive", text: "Ti diamo noi le persone da chiamare, solo a te, nella tua zona.", cover: "", link: "#/notizie" },
   ];
 }
-const defaultSettings = () => ({ welcomeTitle: "Benvenuto!", welcomeSub: "Scopri Vendita Uno", onboardingTitle: "Inizia da qui", onboardingText: "Scopri come usare l'app e tutto quello che offre", onboardingVideo: "jqOjebgNQvk" });
+const defaultSettings = () => ({ welcomeTitle: "Benvenuto!", welcomeSub: "Scopri Vendita Uno", onboardingTitle: "Inizia da qui", onboardingText: "Scopri come usare l'app e tutto quello che offre", onboardingVideo: "jqOjebgNQvk", presentationPdf: "" });
 
 // Vecchie accademie (versioni 1 e 2) → nuova accademia e sottocategoria.
 const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["agenti", ""], min: ["agenti", ""], fin: ["agenti", ""], leg: ["agenti", ""], ai: ["agenti", ""], inv: ["inv", ""] };
@@ -428,6 +428,14 @@ export async function handleAppApi(request, env) {
     const v = await kv.get(`app:img:${img[1]}`, { type: "arrayBuffer" });
     if (!v) return new Response("Not found", { status: 404 });
     return new Response(v, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=31536000, immutable" } });
+  }
+
+  // PDF caricati dall'admin (pubblici, si condividono con chiunque)
+  const file = path.match(/^\/file\/([a-f0-9]{8,40})$/);
+  if (file && method === "GET") {
+    const v = await kv.get(`app:file:${file[1]}`, { type: "arrayBuffer" });
+    if (!v) return new Response("Not found", { status: 404 });
+    return new Response(v, { headers: { "Content-Type": "application/pdf", "Content-Disposition": 'inline; filename="vendita-uno.pdf"', "Cache-Control": "public, max-age=31536000, immutable" } });
   }
 
   if (path === "/register" && method === "POST") return register(body, kv, env);
@@ -557,6 +565,7 @@ export async function handleAppApi(request, env) {
       const text = str(body.text, 1000);
       if (text.length < 1) return fail("Scrivi un commento");
       post.comments.push({ uid: me.id, author: `${me.name} ${me.surname}`.trim(), avatar: me.avatar || "", text, at: now() });
+      if (post.uid !== me.id) await pushNotif(kv, post.uid, { title: `${me.name} ha commentato il tuo post`, text, link: "#/community", icon: "comment" });
       post.comments = post.comments.slice(-200);
     } else {
       if (post.uid !== me.id && !isAdmin) return fail("Non puoi eliminare questo post", 403);
@@ -566,6 +575,33 @@ export async function handleAppApi(request, env) {
     }
     await putJSON(kv, pm[1], post);
     return json({ post: postOut(post, me) });
+  }
+
+  // ----- live dell'educatore (le gestisce lui dal suo profilo) -----
+  if (path === "/edu/lives" && method === "POST") {
+    if (me.role !== "educator" && me.role !== "admin") return fail("Solo per educatori", 403);
+    const content = await getContent(kv);
+    const edu = content.educators.find((e) => e.email && e.email === me.email);
+    if (!edu) return fail("Il tuo account non è collegato a un profilo educatore. Chiedi all'amministratore.", 403);
+    if (!Array.isArray(body.data)) return fail("Dati non validi");
+    const mine = body.data.slice(0, 200).map(SECTIONS.lives).map((l) => ({ ...l, educatorId: edu.id }));
+    const before = content.lives;
+    content.lives = [...content.lives.filter((l) => l.educatorId !== edu.id), ...mine].sort((a, b) => a.start.localeCompare(b.start));
+    await notifyLives(kv, before, content.lives, content.educators);
+    await putJSON(kv, "app:content", content);
+    return json({ content });
+  }
+
+  // ----- notifiche -----
+  if (path === "/notifications" && method === "GET") {
+    const [all, mine, read] = await Promise.all([getJSON(kv, "app:notif:all", []), getJSON(kv, `app:notif:u:${me.id}`, []), kv.get(`app:notifread:${me.id}`)]);
+    const since = Math.max(Number(read) || 0, me.createdAt - 7 * 86400000);
+    const list = [...all, ...mine].sort((a, b) => b.at - a.at).slice(0, 60).map((n) => ({ ...n, unread: n.at > since }));
+    return json({ notifications: list, unread: list.filter((n) => n.unread).length });
+  }
+  if (path === "/notifications/read" && method === "POST") {
+    await kv.put(`app:notifread:${me.id}`, String(now()));
+    return json({ ok: true });
   }
 
   // ----- rete e guadagni -----
@@ -591,9 +627,14 @@ export async function handleAppApi(request, env) {
     if (!isAdmin) return fail("Solo per amministratori", 403);
 
     if (path === "/admin/users" && method === "GET") {
-      const users = await listAll(kv, "app:user:", 5000);
-      const byId = Object.fromEntries(users.map((k) => [k.name.slice(9), k.metadata || {}]));
-      return json({ users: users.map((k) => ({ id: k.name.slice(9), name: k.metadata.n, email: k.metadata.e, role: k.metadata.r, city: k.metadata.c, at: k.metadata.t, referredBy: k.metadata.ref ? (byId[k.metadata.ref] || {}).n || "" : "" })).sort((a, b) => b.at - a.at) });
+      // L'elenco di KV si aggiorna con qualche minuto di ritardo: per il ruolo si leggono i dati veri di ogni utente.
+      const keys = await listAll(kv, "app:user:", 5000);
+      const recs = [];
+      for (let i = 0; i < keys.length; i += 50) recs.push(...(await Promise.all(keys.slice(i, i + 50).map((k) => getJSON(kv, k.name)))));
+      const users = recs.filter(Boolean);
+      const byId = Object.fromEntries(users.map((u) => [u.id, u]));
+      const content = await getContent(kv);
+      return json({ users: users.map((u) => ({ id: u.id, name: `${u.name} ${u.surname}`.trim(), email: u.email, role: u.role, city: u.city || "", at: u.createdAt, refCode: u.refCode, referredBy: u.referredBy && byId[u.referredBy] ? `${byId[u.referredBy].name} ${byId[u.referredBy].surname}`.trim() : "", educatorId: (content.educators.find((e) => e.email && e.email === u.email) || {}).id || "" })).sort((a, b) => b.at - a.at) });
     }
 
     if (path === "/admin/role" && method === "POST") {
@@ -603,15 +644,38 @@ export async function handleAppApi(request, env) {
       if (u.id === me.id && body.role !== "admin") return fail("Non puoi togliere l'accesso admin a te stesso");
       u.role = body.role;
       await saveUser(kv, u);
-      return json({ ok: true });
+      let content = null;
+      if (u.role === "educator") {
+        // Collega l'account al profilo educatore: stessa email, oppure stesso nome senza email, altrimenti ne crea uno nuovo.
+        content = await getContent(kv);
+        const full = `${u.name} ${u.surname}`.trim(), norm = (x) => (x || "").trim().toLowerCase();
+        let edu = content.educators.find((e) => e.email && e.email === u.email) || content.educators.find((e) => !e.email && norm(e.name) === norm(full));
+        if (edu) edu.email = u.email;
+        else {
+          edu = { id: rid(4), name: full, academyId: (content.academies[0] || {}).id || "", role: "", bio: "", photo: u.avatar ? `/api/app/img/${u.avatar}` : "", email: u.email };
+          content.educators.push(edu);
+        }
+        if (content.academies.some((a) => a.id === body.academyId)) edu.academyId = body.academyId;
+        if (body.specialty) edu.role = str(body.specialty, 80);
+        await pushNotif(kv, u.id, { title: "Sei un educatore di Vendita Uno", text: "Dal tuo profilo trovi \"Le mie live\": programmi le dirette o vai in diretta quando vuoi.", link: "#/mie-live", icon: "cap" });
+        await putJSON(kv, "app:content", content);
+      }
+      return json({ ok: true, content });
     }
 
     if (path === "/admin/content" && method === "POST") {
       const section = str(body.section, 20);
       if (!SECTIONS[section] || !Array.isArray(body.data)) return fail("Sezione non valida");
       const content = await getContent(kv);
+      const before = content[section] || [];
       content[section] = body.data.slice(0, 500).map(SECTIONS[section]);
-      if (section === "lives") content.lives.sort((a, b) => a.start.localeCompare(b.start));
+      if (section === "lives") { content.lives.sort((a, b) => a.start.localeCompare(b.start)); await notifyLives(kv, before, content.lives, content.educators); }
+      if (section === "modules") await notifyModules(kv, before, content.modules);
+      if (section === "educators") {
+        const ids = new Set(content.educators.map((e) => e.id));
+        content.lives = content.lives.filter((l) => ids.has(l.educatorId));
+        for (const m of content.modules) if (m.educatorId && !ids.has(m.educatorId)) m.educatorId = "";
+      }
       await putJSON(kv, "app:content", content);
       return json({ content });
     }
@@ -621,6 +685,24 @@ export async function handleAppApi(request, env) {
       for (const k of Object.keys(defaultSettings())) if (k in body) content.settings[k] = str(body[k], 400);
       await putJSON(kv, "app:content", content);
       return json({ content });
+    }
+
+    if (path === "/admin/notify" && method === "POST") {
+      const title = str(body.title, 120);
+      if (!title) return fail("Scrivi il titolo dell'avviso");
+      await pushNotif(kv, "all", { title, text: body.text, link: body.link, icon: "mega" });
+      return json({ ok: true });
+    }
+
+    if (path === "/admin/file" && method === "POST") {
+      const m = typeof body.dataUrl === "string" && body.dataUrl.match(/^data:application\/pdf;base64,([A-Za-z0-9+/=]+)$/);
+      if (!m) return fail("Carica un file PDF");
+      const bin = Uint8Array.from(atob(m[1]), (c) => c.charCodeAt(0));
+      if (bin.length > 12 * 1024 * 1024) return fail("Il PDF è troppo grande (massimo 12 MB)");
+      if (String.fromCharCode(...bin.slice(0, 4)) !== "%PDF") return fail("Il file non è un PDF valido");
+      const id = rid(12);
+      await kv.put(`app:file:${id}`, bin);
+      return json({ url: `/api/app/file/${id}` });
     }
 
     if (path === "/admin/image" && method === "POST") {
@@ -636,6 +718,37 @@ export async function handleAppApi(request, env) {
   }
 
   return fail("Non trovato", 404);
+}
+
+// ---------- notifiche ----------
+// Generali (per tutti): app:notif:all. Personali: app:notif:u:<id>. Letto fino a: app:notifread:<id>.
+async function pushNotif(kv, target, n) {
+  const key = target === "all" ? "app:notif:all" : `app:notif:u:${target}`;
+  const list = await getJSON(kv, key, []);
+  list.unshift({ id: rid(6), at: now(), title: str(n.title, 120), text: str(n.text, 300), link: str(n.link, 200), icon: str(n.icon, 20) || "bell" });
+  await putJSON(kv, key, list.slice(0, 60));
+}
+const fmtDate = (iso) => new Date(iso).toLocaleString("it-IT", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome" });
+// Confronta live prima/dopo un salvataggio e avvisa tutti delle novità.
+async function notifyLives(kv, before, after, educators) {
+  const old = new Set(before.map((l) => l.id)), t = now();
+  for (const l of after) {
+    if (old.has(l.id)) continue;
+    const e = educators.find((x) => x.id === l.educatorId), who = e ? ` con ${e.name}` : "";
+    const start = new Date(l.start).getTime();
+    if (start <= t + 120000 && start + l.minutes * 60000 > t) await pushNotif(kv, "all", { title: `In diretta ora${who}`, text: l.title, link: `#/live/${l.id}`, icon: "live" });
+    else if (start > t) await pushNotif(kv, "all", { title: `Nuova live${who}`, text: `${l.title} · ${fmtDate(l.start)}`, link: `#/live/${l.id}`, icon: "cal" });
+  }
+}
+async function notifyModules(kv, before, after) {
+  for (const m of after) {
+    const o = before.find((x) => x.id === m.id);
+    if (!o) await pushNotif(kv, "all", { title: "Nuovo corso", text: m.title, link: `#/corso/${m.id}`, icon: "cap" });
+    else if (m.lessons.length > o.lessons.length) {
+      const n = m.lessons.length - o.lessons.length;
+      await pushNotif(kv, "all", { title: n === 1 ? "Nuova lezione" : `${n} nuove lezioni`, text: m.title, link: `#/corso/${m.id}`, icon: "play" });
+    }
+  }
 }
 
 function postOut(p, me) {
@@ -678,6 +791,7 @@ async function register(body, kv, env) {
   };
   await saveUser(kv, user);
   await kv.put(`app:email:${email}`, user.id);
+  if (referredBy) await pushNotif(kv, referredBy, { title: `${name} ${surname} si è iscritto con il tuo link`, text: "Ora fa parte della tua rete.", link: "#/guadagni", icon: "users" });
   await kv.put(`app:ref:${refCode}`, user.id);
   const token = await makeToken(user.id, env);
   return json({ user: publicUser(user) }, 200, { "Set-Cookie": sessionCookie(token, SESSION_DAYS * 86400) });

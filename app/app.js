@@ -234,6 +234,8 @@ const ROUTES = {
   guadagni: { fn: viewEarn, title: "Guadagni", nav: "guadagni" },
   notizie: { fn: viewPremium, title: "Servizio", nav: "notizie" },
   profilo: { fn: viewProfile, title: "Profilo", nav: "" },
+  "mie-live": { fn: viewMyLives, title: "Le mie live", nav: "live" },
+  notifiche: { fn: viewNotifications, title: "Notifiche", nav: "notifiche" },
   admin: { fn: viewAdmin, title: "Admin", nav: "admin", admin: true, noRail: true },
 };
 
@@ -254,6 +256,7 @@ async function router() {
     if (!(await loadMe())) { if (name !== "accedi") location.hash = "#/accedi"; else render(); return; }
   }
   if (r.admin && S.user.role !== "admin") { location.hash = "#/home"; return; }
+  if (S.user && Date.now() - (S.notifAt || 0) > 20000) { S.notifAt = Date.now(); refreshNotifs(); }
   if (name === "accedi" && S.user) { location.hash = "#/home"; return; }
   render(r, args, q);
 }
@@ -274,7 +277,7 @@ function render(r = ROUTES.accedi, args = [], q = new URLSearchParams()) {
     renderRail();
     $("#title").textContent = r.title;
     document.querySelectorAll("[data-nav]").forEach((a) => a.classList.toggle("on", a.dataset.nav === r.nav));
-    $("#liveDot").innerHTML = icon("bell") + (liveNow() ? '<span class="dot"></span>' : "");
+    paintBell();
   }
   window.scrollTo(0, 0);
   r.fn(args, q);
@@ -306,6 +309,47 @@ $("#sideOut").onclick = async () => {
   S.user = null;
   location.hash = "#/accedi";
 };
+
+// ---------- notifiche ----------
+S.notifs = []; S.unread = 0;
+function paintBell() {
+  const n = S.unread;
+  const badge = n ? `<span class="nbadge">${n > 9 ? "9+" : n}</span>` : "";
+  $("#liveDot").innerHTML = icon("bell") + badge;
+  const sb = $("#sideBell");
+  if (sb) sb.innerHTML = icon("bell") + "<span>Notifiche</span>" + badge;
+}
+let lastNotifId = null;
+async function refreshNotifs() {
+  if (!S.user) return;
+  try {
+    const d = await api("/notifications");
+    const first = d.notifications[0];
+    // Notifica di sistema per le novità arrivate mentre l'app è aperta in un'altra scheda o in background
+    if (lastNotifId && first && first.id !== lastNotifId && first.unread && document.hidden && "Notification" in window && Notification.permission === "granted") {
+      const n = new Notification(first.title, { body: first.text, icon: "/app/icon-192.png", tag: first.id });
+      n.onclick = () => { window.focus(); location.hash = first.link || "#/notifiche"; };
+    }
+    lastNotifId = first ? first.id : lastNotifId || "none";
+    S.notifs = d.notifications; S.unread = d.unread;
+    paintBell();
+  } catch {}
+}
+setInterval(refreshNotifs, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshNotifs(); });
+
+async function viewNotifications() {
+  view.innerHTML = `<div class="loading"><div class="spin"></div></div>`;
+  await refreshNotifs();
+  const perm = "Notification" in window ? Notification.permission : "unsupported";
+  view.innerHTML = `
+    <h1 class="h1">Notifiche</h1>
+    ${perm === "default" ? `<div class="card pad" style="margin-top:14px"><div class="row"><span class="ini" style="width:40px;height:40px;border-radius:12px">${icon("bell")}</span><div class="grow"><b>Avvisi sul telefono</b><p class="small muted">Ricevi un avviso quando parte una live o esce un corso.</p></div></div><button class="btn pri block" id="perm" style="margin-top:12px">Attiva gli avvisi</button></div>` : ""}
+    <div class="card" style="margin-top:14px">${S.notifs.map((n) => `<a class="nrow ${n.unread ? "unread" : ""}" href="${esc(/^#\//.test(n.link) ? n.link : "#/notifiche")}"><span class="nic">${icon(n.icon || "bell")}</span><div class="grow"><h4>${esc(n.title)}</h4>${n.text ? `<p>${esc(n.text)}</p>` : ""}<small>${ago(n.at)}</small></div>${n.unread ? '<i class="ndot"></i>' : ""}</a>`).join("") || `<div class="empty">${icon("bell")}Nessuna notifica per ora.</div>`}</div>`;
+  const pb = $("#perm");
+  if (pb) pb.onclick = async () => { const r = await Notification.requestPermission(); toast(r === "granted" ? "Avvisi attivati" : "Avvisi non attivati"); viewNotifications(); };
+  if (S.unread) { api("/notifications/read", {}).catch(() => {}); S.unread = 0; paintBell(); }
+}
 
 // ---------- radiale ----------
 const radial = $("#radial"), uno = $("#uno");
@@ -363,6 +407,7 @@ function viewAuth() {
         await api(mode === "reg" ? "/register" : "/login", data);
         localStorage.removeItem("vu_ref");
         await loadMe();
+        refreshNotifs();
         location.hash = "#/home";
         if (mode === "reg") toast(`Benvenuto, ${S.user.name}!`);
       } catch (err) {
@@ -419,8 +464,8 @@ function viewHome() {
     <div class="acards" id="hAcc">${S.content.academies.map(academyCard).join("")}</div>
     ${S.content.educators.length ? `${secHd("I nostri educatori", null, `<a href="#/educatori">Tutti</a>`)}
     <div class="edus">${S.content.educators.map((e) => `<a class="edu-pill" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}<b>${esc(e.name)}</b><small>${esc(e.role || (academyById(e.academyId) || {}).name || "")}</small></a>`).join("")}</div>` : ""}
-    ${secHd(started.length ? "Continua i tuoi corsi" : "Corsi di avvio rapido", null, `<a href="#/accademia">Tutti</a>`)}
-    <div class="hcourses" id="hCourses">${(started.length ? started : S.content.modules).map(courseCard).join("") || `<div class="card empty">I corsi arrivano presto.</div>`}</div>
+    ${started.length ? `${secHd("Continua i tuoi corsi", null, `<a href="#/accademia">Tutti</a>`)}
+    <div class="hcourses" id="hCourses">${started.map(courseCard).join("")}</div>` : ""}
     <div class="hide-desk">
       ${secHd("Prossime live", null, `<a href="#/live">Calendario</a>`)}
       ${next.length ? `<div class="lv-list">${next.slice(0, 3).map(lvItem).join("")}</div>` : `<div class="card empty">${icon("cal")}Nessuna live in programma per ora.</div>`}
@@ -892,6 +937,113 @@ async function viewCommunity(_, q) {
 // =====================================================================
 // GUADAGNI E INVITI
 // =====================================================================
+// ---------- PDF di presentazione con il link invito personale ----------
+const loaded = {};
+function loadScript(src) {
+  return loaded[src] || (loaded[src] = new Promise((ok, ko) => {
+    const el = document.createElement("script");
+    el.src = src; el.onload = ok; el.onerror = () => { delete loaded[src]; ko(new Error("Connessione assente, riprova")); };
+    document.head.appendChild(el);
+  }));
+}
+// Il font standard del PDF non ha alcuni simboli: li sostituisce con equivalenti semplici.
+const pdfText = (t) => String(t || "").replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[–—]/g, "-").replace(/›/g, ">").replace(/[^\x20-\x7E -ÿ€]/g, "");
+
+async function buildPresentation(link, who) {
+  await Promise.all([loadScript("/app/vendor/pdf-lib.min.js"), loadScript("/app/vendor/qrcode.js")]);
+  const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+  const BLUE = rgb(0.18, 0.42, 1), BLACK = rgb(0.02, 0.03, 0.05), WHITE = rgb(1, 1, 1), GREY = rgb(0.62, 0.66, 0.74);
+  const set = S.content.settings || {};
+  let doc;
+  if (safeUrl(set.presentationPdf)) {
+    const buf = await (await fetch(set.presentationPdf)).arrayBuffer();
+    doc = await PDFDocument.load(buf);
+  } else doc = await PDFDocument.create();
+  const reg = await doc.embedFont(StandardFonts.Helvetica), bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const wrap = (text, font, size, width) => {
+    const out = []; let line = "";
+    for (const w of pdfText(text).split(/\s+/)) { const t = line ? line + " " + w : w; if (font.widthOfTextAtSize(t, size) > width && line) { out.push(line); line = w; } else line = t; }
+    if (line) out.push(line);
+    return out;
+  };
+  const W = 595, H = 842;
+  const wordmark = (pg, x, y, size) => {
+    pg.drawText("Vendita", { x, y, size, font: bold, color: WHITE });
+    const w = bold.widthOfTextAtSize("Vendita ", size), uw = bold.widthOfTextAtSize("UNO", size);
+    pg.drawRectangle({ x: x + w - 4, y: y - size * 0.25, width: uw + 14, height: size * 1.15, color: BLUE });
+    pg.drawText("UNO", { x: x + w + 3, y, size, font: bold, color: WHITE });
+  };
+
+  if (!safeUrl(set.presentationPdf)) {
+    // Presentazione base, usata finché l'admin non carica la sua
+    const p = doc.addPage([W, H]);
+    p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: BLACK });
+    p.drawRectangle({ x: 0, y: H - 6, width: W, height: 6, color: BLUE });
+    wordmark(p, 48, H - 90, 30);
+    p.drawText("TUTTO IN UNO.", { x: 48, y: H - 190, size: 44, font: bold, color: WHITE });
+    p.drawText("TUTTO PER TE.", { x: 48, y: H - 240, size: 44, font: bold, color: BLUE });
+    let y = H - 290;
+    for (const l of wrap("Formazione, strumenti e una community di professionisti per aiutarti a crescere nel settore immobiliare.", reg, 14, W - 96)) { p.drawText(l, { x: 48, y, size: 14, font: reg, color: GREY }); y -= 20; }
+    y -= 26;
+    p.drawText("SCEGLI COME GUADAGNARE", { x: 48, y, size: 12, font: bold, color: BLUE }); y -= 26;
+    for (const a of S.content.academies.slice(0, 7)) {
+      p.drawRectangle({ x: 48, y: y - 4, width: 8, height: 8, color: BLUE });
+      p.drawText(pdfText(a.name), { x: 66, y: y - 4, size: 15, font: bold, color: WHITE });
+      const subs = (a.subs || []).map((x) => x.name).join(" · ");
+      if (subs) { y -= 18; for (const l of wrap(subs, reg, 10.5, W - 114).slice(0, 2)) { p.drawText(l, { x: 66, y: y - 4, size: 10.5, font: reg, color: GREY }); y -= 14; } }
+      y -= 16;
+    }
+    y -= 6;
+    p.drawText("E IN PIU'", { x: 48, y, size: 12, font: bold, color: BLUE }); y -= 24;
+    for (const t of ["Live ogni settimana con gli educatori", "Community di agenti e professionisti in tutta Italia", "Notizie esclusive nella tua zona"]) { p.drawText("-  " + t, { x: 48, y, size: 13, font: reg, color: WHITE }); y -= 20; }
+  }
+
+  // Ultima pagina: invito personale con QR code
+  const [pw, ph] = doc.getPageCount() ? (() => { const s0 = doc.getPage(0).getSize(); return [s0.width, s0.height]; })() : [W, H];
+  const last = doc.addPage([pw, ph]);
+  last.drawRectangle({ x: 0, y: 0, width: pw, height: ph, color: BLACK });
+  last.drawRectangle({ x: 0, y: ph - 6, width: pw, height: 6, color: BLUE });
+  const cx = pw / 2, sc = Math.min(pw / W, ph / H);
+  const center = (t, y, size, font, color) => last.drawText(t, { x: cx - font.widthOfTextAtSize(t, size) / 2, y, size, font, color });
+  center(pdfText(who).toUpperCase() + " TI INVITA", ph - 120 * sc, 16 * sc, bold, BLUE);
+  center("Entra in Vendita Uno", ph - 165 * sc, 34 * sc, bold, WHITE);
+  center("Registrati gratis con il link qui sotto o inquadra il QR code", ph - 200 * sc, 13 * sc, reg, GREY);
+  const qr = window.qrcode(0, "M"); qr.addData(link); qr.make();
+  const n = qr.getModuleCount(), size = 300 * sc, cell = size / (n + 8), qx = cx - size / 2, qy = ph / 2 - size / 2 - 30 * sc;
+  last.drawRectangle({ x: qx, y: qy, width: size, height: size, color: WHITE });
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) last.drawRectangle({ x: qx + (c + 4) * cell, y: qy + size - (r + 5) * cell, width: cell, height: cell, color: BLACK });
+  const linkSize = Math.min(15 * sc, (pw - 80) / Math.max(1, reg.widthOfTextAtSize(link, 1)));
+  center(link, qy - 40 * sc, linkSize, bold, WHITE);
+  // Su ogni pagina della presentazione: il link di chi la condivide
+  const foot = pdfText(`Iscriviti con l'invito di ${who}: ${link}`);
+  doc.getPages().slice(0, -1).forEach((pg) => {
+    const { width } = pg.getSize(), fs = Math.min(9, (width - 40) / Math.max(1, reg.widthOfTextAtSize(foot, 1)));
+    pg.drawRectangle({ x: 0, y: 0, width, height: 22, color: BLUE });
+    pg.drawText(foot, { x: 20, y: 7, size: fs, font: reg, color: WHITE });
+  });
+  return doc.save();
+}
+
+async function downloadPresentation(link, who, btn) {
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = "Preparo il PDF…";
+  try {
+    const bytes = await buildPresentation(link, who);
+    const name = `Vendita-Uno-${who.replace(/[^\w]+/g, "-")}.pdf`;
+    const file = new File([bytes], name, { type: "application/pdf" });
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      await navigator.share({ files: [file], title: "Vendita Uno" }).catch(() => {});
+    } else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(file); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+    toast("PDF pronto");
+  } catch (e) { toast(e.message || "Non sono riuscito a creare il PDF"); }
+  btn.disabled = false; btn.innerHTML = label;
+}
+
 async function viewEarn() {
   view.innerHTML = `<div class="loading"><div class="spin"></div></div>`;
   let d;
@@ -911,6 +1063,10 @@ async function viewEarn() {
       <div class="link">${icon("link", "sm")}<span>${esc(link.replace(/^https?:\/\//, ""))}</span><button id="copy">Copia</button></div>
       ${navigator.share ? `<button class="btn sec block" id="share" style="margin-top:8px">${icon("share", "sm")}Condividi su WhatsApp e altre app</button>` : ""}
     </div>
+    <div class="card pad" style="margin-top:12px">
+      <div class="row"><span class="ini" style="width:42px;height:42px;border-radius:12px">${icon("doc")}</span><div class="grow"><h2 class="sec" style="margin:0">Presentazione da condividere</h2><p class="small muted" style="margin-top:2px">Un PDF su Vendita Uno con il tuo link e il tuo QR code: chi si iscrive entra nella tua rete.</p></div></div>
+      <button class="btn pri block" id="pdf" style="margin-top:12px">${icon("doc", "sm")}Scarica il PDF con il mio link</button>
+    </div>
     <h2 class="sec">Come guadagni</h2>
     <div class="card split">
       <div class="ln"><span class="ic">${icon("handshake")}</span><div class="grow"><h4>Persone che porti tu</h4><p>Una percentuale su abbonamenti e servizi che acquistano</p></div></div>
@@ -925,6 +1081,7 @@ async function viewEarn() {
   };
   const sh = $("#share");
   if (sh) sh.onclick = () => navigator.share({ title: "Vendita Uno", text: "Entra nell'accademia Vendita Uno per agenti immobiliari:", url: link }).catch(() => {});
+  $("#pdf").onclick = (e) => downloadPresentation(link, fullName(S.user), e.currentTarget);
 }
 
 // =====================================================================
@@ -977,6 +1134,7 @@ function viewProfile() {
       <div class="grow"><h1 class="h1" style="font-size:22px">${esc(fullName(u))}</h1><p class="muted small" style="margin-top:4px">${roleName}${u.city ? " · " + esc(u.city) : ""}</p></div>
     </div>
     <div class="card menu" style="margin-top:20px">
+      ${u.role === "educator" || (u.role === "admin" && myEducator()) ? `<a href="#/mie-live">${icon("live")}Le mie live${icon("chev", "chev")}</a>` : ""}
       <a href="#/guadagni">${icon("wallet")}Guadagni e inviti${icon("chev", "chev")}</a>
       <a href="#/educatori?tab=seguiti">${icon("users")}Educatori che segui${icon("chev", "chev")}</a>
       <a href="#/notizie">${icon("lock")}Notizie esclusive${icon("chev", "chev")}</a>
@@ -1094,9 +1252,11 @@ function formSheet(title, html, onSave, onDelete) {
 function bindList(root, list, section, edit) {
   root.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(Number(b.dataset.edit))));
   root.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => {
-    if (!confirm("Sicuro di voler eliminare?")) return;
+    const item = list[Number(b.dataset.del)];
+    const n = section === "educators" ? S.content.lives.filter((l) => l.educatorId === item.id).length : 0;
+    if (!confirm(n ? `Insieme a ${item.name} verranno eliminate anche le sue ${n} live. Continuare?` : "Sicuro di voler eliminare?")) return;
     const copy = list.slice(); copy.splice(Number(b.dataset.del), 1);
-    saveSection(section, copy, "Eliminato").catch((e) => toast(e.message));
+    saveSection(section, copy, n ? `Eliminato insieme a ${n} live` : "Eliminato").catch((e) => toast(e.message));
   }));
   root.querySelectorAll("[data-up]").forEach((b) => (b.onclick = () => {
     const i = Number(b.dataset.up), copy = list.slice();
@@ -1108,20 +1268,23 @@ function bindList(root, list, section, edit) {
 // Converte la data della live nel formato del campo "datetime-local" (ora locale).
 const toLocalInput = (iso) => { const d = new Date(iso); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 
-function admLives() {
-  const lives = sortedLives();
+// Gestione live: la usa l'admin (tutte le live) e l'educatore (solo le sue).
+// opts.eduId = educatore fisso (pagina "Le mie live"); opts.save(list) salva l'elenco gestito.
+function livesManager(root, opts) {
+  const lives = sortedLives().filter((l) => !opts.eduId || l.educatorId === opts.eduId);
   const upcoming = lives.filter((l) => liveState(l) !== "past"), past = lives.filter((l) => liveState(l) === "past").reverse();
-  const row = (l) => { const i = lives.indexOf(l), d = new Date(l.start), e = eduById(l.educatorId); return `<div class="adm-item"><div class="grow"><h4>${esc(l.title)}</h4><p>${DOW[d.getDay()]} ${d.toLocaleDateString("it-IT")} ${fmtTime(d)} · ${esc(e ? e.name : "—")}${l.url ? "" : ' · <span style="color:var(--warn)">manca link</span>'}</p></div>${itemActs(i, lives.length, false)}</div>`; };
-  const nowL = liveNow();
-  $("#adm").innerHTML = `<div class="btns" style="margin-top:0"><button class="btn live" id="goNow">${icon("live", "sm")}Vai in diretta ora</button><button class="btn pri" id="add">${icon("plus", "sm")}Programma live</button></div>
+  const row = (l) => { const i = lives.indexOf(l), d = new Date(l.start), e = eduById(l.educatorId); return `<div class="adm-item"><div class="grow"><h4>${esc(l.title)}</h4><p>${DOW[d.getDay()]} ${d.toLocaleDateString("it-IT")} ${fmtTime(d)}${opts.eduId ? "" : " · " + esc(e ? e.name : "—")}${l.url ? "" : ' · <span style="color:var(--warn)">manca link</span>'}</p></div>${itemActs(i, lives.length, false)}</div>`; };
+  const nowL = lives.find((l) => liveState(l) === "now");
+  const eduSel = (val) => (opts.eduId ? "" : select("Educatore", "educatorId", S.content.educators.map((e) => [e.id, e.name]), val));
+  root.innerHTML = `<div class="btns" style="margin-top:0"><button class="btn live" id="goNow">${icon("live", "sm")}Vai in diretta ora</button><button class="btn pri" id="add">${icon("plus", "sm")}Programma live</button></div>
     ${nowL ? `<div class="card pad" style="margin-top:12px;border-color:rgba(255,59,59,.5)"><div class="row"><span class="pulse"></span><div class="grow"><b>In diretta:</b> ${esc(nowL.title)}</div><button class="btn danger" id="endNow" style="padding:8px 12px">Termina</button></div></div>` : ""}
     <h2 class="sec">In programma</h2><div class="card">${upcoming.map(row).join("") || `<div class="empty">Nessuna live in programma</div>`}</div>
     ${past.length ? `<h2 class="sec">Passate</h2><div class="card">${past.slice(0, 30).map(row).join("")}</div>` : ""}`;
+  const done = async (list, msg) => { await opts.save(list); toast(msg); closeSheet(); opts.redraw(); };
   const edit = (i) => {
-    const l = i >= 0 ? lives[i] : { title: "", desc: "", educatorId: (S.content.educators[0] || {}).id, start: new Date(Date.now() + 86400000).toISOString(), minutes: 60, url: "", replayUrl: "" };
+    const l = i >= 0 ? lives[i] : { title: "", desc: "", educatorId: opts.eduId || (S.content.educators[0] || {}).id, start: new Date(Date.now() + 86400000).toISOString(), minutes: 60, url: "", replayUrl: "" };
     formSheet(i >= 0 ? "Modifica live" : "Nuova live",
-      field("Titolo", "title", l.title, "text", "required") +
-      select("Educatore", "educatorId", S.content.educators.map((e) => [e.id, e.name]), l.educatorId) +
+      field("Titolo", "title", l.title, "text", "required") + eduSel(l.educatorId) +
       `<div class="two">${field("Data e ora", "start", toLocalInput(l.start), "datetime-local", "required")}${field("Durata (minuti)", "minutes", l.minutes, "number", 'min="5" max="600"')}</div>` +
       field("Descrizione", "desc", l.desc, "textarea") +
       field("Link della diretta (YouTube, Zoom…)", "url", l.url, "url", 'placeholder="https://"') +
@@ -1131,19 +1294,57 @@ function admLives() {
         const item = { ...l, ...f, start: new Date(f.start).toISOString(), minutes: Number(f.minutes) };
         const copy = lives.slice();
         if (i >= 0) copy[i] = item; else copy.push(item);
-        await saveSection("lives", copy);
+        await done(copy, "Salvato");
       },
-      i >= 0 ? async () => { const copy = lives.slice(); copy.splice(i, 1); await saveSection("lives", copy, "Eliminata"); } : null);
+      i >= 0 ? async () => { const copy = lives.slice(); copy.splice(i, 1); await done(copy, "Live eliminata"); } : null);
   };
-  $("#add").onclick = () => edit(-1);
-  $("#goNow").onclick = goLiveNow;
-  const en = $("#endNow");
+  root.querySelector("#add").onclick = () => edit(-1);
+  root.querySelector("#goNow").onclick = () => formSheet("Vai in diretta ora",
+    `<p class="small muted" style="margin-bottom:10px">Avvia la diretta su YouTube, Zoom, Google Meet o StreamYard e incolla qui il link. Le dirette YouTube si vedono dentro l'app, gli altri link si aprono a parte.</p>` +
+    field("Titolo della live", "title", "", "text", "required") + eduSel((S.content.educators[0] || {}).id) +
+    field("Link della diretta", "url", "", "url", 'required placeholder="https://"') +
+    field("Durata prevista (minuti)", "minutes", 60, "number", 'min="5" max="600"') +
+    field("Descrizione (facoltativa)", "desc", "", "textarea"),
+    async (f) => {
+      const live = { educatorId: opts.eduId, ...f, minutes: Number(f.minutes) || 60, start: new Date(Date.now() - 60000).toISOString(), replayUrl: "" };
+      await done([...lives, live], "Sei in diretta: la live è visibile a tutti");
+    });
+  const en = root.querySelector("#endNow");
   if (en) en.onclick = () => {
     // Termina adesso: la durata finisce in questo momento, poi si può aggiungere il link del replay.
     const copy = lives.map((l) => (l.id === nowL.id ? { ...l, minutes: Math.max(1, Math.floor((Date.now() - new Date(l.start).getTime()) / 60000)) } : l));
-    saveSection("lives", copy, "Diretta terminata: aggiungi il link del replay modificando la live").catch((e) => toast(e.message));
+    done(copy, "Diretta terminata: aggiungi il link del replay modificando la live").catch((e) => toast(e.message));
   };
-  bindList($("#adm"), lives, "lives", edit);
+  root.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(Number(b.dataset.edit))));
+  root.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => {
+    if (!confirm("Eliminare questa live?")) return;
+    const copy = lives.slice(); copy.splice(Number(b.dataset.del), 1);
+    done(copy, "Live eliminata").catch((e) => toast(e.message));
+  }));
+}
+
+function admLives() {
+  livesManager($("#adm"), {
+    save: async (list) => { S.content = (await api("/admin/content", { section: "lives", data: list })).content; },
+    redraw: () => viewAdmin(),
+  });
+}
+
+// Pagina "Le mie live" per l'educatore collegato al suo account.
+const myEducator = () => S.content.educators.find((e) => e.email && e.email === S.user.email);
+function viewMyLives() {
+  const e = myEducator();
+  if (!e) {
+    view.innerHTML = `<h1 class="h1">Le mie live</h1><div class="card empty" style="margin-top:16px">${icon("users")}Il tuo account non è ancora collegato a un profilo educatore.<br>Chiedi all'amministratore di impostarti come <b>Educatore</b>.</div>`;
+    return;
+  }
+  view.innerHTML = `<div class="row" style="margin-bottom:16px">${face(e.name, e.photo)}<div class="grow"><h1 class="h1" style="font-size:24px">Le mie live</h1><p class="muted small">${esc(e.name)} · <a href="#/educatore/${esc(e.id)}" style="color:var(--blue-2)">vedi il tuo profilo</a></p></div></div><div id="myl"></div>`;
+  view.querySelector(".row .av, .row .ini").style.cssText = "width:52px;height:52px;font-size:16px";
+  livesManager($("#myl"), {
+    eduId: e.id,
+    save: async (list) => { S.content = (await api("/edu/lives", { data: list })).content; },
+    redraw: () => viewMyLives(),
+  });
 }
 
 function admHome() {
@@ -1156,8 +1357,30 @@ function admHome() {
       ${field("Video (link Loom, YouTube, Vimeo o Google Drive)", "onboardingVideo", st.onboardingVideo, "text", 'placeholder="https://www.loom.com/share/…"')}
       <button class="btn pri block">Salva</button>
     </form>
+    <h2 class="sec">PDF di presentazione</h2>
+    <div class="card pad">
+      <p class="small muted" style="margin-bottom:12px">Gli utenti lo scaricano da "Guadagni e inviti" per darlo ad altre persone. L'app aggiunge da sola, su ogni pagina, il link invito di chi lo scarica e una pagina finale con il suo QR code. Se non carichi niente, usa una presentazione base.</p>
+      <p style="margin-bottom:12px"><b>${safeUrl(st.presentationPdf) ? `<a href="${esc(st.presentationPdf)}" target="_blank" rel="noopener" style="color:var(--blue-2)">PDF caricato ›</a>` : "Ora: presentazione base"}</b></p>
+      <div class="btns" style="margin-top:0"><label class="btn pri" style="cursor:pointer">${icon("doc", "sm")}Carica PDF<input type="file" accept="application/pdf" id="pdfUp" hidden></label>${safeUrl(st.presentationPdf) ? `<button class="btn danger" id="pdfDel">${icon("trash", "sm")}Usa la base</button>` : `<button class="btn sec" id="pdfTry">${icon("search", "sm")}Prova</button>`}</div>
+    </div>
     <h2 class="sec">Banner a scorrimento <button id="addB">+ Nuovo</button></h2>
     <div class="card">${bns.map((b, i) => `<div class="adm-item"><span style="width:64px;height:40px;border-radius:8px;flex:none;background:var(--panel-2) center/cover;${safeUrl(b.cover) ? `background-image:url('${esc(safeUrl(b.cover))}')` : ""}"></span><div class="grow"><h4>${esc(b.title)}</h4><p class="ell">${esc(b.text)}</p></div>${itemActs(i, bns.length)}</div>`).join("") || `<div class="empty">Nessun banner</div>`}</div>`;
+  const savePdf = async (url, msg) => { S.content = (await api("/admin/settings", { presentationPdf: url })).content; toast(msg); viewAdmin(); };
+  $("#pdfUp").onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 12 * 1024 * 1024) { toast("Il PDF è troppo grande (massimo 12 MB)"); return; }
+    toast("Carico il PDF…");
+    try {
+      const dataUrl = await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(f); });
+      const d = await api("/admin/file", { dataUrl });
+      await savePdf(d.url, "PDF di presentazione caricato");
+    } catch (err) { toast(err.message); }
+  };
+  const pd = $("#pdfDel");
+  if (pd) pd.onclick = () => savePdf("", "Torna la presentazione base").catch((err) => toast(err.message));
+  const pt = $("#pdfTry");
+  if (pt) pt.onclick = (e) => downloadPresentation(`${location.origin}/app/?ref=${S.user.refCode}`, fullName(S.user), e.currentTarget);
   $("#setf").onsubmit = async (e) => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target));
@@ -1247,19 +1470,11 @@ function bulkLessons(i) {
     });
 }
 
-// Crea una live che parte adesso: compare subito in rosso "In diretta" per tutti.
+// Dalla panoramica: apre la scheda Live e il modulo "Vai in diretta ora".
 function goLiveNow() {
-  formSheet("Vai in diretta ora",
-    `<p class="small muted" style="margin-bottom:10px">Avvia la diretta su YouTube, Zoom, Google Meet o StreamYard e incolla qui il link. Le dirette YouTube si vedono dentro l'app, gli altri link si aprono a parte.</p>` +
-    field("Titolo della live", "title", "", "text", "required") +
-    select("Educatore", "educatorId", S.content.educators.map((e) => [e.id, e.name]), (S.content.educators[0] || {}).id) +
-    field("Link della diretta", "url", "", "url", 'required placeholder="https://"') +
-    field("Durata prevista (minuti)", "minutes", 60, "number", 'min="5" max="600"') +
-    field("Descrizione (facoltativa)", "desc", "", "textarea"),
-    async (f) => {
-      const live = { ...f, minutes: Number(f.minutes) || 60, start: new Date(Date.now() - 60000).toISOString(), replayUrl: "" };
-      await saveSection("lives", [...S.content.lives, live], "Sei in diretta: la live è visibile a tutti");
-    });
+  adminTab = "live";
+  viewAdmin();
+  $("#goNow").click();
 }
 
 function admOverview() {
@@ -1282,6 +1497,7 @@ function admOverview() {
       <button class="acad" data-q="lessons" style="--c:#7c5cff"><span class="ic">${icon("play")}</span><h4>Carica lezioni</h4><div class="ct">Link Loom, YouTube…</div></button>
       <button class="acad" data-q="banner" style="--c:#eab308"><span class="ic">${icon("image")}</span><h4>Banner e Home</h4><div class="ct">Immagini e video di benvenuto</div></button>
       <button class="acad" data-q="zone" style="--c:#0ea5e9"><span class="ic">${icon("pin")}</span><h4>Richieste zona</h4><div class="ct">Chi vuole le notizie</div></button>
+      <button class="acad" data-q="notify" style="--c:#ec4899"><span class="ic">${icon("bell")}</span><h4>Avviso a tutti</h4><div class="ct">Notifica a ogni utente</div></button>
     </div>`;
   const go = (tab, after) => { adminTab = tab; viewAdmin(); if (after) after(); };
   $("#adm").querySelectorAll("[data-q]").forEach((b) => (b.onclick = () => ({
@@ -1291,6 +1507,11 @@ function admOverview() {
     lessons: () => go("accademia", () => toast("Scegli il corso e premi \"Aggiungi più lezioni\"")),
     banner: () => go("home"),
     zone: () => go("zone"),
+    notify: () => formSheet("Avviso a tutti",
+      `<p class="small muted" style="margin-bottom:10px">Arriva nelle notifiche di ogni utente (campanella in alto).</p>` +
+      field("Titolo", "title", "", "text", 'required maxlength="120"') + field("Testo", "text", "", "textarea", 'maxlength="300"') +
+      select("Quando lo toccano, apre", "link", [["#/home", "Home"], ["#/accademia", "Accademia"], ["#/live", "Calendario live"], ["#/community", "Community"], ["#/notizie", "Servizio Notizie"], ["#/guadagni", "Guadagni e inviti"]], "#/home"),
+      async (f) => { await api("/admin/notify", f); closeSheet(); toast("Avviso inviato a tutti"); refreshNotifs(); }),
   })[b.dataset.q]()));
   api("/admin/users").then((d) => { const el = $("#ucount b"); if (el) el.textContent = d.users.length; }).catch(() => {});
 }
@@ -1310,7 +1531,11 @@ function admEducators() {
       imgField("Foto", "photo", e.photo) +
       field("Email dell'account (per i suoi post da educatore)", "email", e.email, "email", 'placeholder="facoltativo"'),
       async (f) => { const copy = eds.slice(); if (i >= 0) copy[i] = { ...e, ...f }; else copy.push({ ...e, ...f }); await saveSection("educators", copy); },
-      i >= 0 ? async () => { const copy = eds.slice(); copy.splice(i, 1); await saveSection("educators", copy, "Eliminato"); } : null);
+      i >= 0 ? async () => {
+        const n = S.content.lives.filter((l) => l.educatorId === e.id).length;
+        if (n && !confirm(`Insieme a ${e.name} verranno eliminate anche le sue ${n} live. Continuare?`)) return;
+        const copy = eds.slice(); copy.splice(i, 1); await saveSection("educators", copy, n ? `Eliminato insieme a ${n} live` : "Eliminato");
+      } : null);
   };
   $("#add").onclick = () => edit(-1);
   bindList($("#adm"), eds, "educators", edit);
@@ -1350,10 +1575,38 @@ async function admUsers() {
     const { users } = await api("/admin/users");
     const draw = (t = "") => {
       const list = users.filter((u) => `${u.name} ${u.email} ${u.city}`.toLowerCase().includes(t.toLowerCase()));
-      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p></div>
+      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button></p>` : ""}</div>
         <select data-role="${esc(u.id)}">${[["agent", "Agente"], ["educator", "Educatore"], ["admin", "Admin"]].map(([v, n]) => `<option value="${v}" ${u.role === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>`).join("") || `<div class="empty">Nessun utente</div>`;
+      $("#ulist").querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => {
+        const l = `${location.origin}/app/?ref=${b.dataset.copy}`;
+        try { await navigator.clipboard.writeText(l); toast("Link invito copiato"); } catch { prompt("Copia il link:", l); }
+      }));
       $("#ulist").querySelectorAll("[data-role]").forEach((s) => (s.onchange = async () => {
-        try { await api("/admin/role", { id: s.dataset.role, role: s.value }); toast("Ruolo aggiornato"); } catch (e) { toast(e.message); }
+        const prev = (users.find((x) => x.id === s.dataset.role) || {}).role || "agent";
+        let extra = {};
+        if (s.value === "educator") {
+          extra = await new Promise((ok) => {
+            formSheet("Che educatore è?",
+              select("Accademia", "academyId", S.content.academies.map((a) => [a.id, a.name]), (S.content.academies[0] || {}).id) +
+              field("Specialità (facoltativa)", "specialty", "", "text", 'placeholder="Es. Acquisizione in esclusiva"'),
+              async (f) => { closeSheet(); ok(f); });
+            const close = () => setTimeout(() => { if (!$("#sheet").classList.contains("open")) ok(null); }, 300);
+            $("#sheetClose").addEventListener("click", close, { once: true });
+            $("#sheet").addEventListener("click", (ev) => { if (ev.target.id === "sheet") close(); }, { once: true });
+          });
+          if (!extra) { s.value = prev; return; }
+        }
+        try {
+          const d = await api("/admin/role", { id: s.dataset.role, role: s.value, ...extra });
+          if (d.content) S.content = d.content;
+          const u = users.find((x) => x.id === s.dataset.role);
+          u.role = s.value;
+          if (s.value === "educator") {
+            u.educatorId = (S.content.educators.find((e) => e.email === u.email) || {}).id || "";
+            toast("Ora è educatore: completa il suo profilo in Educatori");
+          } else toast("Ruolo aggiornato");
+          draw($("#uq").value);
+        } catch (e) { toast(e.message); s.value = (users.find((x) => x.id === s.dataset.role) || {}).role || "agent"; }
       }));
     };
     $("#adm").innerHTML = `<div class="qs" style="grid-template-columns:1fr 1fr"><div class="card q"><b>${users.length}</b><span>Utenti</span></div><div class="card q"><b>${users.filter((u) => Date.now() - u.at < 7 * 86400000).length}</b><span>Ultimi 7 giorni</span></div></div>
@@ -1380,7 +1633,7 @@ async function admZones() {
     history.replaceState(null, "", location.pathname + (location.hash || "#/accedi"));
   }
   window.addEventListener("hashchange", router);
-  router().then(scheduleReminders);
+  router().then(() => { scheduleReminders(); refreshNotifs(); });
   // Aggiorna lo stato delle live (in diretta / passata) ogni minuto.
   setInterval(() => {
     const { name } = parseHash();

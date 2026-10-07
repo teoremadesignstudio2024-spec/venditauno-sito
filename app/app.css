@@ -717,3 +717,16 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .edu-pill b{display:block;font-family:var(--display);font-size:14px;margin-top:10px;line-height:1.15}
 .edu-pill small{display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.25;max-height:2.5em;overflow:hidden}
 @media (min-width:1024px){.edus{margin:0;padding:2px 0 6px}.edu-pill{width:140px}}
+
+/* Notifiche */
+.nbadge{position:absolute;top:-6px;right:-8px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #1e4fe0;font-family:var(--display)}
+.side nav a{position:relative}
+.side nav a .nbadge{top:4px;right:14px;border-color:#030406}
+.nrow{display:flex;gap:12px;align-items:flex-start;padding:14px;border-bottom:1px solid var(--line);text-decoration:none}
+.nrow:last-child{border-bottom:0}
+.nrow .nic{width:38px;height:38px;border-radius:12px;background:rgba(47,107,255,.16);color:var(--blue-3);display:flex;align-items:center;justify-content:center;flex:none}
+.nrow h4{font-family:var(--display);font-size:14.5px;font-weight:700;line-height:1.25}
+.nrow p{font-size:12.5px;color:#cfd7e6;margin-top:2px;line-height:1.4}
+.nrow small{font-size:11px;color:var(--dim);display:block;margin-top:4px}
+.nrow.unread{background:rgba(47,107,255,.07)}
+.nrow .ndot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex:none;margin-top:6px}
