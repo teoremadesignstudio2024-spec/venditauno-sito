@@ -433,9 +433,21 @@ export async function handleAppApi(request, env) {
   // PDF caricati dall'admin (pubblici, si condividono con chiunque)
   const file = path.match(/^\/file\/([a-f0-9]{8,40})$/);
   if (file && method === "GET") {
-    const v = await kv.get(`app:file:${file[1]}`, { type: "arrayBuffer" });
+    const { value: v, metadata } = await kv.getWithMetadata(`app:file:${file[1]}`, { type: "arrayBuffer" });
     if (!v) return new Response("Not found", { status: 404 });
-    return new Response(v, { headers: { "Content-Type": "application/pdf", "Content-Disposition": 'inline; filename="vendita-uno.pdf"', "Cache-Control": "public, max-age=31536000, immutable" } });
+    const type = (metadata && metadata.type) || "application/pdf";
+    const headers = { "Content-Type": type, "Accept-Ranges": "bytes", "Cache-Control": "public, max-age=31536000, immutable" };
+    if (type === "application/pdf") headers["Content-Disposition"] = 'inline; filename="vendita-uno.pdf"';
+    const range = (request.headers.get("Range") || "").match(/^bytes=(\d*)-(\d*)$/);
+    if (range) {
+      const size = v.byteLength;
+      let start = range[1] ? Number(range[1]) : size - Number(range[2]);
+      let end = range[1] && range[2] ? Number(range[2]) : size - 1;
+      start = Math.max(0, start); end = Math.min(size - 1, end);
+      if (start > end) return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${size}` } });
+      return new Response(v.slice(start, end + 1), { status: 206, headers: { ...headers, "Content-Range": `bytes ${start}-${end}/${size}`, "Content-Length": String(end - start + 1) } });
+    }
+    return new Response(v, { headers });
   }
 
   if (path === "/register" && method === "POST") return register(body, kv, env);
@@ -605,6 +617,42 @@ export async function handleAppApi(request, env) {
     const err = await setRefCode(kv, me, body.code);
     if (err) return fail(err);
     return json({ user: publicUser(me), refCode: me.refCode });
+  }
+
+  // ----- storie (24 ore) -----
+  if (path === "/stories" && method === "GET") {
+    const keys = await listAll(kv, "app:story:", 300);
+    const t = now();
+    const list = (await Promise.all(keys.map((k) => getJSON(kv, k.name)))).filter((x) => x && t - x.at < 86400000);
+    return json({ stories: list.sort((a, b) => a.at - b.at).map((x) => ({ ...x, mine: x.uid === me.id })) });
+  }
+
+  if (path === "/stories" && method === "POST") {
+    const content = await getContent(kv);
+    const edu = content.educators.find((e) => e.email && e.email === me.email);
+    if (!edu && !isAdmin) return fail("Le storie le pubblicano gli educatori", 403);
+    const TTL = 2 * 86400;
+    let image = "", video = "";
+    if (body.image) { image = await storeImage(kv, body.image, 900 * 1024, TTL); if (!image) return fail("Foto non valida o troppo grande"); }
+    if (body.video) { video = await storeVideo(kv, body.video, TTL); if (!video) return fail("Video non valido o troppo grande (massimo 15 MB)"); }
+    const text = str(body.text, 300);
+    if (!image && !video && !text) return fail("Aggiungi una foto, un video o del testo");
+    const bg = /^#[0-9a-f]{6}$/i.test(body.bg) ? body.bg : "#2f6bff";
+    const key = `app:story:${String(now()).padStart(13, "0")}_${rid(4)}`;
+    const story = { key, uid: me.id, eduId: edu ? edu.id : "", author: edu ? edu.name : "Vendita Uno", photo: edu ? edu.photo : "", image, video, text, bg, at: now() };
+    await kv.put(key, JSON.stringify(story), { expirationTtl: 86400 + 3600 });
+    return json({ story: { ...story, mine: true } });
+  }
+
+  const sm = path.match(/^\/stories\/(app:story:[0-9]{13}_[a-f0-9]{8})\/delete$/);
+  if (sm && method === "POST") {
+    const st = await getJSON(kv, sm[1]);
+    if (!st) return fail("Storia non trovata", 404);
+    if (st.uid !== me.id && !isAdmin) return fail("Non puoi eliminare questa storia", 403);
+    await kv.delete(sm[1]);
+    if (st.image) await kv.delete(`app:img:${st.image}`);
+    if (st.video) await kv.delete(`app:file:${st.video}`);
+    return json({ ok: true });
   }
 
   // ----- notifiche -----
@@ -833,13 +881,24 @@ function postOut(p, me) {
   return { key: p.key, author: p.author, avatar: p.avatar, role: p.role, educatorId: p.educatorId, city: p.city, text: p.text, image: p.image || "", at: p.at, likes: p.likes.length, liked: p.likes.includes(me.id), comments: p.comments, mine: p.uid === me.id };
 }
 
-async function storeImage(kv, dataUrl, maxBytes = MAX_IMG_BYTES) {
+async function storeImage(kv, dataUrl, maxBytes = MAX_IMG_BYTES, ttl = 0) {
   const m = typeof dataUrl === "string" && dataUrl.match(/^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/);
   if (!m) return null;
   const bin = Uint8Array.from(atob(m[1]), (c) => c.charCodeAt(0));
   if (bin.length > maxBytes || bin[0] !== 0xff || bin[1] !== 0xd8) return null;
   const id = rid(12);
-  await kv.put(`app:img:${id}`, bin);
+  await kv.put(`app:img:${id}`, bin, ttl ? { expirationTtl: ttl } : undefined);
+  return id;
+}
+
+// Video delle storie (mp4/webm/mov), salvati come file che scadono da soli.
+async function storeVideo(kv, dataUrl, ttl) {
+  const m = typeof dataUrl === "string" && dataUrl.match(/^data:(video\/(?:mp4|webm|quicktime));base64,([A-Za-z0-9+/=]+)$/);
+  if (!m) return null;
+  const bin = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+  if (bin.length > 15 * 1024 * 1024) return null;
+  const id = rid(12);
+  await kv.put(`app:file:${id}`, bin, { expirationTtl: ttl, metadata: { type: m[1] } });
   return id;
 }
 

@@ -310,6 +310,163 @@ $("#sideOut").onclick = async () => {
   location.hash = "#/accedi";
 };
 
+// ---------- storie (come Instagram, durano 24 ore) ----------
+S.stories = [];
+const seenStories = () => { try { return new Set(JSON.parse(localStorage.getItem("vu_seen") || "[]")); } catch { return new Set(); } };
+function markSeen(key) {
+  const set = seenStories(); set.add(key);
+  try { localStorage.setItem("vu_seen", JSON.stringify([...set].slice(-300))); } catch {}
+}
+const canPostStory = () => S.user && (S.user.role === "admin" || !!myEducator());
+// Raggruppa le storie per autore (educatore o admin); prima chi ha storie non ancora viste.
+function storyGroups() {
+  const seen = seenStories(), map = new Map();
+  for (const st of S.stories) {
+    const k = st.eduId || st.uid;
+    if (!map.has(k)) map.set(k, { key: k, author: st.author, photo: st.eduId && eduById(st.eduId) ? eduById(st.eduId).photo : st.photo, items: [] });
+    map.get(k).items.push(st);
+  }
+  const groups = [...map.values()].map((g) => ({ ...g, unseen: g.items.some((x) => !seen.has(x.key)) }));
+  return groups.sort((a, b) => (b.unseen - a.unseen) || (b.items[b.items.length - 1].at - a.items[a.items.length - 1].at));
+}
+async function loadStories() {
+  try { S.stories = (await api("/stories")).stories; } catch {}
+  document.querySelectorAll("[data-stories]").forEach(paintStories);
+}
+const storiesBar = () => `<div class="stories" data-stories></div>`;
+function paintStories(el) {
+  const groups = storyGroups();
+  const mine = canPostStory();
+  if (!groups.length && !mine) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = (mine ? `<button class="sty add" data-newstory><span class="ring">${userFace(S.user)}<i>${icon("plus")}</i></span><b>La tua storia</b></button>` : "") +
+    groups.map((g, i) => `<button class="sty ${g.unseen ? "" : "seen"}" data-sg="${i}"><span class="ring">${face(g.author, g.photo)}</span><b>${esc(g.author.split(" ")[0])}</b></button>`).join("");
+  el.querySelectorAll("[data-sg]").forEach((b) => (b.onclick = () => openStories(groups, Number(b.dataset.sg))));
+  const nb = el.querySelector("[data-newstory]");
+  if (nb) nb.onclick = newStory;
+}
+
+function openStories(groups, gi, si = 0) {
+  let timer = null, startAt = 0, elapsed = 0, paused = false, dur = 6000;
+  const ov = document.createElement("div");
+  ov.className = "story-ov";
+  document.body.appendChild(ov);
+  document.body.style.overflow = "hidden";
+  const close = () => { clearTimeout(timer); ov.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", onKey); document.querySelectorAll("[data-stories]").forEach(paintStories); };
+  const onKey = (e) => { if (e.key === "Escape") close(); if (e.key === "ArrowRight") next(); if (e.key === "ArrowLeft") prev(); };
+  document.addEventListener("keydown", onKey);
+  const next = () => { const g = groups[gi]; if (si < g.items.length - 1) { si++; show(); } else if (gi < groups.length - 1) { gi++; si = 0; show(); } else close(); };
+  const prev = () => { if (si > 0) { si--; show(); } else if (gi > 0) { gi--; si = groups[gi].items.length - 1; show(); } else { elapsed = 0; show(); } };
+  const tick = () => {
+    clearTimeout(timer);
+    if (paused) return;
+    startAt = Date.now();
+    timer = setTimeout(next, Math.max(0, dur - elapsed));
+    const bar = ov.querySelector(".sbar.cur i");
+    if (bar) { bar.style.transition = "none"; bar.style.width = (elapsed / dur) * 100 + "%"; requestAnimationFrame(() => { bar.style.transition = `width ${Math.max(0, dur - elapsed)}ms linear`; bar.style.width = "100%"; }); }
+  };
+  const pause = () => { if (paused) return; paused = true; elapsed += Date.now() - startAt; clearTimeout(timer); const bar = ov.querySelector(".sbar.cur i"); if (bar) { bar.style.width = getComputedStyle(bar).width; bar.style.transition = "none"; } const v = ov.querySelector("video"); if (v) v.pause(); };
+  const resume = () => { if (!paused) return; paused = false; const v = ov.querySelector("video"); if (v) v.play().catch(() => {}); tick(); };
+  function show() {
+    clearTimeout(timer); elapsed = 0; paused = false; dur = 6000;
+    const g = groups[gi], st = g.items[si];
+    markSeen(st.key);
+    const media = st.video ? `<video src="/api/app/file/${esc(st.video)}" playsinline autoplay preload="auto"></video>`
+      : st.image ? `<img src="${imgUrl(st.image)}" alt="">` : "";
+    ov.innerHTML = `<div class="story">
+      <div class="sbars">${g.items.map((_, k) => `<span class="sbar ${k < si ? "done" : k === si ? "cur" : ""}"><i></i></span>`).join("")}</div>
+      <div class="shead">${face(g.author, g.photo)}<div class="grow"><b>${esc(g.author)}</b><small>${ago(st.at)}</small></div>
+        ${st.mine || S.user.role === "admin" ? `<button data-sdel aria-label="Elimina storia">${icon("trash")}</button>` : ""}<button data-sclose aria-label="Chiudi">${icon("x")}</button></div>
+      <div class="sbody ${media ? "" : "textonly"}" style="--bg:${esc(st.bg || "#2f6bff")}">${media}${st.text ? `<p class="stext">${esc(st.text)}</p>` : ""}</div>
+      <button class="szone l" aria-label="Precedente"></button><button class="szone r" aria-label="Successiva"></button>
+    </div>`;
+    ov.querySelector("[data-sclose]").onclick = close;
+    const del = ov.querySelector("[data-sdel]");
+    if (del) del.onclick = async () => {
+      pause();
+      if (!confirm("Eliminare questa storia?")) { resume(); return; }
+      try { await api(`/stories/${st.key}/delete`, {}); S.stories = S.stories.filter((x) => x.key !== st.key); toast("Storia eliminata"); close(); loadStories(); } catch (e) { toast(e.message); }
+    };
+    // Tocco breve a sinistra/destra = indietro/avanti; tenere premuto = pausa
+    ov.querySelectorAll(".szone").forEach((z) => {
+      let down = 0;
+      z.onpointerdown = () => { down = Date.now(); setTimeout(() => { if (down) pause(); }, 180); };
+      z.onpointerup = () => { const held = Date.now() - down > 180; down = 0; if (held) resume(); else (z.classList.contains("l") ? prev : next)(); };
+      z.onpointerleave = () => { if (down) { down = 0; resume(); } };
+    });
+    let y0 = null;
+    ov.ontouchstart = (e) => { y0 = e.touches[0].clientY; };
+    ov.ontouchend = (e) => { if (y0 !== null && e.changedTouches[0].clientY - y0 > 90) close(); y0 = null; };
+    const v = ov.querySelector("video");
+    if (v) {
+      let started = false;
+      const go = (ms) => { if (started) return; started = true; dur = ms; tick(); };
+      v.onloadedmetadata = () => go(Math.min(60000, (isFinite(v.duration) && v.duration ? v.duration : 6) * 1000));
+      v.onerror = () => go(6000);
+      // Se il video non parte (connessione lenta o formato non supportato) si va avanti lo stesso
+      setTimeout(() => go(15000), 4000);
+      v.onended = next;
+      v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
+    } else tick();
+  }
+  show();
+}
+
+function newStory() {
+  let media = null; // { kind: "image" | "video", data, url }
+  const COLORS_S = ["#2f6bff", "#7c5cff", "#ef4444", "#22c55e", "#eab308", "#0b0d12"];
+  openSheet("Nuova storia", `
+    <label class="btn sec block" style="cursor:pointer;margin-bottom:12px">${icon("camera", "sm")}Scegli foto o video<input type="file" accept="image/*,video/*" id="smedia" hidden></label>
+    <div class="spv" id="spv" style="--bg:${COLORS_S[0]}"><p id="spvt">Scrivi qualcosa…</p></div>
+    <label class="field" style="margin-top:12px"><span>Testo (facoltativo con foto o video)</span><textarea class="inp" id="stext" rows="2" maxlength="300" placeholder="Es. Stasera alle 21 live sulle obiezioni!"></textarea></label>
+    <div class="scolors" id="scolors">${COLORS_S.map((c, i) => `<button type="button" data-c="${c}" class="${i ? "" : "on"}" style="background:${c}"></button>`).join("")}</div>
+    <div id="serr2"></div>
+    <button class="btn pri block" id="spub" style="margin-top:12px">${icon("plus", "sm")}Pubblica la storia</button>
+    <p class="small muted" style="margin-top:8px;text-align:center">La storia sparisce da sola dopo 24 ore.</p>`, (root) => {
+    let bg = COLORS_S[0];
+    const pv = root.querySelector("#spv"), pt = root.querySelector("#spvt"), tx = root.querySelector("#stext");
+    const paint = () => {
+      pv.style.setProperty("--bg", bg);
+      pv.classList.toggle("textonly", !media);
+      pv.querySelectorAll("img,video").forEach((x) => x.remove());
+      if (media) pv.insertAdjacentHTML("afterbegin", media.kind === "video" ? `<video src="${media.url}" muted autoplay loop playsinline></video>` : `<img src="${media.url}" alt="">`);
+      pt.textContent = tx.value || (media ? "" : "Scrivi qualcosa…");
+      pt.hidden = !pt.textContent;
+      root.querySelector("#scolors").hidden = !!media;
+    };
+    tx.oninput = paint;
+    root.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => { bg = b.dataset.c; root.querySelectorAll("[data-c]").forEach((x) => x.classList.toggle("on", x === b)); paint(); }));
+    root.querySelector("#smedia").onchange = async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      try {
+        if (f.type.startsWith("video/")) {
+          if (f.size > 15 * 1024 * 1024) throw new Error("Il video è troppo grande (massimo 15 MB, circa 30-60 secondi)");
+          const data = await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(f); });
+          media = { kind: "video", data: data.replace(/^data:video\/[\w.+-]+;/, `data:${/webm/.test(f.type) ? "video/webm" : /quicktime/.test(f.type) ? "video/quicktime" : "video/mp4"};`), url: URL.createObjectURL(f) };
+        } else {
+          const data = await resizeImage(f, 1600, 0.82);
+          media = { kind: "image", data, url: data };
+        }
+        paint();
+      } catch (err) { root.querySelector("#serr2").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+    };
+    root.querySelector("#spub").onclick = async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true; btn.textContent = media && media.kind === "video" ? "Carico il video…" : "Pubblico…";
+      try {
+        const body = { text: tx.value.trim(), bg };
+        if (media) body[media.kind] = media.data;
+        const d = await api("/stories", body);
+        S.stories.push(d.story);
+        closeSheet(); toast("Storia pubblicata");
+        document.querySelectorAll("[data-stories]").forEach(paintStories);
+      } catch (err) { root.querySelector("#serr2").innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; btn.innerHTML = `${icon("plus", "sm")}Pubblica la storia`; }
+    };
+    paint();
+  });
+}
+
 // ---------- notifiche ----------
 S.notifs = []; S.unread = 0;
 function paintBell() {
@@ -443,6 +600,7 @@ function viewHome() {
   const vid = set.onboardingVideo;
   view.innerHTML = `
     <section class="home-hero"><picture><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture></section>
+    ${storiesBar()}
     <div class="home-top">
       <div>
         <p class="hi-name">Ciao ${esc(S.user.name)}, ${esc((set.welcomeSub || "scopri Vendita Uno").replace(/^./, (c) => c.toLowerCase()))}</p>
@@ -473,6 +631,8 @@ function viewHome() {
     <a class="card teaser" href="#/notizie" style="margin-top:20px"><span class="lk">${icon("lock")}</span><div class="grow"><h4>Notizie esclusive nella tua zona</h4><p>${S.user.city ? `Verifica se ${esc(S.user.city)} è ancora libera` : "Scopri il servizio per avere le notizie"}</p></div>${icon("chev")}</a>`;
   bindCourses(view);
   bindScroll(view);
+  view.querySelectorAll("[data-stories]").forEach(paintStories);
+  loadStories();
   $("#onbBtn").onclick = () => {
     const box = $("#onbVid");
     box.innerHTML = box.innerHTML ? "" : vid ? `<div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>` : `<p class="small muted" style="padding:0 16px 16px">Il video di benvenuto arriva presto.</p>`;
@@ -889,6 +1049,7 @@ function bindPost(el, p) {
 async function viewCommunity(_, q) {
   let image = "";
   view.innerHTML = `
+    ${storiesBar()}
     <div class="card compose">
       <div class="row" style="align-items:flex-start">${userFace(S.user)}<textarea id="ptx" placeholder="Racconta un incarico preso, fai una domanda…" maxlength="2000" rows="2"></textarea></div>
       <div class="prev" id="pprev" hidden></div>
@@ -897,6 +1058,8 @@ async function viewCommunity(_, q) {
     <div id="feed"><div class="loading" style="min-height:120px"><div class="spin"></div></div></div>
     <div id="more"></div>`;
   view.querySelector(".compose .av, .compose .ini").style.cssText = "width:34px;height:34px;font-size:12px";
+  view.querySelectorAll("[data-stories]").forEach(paintStories);
+  loadStories();
   const tx = $("#ptx");
   tx.oninput = () => { tx.style.height = "auto"; tx.style.height = tx.scrollHeight + "px"; };
   if (q.get("scrivi")) setTimeout(() => tx.focus(), 50);
