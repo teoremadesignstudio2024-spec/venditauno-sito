@@ -106,7 +106,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 3;
+const CATALOG_V = 4;
 
 function catalogAcademies() {
   return [
@@ -282,7 +282,7 @@ function seedContent() {
 function defaultBanners() {
   return [
     { id: "b1", title: "Accademia Vendita Uno", text: "Il metodo completo per acquisire incarichi in esclusiva, passo dopo passo.", cover: "", link: "#/accademia" },
-    { id: "b2", title: "Live ogni settimana", text: "Gli educatori in diretta: domande, esempi veri e revisione delle chiamate.", cover: "", link: "#/live" },
+    { id: "b2", title: "", text: "", cover: "/app/banners/live.jpg", link: "#/live" },
     { id: "b3", title: "Notizie esclusive", text: "Ti diamo noi le persone da chiamare, solo a te, nella tua zona.", cover: "", link: "#/notizie" },
   ];
 }
@@ -304,7 +304,7 @@ function migrateContent(c) {
     else if (OLD_ACADEMIES[m.academyId]) [m.academyId, m.subId] = OLD_ACADEMIES[m.academyId];
   }
   for (const m of catM) if (!c.modules.some((x) => x.id === m.id)) c.modules.push(m);
-  c.seedV = CATALOG_V;
+  c.seedV = 3;
   return c;
 }
 
@@ -316,8 +316,14 @@ async function getContent(kv) {
   }
   c.banners = c.banners || defaultBanners();
   c.settings = { ...defaultSettings(), ...(c.settings || {}) };
+  if ((c.seedV || 1) < 3) migrateContent(c);
+  if ((c.seedV || 1) < 4) {
+    // Banner delle live fatto su Canva: sostituisce quello predefinito se non è stato cambiato.
+    const b2 = c.banners.find((b) => b.id === "b2");
+    if (b2 && !b2.cover && b2.title === "Live ogni settimana") Object.assign(b2, { title: "", text: "", cover: "/app/banners/live.jpg" });
+  }
   if ((c.seedV || 1) < CATALOG_V) {
-    migrateContent(c);
+    c.seedV = CATALOG_V;
     await putJSON(kv, "app:content", c);
   }
   return c;
