@@ -371,9 +371,10 @@ function viewHome() {
   const started = S.content.modules.filter((m) => courseStats(m).done && courseStats(m).done < m.lessons.length);
   const vid = ytId(set.onboardingVideo);
   view.innerHTML = `
+    <section class="home-hero"><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></section>
     <div class="home-top">
       <div>
-        <div class="welcome"><h1>${esc(set.welcomeTitle || "Benvenuto!")}</h1><p>${esc(set.welcomeSub || "")}${S.user.name ? `, ${esc(S.user.name)}` : ""}</p></div>
+        <p class="hi-name">Ciao ${esc(S.user.name)}, ${esc((set.welcomeSub || "scopri Vendita Uno").replace(/^./, (c) => c.toLowerCase()))}</p>
         <div class="onb" id="onb">
           <button class="onb-hd" id="onbBtn"><span class="pl">${icon("play")}</span><div class="grow"><h3>${esc(set.onboardingTitle || "Inizia da qui")}</h3><p>${esc(set.onboardingText || "")}</p></div><span class="wave"><i></i><i></i><i></i><i></i><i></i></span></button>
           <div id="onbVid"></div>

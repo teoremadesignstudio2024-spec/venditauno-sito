@@ -596,3 +596,13 @@ h2.sec{font-size:19px;font-weight:700;letter-spacing:-.01em}
   .auth{max-width:460px;margin:0 auto}
 }
 @media (max-width:1023px){.splash img{height:min(340px,48vh);object-fit:cover;object-position:50% 40%}}
+
+/* Immagine in cima alla Home */
+.home-hero{margin:-30px -16px 18px;background:#000}
+.home-hero img{width:100%;height:min(340px,48vh);object-fit:cover;object-position:50% 40%}
+.hi-name{font-family:var(--display);font-size:20px;font-weight:700;margin-bottom:2px}
+.home-top .onb{margin-top:10px}
+@media (min-width:1024px){
+  .home-hero{margin:-34px -40px 26px}
+  .home-hero img{height:auto;max-height:62vh}
+}
