@@ -106,7 +106,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 9;
+const CATALOG_V = 10;
 
 function catalogAcademies() {
   return [
@@ -123,7 +123,7 @@ function catalogAcademies() {
       { id: "aste", name: "Aste", icon: "doc" },
       { id: "affitti", name: "Affitti e rendita", icon: "home2" },
     ] },
-    { id: "pm", name: "Property manager", icon: "key", color: "#22c55e", cover: "", subs: [
+    { id: "pm", name: "Property manager", icon: "key", color: "#22c55e", cover: "", card: "/app/academies/property-manager.jpg", subs: [
       { id: "diventare", name: "Diventare property manager", icon: "cap" },
       { id: "piattaforme", name: "Airbnb e Booking", icon: "home2" },
       { id: "gestione", name: "Ospiti, pulizie e check-in", icon: "users" },
@@ -340,6 +340,10 @@ async function getContent(kv) {
     // Banner delle live: tolta la foto, torna quello originale con le scritte.
     const b2 = c.banners.find((b) => b.id === "b2");
     if (b2 && ((b2.cover || "").startsWith("/app/banners/live") || (!b2.cover && b2.title === "Live ogni settimana"))) Object.assign(b2, defaultBanners().find((b) => b.id === "b2"));
+  }
+  if ((c.seedV || 1) < 10) {
+    const pm = c.academies.find((a) => a.id === "pm");
+    if (pm && !pm.card) pm.card = "/app/academies/property-manager.jpg";
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
