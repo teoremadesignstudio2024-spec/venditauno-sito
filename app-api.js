@@ -106,7 +106,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 10;
+const CATALOG_V = 11;
 
 function catalogAcademies() {
   return [
@@ -116,7 +116,7 @@ function catalogAcademies() {
       { id: "chiu", name: "Chiusura", icon: "doc" },
       { id: "chi", name: "Chiamate a freddo", icon: "phone" },
     ] },
-    { id: "inv", name: "Investimenti immobiliari", icon: "trend", color: "#eab308", cover: "", card: "/app/academies/investimenti.jpg", subs: [
+    { id: "inv", name: "Investimenti immobiliari", icon: "trend", color: "#eab308", cover: "", card: "/app/academies/investimenti-immobiliari.jpg", subs: [
       { id: "affari", name: "Trovare gli affari", icon: "search" },
       { id: "numeri", name: "Numeri e analisi", icon: "euro" },
       { id: "ristr", name: "Ristrutturazione e materiali", icon: "tool" },
@@ -334,7 +334,7 @@ async function getContent(kv) {
   }
   if ((c.seedV || 1) < 8) {
     const inv = c.academies.find((a) => a.id === "inv");
-    if (inv && !inv.card) inv.card = "/app/academies/investimenti.jpg";
+    if (inv && !inv.card) inv.card = "/app/academies/investimenti-immobiliari.jpg";
   }
   if ((c.seedV || 1) < 9) {
     // Banner delle live: tolta la foto, torna quello originale con le scritte.
@@ -344,6 +344,11 @@ async function getContent(kv) {
   if ((c.seedV || 1) < 10) {
     const pm = c.academies.find((a) => a.id === "pm");
     if (pm && !pm.card) pm.card = "/app/academies/property-manager.jpg";
+  }
+  if ((c.seedV || 1) < 11) {
+    // Nuova versione della card Investimenti immobiliari.
+    const inv = c.academies.find((a) => a.id === "inv");
+    if (inv && inv.card === "/app/academies/investimenti.jpg") inv.card = "/app/academies/investimenti-immobiliari.jpg";
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
