@@ -282,7 +282,7 @@ function seedContent() {
 function defaultBanners() {
   return [
     { id: "b1", title: "Accademia Vendita Uno", text: "Il metodo completo per acquisire incarichi in esclusiva, passo dopo passo.", cover: "", link: "#/accademia" },
-    { id: "b2", title: "", text: "", cover: "/app/banners/live.jpg", link: "#/live" },
+    { id: "b2", title: "", text: "", cover: "/app/banners/live-settimanale.jpg", link: "#/live" },
     { id: "b3", title: "Notizie esclusive", text: "Ti diamo noi le persone da chiamare, solo a te, nella tua zona.", cover: "", link: "#/notizie" },
   ];
 }
@@ -320,7 +320,7 @@ async function getContent(kv) {
   if ((c.seedV || 1) < 4) {
     // Banner delle live fatto su Canva: sostituisce quello predefinito se non è stato cambiato.
     const b2 = c.banners.find((b) => b.id === "b2");
-    if (b2 && !b2.cover && b2.title === "Live ogni settimana") Object.assign(b2, { title: "", text: "", cover: "/app/banners/live.jpg" });
+    if (b2 && !b2.cover && b2.title === "Live ogni settimana") Object.assign(b2, { title: "", text: "", cover: "/app/banners/live-settimanale.jpg" });
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
