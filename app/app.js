@@ -392,7 +392,7 @@ function viewHome() {
         ${banners.length > 1 ? `<div class="ctl"><button data-b="-1" aria-label="Precedente">${icon("back")}</button><span class="dots">${banners.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</span><button data-b="1" aria-label="Successivo">${icon("chev")}</button></div>` : ""}</div>` : ""}
     </div>
     ${now ? `<h2 class="sec">In diretta ora</h2>${lvItem(now)}` : ""}
-    ${secHd("Accademie", S.content.academies.length, carouselArrows("hAcc"))}
+    ${secHd("Scegli come guadagnare", null, carouselArrows("hAcc"))}
     <div class="acards" id="hAcc">${S.content.academies.map(academyCard).join("")}</div>
     ${secHd(started.length ? "Continua i tuoi corsi" : "Corsi di avvio rapido", null, `<a href="#/accademia">Tutti</a>`)}
     <div class="hcourses" id="hCourses">${(started.length ? started : S.content.modules).map(courseCard).join("") || `<div class="card empty">I corsi arrivano presto.</div>`}</div>
@@ -439,7 +439,7 @@ function viewAcademy() {
       ${acFilter ? `<div class="sec-hd" style="margin-top:4px"><h2>${acFilter === "_saved" ? "I tuoi corsi" : esc((academyById(acFilter) || {}).name || "")}</h2><span class="ln"></span><span class="small muted">${list.length} corsi</span></div>` : `<p class="small muted" style="margin:-4px 0 4px">${done} lezioni completate su ${ls.length}</p>`}
       ${!acFilter ? S.content.academies.filter((a) => S.content.modules.some((m) => m.academyId === a.id)).map((a) => `${secHd(a.name, S.content.modules.filter((m) => m.academyId === a.id).length, `<a href="#/percorso/${esc(a.id)}">Apri</a>`)}<div class="hcourses">${S.content.modules.filter((m) => m.academyId === a.id).map(courseCard).join("")}</div>`).join("")
         : `<div class="courses">${list.map(courseCard).join("") || `<div class="card empty">${icon("cap")}Nessun corso qui, per ora.</div>`}</div>`}
-      ${secHd("Accademie", S.content.academies.length, carouselArrows("aAcc"))}
+      ${secHd("Scegli come guadagnare", null, carouselArrows("aAcc"))}
       <div class="acards" id="aAcc">${S.content.academies.map(academyCard).join("")}</div>`;
   } else if (acTab === "educatori") {
     body = `${S.content.educators.map(eduRow).join("") || `<div class="card empty">Nessun educatore.</div>`}`;
