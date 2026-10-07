@@ -634,7 +634,13 @@ export async function handleAppApi(request, env) {
       const users = recs.filter(Boolean);
       const byId = Object.fromEntries(users.map((u) => [u.id, u]));
       const content = await getContent(kv);
-      return json({ users: users.map((u) => ({ id: u.id, name: `${u.name} ${u.surname}`.trim(), email: u.email, role: u.role, city: u.city || "", at: u.createdAt, refCode: u.refCode, referredBy: u.referredBy && byId[u.referredBy] ? `${byId[u.referredBy].name} ${byId[u.referredBy].surname}`.trim() : "", educatorId: (content.educators.find((e) => e.email && e.email === u.email) || {}).id || "" })).sort((a, b) => b.at - a.at) });
+      // Chi è stato messo Educatore prima che esistessero i profili collegati: il profilo si crea adesso.
+      const missing = users.filter((u) => u.role === "educator" && !content.educators.some((e) => e.email && e.email === u.email));
+      if (missing.length) {
+        for (const u of missing) linkEducator(content, u);
+        await putJSON(kv, "app:content", content);
+      }
+      return json({ content: missing.length ? content : undefined, users: users.map((u) => ({ id: u.id, name: `${u.name} ${u.surname}`.trim(), email: u.email, role: u.role, city: u.city || "", at: u.createdAt, refCode: u.refCode, referredBy: u.referredBy && byId[u.referredBy] ? `${byId[u.referredBy].name} ${byId[u.referredBy].surname}`.trim() : "", educatorId: (content.educators.find((e) => e.email && e.email === u.email) || {}).id || "" })).sort((a, b) => b.at - a.at) });
     }
 
     if (path === "/admin/role" && method === "POST") {
@@ -648,15 +654,7 @@ export async function handleAppApi(request, env) {
       if (u.role === "educator") {
         // Collega l'account al profilo educatore: stessa email, oppure stesso nome senza email, altrimenti ne crea uno nuovo.
         content = await getContent(kv);
-        const full = `${u.name} ${u.surname}`.trim(), norm = (x) => (x || "").trim().toLowerCase();
-        let edu = content.educators.find((e) => e.email && e.email === u.email) || content.educators.find((e) => !e.email && norm(e.name) === norm(full));
-        if (edu) edu.email = u.email;
-        else {
-          edu = { id: rid(4), name: full, academyId: (content.academies[0] || {}).id || "", role: "", bio: "", photo: u.avatar ? `/api/app/img/${u.avatar}` : "", email: u.email };
-          content.educators.push(edu);
-        }
-        if (content.academies.some((a) => a.id === body.academyId)) edu.academyId = body.academyId;
-        if (body.specialty) edu.role = str(body.specialty, 80);
+        linkEducator(content, u, body.academyId, body.specialty);
         await pushNotif(kv, u.id, { title: "Sei un educatore di Vendita Uno", text: "Dal tuo profilo trovi \"Le mie live\": programmi le dirette o vai in diretta quando vuoi.", link: "#/mie-live", icon: "cap" });
         await putJSON(kv, "app:content", content);
       }
@@ -718,6 +716,20 @@ export async function handleAppApi(request, env) {
   }
 
   return fail("Non trovato", 404);
+}
+
+// Collega l'account al profilo educatore: stessa email, oppure stesso nome senza email, altrimenti ne crea uno nuovo.
+function linkEducator(content, u, academyId, specialty) {
+  const full = `${u.name} ${u.surname}`.trim(), norm = (x) => (x || "").trim().toLowerCase();
+  let edu = content.educators.find((e) => e.email && e.email === u.email) || content.educators.find((e) => !e.email && norm(e.name) === norm(full));
+  if (edu) edu.email = u.email;
+  else {
+    edu = { id: rid(4), name: full, academyId: (content.academies[0] || {}).id || "", role: "", bio: "", photo: u.avatar ? `/api/app/img/${u.avatar}` : "", email: u.email };
+    content.educators.push(edu);
+  }
+  if (academyId && content.academies.some((a) => a.id === academyId)) edu.academyId = academyId;
+  if (specialty) edu.role = str(specialty, 80);
+  return edu;
 }
 
 // ---------- notifiche ----------

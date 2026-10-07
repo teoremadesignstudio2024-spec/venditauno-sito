@@ -1572,11 +1572,17 @@ function admAcademies() {
 async function admUsers() {
   $("#adm").innerHTML = `<div class="loading" style="min-height:100px"><div class="spin"></div></div>`;
   try {
-    const { users } = await api("/admin/users");
+    const { users, content } = await api("/admin/users");
+    if (content) { S.content = content; toast("Creati i profili educatore mancanti"); }
     const draw = (t = "") => {
       const list = users.filter((u) => `${u.name} ${u.email} ${u.city}`.toLowerCase().includes(t.toLowerCase()));
-      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button></p>` : ""}</div>
+      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button></p>` : ""}</div>
         <select data-role="${esc(u.id)}">${[["agent", "Agente"], ["educator", "Educatore"], ["admin", "Admin"]].map(([v, n]) => `<option value="${v}" ${u.role === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>`).join("") || `<div class="empty">Nessun utente</div>`;
+      $("#ulist").querySelectorAll("[data-mkedu]").forEach((b) => (b.onclick = () => {
+        const sel = $(`#ulist [data-role="${b.dataset.mkedu}"]`);
+        const u = users.find((x) => x.id === b.dataset.mkedu); u.role = "agent";
+        sel.value = "educator"; sel.onchange();
+      }));
       $("#ulist").querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => {
         const l = `${location.origin}/app/?ref=${b.dataset.copy}`;
         try { await navigator.clipboard.writeText(l); toast("Link invito copiato"); } catch { prompt("Copia il link:", l); }
