@@ -160,6 +160,11 @@ function bindCourses(root) {
 }
 function academyCard(a) {
   const c = accColor(a);
+  // Card fatta su Canva con nome e icona già dentro: si mostra intera, senza scritte aggiunte.
+  if (safeUrl(a.card)) return `<a class="acard full" href="#/percorso/${esc(a.id)}" style="--c:${c}">
+    <img src="${esc(safeUrl(a.card))}" alt="${esc(a.name)}" loading="lazy">
+    <span class="tag">${(a.subs || []).length ? `${a.subs.length} sezioni · ` : ""}${S.content.modules.filter((m) => m.academyId === a.id).length} corsi</span>
+  </a>`;
   return `<a class="acard" href="#/percorso/${esc(a.id)}" style="--c:${c}">
     <div class="ph">${coverBg(a.cover, c, a.icon)}</div>
     <span class="tile">${icon(a.icon || "cap")}</span>
@@ -1208,6 +1213,8 @@ function admAcademies() {
     const a = i >= 0 ? acs[i] : { name: "", icon: "cap", color: "#2f6bff", cover: "" };
     formSheet(i >= 0 ? "Modifica accademia" : "Nuova accademia", field("Nome", "name", a.name, "text", "required") +
       `<div class="two">${select("Icona", "icon", ICONS.map((x) => [x, x]), a.icon)}${select("Colore", "color", COLORS, a.color)}</div>` +
+      imgField("Card completa con nome e icona già dentro (900 × 1020 px)", "card", a.card, true) +
+      `<p class="small muted" style="margin:-4px 0 12px">Se c'è la card completa, la foto del riquadro qui sotto non serve.</p>` +
       imgField("Foto del riquadro (900 × 1020 px)", "cover", a.cover, true) +
       imgField("Foto della testata (1600 × 700 px)", "hero", a.hero, true) +
       field("Sottocategorie (una per riga)", "subsText", (a.subs || []).map((x) => x.name).join("\n"), "textarea", 'rows="5" placeholder="Acquisizione\nTrattativa\nChiusura"'),

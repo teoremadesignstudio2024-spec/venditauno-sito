@@ -106,11 +106,11 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 6;
+const CATALOG_V = 7;
 
 function catalogAcademies() {
   return [
-    { id: "agenti", name: "Agenti immobiliari", icon: "handshake", color: "#2f6bff", cover: "", subs: [
+    { id: "agenti", name: "Agenti immobiliari", icon: "handshake", color: "#2f6bff", cover: "", card: "/app/academies/agenti.jpg", subs: [
       { id: "acq", name: "Acquisizione", icon: "key" },
       { id: "tra", name: "Trattativa", icon: "handshake" },
       { id: "chiu", name: "Chiusura", icon: "doc" },
@@ -327,6 +327,11 @@ async function getContent(kv) {
     const b2 = c.banners.find((b) => b.id === "b2");
     if (b2 && !b2.cover && b2.title === "Live ogni settimana") Object.assign(b2, defaultBanners().find((b) => b.id === "b2"));
   }
+  if ((c.seedV || 1) < 7) {
+    // Card dell'accademia Agenti immobiliari fatta su Canva.
+    const ag = c.academies.find((a) => a.id === "agenti");
+    if (ag && !ag.card) ag.card = "/app/academies/agenti.jpg";
+  }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
     await putJSON(kv, "app:content", c);
@@ -337,7 +342,7 @@ async function getContent(kv) {
 // ---------- validazione contenuti admin ----------
 
 const SECTIONS = {
-  academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap", color: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff", cover: str(a.cover, 300), hero: str(a.hero, 300),
+  academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap", color: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff", cover: str(a.cover, 300), hero: str(a.hero, 300), card: str(a.card, 300),
     subs: (Array.isArray(a.subs) ? a.subs : []).slice(0, 40).map((x) => ({ id: str(x.id, 40) || rid(4), name: str(x.name, 60), icon: str(x.icon, 20) || "cap" })).filter((x) => x.name) }),
   banners: (b) => ({ id: str(b.id, 40) || rid(4), title: str(b.title, 80), text: str(b.text, 200), cover: str(b.cover, 300), link: str(b.link, 300) }),
   educators: (e) => ({ id: str(e.id, 40) || rid(4), name: str(e.name, 80), academyId: str(e.academyId, 40), role: str(e.role, 80), bio: str(e.bio, 600), photo: str(e.photo, 300), email: str(e.email, 120).toLowerCase() }),

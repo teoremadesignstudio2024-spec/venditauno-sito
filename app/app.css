@@ -682,3 +682,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
 /* Su telefono niente immagine grande: si parte subito dai contenuti */
 @media (max-width:1023px){.splash,.home-hero{display:none}.auth{padding-top:28px}}
+
+/* Card accademia fatta su Canva (immagine completa) */
+.acard.full{padding-bottom:10px}
+.acard.full img{width:100%;aspect-ratio:900/1020;object-fit:cover;border-radius:16px}
+.acard.full .tag{margin-top:6px;background:none;color:var(--muted);padding:0}
