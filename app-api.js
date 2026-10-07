@@ -106,7 +106,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 8;
+const CATALOG_V = 9;
 
 function catalogAcademies() {
   return [
@@ -282,7 +282,7 @@ function seedContent() {
 function defaultBanners() {
   return [
     { id: "b1", title: "Accademia Vendita Uno", text: "Il metodo completo per acquisire incarichi in esclusiva, passo dopo passo.", cover: "", link: "#/accademia" },
-    { id: "b2", title: "", text: "", cover: "/app/banners/live-banner.jpg", link: "#/live" },
+    { id: "b2", title: "Live ogni settimana", text: "Gli educatori in diretta: domande, esempi veri e revisione delle chiamate.", cover: "", link: "#/live" },
     { id: "b3", title: "Notizie esclusive", text: "Ti diamo noi le persone da chiamare, solo a te, nella tua zona.", cover: "", link: "#/notizie" },
   ];
 }
@@ -335,6 +335,11 @@ async function getContent(kv) {
   if ((c.seedV || 1) < 8) {
     const inv = c.academies.find((a) => a.id === "inv");
     if (inv && !inv.card) inv.card = "/app/academies/investimenti.jpg";
+  }
+  if ((c.seedV || 1) < 9) {
+    // Banner delle live: tolta la foto, torna quello originale con le scritte.
+    const b2 = c.banners.find((b) => b.id === "b2");
+    if (b2 && ((b2.cover || "").startsWith("/app/banners/live") || (!b2.cover && b2.title === "Live ogni settimana"))) Object.assign(b2, defaultBanners().find((b) => b.id === "b2"));
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
