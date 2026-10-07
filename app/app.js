@@ -295,9 +295,12 @@ function viewAuth() {
   const ref = (localStorage.getItem("vu_ref") || "").toUpperCase();
   let mode = ref ? "reg" : "login";
   const draw = () => {
-    view.innerHTML = `<div class="auth">
-      <div class="wm" style="font-size:22px"><span class="v">Vendita</span><span class="u">UNO</span></div>
-      <h1 class="hero">L'accademia per agenti che <span>vogliono più incarichi.</span></h1>
+    view.innerHTML = `<section class="splash">
+        <img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare.">
+        <div class="splash-cta"><button class="btn pri" data-cta="reg">Inizia gratis</button><button class="btn sec" data-cta="login">Accedi</button></div>
+      </section>
+      <div class="auth" id="authBox">
+      <h1 class="hero">${mode === "reg" ? "Crea il tuo <span>account gratuito.</span>" : "Bentornato, <span>accedi.</span>"}</h1>
       <div class="perks">
         <div>${icon("cap")} Corsi passo passo, dalla chiamata al rogito</div>
         <div>${icon("live")} Live ogni settimana con gli educatori</div>
@@ -322,7 +325,8 @@ function viewAuth() {
           <label class="field"><span>Password</span><input class="inp" name="password" type="password" autocomplete="current-password" required></label>
           <button class="btn pri block" type="submit">Accedi</button>`}
       </form></div>`;
-    view.querySelectorAll("[data-m]").forEach((b) => (b.onclick = () => { mode = b.dataset.m; draw(); }));
+    view.querySelectorAll("[data-m]").forEach((b) => (b.onclick = () => { mode = b.dataset.m; draw(); $("#authBox").scrollIntoView(); }));
+    view.querySelectorAll("[data-cta]").forEach((b) => (b.onclick = () => { mode = b.dataset.cta; draw(); $("#authBox").scrollIntoView({ behavior: "smooth" }); }));
     $("#authForm").onsubmit = async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector("button[type=submit]");

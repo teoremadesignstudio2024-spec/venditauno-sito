@@ -581,3 +581,18 @@ h2.sec{font-size:19px;font-weight:700;letter-spacing:-.01em}
 .subt.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--panel))}
 .subt.on .ic{background:var(--c)}
 @media (min-width:1024px){.subs{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
+
+/* ---------- Schermata iniziale ---------- */
+.view.noNav{padding:0}
+.splash{position:relative;background:#000}
+.splash img{width:100%;height:auto}
+.splash-cta{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 22px 4px}
+.splash-cta .btn{padding:14px;font-size:15px}
+@media (min-width:1024px){
+  .shell.anon{max-width:none}
+  .shell.anon .view{max-width:none;padding:0}
+  .splash img{max-height:78vh;object-fit:cover}
+  .splash-cta{max-width:460px;margin:0 auto;padding:10px 20px}
+  .auth{max-width:460px;margin:0 auto}
+}
+@media (max-width:1023px){.splash img{height:min(340px,48vh);object-fit:cover;object-position:50% 40%}}
