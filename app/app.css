@@ -606,3 +606,69 @@ h2.sec{font-size:19px;font-weight:700;letter-spacing:-.01em}
   .home-hero{margin:-34px -40px 26px}
   .home-hero img{height:auto;max-height:62vh}
 }
+
+/* =====================================================================
+   Liquid glass + barre curve
+   ===================================================================== */
+:root{
+  --glass:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.02));
+  --glass-line:rgba(255,255,255,.1);
+  --glass-hi:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(255,255,255,.03);
+}
+/* Aloni di luce dietro a tutto: fanno risaltare il vetro */
+body{background:#000}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(60% 40% at 0% 0%,rgba(47,107,255,.32),transparent 70%),
+             radial-gradient(50% 35% at 100% 30%,rgba(56,189,248,.16),transparent 70%),
+             radial-gradient(70% 45% at 50% 105%,rgba(47,107,255,.3),transparent 70%),#000}
+.shell{background:transparent}
+@media (min-width:520px) and (max-width:1023px){.shell{background:rgba(0,0,0,.35)}}
+
+/* Card in vetro */
+.card,.acad,.subt,.lv,.ccard,.search,.seg,.fchips button,.tabs button,.filters button,.inp,.compose{background:var(--glass);border-color:var(--glass-line);box-shadow:var(--glass-hi)}
+.card,.ccard,.lv,.subt,.acad{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.fchips button.on,.tabs button.on,.filters button.on{background:#fff}
+.acc,.prem,.zone,.onb{box-shadow:var(--glass-hi),0 20px 50px -25px rgba(47,107,255,.6)}
+
+/* Barra in alto: vetro con curva centrale */
+.topbar{background:none;height:calc(66px + env(safe-area-inset-top));align-items:flex-start;padding-top:calc(env(safe-area-inset-top) + 12px)}
+.topbar::before{content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 55%),linear-gradient(90deg,rgba(18,52,190,.72),rgba(47,107,255,.78) 50%,rgba(18,52,190,.72));
+  -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+  -webkit-mask:linear-gradient(#000 0 0) top/100% calc(46px + env(safe-area-inset-top)) no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 66' preserveAspectRatio='none'%3E%3Cpath d='M0 0H220V46C186 46 182 66 146 66H74C38 66 34 46 0 46Z'/%3E%3C/svg%3E") top center/220px calc(66px + env(safe-area-inset-top)) no-repeat;
+          mask:linear-gradient(#000 0 0) top/100% calc(46px + env(safe-area-inset-top)) no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 66' preserveAspectRatio='none'%3E%3Cpath d='M0 0H220V46C186 46 182 66 146 66H74C38 66 34 46 0 46Z'/%3E%3C/svg%3E") top center/220px calc(66px + env(safe-area-inset-top)) no-repeat}
+.topbar .title{padding-top:2px}
+.tab-logo{background:none;box-shadow:none;bottom:auto;top:calc(env(safe-area-inset-top) + 20px);height:auto;width:auto;padding:0;border-radius:0}
+.tab-logo .wm{filter:drop-shadow(0 2px 10px rgba(0,0,0,.35))}
+.view{padding-top:22px}
+
+/* Barra in basso: vetro con gobba centrale e icone in cerchi */
+.nav .bar{inset:0;background:none;-webkit-mask:none;mask:none;border-radius:0;padding:26px 8px calc(10px + env(safe-area-inset-bottom));align-items:center}
+.nav .bar::before{content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,0) 45%),linear-gradient(90deg,rgba(18,52,190,.78),rgba(47,107,255,.82) 50%,rgba(18,52,190,.78));
+  -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+  -webkit-mask:linear-gradient(#000 0 0) bottom/100% calc(100% - 25px) no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 26' preserveAspectRatio='none'%3E%3Cpath d='M0 26C44 26 52 0 92 0H148C188 0 196 26 240 26Z'/%3E%3C/svg%3E") top center/240px 26px no-repeat;
+          mask:linear-gradient(#000 0 0) bottom/100% calc(100% - 25px) no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 26' preserveAspectRatio='none'%3E%3Cpath d='M0 26C44 26 52 0 92 0H148C188 0 196 26 240 26Z'/%3E%3C/svg%3E") top center/240px 26px no-repeat}
+.nav .bar a{gap:4px;color:#d6e2ff}
+.nav .bar a svg{width:42px;height:42px;padding:10px;border-radius:50%;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);transition:background .2s}
+.nav .bar a.on svg{background:rgba(255,255,255,.95);color:#1846d8;border-color:#fff}
+.nav .bar a.on{color:#fff}
+.uno{top:-6px;background:radial-gradient(circle at 50% 30%,#1a1f2e,#000 70%);border:2px solid rgba(255,255,255,.55);box-shadow:0 0 0 5px rgba(47,107,255,.35),0 12px 30px -6px rgba(47,107,255,.8),inset 0 1px 0 rgba(255,255,255,.3)}
+
+/* Rotella e finestre in vetro */
+.radial .it{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04));-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-color:rgba(255,255,255,.3)}
+.sheet .box{background:linear-gradient(180deg,rgba(30,36,52,.82),rgba(10,12,18,.92));-webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);border-color:rgba(255,255,255,.14)}
+
+/* Computer: barra laterale e pannello in vetro */
+@media (min-width:1024px){
+  .side:not([hidden]),.rail:not([hidden]){background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-color:var(--glass-line)}
+  .side nav a.on{background:linear-gradient(180deg,rgba(91,140,255,.45),rgba(47,107,255,.18));box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+  .view{padding-top:34px}
+}
+@media (max-width:1023px){.home-hero,.chero,.ahero{margin-top:-22px}}
+:root{--nav-h:96px}
+.nav .bar{padding:28px 8px calc(8px + env(safe-area-inset-bottom))}
+.nav .bar a{font-size:10px;line-height:1}
+.nav .bar a svg{width:40px;height:40px;padding:9px}
+.uno{top:-4px}
+.toast{bottom:calc(130px + env(safe-area-inset-bottom))}
