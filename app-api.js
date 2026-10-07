@@ -465,9 +465,18 @@ export async function handleAppApi(request, env) {
   if (path === "/avatar" && method === "POST") {
     const id = await storeImage(kv, body.dataUrl);
     if (!id) return fail("Immagine non valida o troppo grande");
-    if (me.avatar) await kv.delete(`app:img:${me.avatar}`);
+    const oldUrl = me.avatar ? `/api/app/img/${me.avatar}` : "";
     me.avatar = id;
     await saveUser(kv, me);
+    // Se è un educatore, la nuova foto va anche sul suo profilo educatore (se usava la foto profilo o non ne aveva una).
+    const content = await getContent(kv);
+    const edu = content.educators.find((e) => e.email && e.email === me.email);
+    if (edu && (!edu.photo || edu.photo === oldUrl)) {
+      edu.photo = `/api/app/img/${id}`;
+      await putJSON(kv, "app:content", content);
+    }
+    // La vecchia foto si cancella solo se non la usa più nessun profilo.
+    if (oldUrl && !content.educators.some((e) => e.photo === oldUrl)) await kv.delete(`app:img:${oldUrl.split("/").pop()}`);
     return json({ user: publicUser(me) });
   }
 

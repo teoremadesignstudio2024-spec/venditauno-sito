@@ -1176,7 +1176,7 @@ function viewProfile() {
   $("#avf").onchange = async (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    try { S.user = (await api("/avatar", { dataUrl: await resizeImage(f, 360) })).user; toast("Foto aggiornata"); viewProfile(); } catch (err) { toast(err.message); }
+    try { S.user = (await api("/avatar", { dataUrl: await resizeImage(f, 480) })).user; await loadMe(); toast("Foto aggiornata"); viewProfile(); } catch (err) { toast(err.message); }
   };
   $("#pf").onsubmit = async (e) => {
     e.preventDefault();
