@@ -214,6 +214,70 @@ h2.sec a{font-size:12px;color:var(--blue-2);font-weight:600;text-decoration:none
 .net .ln p{font-size:11.5px;color:var(--muted)}
 .net .ln b{margin-left:auto;font-size:13px;color:#5ee08f}
 
+/* Live */
+.wk{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.wk h3{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.wk p{font-size:12px;color:var(--muted)}
+.wk .arr{display:flex;gap:6px}
+.wk .arr button{width:32px;height:32px;border-radius:10px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.wk .arr svg{width:16px;height:16px}
+.cal{padding:8px 6px 4px}
+.cal .r{display:grid;grid-template-columns:60px repeat(7,1fr);align-items:center}
+.cal .hd{padding:4px 0 8px;border-bottom:1px solid var(--line)}
+.cal .d{text-align:center;font-size:10px;color:var(--dim);font-weight:600;text-transform:uppercase}
+.cal .d b{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+.cal .d.today b{color:#fff;background:var(--blue);width:26px;height:26px;line-height:26px;border-radius:50%;margin:2px auto 0}
+.cal .row{height:72px;border-bottom:1px solid var(--line)}
+.cal .row:last-child{border-bottom:0}
+.cal .ed{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9.5px;color:var(--muted);font-weight:600;text-align:center;line-height:1.1}
+.cal .ed .avatar,.cal .ed .ini{width:40px;height:40px;object-position:top;font-size:13px;outline:2px solid var(--line-2);outline-offset:1px}
+.cal .cell{height:100%;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(29,34,45,.6)}
+.cal .cell.today{background:rgba(47,107,255,.06)}
+.slot{width:38px;padding:5px 0;border-radius:8px;font-size:10px;font-weight:800;text-align:center;line-height:1.15;border:1px solid transparent}
+.slot small{display:block;font-size:8px;font-weight:600;opacity:.8}
+.slot.up{background:rgba(47,107,255,.18);color:#cfdcff;border-color:rgba(91,140,255,.35)}
+.slot.past{background:var(--panel-2);color:var(--dim)}
+.slot.now{background:#ff3b3b;color:#fff;animation:pl 1.4s infinite}
+.slot.sel{outline:2px solid #fff;outline-offset:1px}
+.slot.rem::after{content:"";display:block;width:5px;height:5px;border-radius:50%;background:var(--sky);margin:3px auto 0}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin:10px 2px 0}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:3px}
+.det{padding:14px;margin-top:14px}
+.det .top{display:flex;gap:12px;align-items:center}
+.det .avatar,.det .ini{width:48px;height:48px;object-position:top;font-size:15px}
+.det .when{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--blue-3)}
+.det h3{font-size:16px;font-weight:800;line-height:1.25;margin-top:3px}
+.det p{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5}
+.det .info{display:flex;gap:14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.det .info b{color:var(--text)}
+.det .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.btn.live{background:#ff3b3b;color:#fff}
+.btn.on{background:rgba(56,189,248,.14);border-color:rgba(56,189,248,.45);color:#9fe0ff}
+.acc{margin-top:18px;padding:16px;border-radius:20px;background:radial-gradient(120% 140% at 100% 0%,rgba(47,107,255,.35),transparent 60%),var(--panel);border:1px solid rgba(91,140,255,.35)}
+.acc .mod{font-size:11.5px;color:var(--blue-3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:10px}
+.acc h3{font-size:18px;font-weight:800;margin-top:4px;letter-spacing:-.01em}
+.acc .prog{height:6px;margin-top:12px}
+.acc .pl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px}
+.acc .btn{margin-top:14px}
+
+a.btn{color:inherit;text-decoration:none}
+.prem{padding:20px 18px;border-radius:22px;background:radial-gradient(130% 120% at 100% 0%,rgba(47,107,255,.45),transparent 55%),#07090f;border:1px solid rgba(91,140,255,.45);position:relative;overflow:hidden}
+.prem .lk{width:44px;height:44px;border-radius:14px;background:rgba(47,107,255,.2);color:var(--blue-3);display:flex;align-items:center;justify-content:center}
+.prem h3{font-size:22px;font-weight:900;letter-spacing:-.02em;margin-top:14px;line-height:1.15}
+.prem > p{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5}
+.prem ul{list-style:none;margin-top:14px;display:grid;gap:9px}
+.prem li{display:flex;gap:9px;font-size:13px;line-height:1.4}
+.prem li svg{width:17px;height:17px;color:var(--blue-2);margin-top:1px}
+.prem .price{display:flex;align-items:baseline;gap:6px;margin-top:16px}
+.prem .price b{font-size:28px;font-weight:900}
+.prem .price span{font-size:12px;color:var(--muted)}
+.prem .btn{margin-top:12px;width:100%}
+.teaser{display:flex;gap:12px;align-items:center;padding:14px;margin-top:12px;background:linear-gradient(90deg,rgba(47,107,255,.16),transparent),var(--panel);border-color:rgba(91,140,255,.35)}
+.teaser .lk{width:40px;height:40px;border-radius:12px;background:rgba(47,107,255,.2);color:var(--blue-3);display:flex;align-items:center;justify-content:center;flex:none}
+.teaser h4{font-size:13.5px}
+.teaser p{font-size:12px;color:var(--muted);margin-top:2px}
+
 /* ---------- Bottom nav ---------- */
 .nav{position:absolute;left:0;right:0;bottom:0;height:86px;z-index:10;pointer-events:none}
 .nav .bar{position:absolute;inset:12px 0 0;background:linear-gradient(180deg,#1846d8,#0a2a8f);
@@ -300,7 +364,7 @@ h2.sec a{font-size:12px;color:var(--blue-2);font-weight:600;text-decoration:none
       <div class="title" id="title">Home</div>
       <div class="tab-logo"><div class="wm"><span class="v">Vendita</span><span class="u">UNO</span></div></div>
       <div class="acts">
-        <button aria-label="Notifiche" data-toast="3 nuove notizie a Magenta"><svg class="i"><use href="#bell"/></svg><span class="dot"></span></button>
+        <button aria-label="Notifiche" data-toast="Samuele Diotti è in diretta ora"><svg class="i"><use href="#bell"/></svg><span class="dot"></span></button>
         <button aria-label="Profilo" data-go="guadagni"><svg class="i"><use href="#user"/></svg></button>
       </div>
     </header>
@@ -310,17 +374,15 @@ h2.sec a{font-size:12px;color:var(--blue-2);font-weight:600;text-decoration:none
       <!-- HOME -->
       <section class="screen on" id="s-home" data-title="Home">
         <div class="hello">Buongiorno,<br><span>Luca.</span></div>
-        <p class="sub">Martedì 7 ottobre · hai 3 notizie nuove da chiamare</p>
+        <p class="sub">Mercoledì 7 ottobre · oggi c'è 1 live in corso</p>
 
-        <div class="zone">
-          <div class="row"><span class="chip blue"><svg class="i" style="width:12px;height:12px"><use href="#lock"/></svg> Zona esclusiva</span><span class="chip ok">Attiva</span></div>
-          <div class="name"><svg class="i"><use href="#pin"/></svg> Magenta (MI)</div>
-          <div class="note">Solo la tua agenzia riceve le notizie di questa zona.</div>
-          <div class="stats">
-            <div class="stat"><b>3</b><span>Notizie oggi</span></div>
-            <div class="stat"><b>4</b><span>Appuntamenti</span></div>
-            <div class="stat"><b>2</b><span>Incarichi mese</span></div>
-          </div>
+        <div class="acc">
+          <div class="row" style="display:flex;justify-content:space-between"><span class="chip blue"><svg class="i" style="width:12px;height:12px"><use href="#cap"/></svg> Accademia</span><span class="chip ok">5 giorni di fila</span></div>
+          <div class="mod">Modulo 2 di 6 · Acquisizione</div>
+          <h3>Come ottenere l'incarico in esclusiva</h3>
+          <div class="prog"><i style="width:38%"></i></div>
+          <div class="pl"><span>14 lezioni su 37</span><span>38%</span></div>
+          <button class="btn pri" style="width:100%" data-toast="Riprendi: lezione 15"><svg class="i" style="width:16px;height:16px"><use href="#play"/></svg>Continua da dove eri</button>
         </div>
 
         <div class="card onb">
@@ -332,6 +394,12 @@ h2.sec a{font-size:12px;color:var(--blue-2);font-weight:600;text-decoration:none
           </div>
         </div>
 
+        <button class="card teaser" data-go="premium" style="width:100%;text-align:left">
+          <span class="lk"><svg class="i"><use href="#lock"/></svg></span>
+          <div style="flex:1"><h4>Notizie esclusive a Magenta</h4><p>La zona è ancora libera · scopri il servizio</p></div>
+          <svg class="i" style="color:var(--muted)"><use href="#chev"/></svg>
+        </button>
+
         <h2 class="sec">In diretta ora</h2>
         <div class="card live">
           <img class="avatar" src="../assets/img/samuele-diotti.jpg" alt="">
@@ -339,7 +407,7 @@ h2.sec a{font-size:12px;color:var(--blue-2);font-weight:600;text-decoration:none
             <h3>Acquisire in esclusiva al primo appuntamento</h3>
             <p><span class="pulse"></span> Samuele Diotti · 128 agenti</p>
           </div>
-          <button class="go" data-toast="Entri nella live…">Entra</button>
+          <button class="go" data-go="live">Entra</button>
         </div>
 
         <h2 class="sec">I tuoi guadagni <a href="#" data-go="guadagni">Dettagli</a></h2>
@@ -350,23 +418,53 @@ h2.sec a{font-size:12px;color:var(--blue-2);font-weight:600;text-decoration:none
             <path d="M0 38 L14 34 L28 36 L42 27 L56 29 L70 20 L84 22 L98 10 L110 6" fill="none" stroke="#5b8cff" stroke-width="2"/></svg>
         </div>
 
-        <h2 class="sec">Prossime live <a href="#" data-go="edu">Tutte</a></h2>
+        <h2 class="sec">Prossime live <a href="#" data-go="live">Calendario</a></h2>
         <div class="hlist">
+          <div class="card ev"><div class="when">Oggi · 13:00</div><h4>Instagram per agenti: 3 post che portano chiamate</h4><div class="who"><span class="ini" style="width:24px;height:24px;font-size:10px">GR</span>Giulia Rinaldi</div></div>
+          <div class="card ev"><div class="when">Oggi · 21:00</div><h4>Gestire l'obiezione "la provvigione è alta"</h4><div class="who"><img class="avatar" src="../assets/img/stefano-bonuccelli.png" style="width:24px;height:24px;object-position:top" alt="">Stefano Bonuccelli</div></div>
           <div class="card ev"><div class="when">Gio · 18:30</div><h4>Script per i privati che vendono da soli</h4><div class="who"><img class="avatar" src="../assets/img/marco-diotti.jpg" style="width:24px;height:24px" alt="">Marco Diotti</div></div>
-          <div class="card ev"><div class="when">Lun · 21:00</div><h4>Gestire l'obiezione "la provvigione è alta"</h4><div class="who"><img class="avatar" src="../assets/img/stefano-bonuccelli.png" style="width:24px;height:24px;object-position:top" alt="">Stefano Bonuccelli</div></div>
-          <div class="card ev"><div class="when">Mer · 13:00</div><h4>Successioni: come proporsi senza essere invadenti</h4><div class="who"><span class="ini" style="width:24px;height:24px;font-size:10px">GR</span>Giulia Rinaldi</div></div>
+        </div>
+      </section>
+
+      <!-- LIVE -->
+      <section class="screen" id="s-live" data-title="Live">
+        <div class="wk">
+          <div><h3>Live della settimana</h3><p>5 – 11 ottobre · tocca una live</p></div>
+          <div class="arr"><button aria-label="Settimana precedente" data-toast="Settimana precedente: 6 replay"><svg class="i"><use href="#back"/></svg></button><button aria-label="Settimana successiva" data-toast="Calendario della prossima settimana"><svg class="i"><use href="#chev"/></svg></button></div>
+        </div>
+        <div class="card cal" id="cal"></div>
+        <div class="legend"><span><i style="background:#ff3b3b"></i>In diretta</span><span><i style="background:rgba(47,107,255,.5)"></i>In programma</span><span><i style="background:var(--line-2)"></i>Replay</span></div>
+        <div class="card det" id="det"></div>
+      </section>
+
+      <!-- PREMIUM -->
+      <section class="screen" id="s-premium" data-title="Servizio">
+        <div class="prem">
+          <span class="lk"><svg class="i"><use href="#lock"/></svg></span>
+          <h3>Notizie esclusive nella tua zona</h3>
+          <p>Hai imparato il metodo in accademia. Con il servizio lo applichi: ti diamo noi le persone da chiamare, ogni settimana, solo a te.</p>
+          <ul>
+            <li><svg class="i"><use href="#check"/></svg><span><b>Zona esclusiva</b>: nessun'altra agenzia della tua zona riceve le stesse notizie</span></li>
+            <li><svg class="i"><use href="#check"/></svg><span>Privati che vendono, successioni, trasferimenti, immobili sfitti</span></li>
+            <li><svg class="i"><use href="#check"/></svg><span>Gestionale per segnare chiamate, appuntamenti e incarichi</span></li>
+            <li><svg class="i"><use href="#check"/></svg><span>Affiancamento 1-a-1 con un educatore nei primi 30 giorni</span></li>
+          </ul>
+          <div class="price"><b>€ 3.500</b><span>servizio Notizie Esclusive</span></div>
+          <button class="btn pri" data-toast="Richiesta inviata: ti chiamiamo entro 24 ore"><svg class="i" style="width:16px;height:16px"><use href="#pin"/></svg>Verifica se la tua zona è libera</button>
+          <button class="btn sec" data-go="notizie"><svg class="i" style="width:16px;height:16px"><use href="#search"/></svg>Guarda un esempio</button>
         </div>
       </section>
 
       <!-- NOTIZIE -->
       <section class="screen" id="s-notizie" data-title="Notizie">
+        <button class="back" data-go="premium"><svg class="i" style="width:18px;height:18px"><use href="#back"/></svg> Servizio Notizie</button>
         <div class="filters" id="filters">
           <button class="on" data-f="all">Tutte · 7</button>
           <button data-f="nuova">Nuove · 3</button>
           <button data-f="richiamare">Da richiamare · 2</button>
           <button data-f="appuntamento">Appuntamento · 2</button>
         </div>
-        <div class="excl"><svg class="i"><use href="#lock"/></svg><span>Queste notizie arrivano <b>solo a te</b> per la zona di Magenta. Nessun'altra agenzia le riceve.</span></div>
+        <div class="excl"><svg class="i"><use href="#lock"/></svg><span><b>Esempio.</b> Queste notizie arrivano <b>solo a te</b> per la zona di Magenta. Nessun'altra agenzia le riceve.</span></div>
         <div id="leads"></div>
       </section>
 
@@ -433,14 +531,14 @@ h2.sec a{font-size:12px;color:var(--blue-2);font-weight:600;text-decoration:none
     <div class="radial" id="radial">
       <button class="it live" data-toast="Avvio diretta…"><svg class="i"><use href="#live"/></svg>Live</button>
       <button class="it" data-go="feed"><svg class="i"><use href="#pen"/></svg>Post</button>
-      <button class="it" data-go="notizie"><svg class="i"><use href="#pin"/></svg>Notizie</button>
+      <button class="it" data-go="premium"><svg class="i"><use href="#pin"/></svg>Notizie</button>
       <button class="it" data-go="guadagni"><svg class="i"><use href="#link"/></svg>Invita</button>
     </div>
 
     <nav class="nav">
       <div class="bar">
         <button class="on" data-go="home"><svg class="i"><use href="#home"/></svg>Home</button>
-        <button data-go="notizie"><svg class="i"><use href="#pin"/></svg>Notizie</button>
+        <button data-go="live"><svg class="i"><use href="#live"/></svg>Live</button>
         <span></span>
         <button data-go="edu"><svg class="i"><use href="#cap"/></svg>Educatori</button>
         <button data-go="feed"><svg class="i"><use href="#feed"/></svg>Community</button>
@@ -481,7 +579,7 @@ const POSTS = [
   {who:"Samuele Diotti", img:"../assets/img/samuele-diotti.jpg", when:"2 ore fa", tx:"Il privato non ti dice no perché non gli servi. Ti dice no perché alla prima telefonata hai parlato di te invece che di lui.", script:'<em>Tu:</em> "Buongiorno, ho visto che vende da solo. Non la chiamo per prenderle l\'incarico: le chiedo solo una cosa. Quante visite ha fatto finora?"', likes:84, com:21},
   {who:"Marco Diotti", img:"../assets/img/marco-diotti.jpg", when:"ieri", tx:"Settimana chiusa con 3 incarichi in esclusiva da notizie di successione. Il segreto? Prima la lettera, poi la chiamata dopo 4 giorni. Mai il contrario.", likes:132, com:37},
   {who:"Andrea Ferri", ini:"AF", when:"ieri", agent:"Agente · Legnano", tx:"Primo rogito nato da una notizia dell'app. Trasferimento di lavoro, venduto in 41 giorni. Grazie a tutti per i consigli nella live di lunedì.", media:"../assets/img/massimiliano-poster.jpg", likes:211, com:48},
-  {who:"Stefano Bonuccelli", img:"../assets/img/stefano-bonuccelli.png", when:"3 giorni fa", tx:"La provvigione non è alta o bassa. È alta quando il cliente non capisce cosa stai facendo per lui. Stasera alle 21 ne parliamo in diretta.", likes:97, com:15},
+  {who:"Stefano Bonuccelli", img:"../assets/img/stefano-bonuccelli.png", when:"3 giorni fa", tx:"La provvigione non è alta o bassa. È alta quando il cliente non capisce cosa stai facendo per lui. Mercoledì alle 21 ne parliamo in diretta.", likes:97, com:15},
 ];
 function renderPosts(){
   document.getElementById("posts").innerHTML = POSTS.map(p=>`
@@ -505,9 +603,63 @@ function renderAcads(){
       <h4>${a[1]}</h4><div class="ct">${a[2]} educatori <svg class="i"><use href="#chev"/></svg></div></button>`).join("");
 }
 
-renderLeads("all"); renderPosts(); renderAcads();
+const EDU = [
+  {k:"sd", name:"Samuele", full:"Samuele Diotti", img:"../assets/img/samuele-diotti.jpg", acad:"Acquisizione"},
+  {k:"md", name:"Marco", full:"Marco Diotti", img:"../assets/img/marco-diotti.jpg", acad:"Trattativa"},
+  {k:"sb", name:"Stefano", full:"Stefano Bonuccelli", img:"../assets/img/stefano-bonuccelli.png", acad:"Mindset"},
+  {k:"gr", name:"Giulia", full:"Giulia Rinaldi", ini:"GR", acad:"Social"},
+];
+const DAYS = [["Lun",5],["Mar",6],["Mer",7],["Gio",8],["Ven",9],["Sab",10],["Dom",11]];
+const TODAY = 2; // oggi: mercoledì 7 ottobre
+const LIVES = [
+  {id:1, e:"md", d:0, h:"18:30", st:"past", t:"Le 5 domande da fare prima del sopralluogo", min:60, desc:"Cosa chiedere al proprietario al telefono per arrivare al sopralluogo già con l'incarico mezzo in tasca.", n:214},
+  {id:2, e:"sd", d:2, h:"11:00", st:"now", t:"Acquisire in esclusiva al primo appuntamento", min:75, desc:"Come presentare il servizio, quando parlare di esclusiva e come rispondere a \"ci devo pensare\".", n:128},
+  {id:3, e:"gr", d:2, h:"13:00", st:"up", t:"Instagram per agenti: 3 post che portano chiamate", min:45, desc:"Tre formati da pubblicare ogni settimana, con esempi veri di agenti della community.", n:0},
+  {id:4, e:"sb", d:2, h:"21:00", st:"up", t:"Gestire l'obiezione \"la provvigione è alta\"", min:60, desc:"Perché il cliente contesta la provvigione e cosa dire per far capire il valore, senza fare sconti.", n:0},
+  {id:5, e:"md", d:3, h:"18:30", st:"up", t:"Script per i privati che vendono da soli", min:60, desc:"La telefonata completa, frase per frase, e come gestire chi ti attacca il telefono in faccia.", n:0},
+  {id:6, e:"sd", d:4, h:"18:00", st:"up", t:"Revisione chiamate dal vivo", min:90, desc:"Mandi la registrazione di una tua chiamata e la correggiamo insieme davanti a tutti.", n:0},
+  {id:7, e:"sb", d:5, h:"10:00", st:"up", t:"Pianificare la settimana: i numeri che contano", min:45, desc:"Quante chiamate, quanti appuntamenti e quanti incarichi ti servono per arrivare al tuo obiettivo.", n:0},
+  {id:8, e:"gr", d:6, h:"18:00", st:"up", t:"Video sugli immobili con il telefono", min:45, desc:"Come girare e montare un video di un immobile in 20 minuti, senza attrezzatura.", n:0},
+];
+const DATES = ["2026-10-05","2026-10-06","2026-10-07","2026-10-08","2026-10-09","2026-10-10","2026-10-11"];
+const reminded = new Set();
+let selLive = 2;
+const eduOf = k => EDU.find(e=>e.k===k);
+const face = (e,cls="avatar") => e.img?`<img class="${cls}" src="${e.img}" alt="">`:`<span class="ini">${e.ini}</span>`;
+function renderCal(){
+  let h = `<div class="r hd"><span></span>${DAYS.map((d,i)=>`<div class="d ${i===TODAY?"today":""}">${d[0]}<b>${d[1]}</b></div>`).join("")}</div>`;
+  h += EDU.map(e=>`<div class="r row"><div class="ed">${face(e)}${e.name}</div>${DAYS.map((d,i)=>{
+    const l = LIVES.find(x=>x.e===e.k&&x.d===i);
+    const inner = l?`<button class="slot ${l.st} ${l.id===selLive?"sel":""} ${reminded.has(l.id)?"rem":""}" data-live="${l.id}">${l.st==="now"?"LIVE":l.h}<small>${l.st==="past"?"replay":l.st==="now"?l.h:l.min+"′"}</small></button>`:"";
+    return `<div class="cell ${i===TODAY?"today":""}">${inner}</div>`}).join("")}</div>`).join("");
+  document.getElementById("cal").innerHTML = h;
+  renderDet();
+}
+function gcal(l,e){
+  const [hh,mm]=l.h.split(":").map(Number), d=DATES[l.d].replace(/-/g,"");
+  const end=new Date(2000,0,1,hh,mm+l.min), p=n=>String(n).padStart(2,"0");
+  const q=new URLSearchParams({action:"TEMPLATE",text:"Live Vendita Uno · "+l.t,details:"Con "+e.full+" — entra dall'app Vendita Uno",dates:`${d}T${p(hh)}${p(mm)}00/${d}T${p(end.getHours())}${p(end.getMinutes())}00`,ctz:"Europe/Rome"});
+  return "https://calendar.google.com/calendar/render?"+q;
+}
+function renderDet(){
+  const l=LIVES.find(x=>x.id===selLive), e=eduOf(l.e), dn=DAYS[l.d];
+  const when = l.st==="now"?'<span style="color:#ff6b6b"><span class="pulse"></span> In diretta ora</span>':`${dn[0]} ${dn[1]} ottobre · ${l.h}`;
+  const on=reminded.has(l.id);
+  const btns = l.st==="now"
+    ? `<button class="btn live" data-toast="Ti stai collegando…"><svg class="i" style="width:16px;height:16px"><use href="#live"/></svg>Entra in live</button><button class="btn sec" data-toast="Chat della live aperta"><svg class="i" style="width:16px;height:16px"><use href="#comment"/></svg>Chat</button>`
+    : l.st==="past"
+    ? `<button class="btn pri" data-toast="Avvio replay…"><svg class="i" style="width:16px;height:16px"><use href="#play"/></svg>Guarda replay</button><button class="btn sec" data-toast="Appunti scaricati"><svg class="i" style="width:16px;height:16px"><use href="#doc"/></svg>Appunti</button>`
+    : `<button class="btn sec ${on?"on":""}" data-remind="${l.id}"><svg class="i" style="width:16px;height:16px"><use href="#${on?"check":"bell"}"/></svg>${on?"Ti avviso io":"Ricordamelo"}</button><a class="btn sec" href="${gcal(l,e)}" target="_blank" rel="noopener" style="text-decoration:none"><svg class="i" style="width:16px;height:16px"><use href="#plus"/></svg>Calendario</a>`;
+  document.getElementById("det").innerHTML = `
+    <div class="top">${face(e)}<div style="min-width:0"><div class="when">${when}</div><h3>${l.t}</h3></div></div>
+    <p>${l.desc}</p>
+    <div class="info"><span><b>${e.full}</b></span><span>${e.acad}</span><span>${l.min} min</span>${l.n?`<span><b>${l.n}</b> agenti</span>`:""}</div>
+    <div class="btns">${btns}</div>`;
+}
 
-const NAV_OF = {home:"home",notizie:"notizie",edu:"edu",prof:"edu",feed:"feed",guadagni:null};
+renderLeads("all"); renderPosts(); renderAcads(); renderCal();
+
+const NAV_OF = {home:"home",live:"live",notizie:null,premium:null,edu:"edu",prof:"edu",feed:"feed",guadagni:null};
 function go(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id==="s-"+id));
   const s=document.getElementById("s-"+id); s.scrollTop=0;
@@ -524,6 +676,8 @@ radial.addEventListener("click",e=>{if(e.target===radial)closeRadial()});
 
 document.addEventListener("click",e=>{
   const g=e.target.closest("[data-go]"); if(g){e.preventDefault();go(g.dataset.go);return}
+  const lv=e.target.closest("[data-live]"); if(lv){selLive=+lv.dataset.live;renderCal();return}
+  const rm=e.target.closest("[data-remind]"); if(rm){const id=+rm.dataset.remind;reminded.has(id)?reminded.delete(id):reminded.add(id);renderCal();if(reminded.has(id))toast("Ti avvisiamo 15 minuti prima");return}
   const t=e.target.closest("[data-toast]"); if(t){toast(t.dataset.toast);closeRadial()}
   const f=e.target.closest("#filters button"); if(f){document.querySelectorAll("#filters button").forEach(b=>b.classList.toggle("on",b===f));renderLeads(f.dataset.f)}
   const s=e.target.closest("#seg button"); if(s){document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b===s))}
