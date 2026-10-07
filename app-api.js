@@ -670,6 +670,17 @@ export async function handleAppApi(request, env) {
       if (section === "lives") { content.lives.sort((a, b) => a.start.localeCompare(b.start)); await notifyLives(kv, before, content.lives, content.educators); }
       if (section === "modules") await notifyModules(kv, before, content.modules);
       if (section === "educators") {
+        // Chi viene collegato a un profilo educatore diventa Educatore (gli admin restano admin).
+        for (const e of content.educators) {
+          if (!e.email) continue;
+          const uid = await kv.get(`app:email:${e.email}`);
+          const u = uid ? await getJSON(kv, `app:user:${uid}`) : null;
+          if (u && u.role === "agent") {
+            u.role = "educator";
+            await saveUser(kv, u);
+            await pushNotif(kv, u.id, { title: "Sei un educatore di Vendita Uno", text: "Dal tuo profilo trovi \"Le mie live\": programmi le dirette o vai in diretta quando vuoi.", link: "#/mie-live", icon: "cap" });
+          }
+        }
         const ids = new Set(content.educators.map((e) => e.id));
         content.lives = content.lives.filter((l) => ids.has(l.educatorId));
         for (const m of content.modules) if (m.educatorId && !ids.has(m.educatorId)) m.educatorId = "";

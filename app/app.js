@@ -607,11 +607,19 @@ function viewLive([liveId]) {
 function drawLive() {
   const ws = weekStart(S.week), we = new Date(ws.getTime() + 7 * 86400000);
   const days = [...Array(7)].map((_, i) => new Date(ws.getFullYear(), ws.getMonth(), ws.getDate() + i));
-  const lives = sortedLives().filter((l) => { const d = new Date(l.start); return d >= ws && d < we; });
+  // Filtro per accademia: si vedono solo i suoi educatori e le loro live.
+  const acad = S.liveAcad && academyById(S.liveAcad) ? S.liveAcad : "";
+  const eds = S.content.educators.filter((e) => !acad || e.academyId === acad);
+  const edIds = new Set(eds.map((e) => e.id));
+  const lives = sortedLives().filter((l) => { const d = new Date(l.start); return d >= ws && d < we && edIds.has(l.educatorId); });
   const today = new Date();
-  // Righe: tutti gli educatori, prima quelli che hanno live in questa settimana.
+  // Righe: educatori raggruppati per accademia; in ogni gruppo prima chi ha live in questa settimana.
   const hasLive = (e) => lives.some((l) => l.educatorId === e.id);
-  const rows = [...S.content.educators.filter(hasLive), ...S.content.educators.filter((e) => !hasLive(e))];
+  const groups = [...S.content.academies, { id: "", name: "Altri educatori" }]
+    .map((a) => ({ a, list: eds.filter((e) => (a.id ? e.academyId === a.id : !academyById(e.academyId))) }))
+    .filter((g) => g.list.length)
+    .map((g) => ({ ...g, list: [...g.list.filter(hasLive), ...g.list.filter((e) => !hasLive(e))] }));
+  const usedAcads = S.content.academies.filter((a) => S.content.educators.some((e) => e.academyId === a.id));
   if (!lives.some((l) => l.id === S.selLive)) S.selLive = (lives.find((l) => liveState(l) === "now") || lives.find((l) => liveState(l) === "up") || lives[0] || {}).id;
   const end = new Date(we.getTime() - 1);
   const range = ws.getMonth() === end.getMonth() ? `${ws.getDate()} – ${end.getDate()} ${end.toLocaleDateString("it-IT", { month: "long" })}` : `${ws.getDate()} ${ws.toLocaleDateString("it-IT", { month: "short" })} – ${end.getDate()} ${end.toLocaleDateString("it-IT", { month: "short" })}`;
@@ -626,21 +634,24 @@ function drawLive() {
       <div><h3>${S.week === 0 ? "Live della settimana" : S.week === 1 ? "Settimana prossima" : S.week === -1 ? "Settimana scorsa" : "Live"}</h3><p>${range} · tocca una live</p></div>
       <div class="arr"><button data-w="-1" aria-label="Settimana precedente">${icon("back")}</button><button data-w="1" aria-label="Settimana successiva">${icon("chev")}</button></div>
     </div>
+    ${usedAcads.length > 1 ? `<div class="fchips"><button data-la="" class="${!acad ? "on" : ""}">Tutte</button>${usedAcads.map((a) => `<button data-la="${esc(a.id)}" class="${acad === a.id ? "on" : ""}" style="--c:${accColor(a)}"><i></i>${esc(a.name)}</button>`).join("")}</div>` : ""}
     <div class="card cal">
       <div class="r hd"><span></span>${days.map((d) => `<div class="d ${sameDay(d, today) ? "today" : ""}">${DOW[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}</div>
-      ${rows.map((e) => `<div class="r rw"><a class="ed" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}${esc(e.name.split(" ")[0])}</a>${days.map((d) => {
+      ${groups.map((g) => `${groups.length > 1 || !acad ? `<div class="cal-grp" style="--c:${g.a.id ? accColor(g.a) : "#64748b"}"><i></i>${esc(g.a.name)}</div>` : ""}${g.list.map((e) => `<div class="r rw"><a class="ed" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}${esc(e.name.split(" ")[0])}</a>${days.map((d) => {
         const ll = lives.filter((l) => l.educatorId === e.id && sameDay(new Date(l.start), d));
         return `<div class="cell ${sameDay(d, today) ? "today" : ""}">${ll.slice(0, 2).map(slot).join("")}</div>`;
-      }).join("")}</div>`).join("") || `<div class="empty">Aggiungi gli educatori dal pannello admin.</div>`}
+      }).join("")}</div>`).join("")}`).join("") || `<div class="empty">${acad ? "Nessun educatore in questa accademia." : "Aggiungi gli educatori dal pannello admin."}</div>`}
     </div>
     <div class="legend"><span><i style="background:var(--red)"></i>In diretta</span><span><i style="background:rgba(47,107,255,.5)"></i>In programma</span><span><i style="background:var(--line-2)"></i>Passata</span><span><i style="background:var(--sky);border-radius:50%"></i>Promemoria</span></div>
     <div id="det"></div>
     ${lives.length ? `<h2 class="sec">Tutte le live della settimana</h2><div class="card" style="padding:0 14px">${lives.map((l) => {
       const d = new Date(l.start), e = eduById(l.educatorId) || { name: "" }, st = liveState(l);
-      return `<button class="lrow" data-live="${esc(l.id)}"><div class="dt"><span>${DOW[d.getDay()]}</span><b>${d.getDate()}</b></div><div class="grow"><h4>${esc(l.title)}</h4><p>${fmtTime(d)} · ${esc(e.name)}${st === "now" ? ' · <span style="color:#ff6b6b">in diretta</span>' : st === "past" ? " · passata" : ""}</p></div>${icon("chev", "sm")}</button>`;
+      const ea = academyById(e.academyId);
+      return `<button class="lrow" data-live="${esc(l.id)}"><div class="dt"><span>${DOW[d.getDay()]}</span><b>${d.getDate()}</b></div><div class="grow"><h4>${esc(l.title)}</h4><p>${fmtTime(d)} · ${esc(e.name)}${ea && !acad ? ` · <span style="color:${accColor(ea)}">${esc(ea.name)}</span>` : ""}${st === "now" ? ' · <span style="color:#ff6b6b">in diretta</span>' : st === "past" ? " · passata" : ""}</p></div>${icon("chev", "sm")}</button>`;
     }).join("")}</div>` : ""}`;
 
   view.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { S.week += Number(b.dataset.w); S.selLive = null; drawLive(); }));
+  view.querySelectorAll("[data-la]").forEach((b) => (b.onclick = () => { S.liveAcad = b.dataset.la; S.selLive = null; drawLive(); }));
   view.querySelectorAll("[data-live]").forEach((b) => (b.onclick = () => {
     S.selLive = b.dataset.live;
     drawLive();
@@ -1521,15 +1532,22 @@ function admEducators() {
   $("#adm").innerHTML = `<button class="btn pri block" id="add">${icon("plus", "sm")}Nuovo educatore</button>
     <div class="card" style="margin-top:14px">${eds.map((e, i) => `<div class="adm-item">${face(e.name, e.photo)}<div class="grow"><h4>${esc(e.name)}</h4><p>${esc((academyById(e.academyId) || {}).name || "—")}${e.email ? " · " + esc(e.email) : ""}</p></div>${itemActs(i, eds.length)}</div>`).join("") || `<div class="empty">Nessun educatore</div>`}</div>`;
   $("#adm").querySelectorAll(".adm-item .av,.adm-item .ini").forEach((x) => (x.style.cssText = "width:40px;height:40px;font-size:13px"));
-  const edit = (i) => {
+  const edit = async (i) => {
     const e = i >= 0 ? eds[i] : { name: "", academyId: (S.content.academies[0] || {}).id, role: "", bio: "", photo: "", email: "" };
+    // Elenco degli iscritti per collegare l'account dell'educatore senza scrivere l'email
+    let users = [];
+    try { users = (await api("/admin/users")).users; } catch {}
+    const taken = new Set(eds.filter((x) => x !== e && x.email).map((x) => x.email));
+    const opts = [["", "Nessuno (solo profilo)"], ...users.filter((u) => !taken.has(u.email)).map((u) => [u.email, `${u.name} · ${u.email}`])];
+    if (e.email && !opts.some((o) => o[0] === e.email)) opts.push([e.email, e.email]);
     formSheet(i >= 0 ? "Modifica educatore" : "Nuovo educatore",
+      select("Chi è? (scegli tra gli iscritti)", "email", opts, e.email) +
+      `<p class="small muted" style="margin:-4px 0 12px">Diventa Educatore e trova "Le mie live" nel suo profilo. Se non è ancora iscritto all'app, fallo registrare e poi torna qui.</p>` +
       field("Nome e cognome", "name", e.name, "text", "required") +
       select("Accademia", "academyId", S.content.academies.map((a) => [a.id, a.name]), e.academyId) +
       field("Specialità", "role", e.role, "text", 'placeholder="Es. Acquisizione in esclusiva"') +
       field("Bio", "bio", e.bio, "textarea") +
-      imgField("Foto", "photo", e.photo) +
-      field("Email dell'account (per i suoi post da educatore)", "email", e.email, "email", 'placeholder="facoltativo"'),
+      imgField("Foto", "photo", e.photo),
       async (f) => { const copy = eds.slice(); if (i >= 0) copy[i] = { ...e, ...f }; else copy.push({ ...e, ...f }); await saveSection("educators", copy); },
       i >= 0 ? async () => {
         const n = S.content.lives.filter((l) => l.educatorId === e.id).length;
@@ -1540,6 +1558,13 @@ function admEducators() {
   $("#add").onclick = () => edit(-1);
   bindList($("#adm"), eds, "educators", edit);
 }
+// Scegliendo la persona, il nome si compila da solo.
+document.addEventListener("change", (ev) => {
+  if (ev.target.matches("#sf select[name=email]")) {
+    const nm = $("#sf [name=name]"), opt = ev.target.selectedOptions[0];
+    if (nm && opt && ev.target.value && !nm.value) nm.value = opt.textContent.split(" · ")[0];
+  }
+});
 
 function admAcademies() {
   const acs = S.content.academies;
