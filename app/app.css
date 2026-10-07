@@ -778,3 +778,25 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .scolors button{width:32px;height:32px;border-radius:50%;border:2px solid transparent}
 .scolors button.on{border-color:#fff;box-shadow:0 0 0 2px var(--blue)}
 @media (min-width:1024px){.stories{margin:0 0 18px;padding:4px 0 6px}}
+
+/* Fotocamera per registrare le storie */
+.mirror{transform:scaleX(-1)}
+.rec{background:#000}
+.rec-cam,.rec-prev{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rec-top{position:absolute;top:calc(14px + env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;z-index:3}
+.rec-top button{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.rec-time{font-family:var(--display);font-weight:700;background:var(--red);padding:5px 12px;border-radius:99px;font-size:14px}
+.rec-msg{position:absolute;left:24px;right:24px;top:40%;text-align:center;font-size:15px;line-height:1.5;color:#dfe6f5;z-index:2}
+.rec-bot{position:absolute;left:0;right:0;bottom:calc(28px + env(safe-area-inset-bottom));display:flex;justify-content:space-around;align-items:center;z-index:3}
+.rec-side{width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#fff;cursor:pointer}
+.rec-side svg{width:28px;height:28px}
+.rec-side b{font-family:var(--display);font-size:24px;font-weight:800;line-height:28px}
+.rec-side small{font-size:11px;font-weight:600}
+.rec-btn{position:relative;width:86px;height:86px;border-radius:50%}
+.rec-btn svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.rec-btn .trk{fill:none;stroke:rgba(255,255,255,.85);stroke-width:6}
+.rec-btn .prg{fill:none;stroke:var(--red);stroke-width:7;stroke-dasharray:100;stroke-dashoffset:100;stroke-linecap:round}
+.rec-btn i{position:absolute;inset:14px;border-radius:50%;background:var(--red);transition:all .2s}
+.recording .rec-btn i{inset:28px;border-radius:8px}
+.recording .rec-side{opacity:0;pointer-events:none}
+.rec-after{position:absolute;left:16px;right:16px;bottom:calc(28px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:10px;z-index:3}

@@ -343,7 +343,7 @@ function paintStories(el) {
     groups.map((g, i) => `<button class="sty ${g.unseen ? "" : "seen"}" data-sg="${i}"><span class="ring">${face(g.author, g.photo)}</span><b>${esc(g.author.split(" ")[0])}</b></button>`).join("");
   el.querySelectorAll("[data-sg]").forEach((b) => (b.onclick = () => openStories(groups, Number(b.dataset.sg))));
   const nb = el.querySelector("[data-newstory]");
-  if (nb) nb.onclick = newStory;
+  if (nb) nb.onclick = recordStory;
 }
 
 function openStories(groups, gi, si = 0) {
@@ -371,7 +371,7 @@ function openStories(groups, gi, si = 0) {
     clearTimeout(timer); elapsed = 0; paused = false; dur = 6000;
     const g = groups[gi], st = g.items[si];
     markSeen(st.key);
-    const media = st.video ? `<video src="/api/app/file/${esc(st.video)}" playsinline autoplay preload="auto"></video>`
+    const media = st.video ? `<video src="/api/app/file/${esc(st.video)}" playsinline autoplay preload="auto" class="${st.mirror ? "mirror" : ""}"></video>`
       : st.image ? `<img src="${imgUrl(st.image)}" alt="">` : "";
     ov.innerHTML = `<div class="story">
       <div class="sbars">${g.items.map((_, k) => `<span class="sbar ${k < si ? "done" : k === si ? "cur" : ""}"><i></i></span>`).join("")}</div>
@@ -412,11 +412,108 @@ function openStories(groups, gi, si = 0) {
   show();
 }
 
-function newStory() {
+// Data URL con un tipo video "pulito" (il server accetta mp4, webm, quicktime)
+function videoDataUrl(blob) {
+  const t = /webm/.test(blob.type) ? "video/webm" : /quicktime/.test(blob.type) ? "video/quicktime" : "video/mp4";
+  return new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).replace(/^data:.*?;base64,/, `data:${t};base64,`)); r.onerror = ko; r.readAsDataURL(blob); });
+}
+
+// Fotocamera dentro l'app: registra la storia (fino a 60 secondi), come su Instagram.
+async function recordStory() {
+  const MAX = 60;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) { newStory(); return; }
+  let facing = "user", stream = null, rec = null, chunks = [], t0 = 0, raf = 0, blob = null;
+  const ov = document.createElement("div");
+  ov.className = "story-ov rec-ov";
+  ov.innerHTML = `<div class="story rec">
+    <video class="rec-cam" playsinline muted autoplay></video>
+    <video class="rec-prev" playsinline loop hidden></video>
+    <div class="rec-top"><button data-x aria-label="Chiudi">${icon("x")}</button><span class="rec-time" hidden>0:00</span><button data-flip aria-label="Gira fotocamera">${icon("camera")}</button></div>
+    <div class="rec-msg" hidden></div>
+    <div class="rec-bot">
+      <label class="rec-side" aria-label="Galleria">${icon("image")}<input type="file" accept="video/*,image/*" hidden data-gal><small>Galleria</small></label>
+      <button class="rec-btn" data-rec aria-label="Registra"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" class="trk"/><circle cx="50" cy="50" r="46" class="prg" pathLength="100"/></svg><i></i></button>
+      <button class="rec-side" data-text aria-label="Storia di testo"><b>Aa</b><small>Testo</small></button>
+    </div>
+    <div class="rec-after" hidden><button class="btn sec" data-redo>${icon("back", "sm")}Rifai</button><button class="btn pri" data-use>Avanti${icon("chev", "sm")}</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  document.body.style.overflow = "hidden";
+  const $o = (q) => ov.querySelector(q);
+  const cam = $o(".rec-cam"), prev = $o(".rec-prev"), btn = $o("[data-rec]"), time = $o(".rec-time"), msg = $o(".rec-msg");
+  const stopStream = () => { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; };
+  const close = () => { cancelAnimationFrame(raf); if (rec && rec.state !== "inactive") rec.stop(); stopStream(); ov.remove(); document.body.style.overflow = ""; };
+  async function start() {
+    stopStream();
+    msg.hidden = true;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 1280 } }, audio: true });
+      cam.srcObject = stream;
+      cam.classList.toggle("mirror", facing === "user");
+    } catch (e) {
+      msg.hidden = false;
+      msg.innerHTML = `Per registrare serve il permesso di usare <b>fotocamera e microfono</b>.<br>Puoi anche scegliere un video dalla <b>Galleria</b>.`;
+    }
+  }
+  const fmt = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
+  function loop() {
+    const sec = (Date.now() - t0) / 1000;
+    time.textContent = fmt(sec);
+    $o(".prg").style.strokeDashoffset = String(100 - Math.min(100, (sec / MAX) * 100));
+    if (sec >= MAX) stopRec(); else raf = requestAnimationFrame(loop);
+  }
+  function startRec() {
+    if (!stream) return;
+    chunks = [];
+    const types = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+    const mimeType = types.find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+    rec = new MediaRecorder(stream, { ...(mimeType ? { mimeType } : {}), videoBitsPerSecond: 1500000, audioBitsPerSecond: 96000 });
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      blob = new Blob(chunks, { type: rec.mimeType || mimeType || "video/webm" });
+      stopStream();
+      prev.src = URL.createObjectURL(blob);
+      prev.hidden = false; cam.hidden = true;
+      prev.classList.toggle("mirror", facing === "user");
+      prev.play().catch(() => {});
+      $o(".rec-bot").hidden = true; $o(".rec-after").hidden = false; $o("[data-flip]").hidden = true;
+    };
+    rec.start(250);
+    t0 = Date.now();
+    ov.classList.add("recording");
+    time.hidden = false;
+    loop();
+  }
+  function stopRec() {
+    cancelAnimationFrame(raf);
+    ov.classList.remove("recording");
+    if (rec && rec.state !== "inactive") rec.stop();
+  }
+  btn.onclick = () => (rec && rec.state === "recording" ? stopRec() : startRec());
+  $o("[data-x]").onclick = close;
+  $o("[data-flip]").onclick = () => { if (rec && rec.state === "recording") return; facing = facing === "user" ? "environment" : "user"; start(); };
+  $o("[data-text]").onclick = () => { close(); newStory(); };
+  $o("[data-gal]").onchange = (e) => { const f = e.target.files[0]; close(); if (f) newStory(f); };
+  $o("[data-redo]").onclick = () => {
+    blob = null; prev.pause(); prev.hidden = true; cam.hidden = false; time.hidden = true;
+    $o(".prg").style.strokeDashoffset = "100";
+    $o(".rec-bot").hidden = false; $o(".rec-after").hidden = true; $o("[data-flip]").hidden = false;
+    start();
+  };
+  $o("[data-use]").onclick = () => {
+    if (!blob) return;
+    if (blob.size > 15 * 1024 * 1024) { toast("Il video è troppo lungo: registrane uno più breve"); return; }
+    const file = blob; close(); newStory(file, prev.classList.contains("mirror"));
+  };
+  start();
+}
+
+// Finestra di pubblicazione: foto/video (registrato o dalla galleria) oppure solo testo.
+function newStory(preset, mirrored = false) {
   let media = null; // { kind: "image" | "video", data, url }
   const COLORS_S = ["#2f6bff", "#7c5cff", "#ef4444", "#22c55e", "#eab308", "#0b0d12"];
   openSheet("Nuova storia", `
-    <label class="btn sec block" style="cursor:pointer;margin-bottom:12px">${icon("camera", "sm")}Scegli foto o video<input type="file" accept="image/*,video/*" id="smedia" hidden></label>
+    <div class="btns" style="margin:0 0 12px"><button type="button" class="btn pri" id="srec">${icon("camera", "sm")}Registra video</button><label class="btn sec" style="cursor:pointer">${icon("image", "sm")}Galleria<input type="file" accept="image/*,video/*" id="smedia" hidden></label></div>
     <div class="spv" id="spv" style="--bg:${COLORS_S[0]}"><p id="spvt">Scrivi qualcosa…</p></div>
     <label class="field" style="margin-top:12px"><span>Testo (facoltativo con foto o video)</span><textarea class="inp" id="stext" rows="2" maxlength="300" placeholder="Es. Stasera alle 21 live sulle obiezioni!"></textarea></label>
     <div class="scolors" id="scolors">${COLORS_S.map((c, i) => `<button type="button" data-c="${c}" class="${i ? "" : "on"}" style="background:${c}"></button>`).join("")}</div>
@@ -429,21 +526,19 @@ function newStory() {
       pv.style.setProperty("--bg", bg);
       pv.classList.toggle("textonly", !media);
       pv.querySelectorAll("img,video").forEach((x) => x.remove());
-      if (media) pv.insertAdjacentHTML("afterbegin", media.kind === "video" ? `<video src="${media.url}" muted autoplay loop playsinline></video>` : `<img src="${media.url}" alt="">`);
+      if (media) pv.insertAdjacentHTML("afterbegin", media.kind === "video" ? `<video src="${media.url}" muted autoplay loop playsinline class="${mirrored ? "mirror" : ""}"></video>` : `<img src="${media.url}" alt="">`);
       pt.textContent = tx.value || (media ? "" : "Scrivi qualcosa…");
       pt.hidden = !pt.textContent;
       root.querySelector("#scolors").hidden = !!media;
     };
     tx.oninput = paint;
+    root.querySelector("#srec").onclick = () => { closeSheet(); recordStory(); };
     root.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => { bg = b.dataset.c; root.querySelectorAll("[data-c]").forEach((x) => x.classList.toggle("on", x === b)); paint(); }));
-    root.querySelector("#smedia").onchange = async (e) => {
-      const f = e.target.files[0];
-      if (!f) return;
+    const useFile = async (f) => {
       try {
         if (f.type.startsWith("video/")) {
           if (f.size > 15 * 1024 * 1024) throw new Error("Il video è troppo grande (massimo 15 MB, circa 30-60 secondi)");
-          const data = await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(f); });
-          media = { kind: "video", data: data.replace(/^data:video\/[\w.+-]+;/, `data:${/webm/.test(f.type) ? "video/webm" : /quicktime/.test(f.type) ? "video/quicktime" : "video/mp4"};`), url: URL.createObjectURL(f) };
+          media = { kind: "video", data: await videoDataUrl(f), url: URL.createObjectURL(f) };
         } else {
           const data = await resizeImage(f, 1600, 0.82);
           media = { kind: "image", data, url: data };
@@ -451,11 +546,13 @@ function newStory() {
         paint();
       } catch (err) { root.querySelector("#serr2").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
     };
+    root.querySelector("#smedia").onchange = (e) => { if (e.target.files[0]) useFile(e.target.files[0]); };
+    if (preset) useFile(preset);
     root.querySelector("#spub").onclick = async (e) => {
       const btn = e.currentTarget;
       btn.disabled = true; btn.textContent = media && media.kind === "video" ? "Carico il video…" : "Pubblico…";
       try {
-        const body = { text: tx.value.trim(), bg };
+        const body = { text: tx.value.trim(), bg, mirror: !!(media && media.kind === "video" && mirrored) };
         if (media) body[media.kind] = media.data;
         const d = await api("/stories", body);
         S.stories.push(d.story);

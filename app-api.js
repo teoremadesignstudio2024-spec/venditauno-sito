@@ -639,7 +639,7 @@ export async function handleAppApi(request, env) {
     if (!image && !video && !text) return fail("Aggiungi una foto, un video o del testo");
     const bg = /^#[0-9a-f]{6}$/i.test(body.bg) ? body.bg : "#2f6bff";
     const key = `app:story:${String(now()).padStart(13, "0")}_${rid(4)}`;
-    const story = { key, uid: me.id, eduId: edu ? edu.id : "", author: edu ? edu.name : "Vendita Uno", photo: edu ? edu.photo : "", image, video, text, bg, at: now() };
+    const story = { key, uid: me.id, eduId: edu ? edu.id : "", author: edu ? edu.name : "Vendita Uno", photo: edu ? edu.photo : "", image, video, text, bg, mirror: !!body.mirror && !!video, at: now() };
     await kv.put(key, JSON.stringify(story), { expirationTtl: 86400 + 3600 });
     return json({ story: { ...story, mine: true } });
   }
