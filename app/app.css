@@ -687,3 +687,24 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .acard.full{padding-bottom:10px}
 .acard.full img{width:100%;aspect-ratio:900/1020;object-fit:cover;border-radius:16px}
 .acard.full .tag{margin-top:6px;background:none;color:var(--muted);padding:0}
+
+/* Card accademie più grandi */
+.acard{width:min(70vw,290px)}
+.acard h4{font-size:19px}
+.acard .tile{width:52px;height:52px;margin-top:-34px}
+.acard .tile svg{width:26px;height:26px}
+.acard.full .tag{font-size:12px}
+.acards{gap:14px;margin-bottom:-6px}
+@media (min-width:1024px){.acard{width:270px}.acard h4{font-size:21px}}
+
+/* Tutte le card accademia con la stessa forma (come quelle fatte su Canva) */
+.acard{padding-bottom:4px;border:0}
+.acard:hover{border:0}
+.acard.full img{aspect-ratio:900/1040}
+.acard.boxed .ph{aspect-ratio:900/1040;border-radius:18px;border:1.5px solid color-mix(in srgb,var(--c) 75%,transparent);box-shadow:0 0 22px -6px var(--c),inset 0 0 30px -12px var(--c)}
+.acard.boxed .ph::after{background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.85) 100%)}
+.acard.boxed .ov{position:absolute;left:0;right:0;bottom:16%;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 10px}
+.acard.boxed .tile{margin:0}
+.acard.boxed h4{margin:0;font-size:21px;line-height:1.05;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.acard .tag,.acard.boxed .tag{margin-top:8px;background:none;color:var(--muted);padding:0;font-size:12px}
+@media (min-width:1024px){.acard.boxed h4{font-size:22px}}

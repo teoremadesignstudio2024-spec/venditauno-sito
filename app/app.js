@@ -165,12 +165,9 @@ function academyCard(a) {
     <img src="${esc(safeUrl(a.card))}" alt="${esc(a.name)}" loading="lazy">
     <span class="tag">${(a.subs || []).length ? `${a.subs.length} sezioni · ` : ""}${S.content.modules.filter((m) => m.academyId === a.id).length} corsi</span>
   </a>`;
-  return `<a class="acard" href="#/percorso/${esc(a.id)}" style="--c:${c}">
-    <div class="ph">${coverBg(a.cover, c, a.icon)}</div>
-    <span class="tile">${icon(a.icon || "cap")}</span>
-    <h4>${esc(a.name)}</h4>
+  return `<a class="acard boxed" href="#/percorso/${esc(a.id)}" style="--c:${c}">
+    <div class="ph">${coverBg(a.cover, c, a.icon)}<div class="ov"><span class="tile">${icon(a.icon || "cap")}</span><h4>${esc(a.name)}</h4></div></div>
     <span class="tag">${(a.subs || []).length ? `${a.subs.length} sezioni · ` : ""}${S.content.modules.filter((m) => m.academyId === a.id).length} corsi</span>
-    <div class="bar"></div>
   </a>`;
 }
 function secHd(title, count, extra = "") {
