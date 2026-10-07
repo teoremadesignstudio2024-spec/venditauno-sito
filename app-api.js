@@ -113,14 +113,15 @@ function seedContent() {
   const yt = "jqOjebgNQvk";
   return {
     academies: [
-      { id: "acq", name: "Acquisizione", icon: "key" },
-      { id: "tra", name: "Trattativa e chiusura", icon: "handshake" },
-      { id: "chi", name: "Chiamate a freddo", icon: "phone" },
-      { id: "soc", name: "Social e pubblicità", icon: "mega" },
-      { id: "min", name: "Mindset", icon: "brain" },
-      { id: "fin", name: "Mutui e finanza", icon: "euro" },
-      { id: "leg", name: "Contratti e legale", icon: "doc" },
-      { id: "ai", name: "AI per agenti", icon: "spark" },
+      { id: "acq", name: "Acquisizione", icon: "key", color: "#2f6bff", cover: "" },
+      { id: "tra", name: "Trattativa e chiusura", icon: "handshake", color: "#7c5cff", cover: "" },
+      { id: "chi", name: "Chiamate a freddo", icon: "phone", color: "#0ea5e9", cover: "" },
+      { id: "soc", name: "Social e pubblicità", icon: "mega", color: "#ef4444", cover: "" },
+      { id: "min", name: "Mindset", icon: "brain", color: "#64748b", cover: "" },
+      { id: "fin", name: "Mutui e finanza", icon: "euro", color: "#22c55e", cover: "" },
+      { id: "leg", name: "Contratti e legale", icon: "doc", color: "#eab308", cover: "" },
+      { id: "ai", name: "AI per agenti", icon: "spark", color: "#06b6d4", cover: "" },
+      ...investAcademies(),
     ],
     educators: [
       { id: "sd", name: "Samuele Diotti", academyId: "acq", role: "Acquisizione in esclusiva", bio: "Insegna come arrivare al primo appuntamento e uscire con l'incarico firmato.", photo: "/assets/img/samuele-diotti.jpg", email: "" },
@@ -128,16 +129,20 @@ function seedContent() {
       { id: "sb", name: "Stefano Bonuccelli", academyId: "min", role: "Mindset e organizzazione", bio: "Numeri, abitudini e metodo per lavorare con costanza ogni settimana.", photo: "/assets/img/stefano-bonuccelli.png", email: "" },
     ],
     modules: [
-      { id: "m1", title: "Introduzione al metodo", desc: "Come funziona Vendita Uno e come usare l'accademia.", lessons: [
+      { id: "m1", title: "Introduzione al metodo", desc: "Come funziona Vendita Uno e come usare l'accademia.", academyId: "acq", educatorId: "sd", level: "base", cover: "", lessons: [
         { id: "m1v1", title: "Introduzione al metodo Vendita Uno", youtubeId: yt, minutes: 6, desc: "" },
       ] },
-      { id: "m2", title: "Acquisizione mandati", desc: "Dal primo contatto all'incarico in esclusiva.", lessons: [
+      { id: "m2", title: "Acquisizione mandati", desc: "Dal primo contatto all'incarico in esclusiva.", academyId: "acq", educatorId: "sd", level: "premium", cover: "", lessons: [
         { id: "m2v1", title: "Come acquisire mandati in esclusiva", youtubeId: yt, minutes: 18, desc: "" },
       ] },
-      { id: "m3", title: "Chiusura e firma", desc: "Portare il cliente alla firma senza pressioni.", lessons: [
+      { id: "m3", title: "Chiusura e firma", desc: "Portare il cliente alla firma senza pressioni.", academyId: "tra", educatorId: "md", level: "premium", cover: "", lessons: [
         { id: "m3v1", title: "Chiusura e firma del mandato", youtubeId: yt, minutes: 15, desc: "" },
       ] },
+      ...investModules(),
     ],
+    seedV: 2,
+    banners: defaultBanners(),
+    settings: defaultSettings(),
     lives: [
       { id: "l1", educatorId: "md", title: "Le 5 domande da fare prima del sopralluogo", desc: "Cosa chiedere al proprietario al telefono per arrivare al sopralluogo con l'incarico mezzo in tasca.", start: at(0, 18, 30), minutes: 60, url: "", replayUrl: "" },
       { id: "l2", educatorId: "sd", title: "Acquisire in esclusiva al primo appuntamento", desc: "Come presentare il servizio, quando parlare di esclusiva e come rispondere a \"ci devo pensare\".", start: at(1, 21, 0), minutes: 75, url: "", replayUrl: "" },
@@ -149,10 +154,66 @@ function seedContent() {
   };
 }
 
+// Accademia Investimenti immobiliari: corsi e lezioni già impostati, i video si aggiungono dal pannello admin.
+const investAcademies = () => [{ id: "inv", name: "Investimenti immobiliari", icon: "trend", color: "#eab308", cover: "" }];
+function investModules() {
+  const L = (prefix, titles) => titles.map(([title, desc], i) => ({ id: `${prefix}v${i + 1}`, title, youtubeId: "", minutes: 0, desc, pdf: "" }));
+  return [
+    { id: "inv1", title: "Le case che profumano di soldi", desc: "Come riconoscere e trovare gli immobili che nascondono un guadagno, prima degli altri.", academyId: "inv", educatorId: "", level: "base", cover: "", lessons: L("inv1", [
+      ["Cosa rende un immobile un affare", "Prezzo, zona, stato e motivazione del venditore: i quattro segnali da guardare sempre."],
+      ["Dove cercarle", "Aste, successioni, immobili da ristrutturare, privati che devono vendere in fretta: dove nascono le occasioni."],
+      ["Leggere un annuncio come un investitore", "Cosa dicono davvero foto, descrizione e tempo online di un annuncio."],
+      ["Il primo sopralluogo: la checklist", "Impianti, strutture, documenti e difetti nascosti da controllare prima di fare un'offerta."],
+      ["Fare l'offerta giusta", "Come arrivare al prezzo che ti lascia margine, senza far saltare la trattativa."],
+    ]) },
+    { id: "inv2", title: "Calcolare se l'operazione conviene", desc: "I numeri da fare prima di comprare: costi, tasse, valore finale e margine.", academyId: "inv", educatorId: "", level: "premium", cover: "", lessons: L("inv2", [
+      ["Prezzo, costi e tasse di acquisto", "Notaio, imposte, agenzia, mutuo: tutto quello che si aggiunge al prezzo."],
+      ["Stimare il valore dopo i lavori", "Come usare le vendite vicine per capire quanto varrà l'immobile finito."],
+      ["Margine e rendimento: il foglio di calcolo", "Il modello da compilare per ogni operazione, passo per passo."],
+      ["Gli errori che mangiano il guadagno", "Tempi lunghi, lavori sottostimati, imprevisti: come proteggersi."],
+    ]) },
+    { id: "inv3", title: "Ristrutturare: materiali e fornitori", desc: "Dove comprare i materiali, come scegliere le imprese e tenere sotto controllo costi e tempi.", academyId: "inv", educatorId: "", level: "premium", cover: "", lessons: L("inv3", [
+      ["Dove comprare i materiali e a che prezzo", "Grossisti, outlet, fornitori diretti: come spendere meno senza perdere qualità."],
+      ["Scegliere imprese e artigiani", "Le domande da fare, i lavori da controllare e i segnali di allarme."],
+      ["Capitolato e preventivi", "Come scrivere cosa vuoi e confrontare i preventivi alla pari."],
+      ["Tempi di cantiere e controllo dei costi", "Pianificare i lavori e tenere il budget giorno per giorno."],
+      ["Home staging per vendere prima", "Pochi interventi e allestimento per vendere più in fretta e a un prezzo migliore."],
+    ]) },
+    { id: "inv4", title: "Aste immobiliari da zero", desc: "Come funzionano le aste, come leggere la perizia e come partecipare senza rischi.", academyId: "inv", educatorId: "", level: "premium", cover: "", lessons: L("inv4", [
+      ["Come funziona un'asta", "Tribunale, delegato, offerta minima e rilanci spiegati semplici."],
+      ["Leggere la perizia", "Abusi, occupanti, spese condominiali: cosa cercare prima di partecipare."],
+      ["Partecipare e aggiudicarsi l'immobile", "Cauzione, offerta, saldo prezzo e liberazione dell'immobile."],
+    ]) },
+    { id: "inv5", title: "Affitti e rendita", desc: "Mettere a reddito un immobile: quale affitto scegliere e quanto rende davvero.", academyId: "inv", educatorId: "", level: "premium", cover: "", lessons: L("inv5", [
+      ["Affitto lungo, breve o a studenti", "Pro e contro di ogni formula, con i numeri."],
+      ["Calcolare il rendimento netto", "Dall'affitto lordo a quello che ti resta davvero in tasca."],
+      ["Contratti e tutele per il proprietario", "Garanzie, cauzioni e come scegliere l'inquilino."],
+    ]) },
+  ];
+}
+
+function defaultBanners() {
+  return [
+    { id: "b1", title: "Accademia Vendita Uno", text: "Il metodo completo per acquisire incarichi in esclusiva, passo dopo passo.", cover: "", link: "#/accademia" },
+    { id: "b2", title: "Live ogni settimana", text: "Gli educatori in diretta: domande, esempi veri e revisione delle chiamate.", cover: "", link: "#/live" },
+    { id: "b3", title: "Notizie esclusive", text: "Ti diamo noi le persone da chiamare, solo a te, nella tua zona.", cover: "", link: "#/notizie" },
+  ];
+}
+const defaultSettings = () => ({ welcomeTitle: "Benvenuto!", welcomeSub: "Scopri Vendita Uno", onboardingTitle: "Inizia da qui", onboardingText: "Scopri come usare l'app e tutto quello che offre", onboardingVideo: "jqOjebgNQvk" });
+
 async function getContent(kv) {
   let c = await getJSON(kv, "app:content");
   if (!c) {
     c = seedContent();
+    await putJSON(kv, "app:content", c);
+  }
+  // Contenuti salvati con una versione precedente: aggiunge i campi e i corsi nuovi una volta sola.
+  c.banners = c.banners || defaultBanners();
+  c.settings = { ...defaultSettings(), ...(c.settings || {}) };
+  if ((c.seedV || 1) < 2) {
+    for (const a of investAcademies()) if (!c.academies.some((x) => x.id === a.id)) c.academies.push(a);
+    for (const m of investModules()) if (!c.modules.some((x) => x.id === m.id)) c.modules.push(m);
+    c.seedV = 2;
     await putJSON(kv, "app:content", c);
   }
   return c;
@@ -161,10 +222,12 @@ async function getContent(kv) {
 // ---------- validazione contenuti admin ----------
 
 const SECTIONS = {
-  academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap" }),
+  academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap", color: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff", cover: str(a.cover, 300) }),
+  banners: (b) => ({ id: str(b.id, 40) || rid(4), title: str(b.title, 80), text: str(b.text, 200), cover: str(b.cover, 300), link: str(b.link, 300) }),
   educators: (e) => ({ id: str(e.id, 40) || rid(4), name: str(e.name, 80), academyId: str(e.academyId, 40), role: str(e.role, 80), bio: str(e.bio, 600), photo: str(e.photo, 300), email: str(e.email, 120).toLowerCase() }),
   modules: (m) => ({
     id: str(m.id, 40) || rid(4), title: str(m.title, 120), desc: str(m.desc, 400),
+    academyId: str(m.academyId, 40), educatorId: str(m.educatorId, 40), level: m.level === "premium" ? "premium" : "base", cover: str(m.cover, 300),
     lessons: (Array.isArray(m.lessons) ? m.lessons : []).slice(0, 100).map((l) => ({
       id: str(l.id, 40) || rid(4), title: str(l.title, 140), youtubeId: str(l.youtubeId, 20), minutes: Math.max(0, Math.min(600, Number(l.minutes) || 0)), desc: str(l.desc, 1000), pdf: str(l.pdf, 300),
     })),
@@ -258,6 +321,14 @@ export async function handleAppApi(request, env) {
     if (body.on) r.push(id);
     await putJSON(kv, `app:rem:${me.id}`, r.slice(-200));
     return json({ reminders: r });
+  }
+
+  if (path === "/save" && method === "POST") {
+    const id = str(body.courseId, 40);
+    me.saved = (me.saved || []).filter((x) => x !== id);
+    if (body.on) me.saved.push(id);
+    await saveUser(kv, me);
+    return json({ user: publicUser(me) });
   }
 
   if (path === "/follow" && method === "POST") {
@@ -363,8 +434,15 @@ export async function handleAppApi(request, env) {
       return json({ content });
     }
 
+    if (path === "/admin/settings" && method === "POST") {
+      const content = await getContent(kv);
+      for (const k of Object.keys(defaultSettings())) if (k in body) content.settings[k] = str(body[k], 300);
+      await putJSON(kv, "app:content", content);
+      return json({ content });
+    }
+
     if (path === "/admin/image" && method === "POST") {
-      const id = await storeImage(kv, body.dataUrl);
+      const id = await storeImage(kv, body.dataUrl, 900 * 1024);
       if (!id) return fail("Immagine non valida o troppo grande");
       return json({ url: `/api/app/img/${id}` });
     }

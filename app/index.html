@@ -13,7 +13,7 @@
 <link rel="manifest" href="/app/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/app/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/app/app.css">
 </head>
 <body>
@@ -51,6 +51,9 @@
     <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
     <symbol id="i-badge" viewBox="0 0 24 24"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.7-1 2.8 1 2.8-2.5 1.7-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9-2.5-1.7 1-2.8-1-2.8 2.5-1.7.9-2.9 3 .2z" fill="currentColor" stroke="none"/><path d="m8.5 12 2.3 2.3 4.7-4.6" stroke="#000" stroke-width="2"/></symbol>
     <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3 2.3 3.5 5"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 20h18"/><path d="m4 15 5-5 4 4 7-7"/><path d="M15 7h5v5"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14 6a4 4 0 0 0 5 5l-9 9a2 2 0 0 1-3-3l9-9a4 4 0 0 1-2-2z"/></symbol>
+    <symbol id="i-home2" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></symbol>
     <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
     <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
@@ -73,11 +76,30 @@
     </div>
   </header>
 
+  <aside class="side" id="side" hidden>
+    <a class="side-logo" href="#/home" aria-label="Home"><span>VENDITA</span><b>UNO</b></a>
+    <a class="side-me" href="#/profilo" id="sideMe" aria-label="Profilo"></a>
+    <nav>
+      <a href="#/home" data-nav="home"><svg class="i"><use href="#i-home"/></svg><span>Home</span></a>
+      <a href="#/accademia" data-nav="accademia"><svg class="i"><use href="#i-cap"/></svg><span>Accademia</span></a>
+      <a href="#/live" data-nav="live"><svg class="i"><use href="#i-live"/></svg><span>Live</span></a>
+      <a href="#/educatori" data-nav="educatori"><svg class="i"><use href="#i-users"/></svg><span>Educatori</span></a>
+      <a href="#/community" data-nav="community"><svg class="i"><use href="#i-feed"/></svg><span>Community</span></a>
+      <a href="#/guadagni" data-nav="guadagni"><svg class="i"><use href="#i-wallet"/></svg><span>Guadagni</span></a>
+      <a href="#/notizie" data-nav="notizie"><svg class="i"><use href="#i-pin"/></svg><span>Notizie</span></a>
+      <a href="#/admin" data-nav="admin" id="sideAdmin" hidden><svg class="i"><use href="#i-shield"/></svg><span>Admin</span></a>
+    </nav>
+    <button class="side-out" id="sideOut" aria-label="Esci"><svg class="i"><use href="#i-logout"/></svg><span>Esci</span></button>
+  </aside>
+
+  <aside class="rail" id="rail" hidden></aside>
+
   <main id="view" class="view"><div class="loading"><div class="spin"></div></div></main>
 
   <div class="radial" id="radial">
     <div class="wrap">
       <a class="it lv" href="#/live"><svg class="i"><use href="#i-live"/></svg>Live</a>
+      <a class="it" href="#/educatori"><svg class="i"><use href="#i-users"/></svg>Educatori</a>
       <a class="it" href="#/community?scrivi=1"><svg class="i"><use href="#i-pen"/></svg>Post</a>
       <a class="it" href="#/notizie"><svg class="i"><use href="#i-pin"/></svg>Notizie</a>
       <a class="it" href="#/guadagni"><svg class="i"><use href="#i-link"/></svg>Invita</a>
