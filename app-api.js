@@ -326,7 +326,7 @@ async function getContent(kv) {
 // ---------- validazione contenuti admin ----------
 
 const SECTIONS = {
-  academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap", color: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff", cover: str(a.cover, 300),
+  academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap", color: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff", cover: str(a.cover, 300), hero: str(a.hero, 300),
     subs: (Array.isArray(a.subs) ? a.subs : []).slice(0, 40).map((x) => ({ id: str(x.id, 40) || rid(4), name: str(x.name, 60), icon: str(x.icon, 20) || "cap" })).filter((x) => x.name) }),
   banners: (b) => ({ id: str(b.id, 40) || rid(4), title: str(b.title, 80), text: str(b.text, 200), cover: str(b.cover, 300), link: str(b.link, 300) }),
   educators: (e) => ({ id: str(e.id, 40) || rid(4), name: str(e.name, 80), academyId: str(e.academyId, 40), role: str(e.role, 80), bio: str(e.bio, 600), photo: str(e.photo, 300), email: str(e.email, 120).toLowerCase() }),

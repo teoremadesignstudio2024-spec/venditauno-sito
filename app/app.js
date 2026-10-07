@@ -694,7 +694,7 @@ function viewAcademyEdu([id]) {
   } else if (pTab === "educatori") body = eds.map(eduRow).join("") || `<div class="card empty">${icon("users")}Presto nuovi educatori in questa accademia.</div>`;
   else body = `<div class="lv-list">${lives.map(lvItem).join("") || `<div class="card empty">${icon("cal")}Nessuna live in programma.</div>`}</div>`;
   view.innerHTML = `
-    <div class="ahero">${coverBg(a.cover, c, a.icon)}
+    <div class="ahero">${coverBg(a.hero || a.cover, c, a.icon)}
       <a class="back" href="#/accademia" style="position:absolute;top:24px;left:16px;margin:0">${icon("back", "sm")} Accademie</a>
       <span class="tile" style="--c:${c}">${icon(a.icon || "cap")}</span>
       <h1>${esc(a.name)}</h1><p>${subs.length ? `${subs.length} sezioni · ` : ""}${mods.length} ${mods.length === 1 ? "corso" : "corsi"} · ${eds.length} ${eds.length === 1 ? "educatore" : "educatori"}</p>
@@ -1151,7 +1151,7 @@ function admModules() {
       select("Accademia e sezione", "place", S.content.academies.flatMap((a) => [[`${a.id}|`, `${a.name}`], ...(a.subs || []).map((sb) => [`${a.id}|${sb.id}`, `${a.name} › ${sb.name}`])]), `${m.academyId}|${m.subId || ""}`) +
       select("Livello", "level", [["base", "Base"], ["premium", "Premium"]], m.level) +
       select("Educatore", "educatorId", [["", "Nessuno"], ...S.content.educators.map((e) => [e.id, e.name])], m.educatorId) +
-      imgField("Copertina (se vuota la creiamo noi)", "cover", m.cover, true),
+      imgField("Copertina (1600 × 1000 px, se vuota la creiamo noi)", "cover", m.cover, true),
       async (f) => { [f.academyId, f.subId] = f.place.split("|"); delete f.place; const copy = mods.slice(); if (i >= 0) copy[i] = { ...m, ...f }; else copy.push({ ...m, ...f }); await saveSection("modules", copy); },
       i >= 0 ? async () => { const copy = mods.slice(); copy.splice(i, 1); await saveSection("modules", copy, "Eliminato"); } : null);
   };
@@ -1208,7 +1208,8 @@ function admAcademies() {
     const a = i >= 0 ? acs[i] : { name: "", icon: "cap", color: "#2f6bff", cover: "" };
     formSheet(i >= 0 ? "Modifica accademia" : "Nuova accademia", field("Nome", "name", a.name, "text", "required") +
       `<div class="two">${select("Icona", "icon", ICONS.map((x) => [x, x]), a.icon)}${select("Colore", "color", COLORS, a.color)}</div>` +
-      imgField("Foto di copertina", "cover", a.cover, true) +
+      imgField("Foto del riquadro (900 × 1020 px)", "cover", a.cover, true) +
+      imgField("Foto della testata (1600 × 700 px)", "hero", a.hero, true) +
       field("Sottocategorie (una per riga)", "subsText", (a.subs || []).map((x) => x.name).join("\n"), "textarea", 'rows="5" placeholder="Acquisizione\nTrattativa\nChiusura"'),
       async (f) => {
         // Tiene lo stesso codice per le sottocategorie con lo stesso nome, così i corsi restano collegati.
