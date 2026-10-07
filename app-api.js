@@ -335,6 +335,7 @@ async function getContent(kv) {
     await putJSON(kv, "app:content", c);
   }
   c.banners = c.banners || defaultBanners();
+  c.products = c.products || [];
   c.settings = { ...defaultSettings(), ...(c.settings || {}) };
   if ((c.seedV || 1) < 3) migrateContent(c);
   if ((c.seedV || 1) < 5) {
@@ -390,6 +391,7 @@ async function getContent(kv) {
 const SECTIONS = {
   academies: (a) => ({ id: str(a.id, 40) || rid(4), name: str(a.name, 60), icon: str(a.icon, 20) || "cap", color: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6bff", cover: str(a.cover, 300), hero: str(a.hero, 300), card: str(a.card, 300),
     subs: (Array.isArray(a.subs) ? a.subs : []).slice(0, 40).map((x) => ({ id: str(x.id, 40) || rid(4), name: str(x.name, 60), icon: str(x.icon, 20) || "cap" })).filter((x) => x.name) }),
+  products: (p) => ({ id: str(p.id, 40) || rid(4), name: str(p.name, 80), desc: str(p.desc, 300), price: str(p.price, 40), link: /^https:\/\/\S+$/.test(str(p.link, 400)) ? str(p.link, 400) : "", grants: cleanAccess(p.grants) }),
   banners: (b) => ({ id: str(b.id, 40) || rid(4), title: str(b.title, 80), text: str(b.text, 200), cover: str(b.cover, 300), link: str(b.link, 300) }),
   educators: (e) => ({ id: str(e.id, 40) || rid(4), name: str(e.name, 80), academyId: str(e.academyId, 40), role: str(e.role, 80), bio: str(e.bio, 600), photo: str(e.photo, 300), email: str(e.email, 120).toLowerCase() }),
   modules: (m) => ({
@@ -417,6 +419,7 @@ export async function handleAppApi(request, env) {
 
   // Caricamento diretto di video/foto delle storie: il file arriva così com'è (niente conversioni, poco calcolo).
   if (path === "/upload" && method === "POST") return uploadMedia(request, env, kv, url);
+  if (path === "/stripe-webhook" && method === "POST") return stripeWebhook(request, env, kv);
 
   // Le richieste che scrivono devono essere JSON: blocca i form inviati da altri siti.
   let body = {};
@@ -467,7 +470,7 @@ export async function handleAppApi(request, env) {
     const [content, progress, reminders] = await Promise.all([
       getContent(kv), getJSON(kv, `app:progress:${me.id}`, {}), getJSON(kv, `app:rem:${me.id}`, []),
     ]);
-    return json({ user: publicUser(me), content, progress, reminders });
+    return json({ user: publicUser(me), content: contentFor(me, content), progress, reminders });
   }
 
   if (path === "/profile" && method === "POST") {
@@ -554,6 +557,8 @@ export async function handleAppApi(request, env) {
   }
 
   // ----- community -----
+  if (path.startsWith("/posts") && !canSee(me, "community")) return fail("La community è bloccata: sbloccala per entrare", 403);
+
   if (path === "/posts" && method === "GET") {
     const educatorId = str(url.searchParams.get("educator"), 40);
     const page = await kv.list({ prefix: "app:post:", limit: educatorId ? 200 : 40, cursor: url.searchParams.get("cursor") || undefined });
@@ -679,7 +684,12 @@ export async function handleAppApi(request, env) {
     const ids1 = new Set(lvl1.map((k) => k.name.slice(9)));
     const lvl2 = users.filter((k) => k.metadata && ids1.has(k.metadata.ref));
     const out = (k) => ({ id: k.name.slice(9), name: k.metadata.n, city: k.metadata.c, at: k.metadata.t, avatar: k.metadata.a });
-    return json({ refCode: me.refCode, level1: lvl1.map(out), level2: lvl2.map(out), earnings: await getJSON(kv, `app:earn:${me.id}`, { total: 0, available: 0, pending: 0, items: [] }) });
+    const saleKeys = await listAll(kv, "app:sale:", 3000);
+    const sales = (await Promise.all(saleKeys.map((k) => getJSON(kv, k.name)))).filter(Boolean);
+    const s1 = sales.filter((x) => x.referrerId === me.id), s2 = sales.filter((x) => x.referrer2Id === me.id);
+    const sum = (l) => l.reduce((n, x) => n + x.amount, 0);
+    return json({ refCode: me.refCode, level1: lvl1.map(out), level2: lvl2.map(out),
+      sales: { direct: sum(s1), directCount: s1.length, level2: sum(s2), level2Count: s2.length, items: s1.slice(0, 50).map((x) => ({ at: x.at, buyer: x.buyerName, product: x.productName, amount: x.amount, currency: x.currency })) } });
   }
 
   if (path === "/zone" && method === "POST") {
@@ -708,7 +718,7 @@ export async function handleAppApi(request, env) {
         for (const u of missing) linkEducator(content, u);
         await putJSON(kv, "app:content", content);
       }
-      return json({ content: missing.length ? content : undefined, users: users.map((u) => ({ id: u.id, name: `${u.name} ${u.surname}`.trim(), email: u.email, role: u.role, city: u.city || "", at: u.createdAt, refCode: u.refCode, referredBy: u.referredBy && byId[u.referredBy] ? `${byId[u.referredBy].name} ${byId[u.referredBy].surname}`.trim() : "", educatorId: (content.educators.find((e) => e.email && e.email === u.email) || {}).id || "" })).sort((a, b) => b.at - a.at) });
+      return json({ content: missing.length ? content : undefined, users: users.map((u) => ({ access: Array.isArray(u.access) ? u.access : null, referredById: u.referredBy || "", id: u.id, name: `${u.name} ${u.surname}`.trim(), email: u.email, role: u.role, city: u.city || "", at: u.createdAt, refCode: u.refCode, referredBy: u.referredBy && byId[u.referredBy] ? `${byId[u.referredBy].name} ${byId[u.referredBy].surname}`.trim() : "", educatorId: (content.educators.find((e) => e.email && e.email === u.email) || {}).id || "" })).sort((a, b) => b.at - a.at) });
     }
 
     if (path === "/admin/role" && method === "POST") {
@@ -783,6 +793,36 @@ export async function handleAppApi(request, env) {
       return json({ content });
     }
 
+    if (path === "/admin/access" && method === "POST") {
+      const u = await getJSON(kv, `app:user:${str(body.id, 40)}`);
+      if (!u) return fail("Utente non trovato", 404);
+      u.access = cleanAccess(body.access);
+      await saveUser(kv, u);
+      return json({ ok: true, access: u.access });
+    }
+
+    if (path === "/admin/sales" && method === "GET") {
+      const keys = await listAll(kv, "app:sale:", 5000);
+      return json({ sales: (await Promise.all(keys.map((k) => getJSON(kv, k.name)))).filter(Boolean) });
+    }
+
+    if (path === "/admin/sales" && method === "POST") {
+      // Vendita registrata a mano (bonifico, contanti…): sblocca e attribuisce come quelle Stripe
+      const content = await getContent(kv);
+      const product = (content.products || []).find((p) => p.id === body.productId);
+      if (!product) return fail("Scegli il prodotto");
+      const buyer = await getJSON(kv, `app:user:${str(body.buyerId, 40)}`);
+      if (!buyer) return fail("Scegli chi ha acquistato");
+      const sale = await recordSale(kv, { buyerId: buyer.id, product, amount: Math.round(Number(String(body.amount).replace(",", ".")) * 100), currency: "eur", source: "manuale" });
+      return json({ sale });
+    }
+
+    const sd = path.match(/^\/admin\/sales\/(app:sale:[0-9]{13}_[a-f0-9]{8})\/delete$/);
+    if (sd && method === "POST") {
+      await kv.delete(sd[1]);
+      return json({ ok: true });
+    }
+
     if (path === "/admin/refcode" && method === "POST") {
       const u = await getJSON(kv, `app:user:${str(body.id, 40)}`);
       if (!u) return fail("Utente non trovato", 404);
@@ -849,6 +889,80 @@ async function setRefCode(kv, u, raw) {
   u.refCode = code;
   await saveUser(kv, u);
   return null;
+}
+
+// ---------- accessi a pagamento ----------
+// user.access: assente = utente registrato prima dei blocchi (vede tutto); altrimenti elenco di permessi:
+// "all", "live", "community", "educators", "acad:<id>", "course:<id>". Admin ed educatori vedono sempre tutto.
+const ACCESS_RE = /^(all|live|community|educators|acad:[\w-]{1,40}|course:[\w-]{1,40})$/;
+const cleanAccess = (list) => [...new Set((Array.isArray(list) ? list : []).map((x) => str(x, 50)).filter((x) => ACCESS_RE.test(x)))];
+function fullAccess(u) { return u.role === "admin" || u.role === "educator" || !Array.isArray(u.access) || u.access.includes("all"); }
+function canSee(u, what) { return fullAccess(u) || u.access.includes(what); }
+function canCourse(u, m) { return fullAccess(u) || u.access.includes(`course:${m.id}`) || u.access.includes(`acad:${m.academyId}`); }
+// Contenuti per l'utente: i video e i link dei contenuti bloccati non vengono inviati.
+function contentFor(u, c) {
+  if (fullAccess(u)) return c;
+  const live = canSee(u, "live");
+  return {
+    ...c,
+    modules: c.modules.map((m) => (canCourse(u, m) ? m : { ...m, lessons: m.lessons.map((l) => ({ ...l, video: "", youtubeId: "", pdf: "" })) })),
+    lives: live ? c.lives : c.lives.map((l) => ({ ...l, url: "", replayUrl: "" })),
+  };
+}
+
+// ---------- vendite (Stripe e manuali) ----------
+async function recordSale(kv, { buyerId, product, amount, currency, source, sessionId }) {
+  if (sessionId) {
+    if (await kv.get(`app:salesess:${sessionId}`)) return null; // già registrata (Stripe a volte invia due volte)
+    await kv.put(`app:salesess:${sessionId}`, "1", { expirationTtl: 90 * 86400 });
+  }
+  const buyer = buyerId ? await getJSON(kv, `app:user:${buyerId}`) : null;
+  const ref1 = buyer && buyer.referredBy ? await getJSON(kv, `app:user:${buyer.referredBy}`) : null;
+  const ref2 = ref1 && ref1.referredBy ? await getJSON(kv, `app:user:${ref1.referredBy}`) : null;
+  const nm = (u) => (u ? `${u.name} ${u.surname}`.trim() : "");
+  const key = `app:sale:${invTs()}_${rid(4)}`;
+  const sale = { key, at: now(), source, sessionId: sessionId || "", productId: product ? product.id : "", productName: product ? product.name : "", amount: Math.round(Number(amount) || 0), currency: (currency || "eur").toLowerCase(),
+    buyerId: buyer ? buyer.id : "", buyerName: nm(buyer), buyerEmail: buyer ? buyer.email : "",
+    referrerId: ref1 ? ref1.id : "", referrerName: nm(ref1), referrerCode: ref1 ? ref1.refCode : "", referrer2Id: ref2 ? ref2.id : "", referrer2Name: nm(ref2) };
+  await putJSON(kv, key, sale);
+  // Sblocca quello che il prodotto comprende
+  if (buyer && product && product.grants.length) {
+    buyer.access = Array.isArray(buyer.access) ? cleanAccess([...buyer.access, ...product.grants]) : buyer.access;
+    await saveUser(kv, buyer);
+    await pushNotif(kv, buyer.id, { title: "Acquisto completato", text: `${product.name}: i contenuti sono sbloccati.`, link: "#/accademia", icon: "check" });
+  }
+  if (ref1) await pushNotif(kv, ref1.id, { title: "Nuova vendita dal tuo link", text: `${nm(buyer) || "Un cliente"} ha acquistato ${product ? product.name : "un prodotto"}.`, link: "#/guadagni", icon: "euro" });
+  return sale;
+}
+
+// Verifica la firma che Stripe mette su ogni avviso (webhook).
+async function stripeVerify(raw, header, secret) {
+  const parts = Object.fromEntries((header || "").split(",").map((x) => x.split("=")).filter((x) => x.length === 2).map(([k, v]) => [k.trim(), v.trim()]));
+  const sigs = (header || "").split(",").filter((x) => x.trim().startsWith("v1=")).map((x) => x.trim().slice(3));
+  if (!parts.t || !sigs.length) return false;
+  if (Math.abs(Date.now() / 1000 - Number(parts.t)) > 600) return false;
+  const expected = await hmac(`${parts.t}.${raw}`, secret);
+  return sigs.some((sg) => safeEqual(sg, expected));
+}
+
+async function stripeWebhook(request, env, kv) {
+  if (!env.STRIPE_WEBHOOK_SECRET) return fail("Webhook Stripe non configurato", 500);
+  const raw = await request.text();
+  if (!(await stripeVerify(raw, request.headers.get("Stripe-Signature"), env.STRIPE_WEBHOOK_SECRET))) return fail("Firma non valida", 400);
+  let ev;
+  try { ev = JSON.parse(raw); } catch { return fail("Dati non validi"); }
+  if (ev.type === "checkout.session.completed" || ev.type === "checkout.session.async_payment_succeeded") {
+    const ses = ev.data && ev.data.object ? ev.data.object : {};
+    if (ses.payment_status && ses.payment_status !== "paid" && ev.type === "checkout.session.completed") return json({ ok: true, waiting: true });
+    // client_reference_id = "<idUtente>__<idProdotto>", messo dall'app sul link di pagamento
+    const [buyerId, productId] = String(ses.client_reference_id || "").split("__");
+    const content = await getContent(kv);
+    const product = (content.products || []).find((p) => p.id === productId) || null;
+    let bid = /^[a-f0-9]{16}$/.test(buyerId || "") ? buyerId : "";
+    if (!bid && ses.customer_details && ses.customer_details.email) bid = (await kv.get(`app:email:${String(ses.customer_details.email).toLowerCase()}`)) || "";
+    await recordSale(kv, { buyerId: bid, product, amount: ses.amount_total, currency: ses.currency, source: "stripe", sessionId: ses.id });
+  }
+  return json({ received: true });
 }
 
 // ---------- notifiche ----------
@@ -960,7 +1074,7 @@ async function register(body, kv, env) {
     id: rid(8), email, name, surname,
     city: str(body.city, 80), agency: str(body.agency, 80), phone: str(body.phone, 30),
     role: isAdminEmail(email, env) ? "admin" : "agent",
-    refCode, referredBy, following: [], avatar: "", createdAt: now(),
+    refCode, referredBy, following: [], avatar: "", createdAt: now(), access: [],
     pass: { salt, iter: PBKDF2_ITER, hash: await hashPassword(password, salt) },
   };
   await saveUser(kv, user);

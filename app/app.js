@@ -171,7 +171,7 @@ function courseStats(m) {
 function courseCard(m) {
   const a = academyById(m.academyId), e = eduById(m.educatorId), c = accColor(a), st = courseStats(m);
   const saved = (S.user.saved || []).includes(m.id);
-  return `<a class="ccard" href="#/corso/${esc(m.id)}">
+  return `<a class="ccard ${canCourse(m) ? "" : "locked"}" href="#/corso/${esc(m.id)}">${canCourse(m) ? "" : `<span class="lockchip">${icon("lock", "sm")}Bloccato</span>`}
     <div class="cov">${coverBg(m.cover, c, a ? a.icon : "cap")}
       <div class="info">
         <h3>${esc(m.title)}</h3>
@@ -179,17 +179,54 @@ function courseCard(m) {
         <div class="meta">
           ${a ? `<div class="ac" style="--c:${c}"><span class="tile">${icon((subOf(m) || a).icon || "cap")}</span><span>${esc(subOf(m) ? subOf(m).name : a.name)}<small>${esc(subOf(m) ? a.name : "Accademia")}</small></span></div>` : ""}
           <span class="lvl ${m.level === "premium" ? "premium" : "base"}"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.6 7 .7-5.3 4.7 1.6 7L12 17.3 5.7 21l1.6-7L2 9.3l7-.7z"/></svg>${m.level === "premium" ? "Premium" : "Base"}</span>
-          <span class="acts"><button data-play="${esc(m.id)}" aria-label="Inizia">${icon("play")}</button><button data-save="${esc(m.id)}" class="${saved ? "saved" : ""}" aria-label="Salva">${icon(saved ? "check" : "plus")}</button></span>
+          <span class="acts"><button data-play="${esc(m.id)}" aria-label="${canCourse(m) ? "Inizia" : "Bloccato"}" class="${canCourse(m) ? "" : "lockb"}">${icon(canCourse(m) ? "play" : "lock")}</button><button data-save="${esc(m.id)}" class="${saved ? "saved" : ""}" aria-label="Salva">${icon(saved ? "check" : "plus")}</button></span>
         </div>
       </div>
     </div>
     <div class="ft"><span>${icon("cap", "sm")}${st.all} ${st.all === 1 ? "lezione" : "lezioni"}</span><span>${st.done ? `${st.pct}% <span class="prog"><i style="width:${st.pct}%"></i></span>` : "Da iniziare"}</span></div>
   </a>`;
 }
+// ---------- accessi (contenuti bloccati) ----------
+const fullAccess = () => !S.user || S.user.role === "admin" || S.user.role === "educator" || !Array.isArray(S.user.access) || S.user.access.includes("all");
+const can = (what) => fullAccess() || S.user.access.includes(what);
+const canCourse = (m) => fullAccess() || S.user.access.includes(`course:${m.id}`) || S.user.access.includes(`acad:${m.academyId}`);
+const money = (cents, cur = "eur") => ((Number(cents) || 0) / 100).toLocaleString("it-IT", { style: "currency", currency: (cur || "eur").toUpperCase() });
+const NEED_LABEL = { live: "le live", community: "la community", educators: "la sezione educatori" };
+// Un prodotto sblocca "need" se lo comprende (o comprende tutto / l'accademia del corso)
+function productCovers(p, need) {
+  if (!need || p.grants.includes("all") || p.grants.includes(need)) return true;
+  if (need.startsWith("course:")) { const m = courseById(need.slice(7)); return !!m && p.grants.includes(`acad:${m.academyId}`); }
+  return false;
+}
+function buyUrl(p) {
+  const sep = p.link.includes("?") ? "&" : "?";
+  return `${p.link}${sep}client_reference_id=${encodeURIComponent(`${S.user.id}__${p.id}`)}&prefilled_email=${encodeURIComponent(S.user.email)}`;
+}
+function productsHtml(list) {
+  return list.map((p) => `<div class="prod"><div class="grow"><h4>${esc(p.name)}</h4>${p.desc ? `<p>${esc(p.desc)}</p>` : ""}</div><div class="pr">${p.price ? `<b>${esc(p.price)}</b>` : ""}${p.link ? `<a class="btn pri" href="${esc(buyUrl(p))}" rel="noopener">Acquista</a>` : `<span class="small muted">In arrivo</span>`}</div></div>`).join("");
+}
+function openUnlock(need, title) {
+  const all = (S.content.products || []);
+  const fit = all.filter((p) => productCovers(p, need));
+  const list = fit.length ? fit : all;
+  openSheet(title || "Contenuto bloccato", `
+    <div class="lockhero"><span>${icon("lock")}</span><p>${need && NEED_LABEL[need] ? `Per accedere a ${NEED_LABEL[need]} sblocca uno di questi prodotti.` : "Sblocca il contenuto con uno di questi prodotti."}</p></div>
+    ${list.length ? `<div class="prods">${productsHtml(list)}</div><p class="small muted" style="margin-top:10px;text-align:center">Paghi in modo sicuro con Stripe. L'accesso si attiva da solo dopo il pagamento.</p>`
+      : `<div class="empty">Al momento non ci sono prodotti da acquistare.<br>Contatta chi ti ha invitato o l'amministratore.</div>`}`);
+}
+function lockedView(need, title, text) {
+  view.innerHTML = `<div class="locked-page">
+    <div class="ghost">${[1, 2, 3].map(() => `<div class="card pad"><div class="row"><span class="ini" style="width:38px;height:38px"></span><div class="grow"><div class="gl" style="width:60%"></div><div class="gl" style="width:35%"></div></div></div><div class="gl" style="margin-top:12px"></div><div class="gl" style="width:80%"></div></div>`).join("")}</div>
+    <div class="lockbox"><span class="lk">${icon("lock")}</span><h2>${esc(title)}</h2><p>${esc(text)}</p><button class="btn pri block" id="unlockBtn">${icon("key", "sm")}Sblocca</button></div>
+  </div>`;
+  $("#unlockBtn").onclick = () => openUnlock(need, title);
+}
+
 function bindCourses(root) {
   root.querySelectorAll("[data-play]").forEach((b) => (b.onclick = (ev) => {
     ev.preventDefault(); ev.stopPropagation();
     const m = courseById(b.dataset.play);
+    if (m && !canCourse(m)) { openUnlock(`course:${m.id}`, m.title); return; }
     const l = m && (m.lessons.find((x) => !S.progress[x.id]) || m.lessons[0]);
     location.hash = l ? `#/lezione/${l.id}` : `#/corso/${b.dataset.play}`;
   }));
@@ -259,6 +296,8 @@ const ROUTES = {
   profilo: { fn: viewProfile, title: "Profilo", nav: "" },
   "mie-live": { fn: viewMyLives, title: "Le mie live", nav: "live" },
   notifiche: { fn: viewNotifications, title: "Notifiche", nav: "notifiche" },
+  sblocca: { fn: viewShop, title: "Sblocca", nav: "" },
+  grazie: { fn: viewThanks, title: "Grazie", nav: "" },
   admin: { fn: viewAdmin, title: "Admin", nav: "admin", admin: true, noRail: true },
 };
 
@@ -818,10 +857,13 @@ function viewCourse([id]) {
     <div class="narrow">
     ${m.desc ? `<p class="lead-tx" style="line-height:1.55;margin-top:16px">${esc(m.desc)}</p>` : ""}
     <div class="card pad" style="margin-top:16px"><div class="row"><div class="grow"><b style="font-family:var(--display);font-size:15px">${st.done} di ${st.all} lezioni</b><div class="prog" style="margin-top:8px"><i style="width:${st.pct}%"></i></div></div><span style="font-family:var(--display);font-weight:800;font-size:22px">${st.pct}%</span></div>
-    <div class="btns">${next ? `<a class="btn pri" href="#/lezione/${esc(next.id)}">${icon("play", "sm")}${st.done ? "Continua" : "Inizia"}</a>` : `<span></span>`}<button class="btn sec ${saved ? "on" : ""}" data-save="${esc(m.id)}">${icon(saved ? "check" : "plus", "sm")}${saved ? "Salvato" : "Salva"}</button></div></div>
+    <div class="btns">${!canCourse(m) ? `<button class="btn pri" data-unlock>${icon("lock", "sm")}Sblocca il corso</button>` : next ? `<a class="btn pri" href="#/lezione/${esc(next.id)}">${icon("play", "sm")}${st.done ? "Continua" : "Inizia"}</a>` : `<span></span>`}<button class="btn sec ${saved ? "on" : ""}" data-save="${esc(m.id)}">${icon(saved ? "check" : "plus", "sm")}${saved ? "Salvato" : "Salva"}</button></div></div>
     <h2 class="sec">Lezioni</h2>
-    <div class="card">${m.lessons.map((l, i) => `<a class="les" href="#/lezione/${esc(l.id)}"><span class="st ${S.progress[l.id] ? "done" : ""}">${S.progress[l.id] ? icon("check", "sm") : i + 1}</span><div class="grow"><h4>${esc(l.title)}</h4><p>${l.minutes ? l.minutes + " min" : "Video"}${l.pdf ? " · PDF" : ""}</p></div>${icon("chev", "sm")}</a>`).join("") || `<div class="empty">Le lezioni arrivano presto.</div>`}</div>
+    <div class="card">${m.lessons.map((l, i) => `<a class="les" href="#/lezione/${esc(l.id)}"><span class="st ${S.progress[l.id] ? "done" : ""}">${!canCourse(m) ? icon("lock", "sm") : S.progress[l.id] ? icon("check", "sm") : i + 1}</span><div class="grow"><h4>${esc(l.title)}</h4><p>${l.minutes ? l.minutes + " min" : "Video"}${l.pdf ? " · PDF" : ""}</p></div>${icon("chev", "sm")}</a>`).join("") || `<div class="empty">Le lezioni arrivano presto.</div>`}</div>
     </div>`;
+  const ub = view.querySelector("[data-unlock]");
+  if (ub) ub.onclick = () => openUnlock(`course:${m.id}`, m.title);
+  if (!canCourse(m)) view.querySelectorAll(".les").forEach((a) => (a.onclick = (ev) => { ev.preventDefault(); openUnlock(`course:${m.id}`, m.title); }));
   const sb = view.querySelector("[data-save]");
   sb.onclick = async () => {
     try { S.user = (await api("/save", { courseId: m.id, on: !saved })).user; viewCourse([id]); toast(saved ? "Tolto dai tuoi corsi" : "Salvato nei tuoi corsi"); } catch (err) { toast(err.message); }
@@ -833,6 +875,10 @@ function viewLesson([id]) {
   if (i < 0) { location.hash = "#/accademia"; return; }
   const l = ls[i], prev = ls[i - 1], next = ls[i + 1];
   const vurl = lessonVideo(l);
+  if (!canCourse(l.module)) {
+    lockedView(`course:${l.module.id}`, l.module.title, "Questo corso è bloccato: sbloccalo per guardare le lezioni.");
+    return;
+  }
   const draw = () => {
     const done = !!S.progress[l.id];
     view.innerHTML = `
@@ -945,7 +991,8 @@ function drawDetail() {
   const enterUrl = safeUrl(l.url), replay = safeUrl(l.replayUrl);
   const when = st === "now" ? `<span class="pulse"></span><span style="color:#ff6b6b">In diretta ora</span>` : `${esc(fmtDay(d))} · ${fmtTime(d)}`;
   let btns;
-  if (st === "now") btns = enterUrl ? `<button class="btn live" data-enter>${icon("live", "sm")}Entra in live</button>` : `<button class="btn live" disabled>${icon("live", "sm")}Link in arrivo</button>`;
+  if (!can("live")) btns = `<button class="btn pri" data-unlive>${icon("lock", "sm")}Sblocca le live</button>`;
+  else if (st === "now") btns = enterUrl ? `<button class="btn live" data-enter>${icon("live", "sm")}Entra in live</button>` : `<button class="btn live" disabled>${icon("live", "sm")}Link in arrivo</button>`;
   else if (st === "past") btns = replay ? `<button class="btn pri" data-replay>${icon("play", "sm")}Guarda replay</button>` : `<button class="btn sec" disabled>Replay in arrivo</button>`;
   else btns = `<button class="btn sec ${on ? "on" : ""}" data-remind>${icon(on ? "check" : "bell", "sm")}${on ? "Ti avviso io" : "Ricordamelo"}</button>`;
   const second = st === "up" ? `<a class="btn sec" href="${esc(gcalUrl(l))}" target="_blank" rel="noopener">${icon("cal", "sm")}Calendario</a>` : `<a class="btn sec" href="#/educatore/${esc(e.id || "")}">${icon("user", "sm")}Educatore</a>`;
@@ -954,6 +1001,8 @@ function drawDetail() {
     ${l.desc ? `<p>${esc(l.desc)}</p>` : ""}
     <div class="info"><span><b>${esc(e.name)}</b></span>${e.role ? `<span>${esc(e.role)}</span>` : ""}<span>${l.minutes} min</span></div>
     <div class="btns">${btns}${second}</div></div>`;
+  const ul = box.querySelector("[data-unlive]");
+  if (ul) ul.onclick = () => openUnlock("live", "Live bloccate");
   const r = box.querySelector("[data-remind]");
   if (r) r.onclick = async () => {
     try {
@@ -996,7 +1045,7 @@ function scheduleReminders() {
 function eduRow(e) {
   const a = academyById(e.academyId);
   const up = S.content.lives.filter((l) => l.educatorId === e.id && liveState(l) !== "past").length;
-  return `<a class="card edu-row" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}<div class="grow"><h4>${esc(e.name)}</h4><p>${esc(e.role || (a ? a.name : ""))}${up ? ` · ${up} live in programma` : ""}</p></div>${icon("chev")}</a>`;
+  return `<a class="card edu-row" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}<div class="grow"><h4>${esc(e.name)}</h4><p>${esc(e.role || (a ? a.name : ""))}${up ? ` · ${up} live in programma` : ""}</p></div>${icon(can("educators") ? "chev" : "lock")}</a>`;
 }
 
 function viewEducators(_, q) {
@@ -1067,6 +1116,7 @@ function viewAcademyEdu([id]) {
 async function viewEducator([id]) {
   const e = eduById(id);
   if (!e) { location.hash = "#/educatori"; return; }
+  if (!can("educators")) { lockedView("educators", e.name, "La sezione educatori è bloccata: sbloccala per vedere profili, corsi e live di ogni educatore."); return; }
   const a = academyById(e.academyId);
   const lives = sortedLives().filter((l) => l.educatorId === id);
   const up = lives.filter((l) => liveState(l) !== "past"), past = lives.filter((l) => liveState(l) === "past");
@@ -1163,6 +1213,7 @@ function bindPost(el, p) {
 }
 
 async function viewCommunity(_, q) {
+  if (!can("community")) { lockedView("community", "Community bloccata", "Sblocca la community per leggere e scrivere con gli altri agenti e con gli educatori."); return; }
   let image = "";
   view.innerHTML = `
     ${storiesBar()}
@@ -1334,6 +1385,22 @@ async function downloadPresentation(link, who, btn) {
   btn.disabled = false; btn.innerHTML = label;
 }
 
+function viewShop() {
+  const list = S.content.products || [];
+  view.innerHTML = `<h1 class="h1">Sblocca i contenuti</h1><p class="lead-tx">Scegli cosa vuoi sbloccare. Paghi in modo sicuro con Stripe e l'accesso si attiva da solo.</p>
+    ${list.length ? `<div class="prods" style="margin-top:16px">${productsHtml(list)}</div>` : `<div class="card empty" style="margin-top:16px">${icon("lock")}Al momento non ci sono prodotti da acquistare.</div>`}`;
+}
+async function viewThanks() {
+  view.innerHTML = `<div class="lockbox" style="margin:40px auto"><span class="lk" style="background:rgba(34,197,94,.18);color:#5ee08f">${icon("check")}</span><h2>Grazie per l'acquisto!</h2><p id="thx">Stiamo attivando il tuo accesso…</p><a class="btn pri block" href="#/accademia">Vai all'accademia</a></div>`;
+  const before = JSON.stringify(S.user.access);
+  for (let i = 0; i < 6; i++) {
+    await new Promise((r) => setTimeout(r, 2500));
+    await loadMe();
+    if (JSON.stringify(S.user.access) !== before) { const t = $("#thx"); if (t) t.textContent = "Fatto: i contenuti sono sbloccati."; return; }
+  }
+  const t = $("#thx"); if (t) t.textContent = "Il pagamento è registrato: l'accesso si attiva entro pochi minuti. Se non succede, scrivici.";
+}
+
 async function viewEarn() {
   view.innerHTML = `<div class="loading"><div class="spin"></div></div>`;
   let d;
@@ -1343,10 +1410,11 @@ async function viewEarn() {
   const person = (p) => `<div class="ln">${face(p.name, imgUrl(p.avatar))}<div class="grow"><h4>${esc(p.name)}</h4><p>${esc(p.city || "—")} · dal ${new Date(p.at).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}</p></div></div>`;
   view.innerHTML = `
     <div class="wallet">
-      <small>Totale maturato</small>
-      <div class="big">${eur(d.earnings.total)}</div>
-      <div class="rw"><div><b>${eur(d.earnings.available)}</b>Disponibile</div><div><b>${eur(d.earnings.pending)}</b>In attesa</div><div><b>${d.level1.length + d.level2.length}</b>Nella tua rete</div></div>
+      <small>Vendite generate dal tuo link</small>
+      <div class="big">${money(d.sales.direct)}</div>
+      <div class="rw"><div><b>${d.sales.directCount}</b>Vendite dirette</div><div><b>${money(d.sales.level2)}</b>Secondo livello</div><div><b>${d.level1.length + d.level2.length}</b>Nella tua rete</div></div>
     </div>
+    ${d.sales.items.length ? `<h2 class="sec">Ultime vendite</h2><div class="card split">${d.sales.items.map((x) => `<div class="ln"><span class="ic">${icon("euro")}</span><div class="grow"><h4>${esc(x.product || "Acquisto")}</h4><p>${esc(x.buyer || "Cliente")} · ${new Date(x.at).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</p></div><b>${money(x.amount, x.currency)}</b></div>`).join("")}</div>` : ""}
     <div class="card invite pad" style="margin-top:12px">
       <h2 class="sec" style="margin:0">Il tuo link invito</h2>
       <p class="small muted" style="margin-top:4px">Chi si registra con il tuo link entra nella tua rete. Guadagni una parte su quello che acquista.</p>
@@ -1437,6 +1505,7 @@ function viewProfile() {
     <div class="card menu" style="margin-top:20px">
       ${u.role === "educator" || (u.role === "admin" && myEducator()) ? `<a href="#/mie-live">${icon("live")}Le mie live${icon("chev", "chev")}</a>` : ""}
       <a href="#/guadagni">${icon("wallet")}Guadagni e inviti${icon("chev", "chev")}</a>
+      ${fullAccess() ? "" : `<a href="#/sblocca">${icon("key")}Sblocca i contenuti${icon("chev", "chev")}</a>`}
       <a href="#/educatori?tab=seguiti">${icon("users")}Educatori che segui${icon("chev", "chev")}</a>
       <a href="#/notizie">${icon("lock")}Notizie esclusive${icon("chev", "chev")}</a>
       ${u.role === "admin" ? `<a href="#/admin">${icon("shield")}Pannello admin${icon("chev", "chev")}</a>` : `<button id="claim">${icon("key")}Ho un codice amministratore${icon("chev", "chev")}</button>`}
@@ -1490,11 +1559,11 @@ const ICONS = ["key", "handshake", "phone", "mega", "brain", "euro", "doc", "spa
 let adminTab = "overview";
 
 function viewAdmin() {
-  const tabs = [["overview", "Panoramica"], ["live", "Live"], ["home", "Home"], ["accademia", "Corsi"], ["educatori", "Educatori"], ["percorsi", "Accademie"], ["utenti", "Utenti"], ["zone", "Richieste zona"]];
+  const tabs = [["overview", "Panoramica"], ["vendite", "Vendite"], ["prodotti", "Prodotti"], ["utenti", "Utenti"], ["live", "Live"], ["home", "Home"], ["accademia", "Corsi"], ["educatori", "Educatori"], ["percorsi", "Accademie"], ["zone", "Richieste zona"]];
   view.innerHTML = `<h1 class="h1">Pannello admin</h1><p class="lead-tx" style="margin-bottom:14px">Qui gestisci contenuti, live e utenti dell'app.</p>
     <div class="tabs">${tabs.map(([k, n]) => `<button data-a="${k}" class="${adminTab === k ? "on" : ""}">${n}</button>`).join("")}</div><div id="adm"></div>`;
   view.querySelectorAll("[data-a]").forEach((b) => (b.onclick = async () => { adminTab = b.dataset.a; await loadMe(); viewAdmin(); }));
-  ({ overview: admOverview, live: admLives, home: admHome, accademia: admModules, educatori: admEducators, percorsi: admAcademies, utenti: admUsers, zone: admZones })[adminTab]();
+  ({ overview: admOverview, vendite: admSales, prodotti: admProducts, live: admLives, home: admHome, accademia: admModules, educatori: admEducators, percorsi: admAcademies, utenti: admUsers, zone: admZones })[adminTab]();
 }
 
 async function saveSection(section, data, msg = "Salvato") {
@@ -1760,6 +1829,102 @@ function admModules() {
   }));
 }
 
+// Scelta di cosa sblocca (per un utente o per un prodotto)
+function accessPicker(selected) {
+  const sel = new Set(selected || []);
+  const box = (v, label, cls = "") => `<label class="acc-opt ${cls}"><input type="checkbox" name="acc" value="${esc(v)}" ${sel.has(v) ? "checked" : ""}><span>${label}</span></label>`;
+  return `<div class="acc-pick">
+    ${box("all", "<b>Tutto</b> (ogni accademia, live, community, educatori)", "all")}
+    <div class="acc-grp">Sezioni</div>${box("live", "Live")}${box("community", "Community")}${box("educators", "Educatori")}
+    <div class="acc-grp">Accademie intere</div>${S.content.academies.map((a) => box(`acad:${a.id}`, esc(a.name))).join("")}
+    <details><summary>Corsi singoli</summary>${S.content.academies.map((a) => { const ms = S.content.modules.filter((m) => m.academyId === a.id); return ms.length ? `<div class="acc-grp">${esc(a.name)}</div>${ms.map((m) => box(`course:${m.id}`, esc(m.title))).join("")}` : ""; }).join("")}</details>
+  </div>`;
+}
+const pickedAccess = (root) => [...root.querySelectorAll("input[name=acc]:checked")].map((i) => i.value);
+function accessSummary(acc) {
+  if (acc === null || acc === undefined) return "Vede tutto (iscritto prima dei blocchi)";
+  if (acc.includes("all")) return "Accesso completo";
+  if (!acc.length) return "Tutto bloccato";
+  const n = (pre) => acc.filter((x) => x.startsWith(pre)).length;
+  return [n("acad:") && `${n("acad:")} accademie`, n("course:") && `${n("course:")} corsi`, acc.includes("live") && "live", acc.includes("community") && "community", acc.includes("educators") && "educatori"].filter(Boolean).join(" · ");
+}
+
+function admProducts() {
+  const ps = S.content.products || [];
+  $("#adm").innerHTML = `<div class="card pad" style="margin-bottom:12px"><b>Come funziona</b><p class="small muted" style="margin-top:6px;line-height:1.5">1. Su Stripe crei un <b>Payment Link</b> per ogni prodotto e incolli qui il link.<br>2. Scegli cosa sblocca.<br>3. Chi paga viene sbloccato da solo e la vendita viene attribuita a chi l'ha invitato (vedi Vendite).</p></div>
+    <button class="btn pri block" id="add">${icon("plus", "sm")}Nuovo prodotto</button>
+    <div class="card" style="margin-top:14px">${ps.map((p, i) => `<div class="adm-item"><span class="ini" style="width:36px;height:36px;border-radius:10px">${icon("euro", "sm")}</span><div class="grow"><h4>${esc(p.name)} ${p.price ? `· ${esc(p.price)}` : ""}</h4><p>${esc(accessSummary(p.grants))}${p.link ? "" : ' · <span style="color:var(--warn)">manca link Stripe</span>'}</p></div>${itemActs(i, ps.length)}</div>`).join("") || `<div class="empty">Nessun prodotto: creane uno.</div>`}</div>`;
+  const edit = (i) => {
+    const p = i >= 0 ? ps[i] : { name: "", desc: "", price: "", link: "", grants: [] };
+    formSheet(i >= 0 ? "Modifica prodotto" : "Nuovo prodotto",
+      field("Nome", "name", p.name, "text", 'required placeholder="Es. Accademia Agenti immobiliari"') +
+      `<div class="two">${field("Prezzo (come lo vedono)", "price", p.price, "text", 'placeholder="Es. 997 €"')}<span></span></div>` +
+      field("Descrizione breve", "desc", p.desc, "textarea") +
+      field("Link di pagamento Stripe", "link", p.link, "text", 'placeholder="https://buy.stripe.com/…" inputmode="url" autocapitalize="off"') +
+      `<div class="field"><span>Cosa sblocca</span>${accessPicker(p.grants)}</div>`,
+      async (f, form) => {
+        if (f.link && !/^https:\/\/\S+$/.test(f.link)) throw new Error("Il link Stripe deve iniziare con https://");
+        const item = { ...p, name: f.name, price: f.price, desc: f.desc, link: f.link, grants: pickedAccess(form) };
+        if (!item.grants.length) throw new Error("Scegli almeno una cosa da sbloccare");
+        const copy = ps.slice(); if (i >= 0) copy[i] = item; else copy.push(item);
+        await saveSection("products", copy);
+      },
+      i >= 0 ? async () => { const copy = ps.slice(); copy.splice(i, 1); await saveSection("products", copy, "Prodotto eliminato"); } : null);
+  };
+  $("#add").onclick = () => edit(-1);
+  bindList($("#adm"), ps, "products", edit);
+}
+
+async function admSales() {
+  $("#adm").innerHTML = `<div class="loading" style="min-height:100px"><div class="spin"></div></div>`;
+  let sales = [], users = [];
+  try { [sales, users] = await Promise.all([api("/admin/sales").then((d) => d.sales), api("/admin/users").then((d) => d.users)]); } catch (e) { $("#adm").innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  sales.sort((a, b) => b.at - a.at);
+  const tot = sales.reduce((n, x) => n + x.amount, 0);
+  // Totali per chi ha portato la vendita (primo livello) e per il secondo livello
+  const by = new Map();
+  for (const x of sales) {
+    if (x.referrerId) { const r = by.get(x.referrerId) || { name: x.referrerName, code: x.referrerCode, direct: 0, n: 0, l2: 0 }; r.direct += x.amount; r.n++; by.set(x.referrerId, r); }
+    if (x.referrer2Id) { const r = by.get(x.referrer2Id) || { name: x.referrer2Name, code: "", direct: 0, n: 0, l2: 0 }; r.l2 += x.amount; by.set(x.referrer2Id, r); }
+  }
+  const rows = [...by.values()].sort((a, b) => b.direct - a.direct);
+  const noRef = sales.filter((x) => !x.referrerId).reduce((n, x) => n + x.amount, 0);
+  $("#adm").innerHTML = `
+    <div class="qs" style="grid-template-columns:1fr 1fr"><div class="card q"><b>${money(tot)}</b><span>Totale venduto</span></div><div class="card q"><b>${sales.length}</b><span>Vendite</span></div></div>
+    <div class="btns"><button class="btn pri" id="addSale">${icon("plus", "sm")}Vendita manuale</button><button class="btn sec" id="csv">${icon("doc", "sm")}Scarica Excel (CSV)</button></div>
+    <h2 class="sec">Venduto per link</h2>
+    <div class="card">${rows.map((r) => `<div class="adm-item"><div class="grow"><h4>${esc(r.name || "—")}</h4><p>${r.code ? `?ref=${esc(r.code)} · ` : ""}${r.n} vendite dirette${r.l2 ? ` · secondo livello ${money(r.l2)}` : ""}</p></div><b style="font-family:var(--display)">${money(r.direct)}</b></div>`).join("")}
+      ${noRef ? `<div class="adm-item"><div class="grow"><h4>Senza invito</h4><p>Clienti arrivati da soli</p></div><b style="font-family:var(--display)">${money(noRef)}</b></div>` : ""}
+      ${!sales.length ? `<div class="empty">${icon("euro")}Nessuna vendita ancora.</div>` : ""}</div>
+    ${sales.length ? `<h2 class="sec">Tutte le vendite</h2><div class="card">${sales.map((x) => `<div class="adm-item"><div class="grow"><h4>${esc(x.productName || "Acquisto")} · ${money(x.amount, x.currency)}</h4><p>${esc(x.buyerName || x.buyerEmail || "Cliente")} · ${new Date(x.at).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · ${x.source === "stripe" ? "Stripe" : "manuale"}${x.referrerName ? ` · link di ${esc(x.referrerName)}` : ""}</p></div><div class="acts"><button data-sdel="${esc(x.key)}" aria-label="Elimina">${icon("trash")}</button></div></div>`).join("")}</div>` : ""}`;
+  $("#csv").onclick = () => {
+    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [["Data", "Prodotto", "Importo", "Valuta", "Cliente", "Email cliente", "Invitato da (1° livello)", "Codice link", "2° livello", "Fonte"].map(q).join(";"),
+      ...sales.map((x) => [new Date(x.at).toLocaleString("it-IT"), x.productName, (x.amount / 100).toFixed(2).replace(".", ","), x.currency.toUpperCase(), x.buyerName, x.buyerEmail, x.referrerName, x.referrerCode, x.referrer2Name, x.source].map(q).join(";"))];
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }));
+    a.download = `vendite-vendita-uno-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  $("#addSale").onclick = () => {
+    const ps = S.content.products || [];
+    if (!ps.length) { toast("Prima crea un prodotto nella scheda Prodotti"); return; }
+    formSheet("Vendita manuale",
+      `<p class="small muted" style="margin-bottom:10px">Per bonifici o pagamenti fuori da Stripe: la persona viene sbloccata e la vendita attribuita a chi l'ha invitata.</p>` +
+      select("Chi ha acquistato", "buyerId", users.map((u) => [u.id, `${u.name} · ${u.email}`]), "") +
+      select("Prodotto", "productId", ps.map((p) => [p.id, `${p.name}${p.price ? " · " + p.price : ""}`]), ps[0].id) +
+      field("Importo pagato (€)", "amount", "", "text", 'required inputmode="decimal" placeholder="997"'),
+      async (f) => {
+        if (!(Number(String(f.amount).replace(",", ".")) > 0)) throw new Error("Scrivi l'importo pagato");
+        await api("/admin/sales", f); closeSheet(); toast("Vendita registrata"); admSales();
+      });
+  };
+  $("#adm").querySelectorAll("[data-sdel]").forEach((b) => (b.onclick = async () => {
+    if (!confirm("Eliminare questa vendita dal registro? (Gli accessi già sbloccati restano)")) return;
+    try { await api(`/admin/sales/${b.dataset.sdel}/delete`, {}); toast("Vendita eliminata"); admSales(); } catch (e) { toast(e.message); }
+  }));
+}
+
 // Tante lezioni in una volta: una riga per lezione, "Titolo | link video".
 function bulkLessons(i) {
   const mods = S.content.modules, m = mods[i];
@@ -1900,8 +2065,15 @@ async function admUsers() {
     if (content) { S.content = content; toast("Creati i profili educatore mancanti"); }
     const draw = (t = "") => {
       const list = users.filter((u) => `${u.name} ${u.email} ${u.city}`.toLowerCase().includes(t.toLowerCase()));
-      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button><button data-ref="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Modifica</button></p>` : ""}</div>
+      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button><button data-ref="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Modifica</button></p>` : ""}${u.role === "agent" ? `<p class="row" style="gap:8px;margin-top:4px"><span class="ell" style="color:${u.access && !u.access.length ? "var(--warn)" : "#5ee08f"}">${icon("key", "sm")} ${esc(accessSummary(u.access))}</span><button data-acc="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Accessi</button></p>` : ""}</div>
         <select data-role="${esc(u.id)}">${[["agent", "Agente"], ["educator", "Educatore"], ["admin", "Admin"]].map(([v, n]) => `<option value="${v}" ${u.role === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>`).join("") || `<div class="empty">Nessun utente</div>`;
+      $("#ulist").querySelectorAll("[data-acc]").forEach((b) => (b.onclick = () => {
+        const u = users.find((x) => x.id === b.dataset.acc);
+        formSheet(`Cosa può vedere ${u.name}`,
+          (u.access === null ? `<p class="small" style="margin-bottom:10px;color:var(--warn)">Si è iscritto prima dei blocchi e ora vede tutto. Salvando, vedrà solo quello che spunti.</p>` : "") +
+          accessPicker(u.access === null ? ["all"] : u.access),
+          async (f, form) => { const d = await api("/admin/access", { id: u.id, access: pickedAccess(form) }); u.access = d.access; closeSheet(); toast("Accessi aggiornati"); draw($("#uq").value); });
+      }));
       $("#ulist").querySelectorAll("[data-mkedu]").forEach((b) => (b.onclick = () => {
         const sel = $(`#ulist [data-role="${b.dataset.mkedu}"]`);
         const u = users.find((x) => x.id === b.dataset.mkedu); u.role = "agent";
