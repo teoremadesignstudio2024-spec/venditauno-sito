@@ -231,7 +231,7 @@ export default {
     if (url.pathname.startsWith("/api/app/")) {
       return handleAppApi(request, env);
     }
-    if (url.pathname === "/app-api.js" || url.pathname === "/worker.js") {
+    if (url.pathname === "/app-api.js" || url.pathname === "/worker.js" || url.pathname === "/dashboard.js") {
       return new Response("Not found", { status: 404 });
     }
     if (url.pathname === "/app" || url.pathname.startsWith("/app/")) {
