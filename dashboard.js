@@ -53,7 +53,7 @@ function summary(date, day) {
     date,
     total: Math.round(total * 100) / 100,
     count: day.entries.length,
-    entries: day.entries.slice(-8).reverse(),
+    entries: day.entries.slice().reverse(),
   };
 }
 
@@ -137,7 +137,7 @@ ${BASE_HEAD}
   .card button { flex: 1; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer; border: 1px solid #fff; }
   .btn-main { background: #fff; color: #000; }
   .msg { min-height: 1.3em; font-size: 0.9rem; margin: 4px 0 10px; }
-  .list { margin-top: 22px; border-top: 1px solid #222; padding-top: 14px; max-height: 34vh; overflow-y: auto; }
+  .list { margin-top: 22px; border-top: 1px solid #222; padding-top: 14px; }
   .list h3 { margin: 0 0 10px; font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
   .item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 0.95rem; }
   .item .amt { font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -151,7 +151,9 @@ ${BASE_HEAD}
   body.pc .panel { padding: 16px 16px 48px; }
   body.pc .flash { display: none; }
   .tv-link { display: block; text-align: center; color: #fff; opacity: 0.6; font-size: 0.9rem; margin-top: 18px; }
-  .item .del { background: none; border: 0; color: #f87171; cursor: pointer; font-size: 1rem; padding: 4px 6px; flex: none; }
+  .item .del { background: none; border: 1px solid #7f1d1d; color: #f87171; cursor: pointer; font-size: 0.85rem; font-weight: 700; padding: 6px 12px; border-radius: 8px; flex: none; }
+  .item .del:hover { background: #2a0a0a; }
+  .item .del.sure { background: #dc2626; border-color: #dc2626; color: #fff; }
 </style>
 </head>
 <body${tv ? "" : ' class="pc"'}>
@@ -177,7 +179,7 @@ ${tv ? "" : `<div class="panel" id="panel">
       <button type="submit" class="btn-main">Aggiungi</button>
     </div>
     <div class="list">
-      <h3>Ultimi inserimenti di oggi</h3>
+      <h3>Inserimenti di oggi</h3>
       <div id="items"></div>
     </div>
     <a class="tv-link" href="${DASH_PATH}/tv" target="_blank">Apri la schermata della TV ↗</a>
@@ -189,7 +191,7 @@ const API = '${DASH_PATH}/api';
 const eur = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const eur2 = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
 const $ = (id) => document.getElementById(id);
-let shown = null, lastTotal = null, anim = null;
+let shown = null, lastTotal = null, anim = null, lastListKey = null;
 
 function fmtTotal(n) { return Number.isInteger(n) ? eur.format(n) : eur2.format(n); }
 
@@ -220,10 +222,14 @@ function render(d) {
     animateTo(d.total);
   }
   lastTotal = d.total;
-  if ($('items')) $('items').innerHTML = d.entries.length ? d.entries.map((e) =>
+  // Ridisegna la lista solo se è cambiata, così il clic su "Elimina" non va perso
+  const key = d.entries.map((e) => e.id).join(',');
+  if (!$('items') || key === lastListKey) return;
+  lastListKey = key;
+  $('items').innerHTML = d.entries.length ? d.entries.map((e) =>
     '<div class="item"><span class="amt">' + eur2.format(e.amount) + '</span><span class="note">' + esc(e.note || '') +
     '</span><span class="time">' + new Date(e.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) +
-    '</span><button type="button" class="del" data-id="' + e.id + '" title="Elimina">✕</button></div>'
+    '</span><button type="button" class="del" data-id="' + e.id + '">Elimina</button></div>'
   ).join('') : '<div class="item"><span class="note">Nessun inserimento</span></div>';
 }
 
@@ -276,11 +282,25 @@ $('addForm').onsubmit = async (e) => {
   } catch (err) { $('msg').textContent = 'Errore, riprova'; }
 };
 
+// Primo clic: "Sicuro?" — secondo clic: elimina
 $('items').onclick = async (e) => {
-  const id = e.target.dataset?.id;
-  if (!id || !confirm('Eliminare questo inserimento?')) return;
-  const r = await fetch(API + '?id=' + encodeURIComponent(id), { method: 'DELETE' });
-  if (r.ok) render(await r.json());
+  const btn = e.target.closest('.del');
+  if (!btn) return;
+  if (!btn.classList.contains('sure')) {
+    btn.classList.add('sure'); btn.textContent = 'Sicuro?';
+    setTimeout(() => { if (btn.isConnected && btn.textContent === 'Sicuro?') { btn.classList.remove('sure'); btn.textContent = 'Elimina'; } }, 4000);
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Elimino…';
+  try {
+    const r = await fetch(API + '?id=' + encodeURIComponent(btn.dataset.id), { method: 'DELETE' });
+    if (!r.ok) throw new Error();
+    render(await r.json());
+    $('msg').textContent = '✓ Eliminato';
+  } catch (err) {
+    btn.disabled = false; btn.classList.remove('sure'); btn.textContent = 'Elimina';
+    $('msg').textContent = 'Errore, non eliminato: riprova';
+  }
 };
 }
 </script>
