@@ -1,5 +1,5 @@
 import usersData from "./academy-users.json";
-import { DASH_PATH, TV_PATH, handleDashboard } from "./dashboard.js";
+import { DASH_PATH, handleDashboard } from "./dashboard.js";
 import { handleAppApi } from "./app-api.js";
 
 const MODULES = [
@@ -300,7 +300,7 @@ export default {
     if (decodedPath.startsWith(`${DASH_PATH}ù`)) {
       return Response.redirect(`${url.origin}${DASH_PATH}`, 302);
     }
-    if (url.pathname === DASH_PATH || url.pathname.startsWith(`${DASH_PATH}/`) || url.pathname === TV_PATH || url.pathname === `${TV_PATH}/`) {
+    if (url.pathname === DASH_PATH || url.pathname.startsWith(`${DASH_PATH}/`)) {
       return handleDashboard(request, env, url);
     }
 

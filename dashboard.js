@@ -1,10 +1,9 @@
 // Dashboard "Fatturato del giorno" per la TV dell'ufficio.
-// Pagine: /dashboardvenditatop = PC, per inserire il fatturato
-//         /tv                  = TV, mostra i totali e il podio in tempo reale
+// Pagine: /dashboardvenditatop    = PC, per inserire il fatturato
+//         /dashboardvenditatop/tv = TV, mostra il totale che arriva in tempo reale
 // I dati stanno nel KV ACADEMY_PROGRESS con chiave "fatturato:AAAA-MM-GG" (giorno di Roma).
 
 export const DASH_PATH = "/dashboardvenditatop";
-export const TV_PATH = "/tv";
 
 // I sales in classifica. Per aggiungerne uno basta scrivere il nome qui.
 const SELLERS = ["Samuele", "Marco", "Tomas", "Elio"];
@@ -263,7 +262,7 @@ ${tv ? "" : `<div class="panel">
       <h3>Inserimenti di oggi</h3>
       <div id="items"></div>
     </div>
-    <a class="tv-link" href="${TV_PATH}" target="_blank">Apri la schermata della TV ↗</a>
+    <a class="tv-link" href="${DASH_PATH}/tv" target="_blank">Apri la schermata della TV ↗</a>
   </form>
 </div>`}
 
@@ -447,8 +446,8 @@ export async function handleDashboard(request, env, url) {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: url.searchParams.get("tv") ? TV_PATH : DASH_PATH,
-        "Set-Cookie": `${DASH_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${DASH_SESSION_DAYS * 86400}`,
+        Location: url.searchParams.get("tv") ? `${DASH_PATH}/tv` : DASH_PATH,
+        "Set-Cookie": `${DASH_COOKIE}=${token}; Path=${DASH_PATH}; HttpOnly; Secure; SameSite=Lax; Max-Age=${DASH_SESSION_DAYS * 86400}`,
       },
     });
   }
@@ -498,10 +497,6 @@ export async function handleDashboard(request, env, url) {
   }
 
   if (path === `${DASH_PATH}/tv`) {
-    return new Response(null, { status: 302, headers: { Location: TV_PATH } });
-  }
-
-  if (path === TV_PATH) {
     return html(loggedIn ? dashboardPage(true) : loginPage(null, true));
   }
 
