@@ -127,29 +127,45 @@ ${BASE_HEAD}
   .num { font-variant-numeric: tabular-nums; }
 
   /* ---- Schermata TV ---- */
-  .screen { height: 100vh; display: flex; flex-direction: column; padding: 4vh 4vw; gap: 4vh; }
+  .screen { height: 100vh; display: flex; flex-direction: column; padding: 3vh 4vw 0; gap: 2.5vh; }
   .top { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(1rem, 2.2vw, 2.4rem); }
   .top .date { opacity: 0.7; text-transform: capitalize; }
   .top .clock { opacity: 0.7; }
   .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; }
   .kpi { text-align: center; }
-  .kpi .label { font-size: clamp(1.1rem, 2.8vw, 3.2rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
-  .kpi .value { font-size: clamp(2.6rem, 8.5vw, 11rem); font-weight: 900; line-height: 1.05; margin-top: 1.5vh; letter-spacing: -0.02em; }
-  .kpi .sub { font-size: clamp(0.9rem, 1.8vw, 2rem); opacity: 0.6; margin-top: 1vh; }
+  .kpi .label { white-space: nowrap; font-size: clamp(0.9rem, 2.1vw, 2.5rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+  .kpi .value { font-size: clamp(2.2rem, 6.2vw, 8rem); font-weight: 900; line-height: 1.05; margin-top: 1vh; letter-spacing: -0.02em; }
+  .kpi .sub { font-size: clamp(0.8rem, 1.5vw, 1.8rem); opacity: 0.6; margin-top: 0.5vh; }
   .bump { animation: bump 1.2s ease-out; }
   @keyframes bump { 0% { transform: scale(1); } 15% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
-  .rank { flex: 1; display: flex; flex-direction: column; min-height: 0; border-top: 1px solid #333; padding-top: 3vh; }
-  .rank h2 { margin: 0 0 2.5vh; font-size: clamp(1rem, 2.2vw, 2.6rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; }
-  .rows { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 1vh; }
-  .row { display: grid; grid-template-columns: 3.2em 7em 1fr auto; align-items: center; gap: 1.2vw; font-size: clamp(1rem, 2.6vw, 3.2rem); }
-  .row .pos { font-weight: 900; opacity: 0.6; }
-  .row .name { font-weight: 800; }
-  .row .bar { height: 0.55em; background: #1a1a1a; border-radius: 999px; overflow: hidden; }
-  .row .bar i { display: block; height: 100%; background: #fff; border-radius: 999px; width: 0; transition: width 1.2s ease-out; }
-  .row .amt { font-weight: 800; text-align: right; min-width: 6em; }
-  .row .amt small { display: block; font-size: 0.5em; font-weight: 500; opacity: 0.6; }
-  .row.first .pos, .row.first .name { opacity: 1; }
+  /* Top sales: podio + fuori dal podio */
+  .rank { flex: 1; display: grid; grid-template-columns: 2.3fr 1fr; gap: 3vw; min-height: 0; border-top: 1px solid #333; padding-top: 2.5vh; }
+  .rank h2 { margin: 0 0 1vh; font-size: clamp(1rem, 2.4vw, 2.8rem); font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; text-align: center; }
+  .rank h3 { margin: 0 0 2vh; font-size: clamp(0.8rem, 1.5vw, 1.7rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
+  .podium-wrap { display: flex; flex-direction: column; min-height: 0; }
+  .podium { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 1.2vw; min-height: 0; }
+  .step { flex: 1; max-width: 22vw; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; text-align: center; }
+  .step .medal { font-size: clamp(1.6rem, 3.6vw, 4.4rem); line-height: 1; }
+  .step .name { font-size: clamp(1.1rem, 2.6vw, 3.2rem); font-weight: 900; margin-top: 0.6vh; }
+  .step .amt { font-size: clamp(1rem, 2.3vw, 2.8rem); font-weight: 800; }
+  .step .inc { font-size: clamp(0.7rem, 1.2vw, 1.4rem); opacity: 0.6; margin-bottom: 1.2vh; }
+  .step .block { width: 100%; border-radius: 1.2vw 1.2vw 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 1.5vh;
+    font-size: clamp(1.4rem, 3.2vw, 4rem); line-height: 1; font-weight: 900; color: rgba(0,0,0,0.75); transition: height 1s ease-out; }
+  .p1 .block { height: 19vh; background: linear-gradient(180deg, #ffe17a, #d4a017 55%, #8a6a0c); box-shadow: 0 0 4vw rgba(255, 205, 60, 0.35); }
+  .p2 .block { height: 14vh; background: linear-gradient(180deg, #f2f2f2, #b8b8b8 55%, #6d6d6d); }
+  .p3 .block { height: 10vh; background: linear-gradient(180deg, #f0b27a, #c7792f 55%, #6e3f14); }
+  .p1 .name { font-size: clamp(1.3rem, 3.2vw, 4rem); }
+  .p1 .amt { font-size: clamp(1.1rem, 2.8vw, 3.4rem); }
+  .step.pop .name, .step.pop .medal { animation: pop 1.2s ease-out; }
+  @keyframes pop { 0% { transform: scale(1); } 20% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .others { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid #222; padding-left: 2.5vw; }
+  .other { display: flex; align-items: baseline; gap: 1vw; padding: 1.4vh 0; border-bottom: 1px solid #1a1a1a; font-size: clamp(1rem, 2.2vw, 2.6rem); }
+  .other .pos { font-weight: 900; opacity: 0.5; width: 2em; }
+  .other .name { font-weight: 800; flex: 1; }
+  .other .amt { font-weight: 800; text-align: right; }
+  .other .amt small { display: block; font-size: 0.5em; font-weight: 500; opacity: 0.6; }
+  .others .empty { opacity: 0.4; font-size: clamp(0.9rem, 1.6vw, 1.8rem); }
 
   .flash { position: fixed; left: 50%; top: 40vh; transform: translateX(-50%); font-size: clamp(1.5rem, 5vw, 6rem); font-weight: 800; opacity: 0; pointer-events: none; background: #000; padding: 0.2em 0.6em; border: 2px solid #fff; border-radius: 0.4em; white-space: nowrap; }
   .flash.show { animation: flash 3.5s ease-out; }
@@ -162,8 +178,11 @@ ${BASE_HEAD}
   body.pc .screen { height: auto; padding: 4vh 16px 2vh; max-width: 900px; margin: 0 auto; }
   body.pc .kpi .value { font-size: clamp(2rem, 7vw, 4.5rem); }
   body.pc .kpi .label { font-size: 1rem; }
-  body.pc .row { font-size: clamp(0.95rem, 2.4vw, 1.3rem); }
-  body.pc .rank { flex: none; }
+  body.pc .rank { flex: none; height: 460px; }
+  body.pc .p1 .block { height: 150px; } body.pc .p2 .block { height: 105px; } body.pc .p3 .block { height: 70px; }
+  body.pc .step { max-width: 200px; }
+  body.pc .step .block { font-size: 2.6rem; }
+  body.pc .other { font-size: 1.1rem; }
   body.pc .flash { display: none; }
   .panel { display: flex; justify-content: center; padding: 8px 16px 48px; }
   .card { width: 100%; max-width: 520px; background: #000; border: 1px solid #333; border-radius: 16px; padding: 28px; }
@@ -191,7 +210,12 @@ ${BASE_HEAD}
   .tv-link { display: block; text-align: center; color: #fff; opacity: 0.6; font-size: 0.9rem; margin-top: 18px; }
   @media (max-width: 600px) {
     .kpis { grid-template-columns: 1fr; gap: 3vh; }
-    .row { grid-template-columns: 2em 5em 1fr auto; }
+    .rank { grid-template-columns: 1fr; height: auto; }
+    .podium { flex: none; }
+    .step { max-width: none; }
+    .p1 .block { height: 110px; } .p2 .block { height: 75px; } .p3 .block { height: 50px; }
+    .others { border-left: 0; padding-left: 0; }
+    body.pc .rank { height: auto; }
   }
 </style>
 </head>
@@ -203,8 +227,18 @@ ${BASE_HEAD}
     <div class="kpi"><div class="label">Incassato del giorno</div><div class="value num" id="cashed">€ 0</div><div class="sub" id="cashedSub"></div></div>
   </div>
   <div class="rank">
-    <h2>Classifica sales</h2>
-    <div class="rows" id="rows"></div>
+    <div class="podium-wrap">
+      <h2>🏆 Top sales</h2>
+      <div class="podium">
+        <div class="step p2" id="p2"><div class="medal">🥈</div><div class="name"></div><div class="amt num"></div><div class="inc num"></div><div class="block">2</div></div>
+        <div class="step p1" id="p1"><div class="medal">👑</div><div class="name"></div><div class="amt num"></div><div class="inc num"></div><div class="block">1</div></div>
+        <div class="step p3" id="p3"><div class="medal">🥉</div><div class="name"></div><div class="amt num"></div><div class="inc num"></div><div class="block">3</div></div>
+      </div>
+    </div>
+    <div class="others">
+      <h3>Fuori dal podio</h3>
+      <div id="others"></div>
+    </div>
   </div>
 </div>
 <div class="flash" id="flash"></div>
@@ -282,19 +316,24 @@ function render(d) {
     }
   }
 
-  // Classifica (ordinata per fatturato)
-  const max = Math.max(1, ...d.ranking.map((r) => r.total));
-  const rows = $('rows');
-  if (rows.children.length !== d.ranking.length) rows.innerHTML = d.ranking.map(() =>
-    '<div class="row"><span class="pos num"></span><span class="name"></span><span class="bar"><i></i></span><span class="amt num"></span></div>').join('');
-  d.ranking.forEach((r, i) => {
-    const row = rows.children[i];
-    row.classList.toggle('first', i === 0 && r.total > 0);
-    row.querySelector('.pos').textContent = (i + 1) + '°';
-    row.querySelector('.name').textContent = r.name;
-    row.querySelector('.bar i').style.width = (r.total / max * 100) + '%';
-    row.querySelector('.amt').innerHTML = fmt(r.total) + '<small>incassato ' + fmt(r.cashed) + '</small>';
+  // Top sales: primi 3 sul podio, gli altri fuori dal podio
+  d.ranking.slice(0, 3).forEach((r, i) => {
+    const step = $('p' + (i + 1));
+    const changed = last && last.ranking[i] && last.ranking[i].name !== r.name;
+    step.querySelector('.name').textContent = r.name;
+    step.querySelector('.amt').textContent = fmt(r.total);
+    step.querySelector('.inc').textContent = 'incassato ' + fmt(r.cashed);
+    if (changed) { step.classList.remove('pop'); void step.offsetWidth; step.classList.add('pop'); }
   });
+  const rest = d.ranking.slice(3);
+  $('others').innerHTML = rest.length ? rest.map((r, i) =>
+    '<div class="other"><span class="pos num">' + (i + 4) + '°</span><span class="name">' + esc(r.name) +
+    '</span><span class="amt num">' + fmt(r.total) + '<small>incassato ' + fmt(r.cashed) + '</small></span></div>'
+  ).join('') : '<div class="empty">Nessuno</div>';
+  // Nuovo primo in classifica: annuncio dopo quello della vendita
+  if (last && d.ranking[0].total > 0 && last.ranking[0].name !== d.ranking[0].name) {
+    setTimeout(() => flash('👑 ' + d.ranking[0].name + ' è primo!'), 3600);
+  }
 
   last = d;
 
