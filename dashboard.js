@@ -5,6 +5,9 @@
 
 export const DASH_PATH = "/dashboardvenditatop";
 
+// I sales in classifica. Per aggiungerne uno basta scrivere il nome qui.
+const SELLERS = ["Samuele", "Marco", "Tomas", "Elio"];
+
 // Password di accesso: salvata solo come hash PBKDF2. Per cambiarla chiedi a Claude un nuovo hash.
 const DASH_SALT = "dc9c1720bf64430ece096b2650befaac";
 const DASH_HASH = "ac7f198145ddd36f9805c116254d3ae88b0df25100e68c158b521ae2c62d4db8";
@@ -47,12 +50,20 @@ async function readDay(kv, date) {
   return raw ? JSON.parse(raw) : { entries: [] };
 }
 
+const round2 = (n) => Math.round(n * 100) / 100;
+
 function summary(date, day) {
-  const total = day.entries.reduce((s, e) => s + e.amount, 0);
+  const sum = (list, f) => round2(list.reduce((s, e) => s + (e[f] || 0), 0));
+  const ranking = SELLERS.map((name) => {
+    const mine = day.entries.filter((e) => e.seller === name);
+    return { name, total: sum(mine, "amount"), cashed: sum(mine, "cashed") };
+  }).sort((a, b) => b.total - a.total || b.cashed - a.cashed);
   return {
     date,
-    total: Math.round(total * 100) / 100,
-    count: day.entries.length,
+    total: sum(day.entries, "amount"),
+    cashed: sum(day.entries, "cashed"),
+    count: day.entries.filter((e) => e.amount).length,
+    ranking,
     entries: day.entries.slice().reverse(),
   };
 }
@@ -113,71 +124,106 @@ ${BASE_HEAD}
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
-  .screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4vh 4vw; }
-  .label { font-size: clamp(1.4rem, 4.5vw, 5rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
-  .date { font-size: clamp(1rem, 2.2vw, 2.4rem); color: #fff; opacity: 0.7; margin-top: 1vh; text-transform: capitalize; }
-  .total { font-size: clamp(3.5rem, 16vw, 22rem); font-weight: 900; line-height: 1; margin: 5vh 0 3vh; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; transition: transform 0.3s; }
-  .total.bump { animation: bump 1.2s ease-out; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---- Schermata TV ---- */
+  .screen { height: 100vh; display: flex; flex-direction: column; padding: 4vh 4vw; gap: 4vh; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(1rem, 2.2vw, 2.4rem); }
+  .top .date { opacity: 0.7; text-transform: capitalize; }
+  .top .clock { opacity: 0.7; }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; }
+  .kpi { text-align: center; }
+  .kpi .label { font-size: clamp(1.1rem, 2.8vw, 3.2rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+  .kpi .value { font-size: clamp(2.6rem, 8.5vw, 11rem); font-weight: 900; line-height: 1.05; margin-top: 1.5vh; letter-spacing: -0.02em; }
+  .kpi .sub { font-size: clamp(0.9rem, 1.8vw, 2rem); opacity: 0.6; margin-top: 1vh; }
+  .bump { animation: bump 1.2s ease-out; }
   @keyframes bump { 0% { transform: scale(1); } 15% { transform: scale(1.08); } 100% { transform: scale(1); } }
-  .count { font-size: clamp(1rem, 2.4vw, 2.6rem); opacity: 0.75; }
-  .flash { position: fixed; left: 50%; top: 18vh; transform: translateX(-50%); font-size: clamp(1.5rem, 5vw, 6rem); font-weight: 800; opacity: 0; pointer-events: none; }
-  .flash.show { animation: flash 3s ease-out; }
-  @keyframes flash { 0% { opacity: 0; transform: translate(-50%, 2vh); } 12% { opacity: 1; transform: translate(-50%, 0); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -2vh); } }
-  .clock { position: fixed; top: 3vh; right: 3vw; font-size: clamp(1rem, 2.4vw, 2.6rem); font-variant-numeric: tabular-nums; opacity: 0.7; }
-  .status { position: fixed; bottom: 2vh; left: 3vw; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; }
+
+  .rank { flex: 1; display: flex; flex-direction: column; min-height: 0; border-top: 1px solid #333; padding-top: 3vh; }
+  .rank h2 { margin: 0 0 2.5vh; font-size: clamp(1rem, 2.2vw, 2.6rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; }
+  .rows { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 1vh; }
+  .row { display: grid; grid-template-columns: 3.2em 7em 1fr auto; align-items: center; gap: 1.2vw; font-size: clamp(1rem, 2.6vw, 3.2rem); }
+  .row .pos { font-weight: 900; opacity: 0.6; }
+  .row .name { font-weight: 800; }
+  .row .bar { height: 0.55em; background: #1a1a1a; border-radius: 999px; overflow: hidden; }
+  .row .bar i { display: block; height: 100%; background: #fff; border-radius: 999px; width: 0; transition: width 1.2s ease-out; }
+  .row .amt { font-weight: 800; text-align: right; min-width: 6em; }
+  .row .amt small { display: block; font-size: 0.5em; font-weight: 500; opacity: 0.6; }
+  .row.first .pos, .row.first .name { opacity: 1; }
+
+  .flash { position: fixed; left: 50%; top: 40vh; transform: translateX(-50%); font-size: clamp(1.5rem, 5vw, 6rem); font-weight: 800; opacity: 0; pointer-events: none; background: #000; padding: 0.2em 0.6em; border: 2px solid #fff; border-radius: 0.4em; white-space: nowrap; }
+  .flash.show { animation: flash 3.5s ease-out; }
+  @keyframes flash { 0% { opacity: 0; transform: translate(-50%, 2vh); } 10% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -2vh); } }
+  .status { position: fixed; bottom: 1.5vh; left: 4vw; font-size: 0.9rem; opacity: 0; }
   .status.offline { opacity: 0.6; }
 
-  /* Pannello per aggiungere (solo pagina del PC) */
-  .panel { display: flex; justify-content: center; }
-  .card { width: 100%; max-width: 440px; background: #000; border: 1px solid #333; border-radius: 16px; padding: 28px; }
+  /* ---- Pagina del PC ---- */
+  body.pc { overflow: auto; height: auto; }
+  body.pc .screen { height: auto; padding: 4vh 16px 2vh; max-width: 900px; margin: 0 auto; }
+  body.pc .kpi .value { font-size: clamp(2rem, 7vw, 4.5rem); }
+  body.pc .kpi .label { font-size: 1rem; }
+  body.pc .row { font-size: clamp(0.95rem, 2.4vw, 1.3rem); }
+  body.pc .rank { flex: none; }
+  body.pc .flash { display: none; }
+  .panel { display: flex; justify-content: center; padding: 8px 16px 48px; }
+  .card { width: 100%; max-width: 520px; background: #000; border: 1px solid #333; border-radius: 16px; padding: 28px; }
   .card h2 { margin: 0 0 20px; font-size: 1.2rem; letter-spacing: 0.1em; text-transform: uppercase; }
   .card label { display: block; font-size: 0.85rem; opacity: 0.7; margin-bottom: 6px; }
   .card input { width: 100%; padding: 14px; font-size: 1.2rem; background: #111; color: #fff; border: 1px solid #333; border-radius: 10px; margin-bottom: 14px; }
-  .card .row { display: flex; gap: 10px; }
-  .card button { flex: 1; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer; border: 1px solid #fff; }
-  .btn-main { background: #fff; color: #000; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .sellers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .sellers button { padding: 12px 4px; font-size: 1rem; font-weight: 700; background: #111; color: #fff; border: 1px solid #333; border-radius: 10px; cursor: pointer; }
+  .sellers button.on { background: #fff; color: #000; border-color: #fff; }
+  .btn-main { width: 100%; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer; border: 0; background: #fff; color: #000; }
+  .hint { font-size: 0.8rem; opacity: 0.55; margin: -6px 0 14px; }
   .msg { min-height: 1.3em; font-size: 0.9rem; margin: 4px 0 10px; }
   .list { margin-top: 22px; border-top: 1px solid #222; padding-top: 14px; }
   .list h3 { margin: 0 0 10px; font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
   .item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 0.95rem; }
-  .item .amt { font-weight: 700; font-variant-numeric: tabular-nums; }
-  .item .note { flex: 1; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .who { font-weight: 700; width: 5.5em; flex: none; }
+  .item .vals { flex: 1; min-width: 0; }
+  .item .vals b { font-variant-numeric: tabular-nums; }
+  .item .vals span { display: block; opacity: 0.6; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .item .time { opacity: 0.5; font-size: 0.8rem; }
-  /* Pagina del PC: pannello sempre aperto sotto il totale */
-  body.pc { overflow: auto; height: auto; }
-  body.pc .screen { height: auto; padding-top: 8vh; padding-bottom: 2vh; }
-  body.pc .label { font-size: clamp(1.2rem, 3vw, 2.2rem); }
-  body.pc .total { font-size: clamp(3rem, 11vw, 8rem); margin: 3vh 0 2vh; }
-  body.pc .panel { padding: 16px 16px 48px; }
-  body.pc .flash { display: none; }
-  .tv-link { display: block; text-align: center; color: #fff; opacity: 0.6; font-size: 0.9rem; margin-top: 18px; }
   .item .del { background: none; border: 1px solid #7f1d1d; color: #f87171; cursor: pointer; font-size: 0.85rem; font-weight: 700; padding: 6px 12px; border-radius: 8px; flex: none; }
   .item .del:hover { background: #2a0a0a; }
   .item .del.sure { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .tv-link { display: block; text-align: center; color: #fff; opacity: 0.6; font-size: 0.9rem; margin-top: 18px; }
+  @media (max-width: 600px) {
+    .kpis { grid-template-columns: 1fr; gap: 3vh; }
+    .row { grid-template-columns: 2em 5em 1fr auto; }
+  }
 </style>
 </head>
 <body${tv ? "" : ' class="pc"'}>
-<div class="clock" id="clock"></div>
 <div class="screen" id="screen">
-  <div class="label">Fatturato del giorno</div>
-  <div class="date" id="date"></div>
-  <div class="total" id="total">€ 0</div>
-  <div class="count" id="count"></div>
+  <div class="top"><span class="date" id="date"></span><span class="clock num" id="clock"></span></div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Fatturato del giorno</div><div class="value num" id="total">€ 0</div><div class="sub" id="count"></div></div>
+    <div class="kpi"><div class="label">Incassato del giorno</div><div class="value num" id="cashed">€ 0</div><div class="sub" id="cashedSub"></div></div>
+  </div>
+  <div class="rank">
+    <h2>Classifica sales</h2>
+    <div class="rows" id="rows"></div>
+  </div>
 </div>
 <div class="flash" id="flash"></div>
 <div class="status" id="status">Connessione persa, riprovo…</div>
 
-${tv ? "" : `<div class="panel" id="panel">
+${tv ? "" : `<div class="panel">
   <form class="card" id="addForm">
-    <h2>Aggiungi fatturato</h2>
-    <label for="amount">Importo (€)</label>
-    <input id="amount" inputmode="decimal" placeholder="es. 1500 oppure 1.250,50" autocomplete="off" required>
-    <label for="note">Nota (facoltativa)</label>
+    <h2>Aggiungi vendita</h2>
+    <label>Sales</label>
+    <div class="sellers" id="sellers">${SELLERS.map((s) => `<button type="button" data-s="${s}">${s}</button>`).join("")}</div>
+    <div class="two">
+      <div><label for="amount">Fatturato (€)</label><input id="amount" inputmode="decimal" placeholder="es. 1500" autocomplete="off"></div>
+      <div><label for="cashedIn">Incassato (€)</label><input id="cashedIn" inputmode="decimal" placeholder="es. 500" autocomplete="off"></div>
+    </div>
+    <p class="hint">Puoi compilare anche solo uno dei due (es. solo incassato per un acconto ricevuto oggi).</p>
+    <label for="note">Nota / cliente (facoltativa)</label>
     <input id="note" maxlength="80" placeholder="es. Cliente Rossi" autocomplete="off">
     <div class="msg" id="msg"></div>
-    <div class="row">
-      <button type="submit" class="btn-main">Aggiungi</button>
-    </div>
+    <button type="submit" class="btn-main">Aggiungi</button>
     <div class="list">
       <h3>Inserimenti di oggi</h3>
       <div id="items"></div>
@@ -191,49 +237,79 @@ const API = '${DASH_PATH}/api';
 const eur = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const eur2 = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
 const $ = (id) => document.getElementById(id);
-let shown = null, lastTotal = null, anim = null, lastListKey = null;
+let last = null, lastListKey = null;
+const anims = {};
 
-function fmtTotal(n) { return Number.isInteger(n) ? eur.format(n) : eur2.format(n); }
+function fmt(n) { return Number.isInteger(n) ? eur.format(n) : eur2.format(n); }
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
-function animateTo(target) {
-  const from = shown ?? 0;
-  if (anim) cancelAnimationFrame(anim);
+function animateTo(id, from, to) {
+  const el = $(id);
+  cancelAnimationFrame(anims[id]);
   const start = performance.now(), dur = 1500;
   const step = (t) => {
     const p = Math.min(1, (t - start) / dur);
-    const v = from + (target - from) * (1 - Math.pow(1 - p, 3));
-    $('total').textContent = p < 1 ? eur.format(Math.round(v)) : fmtTotal(target);
-    if (p < 1) anim = requestAnimationFrame(step); else shown = target;
+    const v = from + (to - from) * (1 - Math.pow(1 - p, 3));
+    el.textContent = p < 1 ? eur.format(Math.round(v)) : fmt(to);
+    if (p < 1) anims[id] = requestAnimationFrame(step);
   };
-  anim = requestAnimationFrame(step);
+  anims[id] = requestAnimationFrame(step);
+  if (to > from) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+}
+
+function flash(text) {
+  const f = $('flash');
+  f.textContent = text;
+  f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
 }
 
 function render(d) {
   $('date').textContent = new Date(d.date + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   $('count').textContent = d.count === 0 ? 'Nessuna vendita ancora' : d.count === 1 ? '1 vendita' : d.count + ' vendite';
-  if (lastTotal === null) { shown = d.total; $('total').textContent = fmtTotal(d.total); }
-  else if (d.total !== lastTotal) {
-    if (d.total > lastTotal) {
-      const f = $('flash');
-      f.textContent = '+ ' + fmtTotal(Math.round((d.total - lastTotal) * 100) / 100);
-      f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
-      const t = $('total'); t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
+  $('cashedSub').textContent = d.total > 0 ? Math.round(d.cashed / d.total * 100) + '% del fatturato' : '';
+
+  if (last === null) { $('total').textContent = fmt(d.total); $('cashed').textContent = fmt(d.cashed); }
+  else {
+    if (d.total !== last.total) animateTo('total', last.total, d.total);
+    if (d.cashed !== last.cashed) animateTo('cashed', last.cashed, d.cashed);
+    // Annuncio sulla TV della nuova vendita
+    const newest = d.entries[0];
+    if (newest && !last.entries.some((e) => e.id === newest.id)) {
+      const parts = [];
+      if (newest.amount) parts.push('+ ' + fmt(newest.amount));
+      if (newest.cashed) parts.push('incassati ' + fmt(newest.cashed));
+      flash((newest.seller ? newest.seller + '  ' : '') + parts.join(' · '));
     }
-    animateTo(d.total);
   }
-  lastTotal = d.total;
-  // Ridisegna la lista solo se è cambiata, così il clic su "Elimina" non va perso
+
+  // Classifica (ordinata per fatturato)
+  const max = Math.max(1, ...d.ranking.map((r) => r.total));
+  const rows = $('rows');
+  if (rows.children.length !== d.ranking.length) rows.innerHTML = d.ranking.map(() =>
+    '<div class="row"><span class="pos num"></span><span class="name"></span><span class="bar"><i></i></span><span class="amt num"></span></div>').join('');
+  d.ranking.forEach((r, i) => {
+    const row = rows.children[i];
+    row.classList.toggle('first', i === 0 && r.total > 0);
+    row.querySelector('.pos').textContent = (i + 1) + '°';
+    row.querySelector('.name').textContent = r.name;
+    row.querySelector('.bar i').style.width = (r.total / max * 100) + '%';
+    row.querySelector('.amt').innerHTML = fmt(r.total) + '<small>incassato ' + fmt(r.cashed) + '</small>';
+  });
+
+  last = d;
+
+  // Lista inserimenti (solo PC): ridisegna solo se cambiata, così il clic su "Elimina" non va perso
   const key = d.entries.map((e) => e.id).join(',');
   if (!$('items') || key === lastListKey) return;
   lastListKey = key;
   $('items').innerHTML = d.entries.length ? d.entries.map((e) =>
-    '<div class="item"><span class="amt">' + eur2.format(e.amount) + '</span><span class="note">' + esc(e.note || '') +
+    '<div class="item"><span class="who">' + esc(e.seller || '—') + '</span><span class="vals">' +
+    (e.amount ? '<b>' + eur2.format(e.amount) + '</b> fatt. ' : '') + (e.cashed ? '<b>' + eur2.format(e.cashed) + '</b> inc.' : '') +
+    (e.note ? '<span>' + esc(e.note) + '</span>' : '') +
     '</span><span class="time">' + new Date(e.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) +
     '</span><button type="button" class="del" data-id="' + e.id + '">Elimina</button></div>'
-  ).join('') : '<div class="item"><span class="note">Nessun inserimento</span></div>';
+  ).join('') : '<div class="item"><span class="vals">Nessun inserimento</span></div>';
 }
-
-function esc(s) { return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 async function refresh() {
   try {
@@ -253,15 +329,23 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 async function keepAwake() { try { await navigator.wakeLock?.request('screen'); } catch (e) {} }
 keepAwake(); document.addEventListener('visibilitychange', () => { if (!document.hidden) keepAwake(); });
 
-// Doppio clic sul totale = schermo intero (comodo sulla TV)
+// Doppio clic = schermo intero (comodo sulla TV)
 $('screen').addEventListener('dblclick', () => document.documentElement.requestFullscreen?.());
 
-// Solo nella pagina del PC: modulo per inserire il fatturato
+// Solo nella pagina del PC: modulo per inserire
 if ($('addForm')) {
-$('amount').focus();
+let seller = null;
+$('sellers').onclick = (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  seller = b.dataset.s;
+  [...$('sellers').children].forEach((x) => x.classList.toggle('on', x === b));
+  $('amount').focus();
+};
 
 function parseAmount(s) {
   s = s.replace(/[€\\s]/g, '');
+  if (!s) return 0;
   if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');
   else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');
   return Number(s);
@@ -269,16 +353,17 @@ function parseAmount(s) {
 
 $('addForm').onsubmit = async (e) => {
   e.preventDefault();
-  const amount = parseAmount($('amount').value);
-  if (!isFinite(amount) || amount === 0) { $('msg').textContent = 'Importo non valido'; return; }
+  if (!seller) { $('msg').textContent = 'Scegli il sales'; return; }
+  const amount = parseAmount($('amount').value), cashed = parseAmount($('cashedIn').value);
+  if (!isFinite(amount) || !isFinite(cashed)) { $('msg').textContent = 'Importo non valido'; return; }
+  if (!amount && !cashed) { $('msg').textContent = 'Scrivi il fatturato o l\\'incassato'; return; }
   $('msg').textContent = 'Salvo…';
   try {
-    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount, note: $('note').value }) });
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seller, amount, cashed, note: $('note').value }) });
     if (!r.ok) throw new Error();
     render(await r.json());
-    $('amount').value = ''; $('note').value = '';
-    $('msg').textContent = '✓ Aggiunto ' + eur2.format(amount);
-    $('amount').focus();
+    $('amount').value = ''; $('cashedIn').value = ''; $('note').value = '';
+    $('msg').textContent = '✓ Aggiunto per ' + seller;
   } catch (err) { $('msg').textContent = 'Errore, riprova'; }
 };
 
@@ -339,12 +424,17 @@ export async function handleDashboard(request, env, url) {
 
     if (request.method === "POST") {
       const body = await request.json().catch(() => ({}));
-      const amount = Math.round(Number(body.amount) * 100) / 100;
-      if (!isFinite(amount) || amount === 0 || Math.abs(amount) > 100000000) return json({ error: "importo non valido" }, 400);
+      const amount = round2(Number(body.amount) || 0);
+      const cashed = round2(Number(body.cashed) || 0);
+      const valid = (n) => isFinite(n) && Math.abs(n) <= 100000000;
+      if (!valid(amount) || !valid(cashed) || (!amount && !cashed)) return json({ error: "importo non valido" }, 400);
+      if (!SELLERS.includes(body.seller)) return json({ error: "sales non valido" }, 400);
       const day = await readDay(kv, date);
       day.entries.push({
         id: toHex(crypto.getRandomValues(new Uint8Array(6))),
+        seller: body.seller,
         amount,
+        cashed,
         note: String(body.note || "").slice(0, 80),
         ts: Date.now(),
       });
