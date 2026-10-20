@@ -25,34 +25,40 @@
 
 <style>
   :root {
-    --bg: #0a1628;
-    --bg-soft: #102038;
-    --text: #ffffff;
-    --muted: #b8c4d6;
-    --accent: #1d4ed8;   /* colore brand: cambialo qui se serve */
-    --accent-hover: #1e40af;
-    --line: rgba(255, 255, 255, 0.12);
+    --blue: #1f0fd6;        /* colore brand (come nel banner): cambialo qui se serve */
+    --blue-dark: #1608b0;
+    --navy: #0b1437;
+    --muted: #5b6478;
+    --soft: #f3f5fb;
+    --line: #e3e7f1;
+    --white: #ffffff;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
     margin: 0;
-    background: var(--bg);
-    color: var(--text);
+    background: var(--white);
+    color: var(--navy);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 17px;
     line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
-  section { padding: 56px 0; border-top: 1px solid var(--line); }
-  h1, h2 { line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.01em; }
-  h1 { font-size: 2rem; font-weight: 800; }
-  h2 { font-size: 1.6rem; font-weight: 800; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  section { padding: 64px 0; }
+  .alt { background: var(--soft); }
+  h1, h2, h3 { line-height: 1.12; margin: 0 0 16px; letter-spacing: -0.02em; color: var(--navy); }
+  h1 { font-size: 2.1rem; font-weight: 900; color: var(--blue); }
+  h2 { font-size: 1.8rem; font-weight: 900; }
+  h3 { font-size: 1.15rem; font-weight: 800; }
   p { margin: 0 0 14px; }
   .kicker {
-    display: inline-block; font-size: 0.8rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
-    margin-bottom: 12px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 12px;
+  }
+  .kicker::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--blue);
   }
   .sub { color: var(--muted); font-size: 1.05rem; }
 
@@ -60,122 +66,132 @@
   .cta {
     display: block; width: 100%; max-width: 420px; margin: 24px auto 0;
     padding: 18px 20px; border: 0; border-radius: 12px;
-    background: var(--accent); color: #fff; text-align: center;
+    background: var(--blue); color: #fff; text-align: center;
     font-size: 1.15rem; font-weight: 800; text-decoration: none;
-    box-shadow: 0 8px 24px rgba(29, 78, 216, 0.35);
-    transition: background 0.2s;
+    box-shadow: 0 10px 28px rgba(31, 15, 214, 0.28);
+    transition: background 0.2s, transform 0.2s;
   }
-  .cta:hover, .cta:focus-visible { background: var(--accent-hover); }
+  .cta:hover, .cta:focus-visible { background: var(--blue-dark); transform: translateY(-1px); }
   .cta-wrap { text-align: center; }
 
   /* Hero */
-  .hero { padding: 40px 0 56px; border-top: 0; }
-  .hero h1 { font-size: 2.1rem; }
-  .when {
-    display: inline-block; margin: 8px 0 18px; padding: 8px 14px;
-    border: 1px solid var(--line); border-radius: 999px;
-    font-size: 0.95rem; color: var(--text);
+  .hero { padding: 40px 0 64px; }
+  .hero-grid { display: grid; gap: 32px; align-items: center; }
+  .hero .sub { font-size: 1.08rem; }
+  .date-card {
+    background: var(--blue); color: #fff; border-radius: 20px; padding: 28px 24px;
+    box-shadow: 0 20px 50px rgba(31, 15, 214, 0.25);
   }
+  .date-card .day { font-size: 4.2rem; font-weight: 900; line-height: 1; letter-spacing: -0.03em; }
+  .date-card .month { font-size: 1rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 6px; }
+  .date-card .time { display: inline-block; margin-top: 14px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.16); font-weight: 700; }
   .countdown {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-    margin: 24px 0 0; max-width: 420px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 22px;
   }
   .countdown[hidden] { display: none; }
-  .countdown div {
-    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 10px;
-    padding: 10px 4px; text-align: center;
-  }
-  .countdown b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
-  .countdown span { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+  .countdown div { background: rgba(255,255,255,0.12); border-radius: 12px; padding: 10px 4px; text-align: center; }
+  .countdown b { display: block; font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+  .countdown span { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; }
 
   /* Liste */
-  ul.points { list-style: none; padding: 0; margin: 0; }
+  ul.points { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
   ul.points li {
-    position: relative; padding: 14px 0 14px 34px; border-bottom: 1px solid var(--line);
+    position: relative; padding: 18px 18px 18px 56px; background: var(--white);
+    border: 1px solid var(--line); border-radius: 14px;
   }
   ul.points li::before {
-    content: "✓"; position: absolute; left: 0; top: 14px;
-    color: var(--accent); font-weight: 900; font-size: 1.1rem;
+    content: "✓"; position: absolute; left: 18px; top: 16px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff;
+    font-size: 0.9rem; font-weight: 900; display: flex; align-items: center; justify-content: center;
   }
   .two { display: grid; gap: 16px; }
   .card {
-    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 14px; padding: 22px;
+    background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 26px;
+    box-shadow: 0 8px 24px rgba(11, 20, 55, 0.05);
   }
-  .card h3 { margin: 0 0 12px; font-size: 1.1rem; }
+  .card.yes { border-top: 4px solid var(--blue); }
+  .card.no { border-top: 4px solid var(--navy); }
   .card ul { margin: 0; padding-left: 20px; color: var(--muted); }
   .card li { margin-bottom: 8px; }
 
   /* Chi parla */
-  .speaker { display: grid; gap: 20px; align-items: center; }
-  .photo {
-    width: 100%; aspect-ratio: 4 / 5; max-width: 320px; border-radius: 14px;
-    background: var(--bg-soft); border: 1px dashed var(--muted);
-    display: flex; align-items: center; justify-content: center; color: var(--muted);
+  .speaker { display: grid; gap: 28px; align-items: center; }
+  .speaker img {
+    width: 100%; max-width: 340px; height: auto; border-radius: 20px; display: block; margin: 0 auto;
+    box-shadow: 0 20px 50px rgba(11, 20, 55, 0.15);
   }
+  .speaker .name { color: var(--blue); font-weight: 800; margin-bottom: 4px; }
 
   /* Prova */
-  .proof img, .proof .shot {
-    width: 100%; border-radius: 12px; display: block;
-    background: var(--bg-soft); border: 1px dashed var(--muted);
+  .shot {
+    width: 100%; border-radius: 18px; background: var(--white); border: 2px dashed #b9c0d4;
     aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center;
     color: var(--muted); text-align: center; padding: 16px;
   }
-  .big { font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0 0 6px; }
+  .big { font-size: 2.6rem; font-weight: 900; color: var(--blue); margin: 18px 0 4px; letter-spacing: -0.02em; }
   .note { font-size: 0.85rem; color: var(--muted); margin-top: 12px; }
 
   /* Form */
   #iscriviti { scroll-margin-top: 16px; }
+  .form-shell {
+    background: var(--soft); border-radius: 22px; padding: 22px;
+  }
   #form-ghl {
-    background: #fff; color: #0a1628; border-radius: 14px; padding: 16px;
-    min-height: 360px; transition: opacity 0.2s;
+    background: var(--white); color: var(--navy); border-radius: 16px; padding: 16px;
+    min-height: 360px; border: 1px solid var(--line); transition: opacity 0.2s;
   }
   #form-ghl.locked { opacity: 0.45; pointer-events: none; }
-  #form-ghl .placeholder { color: #5b6576; font-size: 0.95rem; text-align: center; margin: 120px 0; }
-  .consent { margin-top: 16px; font-size: 0.9rem; color: var(--muted); }
+  #form-ghl .placeholder { color: var(--muted); font-size: 0.95rem; text-align: center; margin: 120px 0; }
+  .consent { margin-top: 18px; font-size: 0.9rem; color: var(--muted); }
   .consent label { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; cursor: pointer; }
-  .consent input { margin-top: 5px; width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--accent); }
-  .consent a { color: var(--text); }
-  .consent .hint { display: none; color: #fca5a5; margin-top: 4px; }
+  .consent input { margin-top: 5px; width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--blue); }
+  .consent a { color: var(--blue); }
+  .consent .hint { display: none; color: #c62828; margin-top: 4px; font-weight: 700; }
   .consent .hint.show { display: block; }
 
   /* FAQ */
-  details { border-bottom: 1px solid var(--line); padding: 16px 0; }
-  summary { font-weight: 700; cursor: pointer; list-style: none; }
+  details { border-bottom: 1px solid var(--line); padding: 18px 0; }
+  summary { font-weight: 800; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  summary::after { content: "+"; color: var(--blue); font-size: 1.4rem; line-height: 1; }
+  details[open] summary::after { content: "–"; }
   summary::-webkit-details-marker { display: none; }
   details p { color: var(--muted); margin: 10px 0 0; }
 
   /* Footer */
-  footer { padding: 32px 0 110px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); }
-  footer a { color: var(--muted); }
+  footer { padding: 32px 0 120px; background: var(--navy); color: #aab3cc; font-size: 0.85rem; }
+  footer a { color: #d6dcf0; }
 
   /* Banner cookie */
   #cookie-banner {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
-    background: #fff; color: #0a1628; padding: 16px; box-shadow: 0 -6px 24px rgba(0,0,0,0.25);
+    background: var(--white); color: var(--navy); padding: 16px;
+    box-shadow: 0 -8px 30px rgba(11, 20, 55, 0.18);
   }
   #cookie-banner[hidden] { display: none; }
   #cookie-banner p { font-size: 0.9rem; margin: 0 0 12px; }
-  #cookie-banner a { color: #0a1628; }
+  #cookie-banner a { color: var(--blue); }
   #cookie-banner .btns { display: flex; gap: 10px; }
   #cookie-banner button {
-    flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 0.95rem;
-    border: 2px solid #0a1628; cursor: pointer; background: #fff; color: #0a1628;
+    flex: 1; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem;
+    border: 2px solid var(--navy); cursor: pointer; background: var(--white); color: var(--navy);
   }
-  #cookie-banner button.primary { background: #0a1628; color: #fff; }
+  #cookie-banner button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
 
   /* Tablet e desktop */
   @media (min-width: 720px) {
     body { font-size: 18px; }
-    h1 { font-size: 3rem; }
-    .hero h1 { font-size: 3.4rem; }
-    h2 { font-size: 2.2rem; }
-    section { padding: 88px 0; }
+    h1 { font-size: 3.4rem; }
+    h2 { font-size: 2.4rem; }
+    section { padding: 96px 0; }
+    .hero { padding: 72px 0 96px; }
+    .hero-grid { grid-template-columns: 1.2fr 1fr; gap: 56px; }
+    .hero .cta { margin-left: 0; }
+    .date-card .day { font-size: 6rem; }
     .two { grid-template-columns: 1fr 1fr; }
-    .speaker { grid-template-columns: 320px 1fr; gap: 40px; }
-    .hero-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: start; }
-    .hero-grid .cta { margin-left: 0; }
-    .cta-wrap .cta { margin-left: auto; margin-right: auto; }
-    .countdown { margin-left: 0; }
+    ul.points { grid-template-columns: 1fr 1fr; }
+    .speaker { grid-template-columns: 340px 1fr; gap: 56px; }
+    .speaker img { margin: 0; }
+    .form-shell { padding: 32px; }
     footer { padding-bottom: 32px; }
     #cookie-banner { display: flex; align-items: center; gap: 24px; }
     #cookie-banner p { margin: 0; flex: 1; }
@@ -193,7 +209,14 @@
       <span class="kicker">Webinar in diretta</span>
       <h1>Da 0 a 8 incarichi al mese: come acquisire venditori online e calcolare in anticipo quanti incarichi ti porta ogni euro investito</h1>
       <p class="sub">Venerdì 23 ottobre 2026, ore 19:00 (ora italiana). Diretta di circa 60 minuti, con domande in chat.</p>
-      <div class="when" aria-hidden="true">Venerdì 23 ottobre · 19:00</div>
+      <a class="cta" href="#iscriviti">Riserva il mio posto</a>
+      <!-- [POSTI LIMITATI: solo se vero] -->
+    </div>
+
+    <aside class="date-card" aria-label="Data del webinar">
+      <div class="day">23</div>
+      <div class="month">Ottobre 2026</div>
+      <span class="time">Venerdì · ore 19:00</span>
 
       <!-- Countdown: JS lo nasconde se la data è già passata -->
       <div class="countdown" id="countdown" hidden aria-label="Tempo al webinar">
@@ -202,16 +225,12 @@
         <div><b id="cd-m">00</b><span>minuti</span></div>
         <div><b id="cd-s">00</b><span>secondi</span></div>
       </div>
-    </div>
-    <div>
-      <a class="cta" href="#iscriviti">Riserva il mio posto</a>
-      <!-- [POSTI LIMITATI: solo se vero] -->
-    </div>
+    </aside>
   </div>
 </header>
 
 <!-- COSA VEDRAI -->
-<section>
+<section class="alt">
   <div class="wrap">
     <span class="kicker">Nel webinar</span>
     <h2>Cosa vedrai</h2>
@@ -233,7 +252,7 @@
     <span class="kicker">Per te?</span>
     <h2>Per chi è</h2>
     <div class="two">
-      <div class="card">
+      <div class="card yes">
         <h3>Questo webinar è per te se</h3>
         <ul>
           <li>sei titolare o agente di un'agenzia immobiliare in Italia;</li>
@@ -241,7 +260,7 @@
           <li>vuoi sapere in anticipo quanto ti costa un incarico.</li>
         </ul>
       </div>
-      <div class="card">
+      <div class="card no">
         <h3>Non è per te se</h3>
         <ul>
           <li>cerchi un risultato garantito dalla sera alla mattina;</li>
@@ -257,21 +276,21 @@
 </section>
 
 <!-- CHI PARLA -->
-<section>
+<section class="alt">
   <div class="wrap speaker">
-    <!-- SEGNAPOSTO: sostituisci con la foto di Samuele (formato 4:5, ottimizzata, max ~100 KB) -->
-    <div class="photo" role="img" aria-label="Foto di Samuele (segnaposto)">Foto Samuele</div>
+    <img src="/assets/img/samuele-diotti.jpg" alt="Samuele Diotti, fondatore di Vendita Uno" width="1000" height="998" loading="lazy">
     <div>
       <span class="kicker">Chi parla</span>
-      <h2>Samuele</h2>
-      <p>Samuele è il fondatore di Vendita Uno, agenzia di lead generation per agenzie immobiliari in Italia.</p>
-      <p>Nel webinar racconta come gestisce acquisizione e qualificazione dei venditori, con esempi dal lavoro sul campo.</p>
+      <h2>Samuele Diotti</h2>
+      <p class="name">Fondatore di Vendita Uno</p>
+      <p>Vendita Uno è un'agenzia di lead generation per agenzie immobiliari in Italia.</p>
+      <p>Nel webinar Samuele racconta come acquisire e qualificare i venditori, con esempi dal lavoro sul campo.</p>
     </div>
   </div>
 </section>
 
 <!-- PROVA -->
-<section class="proof">
+<section>
   <div class="wrap">
     <span class="kicker">Risultati reali</span>
     <h2>Un risultato reale</h2>
@@ -288,31 +307,52 @@
 </section>
 
 <!-- FORM -->
-<section id="iscriviti">
+<section id="iscriviti" class="alt">
   <div class="wrap">
     <span class="kicker">Iscrizione gratuita</span>
     <h2>Riserva il tuo posto</h2>
     <p class="sub">Nome, cognome, WhatsApp, email e comune della tua zona. Ti mandiamo il link e il promemoria.</p>
 
-    <!-- ==== FORM GOHIGHLEVEL ====
-         INCOLLA QUI l'embed del form GoHighLevel (il codice copiato da GHL, di solito un iframe).
-         Campi previsti nel form: nome, cognome, telefono (WhatsApp), email, comune di zona.
-         Dopo l'invio, nelle impostazioni del form GHL imposta il redirect su:
-         https://venditauno.it/webinar/thank-you.html -->
-    <div id="form-ghl" class="locked">
-      <p class="placeholder">Modulo di iscrizione: incolla qui l'embed GoHighLevel</p>
-    </div>
+    <div class="form-shell">
+      <!-- ==== FORM GOHIGHLEVEL ====
+           INCOLLA QUI l'embed del form GoHighLevel (il codice copiato da GHL, di solito un iframe).
+           Campi previsti nel form: nome, cognome, telefono (WhatsApp), email, comune di zona.
+           Dopo l'invio, nelle impostazioni del form GHL imposta il redirect su:
+           https://venditauno.it/webinar/thank-you.html -->
+      <div id="form-ghl" class="locked">
+        <iframe
+          src="https://api.leadconnectorhq.com/widget/form/1k3xpzUiSU0bkL1YqsUs"
+          style="width:100%;height:795px;border:none;border-radius:3px"
+          id="inline-1k3xpzUiSU0bkL1YqsUs"
+          data-layout="{'id':'INLINE'}"
+          data-trigger-type="alwaysShow"
+          data-trigger-value=""
+          data-activation-type="alwaysActivated"
+          data-activation-value=""
+          data-deactivation-type="neverDeactivate"
+          data-deactivation-value=""
+          data-form-name="Property Investment Contact"
+          data-height="795"
+          data-layout-iframe-id="inline-1k3xpzUiSU0bkL1YqsUs"
+          data-form-id="1k3xpzUiSU0bkL1YqsUs"
+          data-cookie-consent="true"
+          data-cookie-consent-provider="auto"
+          title="Modulo di iscrizione webinar"
+        ></iframe>
+        <script src="https://link.msgsndr.com/js/form_embed.js"></script>
+      </div>
 
-    <div class="consent">
-      <label>
-        <input type="checkbox" id="consent-privacy" required>
-        <span>Ho letto la <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a> e acconsento al trattamento dei miei dati per essere iscritto al webinar. <strong>(obbligatorio)</strong></span>
-      </label>
-      <p class="hint" id="consent-hint">Spunta il consenso per attivare il modulo.</p>
-      <label>
-        <input type="checkbox" id="consent-marketing">
-        <span>Acconsento a ricevere comunicazioni commerciali di Vendita Uno via email e WhatsApp. (facoltativo)</span>
-      </label>
+      <div class="consent">
+        <label>
+          <input type="checkbox" id="consent-privacy" required>
+          <span>Ho letto la <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a> e acconsento al trattamento dei miei dati per essere iscritto al webinar. <strong>(obbligatorio)</strong></span>
+        </label>
+        <p class="hint" id="consent-hint">Spunta il consenso per attivare il modulo.</p>
+        <label>
+          <input type="checkbox" id="consent-marketing">
+          <span>Acconsento a ricevere comunicazioni commerciali di Vendita Uno via email e WhatsApp. (facoltativo)</span>
+        </label>
+      </div>
     </div>
   </div>
 </section>
