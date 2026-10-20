@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Webinar Vendita Uno: come acquisire venditori online</title>
+<meta name="description" content="Webinar in diretta di 60 minuti per titolari e agenti immobiliari: come acquisire venditori online e calcolare quanti incarichi ti porta ogni euro investito.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://venditauno.it/webinar/">
+
+<!-- ==== TRACCIAMENTO ====
+     Gli script qui sotto NON partono subito: il banner cookie li attiva solo dopo "Accetta".
+     Per aggiungere il pixel Meta: incolla lo snippet completo dentro il blocco "PIXEL META".
+     Per altri script: stesso schema, un blocco per ciascuno, sempre con data-consent="marketing". -->
+
+<!-- PIXEL META: incolla qui lo snippet del pixel (con il tuo ID) -->
+<script type="text/plain" data-consent="marketing">
+  /* INCOLLA QUI LO SCRIPT DEL PIXEL META */
+</script>
+
+<!-- ALTRI SCRIPT DI TRACCIAMENTO (es. Google Analytics, GTM): incollali qui -->
+<script type="text/plain" data-consent="marketing">
+  /* INCOLLA QUI ALTRI SCRIPT */
+</script>
+
+<style>
+  :root {
+    --bg: #0a1628;
+    --bg-soft: #102038;
+    --text: #ffffff;
+    --muted: #b8c4d6;
+    --accent: #1d4ed8;   /* colore brand: cambialo qui se serve */
+    --accent-hover: #1e40af;
+    --line: rgba(255, 255, 255, 0.12);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  h1, h2 { line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.01em; }
+  h1 { font-size: 2rem; font-weight: 800; }
+  h2 { font-size: 1.6rem; font-weight: 800; }
+  p { margin: 0 0 14px; }
+  .kicker {
+    display: inline-block; font-size: 0.8rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .sub { color: var(--muted); font-size: 1.05rem; }
+
+  /* Bottone unico: stesso testo e stile in tutta la pagina */
+  .cta {
+    display: block; width: 100%; max-width: 420px; margin: 24px auto 0;
+    padding: 18px 20px; border: 0; border-radius: 12px;
+    background: var(--accent); color: #fff; text-align: center;
+    font-size: 1.15rem; font-weight: 800; text-decoration: none;
+    box-shadow: 0 8px 24px rgba(29, 78, 216, 0.35);
+    transition: background 0.2s;
+  }
+  .cta:hover, .cta:focus-visible { background: var(--accent-hover); }
+  .cta-wrap { text-align: center; }
+
+  /* Hero */
+  .hero { padding: 40px 0 56px; border-top: 0; }
+  .hero h1 { font-size: 2.1rem; }
+  .when {
+    display: inline-block; margin: 8px 0 18px; padding: 8px 14px;
+    border: 1px solid var(--line); border-radius: 999px;
+    font-size: 0.95rem; color: var(--text);
+  }
+  .countdown {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin: 24px 0 0; max-width: 420px;
+  }
+  .countdown[hidden] { display: none; }
+  .countdown div {
+    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 4px; text-align: center;
+  }
+  .countdown b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .countdown span { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+
+  /* Liste */
+  ul.points { list-style: none; padding: 0; margin: 0; }
+  ul.points li {
+    position: relative; padding: 14px 0 14px 34px; border-bottom: 1px solid var(--line);
+  }
+  ul.points li::before {
+    content: "✓"; position: absolute; left: 0; top: 14px;
+    color: var(--accent); font-weight: 900; font-size: 1.1rem;
+  }
+  .two { display: grid; gap: 16px; }
+  .card {
+    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 14px; padding: 22px;
+  }
+  .card h3 { margin: 0 0 12px; font-size: 1.1rem; }
+  .card ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  .card li { margin-bottom: 8px; }
+
+  /* Chi parla */
+  .speaker { display: grid; gap: 20px; align-items: center; }
+  .photo {
+    width: 100%; aspect-ratio: 4 / 5; max-width: 320px; border-radius: 14px;
+    background: var(--bg-soft); border: 1px dashed var(--muted);
+    display: flex; align-items: center; justify-content: center; color: var(--muted);
+  }
+
+  /* Prova */
+  .proof img, .proof .shot {
+    width: 100%; border-radius: 12px; display: block;
+    background: var(--bg-soft); border: 1px dashed var(--muted);
+    aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); text-align: center; padding: 16px;
+  }
+  .big { font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0 0 6px; }
+  .note { font-size: 0.85rem; color: var(--muted); margin-top: 12px; }
+
+  /* Form */
+  #iscriviti { scroll-margin-top: 16px; }
+  #form-ghl {
+    background: #fff; color: #0a1628; border-radius: 14px; padding: 16px;
+    min-height: 360px; transition: opacity 0.2s;
+  }
+  #form-ghl.locked { opacity: 0.45; pointer-events: none; }
+  #form-ghl .placeholder { color: #5b6576; font-size: 0.95rem; text-align: center; margin: 120px 0; }
+  .consent { margin-top: 16px; font-size: 0.9rem; color: var(--muted); }
+  .consent label { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; cursor: pointer; }
+  .consent input { margin-top: 5px; width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--accent); }
+  .consent a { color: var(--text); }
+  .consent .hint { display: none; color: #fca5a5; margin-top: 4px; }
+  .consent .hint.show { display: block; }
+
+  /* FAQ */
+  details { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  summary { font-weight: 700; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+
+  /* Footer */
+  footer { padding: 32px 0 110px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); }
+  footer a { color: var(--muted); }
+
+  /* Banner cookie */
+  #cookie-banner {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: #fff; color: #0a1628; padding: 16px; box-shadow: 0 -6px 24px rgba(0,0,0,0.25);
+  }
+  #cookie-banner[hidden] { display: none; }
+  #cookie-banner p { font-size: 0.9rem; margin: 0 0 12px; }
+  #cookie-banner a { color: #0a1628; }
+  #cookie-banner .btns { display: flex; gap: 10px; }
+  #cookie-banner button {
+    flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 0.95rem;
+    border: 2px solid #0a1628; cursor: pointer; background: #fff; color: #0a1628;
+  }
+  #cookie-banner button.primary { background: #0a1628; color: #fff; }
+
+  /* Tablet e desktop */
+  @media (min-width: 720px) {
+    body { font-size: 18px; }
+    h1 { font-size: 3rem; }
+    .hero h1 { font-size: 3.4rem; }
+    h2 { font-size: 2.2rem; }
+    section { padding: 88px 0; }
+    .two { grid-template-columns: 1fr 1fr; }
+    .speaker { grid-template-columns: 320px 1fr; gap: 40px; }
+    .hero-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: start; }
+    .hero-grid .cta { margin-left: 0; }
+    .cta-wrap .cta { margin-left: auto; margin-right: auto; }
+    .countdown { margin-left: 0; }
+    footer { padding-bottom: 32px; }
+    #cookie-banner { display: flex; align-items: center; gap: 24px; }
+    #cookie-banner p { margin: 0; flex: 1; }
+    #cookie-banner .btns { flex: 0 0 auto; }
+    #cookie-banner button { flex: none; min-width: 140px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="kicker">Webinar in diretta</span>
+      <h1>Da 0 a 8 incarichi al mese: come acquisire venditori online e calcolare in anticipo quanti incarichi ti porta ogni euro investito</h1>
+      <p class="sub">Venerdì 23 ottobre 2026, ore 19:00 (ora italiana). Diretta di circa 60 minuti, con domande in chat.</p>
+      <div class="when" aria-hidden="true">Venerdì 23 ottobre · 19:00</div>
+
+      <!-- Countdown: JS lo nasconde se la data è già passata -->
+      <div class="countdown" id="countdown" hidden aria-label="Tempo al webinar">
+        <div><b id="cd-d">00</b><span>giorni</span></div>
+        <div><b id="cd-h">00</b><span>ore</span></div>
+        <div><b id="cd-m">00</b><span>minuti</span></div>
+        <div><b id="cd-s">00</b><span>secondi</span></div>
+      </div>
+    </div>
+    <div>
+      <a class="cta" href="#iscriviti">Riserva il mio posto</a>
+      <!-- [POSTI LIMITATI: solo se vero] -->
+    </div>
+  </div>
+</header>
+
+<!-- COSA VEDRAI -->
+<section>
+  <div class="wrap">
+    <span class="kicker">Nel webinar</span>
+    <h2>Cosa vedrai</h2>
+    <ul class="points">
+      <li>I numeri da conoscere prima di fare pubblicità: costo per contatto e costo per incarico.</li>
+      <li>Come calcolare quanti incarichi ti porta un budget, prima di spendere.</li>
+      <li>Quale pubblicità funziona e quale porta solo curiosi che vogliono "valutare casa".</li>
+      <li>Come filtrare i contatti e rispondere subito, anche con un assistente automatico su WhatsApp.</li>
+    </ul>
+    <div class="cta-wrap">
+      <a class="cta" href="#iscriviti">Riserva il mio posto</a>
+    </div>
+  </div>
+</section>
+
+<!-- PER CHI È -->
+<section>
+  <div class="wrap">
+    <span class="kicker">Per te?</span>
+    <h2>Per chi è</h2>
+    <div class="two">
+      <div class="card">
+        <h3>Questo webinar è per te se</h3>
+        <ul>
+          <li>sei titolare o agente di un'agenzia immobiliare in Italia;</li>
+          <li>vuoi più venditori, non solo più curiosi;</li>
+          <li>vuoi sapere in anticipo quanto ti costa un incarico.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Non è per te se</h3>
+        <ul>
+          <li>cerchi un risultato garantito dalla sera alla mattina;</li>
+          <li>non hai ancora un'agenzia o un'attività attiva sul territorio;</li>
+          <li>vuoi solo sentire parlare di marketing in generale.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="cta-wrap">
+      <a class="cta" href="#iscriviti">Riserva il mio posto</a>
+    </div>
+  </div>
+</section>
+
+<!-- CHI PARLA -->
+<section>
+  <div class="wrap speaker">
+    <!-- SEGNAPOSTO: sostituisci con la foto di Samuele (formato 4:5, ottimizzata, max ~100 KB) -->
+    <div class="photo" role="img" aria-label="Foto di Samuele (segnaposto)">Foto Samuele</div>
+    <div>
+      <span class="kicker">Chi parla</span>
+      <h2>Samuele</h2>
+      <p>Samuele è il fondatore di Vendita Uno, agenzia di lead generation per agenzie immobiliari in Italia.</p>
+      <p>Nel webinar racconta come gestisce acquisizione e qualificazione dei venditori, con esempi dal lavoro sul campo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROVA -->
+<section class="proof">
+  <div class="wrap">
+    <span class="kicker">Risultati reali</span>
+    <h2>Un risultato reale</h2>
+    <!-- SEGNAPOSTO: sostituisci questo blocco con lo screenshot reale di un cliente (con permesso scritto).
+         Non inserire numeri o testimonianze non verificate. -->
+    <div class="shot">Screenshot di un risultato reale di un cliente: da inserire</div>
+    <p class="big">[NUMERO REALE] incarichi</p>
+    <p>[DESCRIZIONE REALE: zona, budget mensile, periodo]</p>
+    <p class="note">I risultati dipendono da zona, budget e mercato.</p>
+    <div class="cta-wrap">
+      <a class="cta" href="#iscriviti">Riserva il mio posto</a>
+    </div>
+  </div>
+</section>
+
+<!-- FORM -->
+<section id="iscriviti">
+  <div class="wrap">
+    <span class="kicker">Iscrizione gratuita</span>
+    <h2>Riserva il tuo posto</h2>
+    <p class="sub">Nome, cognome, WhatsApp, email e comune della tua zona. Ti mandiamo il link e il promemoria.</p>
+
+    <!-- ==== FORM GOHIGHLEVEL ====
+         INCOLLA QUI l'embed del form GoHighLevel (il codice copiato da GHL, di solito un iframe).
+         Campi previsti nel form: nome, cognome, telefono (WhatsApp), email, comune di zona.
+         Dopo l'invio, nelle impostazioni del form GHL imposta il redirect su:
+         https://venditauno.it/webinar/thank-you.html -->
+    <div id="form-ghl" class="locked">
+      <p class="placeholder">Modulo di iscrizione: incolla qui l'embed GoHighLevel</p>
+    </div>
+
+    <div class="consent">
+      <label>
+        <input type="checkbox" id="consent-privacy" required>
+        <span>Ho letto la <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a> e acconsento al trattamento dei miei dati per essere iscritto al webinar. <strong>(obbligatorio)</strong></span>
+      </label>
+      <p class="hint" id="consent-hint">Spunta il consenso per attivare il modulo.</p>
+      <label>
+        <input type="checkbox" id="consent-marketing">
+        <span>Acconsento a ricevere comunicazioni commerciali di Vendita Uno via email e WhatsApp. (facoltativo)</span>
+      </label>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="wrap">
+    <span class="kicker">Domande frequenti</span>
+    <h2>FAQ</h2>
+    <details>
+      <summary>Quando è il webinar?</summary>
+      <p>Venerdì 23 ottobre 2026 alle 19:00, ora italiana. Il link della diretta arriva dopo l'iscrizione.</p>
+    </details>
+    <details>
+      <summary>Quanto dura?</summary>
+      <p>Circa 60 minuti, in diretta, con spazio per le domande.</p>
+    </details>
+    <details>
+      <summary>Resterà il replay?</summary>
+      <p>[CONFERMARE: sì/no e dove sarà disponibile]</p>
+    </details>
+    <details>
+      <summary>Serve registrarsi per forza?</summary>
+      <p>Sì. L'iscrizione serve a ricevere il link della diretta e il promemoria.</p>
+    </details>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <p>Vendita Uno · [RAGIONE SOCIALE] · P.IVA [DA COMPILARE]</p>
+    <p><a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a> · <a href="/cookie.html" target="_blank" rel="noopener">Cookie Policy</a></p>
+  </div>
+</footer>
+
+<!-- BANNER COOKIE -->
+<div id="cookie-banner" role="dialog" aria-label="Preferenze cookie" hidden>
+  <p>Usiamo cookie di tracciamento solo se accetti. <a href="/cookie.html" target="_blank" rel="noopener">Cookie Policy</a></p>
+  <div class="btns">
+    <button type="button" id="cookie-reject">Rifiuta</button>
+    <button type="button" id="cookie-accept" class="primary">Accetta</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ---------- Countdown (fuso Europe/Rome: 23 ottobre 2026 ore 19:00 CEST = 17:00 UTC) ---------- */
+  var target = Date.UTC(2026, 9, 23, 17, 0, 0);
+  var box = document.getElementById('countdown');
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+  function tick() {
+    var diff = target - Date.now();
+    if (diff <= 0) { box.hidden = true; return false; }
+    var s = Math.floor(diff / 1000);
+    document.getElementById('cd-d').textContent = pad(Math.floor(s / 86400));
+    document.getElementById('cd-h').textContent = pad(Math.floor((s % 86400) / 3600));
+    document.getElementById('cd-m').textContent = pad(Math.floor((s % 3600) / 60));
+    document.getElementById('cd-s').textContent = pad(s % 60);
+    return true;
+  }
+  if (tick()) {
+    box.hidden = false;
+    var timer = setInterval(function () { if (!tick()) clearInterval(timer); }, 1000);
+  }
+
+  /* ---------- Consenso: il modulo si sblocca solo con la checkbox obbligatoria ---------- */
+  var formBox = document.getElementById('form-ghl');
+  var privacy = document.getElementById('consent-privacy');
+  var hint = document.getElementById('consent-hint');
+  function syncConsent() {
+    formBox.classList.toggle('locked', !privacy.checked);
+    hint.classList.toggle('show', false);
+  }
+  privacy.addEventListener('change', syncConsent);
+  syncConsent();
+  // Blocca il click sul modulo se il consenso non c'è (anche con l'embed incollato)
+  formBox.addEventListener('click', function (e) {
+    if (!privacy.checked) {
+      e.preventDefault();
+      hint.classList.add('show');
+      privacy.focus();
+    }
+  }, true);
+
+  /* ---------- Cookie: gli script di tracciamento partono solo dopo "Accetta" ---------- */
+  function readChoice() {
+    try { return localStorage.getItem('vu_cookie_choice'); } catch (e) { return null; }
+  }
+  function saveChoice(v) {
+    try { localStorage.setItem('vu_cookie_choice', v); } catch (e) { /* ignorato */ }
+  }
+  function loadTracking() {
+    var blocks = document.querySelectorAll('script[data-consent="marketing"]');
+    for (var i = 0; i < blocks.length; i++) {
+      var s = document.createElement('script');
+      s.textContent = blocks[i].textContent;
+      blocks[i].parentNode.replaceChild(s, blocks[i]);
+    }
+  }
+  var banner = document.getElementById('cookie-banner');
+  var choice = readChoice();
+  if (choice === 'accepted') {
+    loadTracking();
+  } else if (choice !== 'rejected') {
+    banner.hidden = false;
+  }
+  document.getElementById('cookie-accept').addEventListener('click', function () {
+    saveChoice('accepted');
+    banner.hidden = true;
+    loadTracking();
+  });
+  document.getElementById('cookie-reject').addEventListener('click', function () {
+    saveChoice('rejected');
+    banner.hidden = true;
+  });
+})();
+</script>
+
+</body>
+</html>
