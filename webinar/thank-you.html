@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iscrizione confermata: webinar Vendita Uno</title>
+<meta name="robots" content="noindex">
+<!-- SCRIPT DI TRACCIAMENTO CONVERSIONE: incolla qui (es. evento Lead del pixel Meta, con lo stesso schema di index.html) -->
+
+<style>
+  :root {
+    --bg: #0a1628;
+    --bg-soft: #102038;
+    --text: #ffffff;
+    --muted: #b8c4d6;
+    --accent: #1d4ed8;
+    --accent-hover: #1e40af;
+    --line: rgba(255, 255, 255, 0.12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px; line-height: 1.55;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 56px 16px; }
+  h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 16px; font-weight: 800; }
+  p { margin: 0 0 14px; }
+  .muted { color: var(--muted); }
+  .when {
+    display: inline-block; margin: 4px 0 20px; padding: 10px 14px;
+    border: 1px solid var(--line); border-radius: 999px; font-weight: 700;
+  }
+  .btn {
+    display: block; width: 100%; padding: 18px 20px; border: 0; border-radius: 12px;
+    background: var(--accent); color: #fff; font-size: 1.1rem; font-weight: 800;
+    text-align: center; cursor: pointer; margin: 24px 0 8px;
+    box-shadow: 0 8px 24px rgba(29, 78, 216, 0.35);
+  }
+  .btn:hover, .btn:focus-visible { background: var(--accent-hover); }
+  .box {
+    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px; margin-top: 24px;
+  }
+  .box h2 { font-size: 1.1rem; margin: 0 0 10px; }
+  .box ol { margin: 0; padding-left: 20px; color: var(--muted); }
+  .box li { margin-bottom: 8px; }
+  .num { font-weight: 800; color: #fff; }
+  @media (min-width: 720px) {
+    h1 { font-size: 2.6rem; }
+    .wrap { padding: 88px 16px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Sei iscritto.</h1>
+  <p>Ci vediamo <strong>venerdì 23 ottobre 2026, alle 19:00</strong> (ora italiana).</p>
+  <span class="when">Venerdì 23 ottobre · 19:00</span>
+
+  <button class="btn" id="add-cal" type="button">Aggiungi al calendario</button>
+
+  <div class="box">
+    <h2>Prossimi passi</h2>
+    <ol>
+      <li>Ti mandiamo il promemoria su WhatsApp e via email. Salva il numero <span class="num">[NUMERO]</span> in rubrica, così non finisce tra lo spam.</li>
+      <li>Rispondi al messaggio WhatsApp di conferma: ci serve per capire la tua zona prima della diretta.</li>
+    </ol>
+  </div>
+
+  <p class="muted" style="margin-top:24px; font-size:0.9rem;">Il link della diretta: <span id="live-link">[LINK]</span></p>
+</main>
+
+<script>
+(function () {
+  // Dati del calendario: data, ora e link della diretta
+  var LIVE_URL = '[LINK]';
+  var start = '20261023T170000Z'; // 19:00 Europe/Rome (CEST) = 17:00 UTC
+  var end = '20261023T180000Z';   // durata circa 60 minuti
+
+  document.getElementById('add-cal').addEventListener('click', function () {
+    var ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Vendita Uno//Webinar//IT',
+      'BEGIN:VEVENT',
+      'UID:webinar-vendita-uno-20261023@venditauno.it',
+      'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z',
+      'DTSTART:' + start,
+      'DTEND:' + end,
+      'SUMMARY:Webinar Vendita Uno: da 0 a 8 incarichi al mese',
+      'DESCRIPTION:Diretta di circa 60 minuti con Samuele. Link: ' + LIVE_URL,
+      'URL:' + LIVE_URL,
+      'BEGIN:VALARM',
+      'TRIGGER:-PT15M',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Webinar Vendita Uno tra 15 minuti',
+      'END:VALARM',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    var blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'webinar-vendita-uno.ics';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+})();
+</script>
+</body>
+</html>
