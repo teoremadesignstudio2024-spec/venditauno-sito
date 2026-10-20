@@ -70,6 +70,13 @@
 
   /* Hero */
   .hero { padding: 40px 0 56px; border-top: 0; }
+  .hero-cover {
+    width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; margin: 0 0 28px;
+    background: var(--bg-soft); border: 1px dashed var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); text-align: center; padding: 20px; font-size: 0.95rem;
+  }
+  .hero-cover img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; display: block; }
   .hero h1 { font-size: 2.1rem; }
   .when {
     display: inline-block; margin: 8px 0 18px; padding: 8px 14px;
@@ -121,6 +128,8 @@
     color: var(--muted); text-align: center; padding: 16px;
   }
   .big { font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0 0 6px; }
+  .three .card { text-align: center; }
+  .three .card p:not(.big) { color: var(--muted); margin: 0; }
   .note { font-size: 0.85rem; color: var(--muted); margin-top: 12px; }
 
   /* Form */
@@ -171,6 +180,7 @@
     h2 { font-size: 2.2rem; }
     section { padding: 88px 0; }
     .two { grid-template-columns: 1fr 1fr; }
+    .two.three { grid-template-columns: 1fr 1fr 1fr; }
     .speaker { grid-template-columns: 320px 1fr; gap: 40px; }
     .hero-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: start; }
     .hero-grid .cta { margin-left: 0; }
@@ -188,24 +198,25 @@
 
 <!-- HERO -->
 <header class="hero">
-  <div class="wrap hero-grid">
-    <div>
-      <span class="kicker">Webinar in diretta</span>
-      <h1>Da 0 a 8 incarichi al mese, senza usare il passaparola.</h1>
-      <p class="sub">Venerdì 23 ottobre 2026, ore 19:00 (ora italiana). Diretta di circa 60 minuti, con domande in chat.</p>
-      <div class="when" aria-hidden="true">Venerdì 23 ottobre · 19:00</div>
+  <div class="wrap">
+    <!-- SEGNAPOSTO: sostituisci con <img src="/webinar/cover.jpg" alt="Da 0 a 8 incarichi al mese, senza usare il passaparola"> appena arriva il file della copertina -->
+    <div class="hero-cover" role="img" aria-label="Copertina webinar: Da 0 a 8 incarichi al mese, senza usare il passaparola">In attesa del file della copertina (immagine con Samuele e il collega, titolo e data)</div>
 
-      <!-- Countdown: JS lo nasconde se la data è già passata -->
-      <div class="countdown" id="countdown" hidden aria-label="Tempo al webinar">
-        <div><b id="cd-d">00</b><span>giorni</span></div>
-        <div><b id="cd-h">00</b><span>ore</span></div>
-        <div><b id="cd-m">00</b><span>minuti</span></div>
-        <div><b id="cd-s">00</b><span>secondi</span></div>
-      </div>
+    <span class="kicker">Evento esclusivo per titolari di agenzia immobiliare e agenti immobiliari</span>
+    <h1>Da 0 a 8 incarichi al mese, senza usare il passaparola.</h1>
+    <p class="sub">In questa live capiremo come prendere 8 incarichi ogni mese senza usare il passaparola.</p>
+    <div class="when" aria-hidden="true">Venerdì 23 ottobre · 19:00</div>
+
+    <!-- Countdown: JS lo nasconde se la data è già passata -->
+    <div class="countdown" id="countdown" hidden aria-label="Tempo al webinar">
+      <div><b id="cd-d">00</b><span>giorni</span></div>
+      <div><b id="cd-h">00</b><span>ore</span></div>
+      <div><b id="cd-m">00</b><span>minuti</span></div>
+      <div><b id="cd-s">00</b><span>secondi</span></div>
     </div>
-    <div>
-      <a class="cta" href="#iscriviti">Riserva il mio posto</a>
-      <!-- [POSTI LIMITATI: solo se vero] -->
+
+    <div class="cta-wrap">
+      <a class="cta" href="#iscriviti">Riserva il tuo posto</a>
     </div>
   </div>
 </header>
@@ -217,9 +228,9 @@
     <h2>Cosa vedrai</h2>
     <ul class="points">
       <li>I numeri da conoscere prima di fare pubblicità: costo per contatto e costo per incarico.</li>
-      <li>Come calcolare quanti incarichi ti porta un budget, prima di spendere.</li>
-      <li>Quale pubblicità funziona e quale porta solo curiosi che vogliono "valutare casa".</li>
-      <li>Come filtrare i contatti e rispondere subito, anche con un assistente automatico su WhatsApp.</li>
+      <li>Come calcolare quanti incarichi ti porta un budget, prima di spenderlo, come fanno gli imprenditori.</li>
+      <li>Quale pubblicità funziona e quale porta solo curiosi che vogliono "valutare casa" e basta, senza voler realmente vendere.</li>
+      <li>Come filtrare i contatti e rispondere subito, anche con un assistente automatico su WhatsApp con l'intelligenza artificiale.</li>
     </ul>
     <div class="cta-wrap">
       <a class="cta" href="#iscriviti">Riserva il mio posto</a>
@@ -236,9 +247,10 @@
       <div class="card">
         <h3>Questo webinar è per te se</h3>
         <ul>
-          <li>sei titolare o agente di un'agenzia immobiliare in Italia;</li>
-          <li>vuoi più venditori, non solo più curiosi;</li>
-          <li>vuoi sapere in anticipo quanto ti costa un incarico.</li>
+          <li>sei un agente immobiliare o un titolare di un'agenzia immobiliare in Italia;</li>
+          <li>vuoi più proprietari di casa che vogliono vendere, non curiosi;</li>
+          <li>vuoi aumentare i tuoi incarichi in esclusiva ogni mese e renderli costanti, perché il passaparola non è costante;</li>
+          <li>vuoi sapere in anticipo quanto ti costa un incarico: spendi Y per ricevere X incarichi, ogni mese, con costanza.</li>
         </ul>
       </div>
       <div class="card">
@@ -274,15 +286,24 @@
 <section class="proof">
   <div class="wrap">
     <span class="kicker">Risultati reali</span>
-    <h2>Un risultato reale</h2>
-    <!-- SEGNAPOSTO: sostituisci questo blocco con lo screenshot reale di un cliente (con permesso scritto).
-         Non inserire numeri o testimonianze non verificate. -->
-    <div class="shot">Screenshot di un risultato reale di un cliente: da inserire</div>
-    <p class="big">[NUMERO REALE] incarichi</p>
-    <p>[DESCRIZIONE REALE: zona, budget mensile, periodo]</p>
+    <h2>Risultati veri, di agenzie vere</h2>
+    <div class="two three">
+      <div class="card">
+        <p class="big">19.000€</p>
+        <p>Giuseppe Lanza: incassati in un mese, spendendo 500€ di pubblicità.</p>
+      </div>
+      <div class="card">
+        <p class="big">1 incarico</p>
+        <p>Massimiliano Bonomo: 1 incarico in esclusiva con 150€ investiti.</p>
+      </div>
+      <div class="card">
+        <p class="big">2 incarichi</p>
+        <p>Francesco: 2 incarichi in un mese, spendendo 300€ di pubblicità.</p>
+      </div>
+    </div>
     <p class="note">I risultati dipendono da zona, budget e mercato.</p>
     <div class="cta-wrap">
-      <a class="cta" href="#iscriviti">Riserva il mio posto</a>
+      <a class="cta" href="#iscriviti">Riserva il tuo posto</a>
     </div>
   </div>
 </section>
@@ -335,34 +356,9 @@
   </div>
 </section>
 
-<!-- FAQ -->
-<section>
-  <div class="wrap">
-    <span class="kicker">Domande frequenti</span>
-    <h2>FAQ</h2>
-    <details>
-      <summary>Quando è il webinar?</summary>
-      <p>Venerdì 23 ottobre 2026 alle 19:00, ora italiana. Il link della diretta arriva dopo l'iscrizione.</p>
-    </details>
-    <details>
-      <summary>Quanto dura?</summary>
-      <p>Circa 60 minuti, in diretta, con spazio per le domande.</p>
-    </details>
-    <details>
-      <summary>Resterà il replay?</summary>
-      <p>[CONFERMARE: sì/no e dove sarà disponibile]</p>
-    </details>
-    <details>
-      <summary>Serve registrarsi per forza?</summary>
-      <p>Sì. L'iscrizione serve a ricevere il link della diretta e il promemoria.</p>
-    </details>
-  </div>
-</section>
-
 <!-- FOOTER -->
 <footer>
   <div class="wrap">
-    <p>Vendita Uno · [RAGIONE SOCIALE] · P.IVA [DA COMPILARE]</p>
     <p><a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a> · <a href="/cookie.html" target="_blank" rel="noopener">Cookie Policy</a></p>
   </div>
 </footer>
