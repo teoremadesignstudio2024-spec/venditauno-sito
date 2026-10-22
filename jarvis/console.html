@@ -1,0 +1,366 @@
+<title>Jarvis Console</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: full-bleed command console. Canvas orb centred, metrics on the edges. */
+:root {
+  --bg: #04080d;
+  --panel: #07111a;
+  --ink: #bfefff;
+  --ink-dim: #5f8193;
+  --cyan: #3fd3f0;
+  --amber: #ffd27a;
+  --alert: #ff4d5e;
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at 50% 45%, #0b1a26 0%, var(--bg) 70%);
+  color: var(--ink);
+  font-family: "Share Tech Mono", ui-monospace, Menlo, Consolas, monospace;
+  min-height: 100vh;
+  padding-block: 18px;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.console {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: calc(100vh - 36px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.clock {
+  font-size: clamp(28px, 5vw, 44px);
+  color: var(--cyan);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 14px rgba(63, 211, 240, 0.5);
+  min-width: 0;
+}
+.clock small {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.brand {
+  text-align: right;
+  min-width: 0;
+}
+.brand h1 {
+  margin: 0;
+  font-family: "Orbitron", "Share Tech Mono", ui-monospace, monospace;
+  font-weight: 700;
+  font-size: clamp(22px, 4vw, 32px);
+  letter-spacing: 0.3em;
+  color: var(--ink);
+  text-shadow: 0 0 18px rgba(63, 211, 240, 0.45);
+}
+.brand p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+.stats {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--ink-dim);
+}
+.stats li span:last-child {
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+  margin-left: 14px;
+}
+.stage {
+  position: relative;
+  min-height: 0;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: clamp(340px, 62vh, 620px);
+  max-width: 100%;
+}
+.caption {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.alert-line {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--alert);
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(255, 77, 94, 0.6);
+}
+footer {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  border-top: 1px solid rgba(63, 211, 240, 0.2);
+  padding-top: 12px;
+}
+.metric {
+  min-width: 0;
+}
+.metric strong {
+  display: block;
+  font-family: "Orbitron", "Share Tech Mono", ui-monospace, monospace;
+  font-weight: 700;
+  font-size: clamp(22px, 4.5vw, 38px);
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 14px rgba(255, 210, 122, 0.35);
+  line-height: 1.1;
+}
+.metric span {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.metric.alert strong {
+  color: var(--alert);
+  text-shadow: 0 0 14px rgba(255, 77, 94, 0.45);
+}
+.note {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+@media (max-width: 560px) {
+  footer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand { text-align: left; }
+  .stats { display: none; }
+  .caption { white-space: normal; width: 80%; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  canvas { animation: none; }
+}
+</style>
+
+<div class="console">
+  <header>
+    <div class="clock" id="clock">--:--:--<small id="date">oggi</small></div>
+    <div class="brand">
+      <h1>JARVIS</h1>
+      <p>Assistente giornaliero · dati di esempio</p>
+      <ul class="stats">
+        <li><span>eventi oggi</span><span>4</span></li>
+        <li><span>mail da leggere</span><span>12</span></li>
+        <li><span>task aperti</span><span>7</span></li>
+        <li><span>promemoria</span><span>3</span></li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="stage">
+    <canvas id="orb" aria-label="Visualizzazione dei moduli di Jarvis"></canvas>
+    <div class="alert-line" id="alert">Scadenza fiscale · domani</div>
+    <div class="caption">Centro di comando</div>
+  </div>
+
+  <footer>
+    <div class="metric"><strong id="m1">0</strong><span>eventi questa settimana</span></div>
+    <div class="metric"><strong id="m2">0</strong><span>mail elaborate</span></div>
+    <div class="metric alert"><strong id="m3">0</strong><span>scadenze in arrivo</span></div>
+    <div class="metric"><strong id="m4">0</strong><span>task completati</span></div>
+    <div class="note">Tutti i numeri sono di esempio. Collegherò i dati reali quando attiviamo i connettori.</div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // Labels around the orb: the daily-assistant modules.
+  var LABELS = [
+    { t: "CALENDARIO", x: 0.22, y: 0.30 },
+    { t: "MAIL", x: 0.76, y: 0.28 },
+    { t: "TASK", x: 0.20, y: 0.58 },
+    { t: "METEO", x: 0.80, y: 0.56 },
+    { t: "SPESE", x: 0.30, y: 0.80 },
+    { t: "DOCUMENTI", x: 0.70, y: 0.82 }
+  ];
+  var HOT = 1; // index of the highlighted label (drawn red)
+
+  var canvas = document.getElementById("orb");
+  var ctx = canvas.getContext("2d");
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function resize() {
+    var rect = canvas.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  // Points on a sphere (Fibonacci lattice).
+  var N = 240, pts = [];
+  for (var i = 0; i < N; i++) {
+    var y = 1 - (i / (N - 1)) * 2;
+    var r = Math.sqrt(1 - y * y);
+    var phi = i * Math.PI * (3 - Math.sqrt(5));
+    pts.push({ x: Math.cos(phi) * r, y: y, z: Math.sin(phi) * r });
+  }
+  // Connections between near neighbours.
+  var links = [];
+  for (var a = 0; a < N; a++) {
+    for (var b = a + 1; b < N; b++) {
+      var dx = pts[a].x - pts[b].x, dy = pts[a].y - pts[b].y, dz = pts[a].z - pts[b].z;
+      if (dx * dx + dy * dy + dz * dz < 0.035) links.push([a, b]);
+    }
+  }
+  // Dots on the orbit ring.
+  var RING = 90, ring = [];
+  for (var k = 0; k < RING; k++) ring.push(k / RING * Math.PI * 2);
+
+  var angle = 0;
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    var cx = W / 2, cy = H * 0.48;
+    var R = Math.min(W * 0.26, H * 0.36);
+    var ry = R * 1.45, rx = R * 2.5;
+
+    // Orbit ring (flat ellipse with dots).
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(63,211,240,0.18)";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    for (var k = 0; k < ring.length; k++) {
+      var p = ring[k] + t * 0.00005;
+      ctx.fillStyle = "rgba(191,239,255," + (0.35 + 0.3 * Math.sin(p * 3 + t * 0.002)) + ")";
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(p) * rx, cy + Math.sin(p) * ry, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Rotate the sphere.
+    angle = reduce ? 0.6 : t * 0.00025;
+    var cA = Math.cos(angle), sA = Math.sin(angle);
+    var tilt = 0.35, cT = Math.cos(tilt), sT = Math.sin(tilt);
+    var proj = new Array(N);
+    for (var i = 0; i < N; i++) {
+      var q = pts[i];
+      var x1 = q.x * cA + q.z * sA;
+      var z1 = -q.x * sA + q.z * cA;
+      var y1 = q.y * cT - z1 * sT;
+      var z2 = q.y * sT + z1 * cT;
+      var s = (z2 + 2) / 3;
+      proj[i] = { x: cx + x1 * R, y: cy + y1 * R, s: s, z: z2 };
+    }
+
+    // Lines: warm near the front, cyan toward the back.
+    for (var l = 0; l < links.length; l++) {
+      var A = proj[links[l][0]], B = proj[links[l][1]];
+      var depth = (A.z + B.z + 2) / 4;
+      ctx.strokeStyle = depth > 0.1
+        ? "rgba(255,210,122," + (0.1 + depth * 0.25) + ")"
+        : "rgba(63,211,240," + (0.04 + depth * 0.1 + 0.06) + ")";
+      ctx.beginPath();
+      ctx.moveTo(A.x, A.y);
+      ctx.lineTo(B.x, B.y);
+      ctx.stroke();
+    }
+
+    // Dots.
+    for (var i = 0; i < N; i++) {
+      var P = proj[i];
+      var warm = P.z > 0.2;
+      ctx.fillStyle = warm
+        ? "rgba(255,240,200," + (0.5 + P.s * 0.5) + ")"
+        : "rgba(191,239,255," + (0.3 + P.s * 0.4) + ")";
+      ctx.beginPath();
+      ctx.arc(P.x, P.y, 1.2 + P.s * 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Module labels with leader lines to the orb.
+    ctx.font = "12px 'Share Tech Mono', ui-monospace, monospace";
+    for (var m = 0; m < LABELS.length; m++) {
+      var L = LABELS[m];
+      var lx = L.x * W, ly = L.y * H;
+      var toX = cx + (lx < cx ? -R * 0.55 : R * 0.55);
+      var toY = cy + (ly < cy ? -R * 0.2 : R * 0.2);
+      var isHot = m === HOT;
+      var color = isHot ? "#ff4d5e" : "#3fd3f0";
+      ctx.strokeStyle = isHot ? "rgba(255,77,94,0.6)" : "rgba(63,211,240,0.35)";
+      ctx.beginPath();
+      ctx.moveTo(lx, ly);
+      ctx.lineTo(toX, toY);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.fillRect(lx - 2, ly - 2, 4, 4);
+      ctx.textAlign = lx < cx ? "right" : "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(L.t, lx + (lx < cx ? -10 : 10), ly);
+    }
+    ctx.textAlign = "left";
+  }
+
+  function frame(t) {
+    draw(t);
+    if (!reduce) requestAnimationFrame(frame);
+  }
+
+  // Clock and counters.
+  var days = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
+  var months = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+  function tick() {
+    var d = new Date();
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var clock = document.getElementById("clock");
+    clock.firstChild.nodeValue = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+    document.getElementById("date").textContent = days[d.getDay()] + " " + d.getDate() + " " + months[d.getMonth()];
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  function count(id, to) {
+    var el = document.getElementById(id);
+    if (reduce) { el.textContent = to.toLocaleString("it-IT"); return; }
+    var start = performance.now(), dur = 1400;
+    (function step(now) {
+      var p = Math.min((now - start) / dur, 1);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))).toLocaleString("it-IT");
+      if (p < 1) requestAnimationFrame(step);
+    })(start);
+  }
+  count("m1", 18);
+  count("m2", 1860);
+  count("m3", 5);
+  count("m4", 43);
+
+  window.addEventListener("resize", resize);
+  resize();
+  requestAnimationFrame(frame);
+})();
+</script>
