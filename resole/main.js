@@ -16,11 +16,17 @@
     })[c]);
   }
 
+  // Illustrazione di default per tipologia, finché non c'è una foto reale (campo "foto" in data.js).
+  const ILLUSTRAZIONE = {
+    Appartamento: "assets/illustrazioni/casa-palazzina.svg",
+    Attico: "assets/illustrazioni/casa-palazzina.svg",
+    Villa: "assets/illustrazioni/casa-villa.svg",
+    Rustico: "assets/illustrazioni/casa-rustico.svg",
+  };
+
   function fotoHTML(im) {
-    if (im.foto) {
-      return `<img src="${esc(im.foto)}" alt="${esc(im.titolo)}" loading="lazy">`;
-    }
-    return `<div class="foto-placeholder" aria-hidden="true"><span>Foto in arrivo</span></div>`;
+    const src = im.foto || ILLUSTRAZIONE[im.tipologia] || ILLUSTRAZIONE.Appartamento;
+    return `<img src="${esc(src)}" alt="${esc(im.titolo)}" loading="lazy">`;
   }
 
   function mailtoRichiesta(im) {
