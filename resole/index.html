@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Re Sole Agenzia Immobiliare · Pieve Ligure</title>
+<meta name="description" content="Re Sole Agenzia Immobiliare a Pieve Ligure. Immobili in vendita sulla Riviera ligure e valutazione gratuita del tuo immobile.">
+<meta name="theme-color" content="#161514">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Re Sole Agenzia Immobiliare">
+<meta property="og:title" content="Re Sole Agenzia Immobiliare · Pieve Ligure">
+<meta property="og:description" content="Immobili in vendita a Pieve Ligure e valutazione gratuita del tuo immobile.">
+<meta property="og:locale" content="it_IT">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/webp" href="assets/logo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="index.html" class="brand" aria-label="Re Sole Agenzia Immobiliare, home">
+      <img src="assets/logo.webp" alt="Re Sole Agenzia Immobiliare">
+    </a>
+    <nav class="nav" aria-label="Navigazione principale">
+      <a href="#immobili">Immobili</a>
+      <a href="#valuta">Valutazione</a>
+      <a href="#chi-siamo">Chi siamo</a>
+      <a href="#contatti">Contatti</a>
+    </nav>
+    <div class="header-cta">
+      <a class="btn btn-ghost" href="tel:+390185000000">Chiama</a>
+      <a class="btn btn-gold" href="valuta.html">Valuta casa</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-inner">
+        <span class="eyebrow">Pieve Ligure · Riviera di Levante</span>
+        <h1>Vendere casa è un progetto.<br><em>Lo seguiamo come tale.</em></h1>
+        <p class="hero-lead">Re Sole accompagna proprietari e acquirenti con un approccio curato: valutazioni precise, immobili presentati con cura e una trattativa seguita passo dopo passo.</p>
+        <div class="hero-actions">
+          <a class="btn btn-gold" href="#immobili">Scopri gli immobili</a>
+          <a class="btn btn-light" href="valuta.html">Valuta il tuo immobile</a>
+        </div>
+        <ul class="hero-points">
+          <li>Valutazione senza impegno</li>
+          <li>Sopralluogo a domicilio</li>
+          <li>Riservatezza garantita</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section listing-section" id="immobili">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Immobili in vendita</span>
+        <h2>Case selezionate sulla costa e in collina</h2>
+        <p>Ogni immobile è visionabile su appuntamento. Contattaci per ricevere planimetrie, documentazione e tutte le informazioni che ti servono.</p>
+      </div>
+
+      <div class="filtri" role="search" aria-label="Filtra gli immobili">
+        <div>
+          <label for="filtro-tipologia">Tipologia</label>
+          <select id="filtro-tipologia">
+            <option value="tutti">Tutte le tipologie</option>
+            <option value="Appartamento">Appartamenti</option>
+            <option value="Attico">Attici</option>
+            <option value="Villa">Ville</option>
+            <option value="Rustico">Rustici</option>
+          </select>
+        </div>
+        <div>
+          <label for="filtro-prezzo">Budget</label>
+          <select id="filtro-prezzo">
+            <option value="">Qualsiasi budget</option>
+            <option value="0-300000">Fino a 300.000 €</option>
+            <option value="300000-600000">Da 300.000 a 600.000 €</option>
+            <option value="600000-99999999">Oltre 600.000 €</option>
+          </select>
+        </div>
+        <div>
+          <label for="filtro-ordine">Ordina per</label>
+          <select id="filtro-ordine">
+            <option value="prezzo-asc">Prezzo crescente</option>
+            <option value="prezzo-desc">Prezzo decrescente</option>
+            <option value="superficie-desc">Superficie maggiore</option>
+          </select>
+        </div>
+        <p class="conteggio" id="conteggio" aria-live="polite"></p>
+      </div>
+
+      <div class="griglia" id="griglia-immobili" style="margin-top: 36px;"></div>
+
+      <div class="listing-cta">
+        <p>Non trovi quello che cerchi? Ti segnaliamo le nuove opportunità prima che vengano pubblicate.</p>
+        <a class="btn btn-ghost" href="#contatti">Richiedi una ricerca personalizzata</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section valuta-band" id="valuta">
+    <div class="wrap valuta-grid">
+      <div>
+        <span class="eyebrow">Valutazione gratuita</span>
+        <h2>Quanto vale davvero la tua casa?</h2>
+        <p class="lead">Una valutazione seria parte dai dati reali: posizione, stato dell'immobile, domanda attuale della zona. Ti diamo un parere chiaro, senza impegno e senza costi.</p>
+        <div class="hero-actions" style="margin-top: 32px;">
+          <a class="btn btn-ghost" href="valuta.html">Richiedi la valutazione</a>
+        </div>
+      </div>
+      <ol class="passi">
+        <li>
+          <div>
+            <strong>Raccontaci l'immobile</strong>
+            <span>Compili il modulo in due minuti con i dati principali della casa.</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Sopralluogo a domicilio</strong>
+            <span>Un nostro consulente visita l'immobile e ne valuta punti di forza e criticità.</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Strategia e prezzo</strong>
+            <span>Ricevi un parere di mercato motivato e un piano di vendita su misura.</span>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="chi-siamo">
+    <div class="wrap chi-grid">
+      <div>
+        <span class="eyebrow">Chi siamo</span>
+        <h2>Una presenza concreta, un servizio attento</h2>
+        <div class="testo" style="margin-top: 22px;">
+          <p>Re Sole è un'agenzia immobiliare con sede a Pieve Ligure. Conosciamo il territorio della Riviera di Levante e le sue zone più richieste, dal lungomare alle colline.</p>
+          <p>Lavoriamo con un obiettivo semplice: aiutare ogni cliente a vendere o acquistare nel modo più chiaro e sicuro possibile, con informazioni precise e una comunicazione sempre diretta.</p>
+        </div>
+      </div>
+      <div class="valori">
+        <div class="valore">
+          <h3>Conoscenza del territorio</h3>
+          <p>Prezzi, zone e richieste reali, aggiornati con il lavoro quotidiano sul campo.</p>
+        </div>
+        <div class="valore">
+          <h3>Trasparenza in ogni fase</h3>
+          <p>Ti spieghiamo ogni passaggio, dalla valutazione al rogito, senza sorprese.</p>
+        </div>
+        <div class="valore">
+          <h3>Cura nella presentazione</h3>
+          <p>Foto, descrizioni e visite organizzate per valorizzare davvero l'immobile.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section contatti" id="contatti">
+    <div class="wrap contatti-grid">
+      <div>
+        <span class="eyebrow">Contatti</span>
+        <h2>Parliamone di persona</h2>
+        <ul class="contatti-lista">
+          <li>
+            <small>Telefono</small>
+            <a href="tel:+390185000000">+39 0185 000 000</a>
+          </li>
+          <li>
+            <small>Email</small>
+            <a href="mailto:info@resole-immobiliare.it">info@resole-immobiliare.it</a>
+          </li>
+          <li>
+            <small>Sede</small>
+            <span>Pieve Ligure (GE)</span>
+          </li>
+          <li>
+            <small>Orari</small>
+            <span>Lun–Ven 9:00–13:00 e 15:00–19:00<br>Sabato su appuntamento</span>
+          </li>
+        </ul>
+      </div>
+      <div class="contatti-card">
+        <h3>Vuoi vendere o comprare?</h3>
+        <p>Il primo colloquio è gratuito e senza impegno. Ti ascoltiamo e ti diciamo con franchezza come possiamo aiutarti.</p>
+        <a class="btn btn-gold btn-block" href="valuta.html">Valuta il tuo immobile</a>
+        <a class="btn btn-light btn-block" href="tel:+390185000000">Chiama ora</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <img src="assets/logo.webp" alt="Re Sole Agenzia Immobiliare">
+    <nav aria-label="Footer">
+      <a href="#immobili">Immobili</a>
+      <a href="valuta.html">Valutazione</a>
+      <a href="#chi-siamo">Chi siamo</a>
+      <a href="#contatti">Contatti</a>
+    </nav>
+    <p>© 2026 Re Sole Agenzia Immobiliare · Pieve Ligure (GE)</p>
+  </div>
+</footer>
+
+<dialog class="dettaglio" id="dettaglio" aria-labelledby="dettaglio-titolo">
+  <button class="dettaglio-chiudi" type="button" id="dettaglio-chiudi" aria-label="Chiudi">×</button>
+  <div id="dettaglio-contenuto"></div>
+</dialog>
+
+<script src="data.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

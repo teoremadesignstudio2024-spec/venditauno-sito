@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valuta il tuo immobile · Re Sole Agenzia Immobiliare</title>
+<meta name="description" content="Richiedi una valutazione gratuita e senza impegno del tuo immobile a Pieve Ligure con Re Sole Agenzia Immobiliare.">
+<meta name="theme-color" content="#161514">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Re Sole Agenzia Immobiliare">
+<meta property="og:title" content="Valuta il tuo immobile · Re Sole">
+<meta property="og:description" content="Valutazione gratuita e senza impegno del tuo immobile a Pieve Ligure.">
+<meta property="og:locale" content="it_IT">
+<link rel="icon" type="image/webp" href="assets/logo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="index.html" class="brand" aria-label="Re Sole Agenzia Immobiliare, home">
+      <img src="assets/logo.webp" alt="Re Sole Agenzia Immobiliare">
+    </a>
+    <nav class="nav" aria-label="Navigazione principale">
+      <a href="index.html#immobili">Immobili</a>
+      <a href="index.html#valuta">Valutazione</a>
+      <a href="index.html#chi-siamo">Chi siamo</a>
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+    <div class="header-cta">
+      <a class="btn btn-ghost" href="tel:+390185000000">Chiama</a>
+      <a class="btn btn-gold" href="valuta.html">Valuta casa</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-hero">
+    <div class="wrap">
+      <span class="eyebrow">Valutazione gratuita</span>
+      <h1>Scopri il valore reale della tua casa</h1>
+      <p>Compila il modulo con i dati principali dell'immobile. Ti contatteremo per fissare un sopralluogo e ricevere un parere di mercato chiaro, senza impegno.</p>
+    </div>
+  </section>
+
+  <section class="page-body">
+    <div class="wrap valuta-layout">
+
+      <div class="form-card">
+        <h2>Richiedi la valutazione</h2>
+        <p>I campi contrassegnati con <em>*</em> sono obbligatori.</p>
+
+        <form class="form" id="form-valutazione" novalidate>
+          <div>
+            <label for="nome">Nome <em>*</em></label>
+            <input id="nome" name="nome" type="text" autocomplete="given-name" required>
+          </div>
+          <div>
+            <label for="cognome">Cognome <em>*</em></label>
+            <input id="cognome" name="cognome" type="text" autocomplete="family-name" required>
+          </div>
+          <div>
+            <label for="telefono">Telefono <em>*</em></label>
+            <input id="telefono" name="telefono" type="tel" autocomplete="tel" required>
+          </div>
+          <div>
+            <label for="email">Email <em>*</em></label>
+            <input id="email" name="email" type="email" autocomplete="email" required>
+          </div>
+
+          <div>
+            <label for="tipologia">Tipologia di immobile <em>*</em></label>
+            <select id="tipologia" name="tipologia" required>
+              <option value="">Seleziona</option>
+              <option>Appartamento</option>
+              <option>Attico</option>
+              <option>Villa</option>
+              <option>Rustico o casa indipendente</option>
+              <option>Box, garage o terreno</option>
+              <option>Altro</option>
+            </select>
+          </div>
+          <div>
+            <label for="superficie">Superficie (m²)</label>
+            <input id="superficie" name="superficie" type="number" min="1" inputmode="numeric">
+          </div>
+
+          <div class="full">
+            <label for="indirizzo">Zona o indirizzo dell'immobile <em>*</em></label>
+            <input id="indirizzo" name="indirizzo" type="text" placeholder="Es. Pieve Ligure, zona lungomare" required>
+          </div>
+
+          <div class="full">
+            <label for="note">Note aggiuntive</label>
+            <textarea id="note" name="note" placeholder="Stato dell'immobile, piano, vista, eventuali esigenze di tempistica..."></textarea>
+          </div>
+
+          <div class="full">
+            <label class="consenso">
+              <input type="checkbox" id="privacy" name="privacy" required>
+              <span>Ho letto l'<a href="#" target="_blank" rel="noopener">informativa privacy</a> e acconsento al trattamento dei miei dati per essere ricontattato in merito alla richiesta di valutazione. <em>*</em></span>
+            </label>
+          </div>
+
+          <div class="full">
+            <button class="btn btn-gold btn-block" type="submit" id="invio">Invia la richiesta</button>
+            <p class="form-esito" id="esito" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
+
+      <aside class="side-card">
+        <h3>Cosa succede dopo</h3>
+        <ul>
+          <li><div><strong>Ti contattiamo</strong>Un nostro consulente ti richiama per confermare i dettagli.</div></li>
+          <li><div><strong>Sopralluogo</strong>Visitiamo l'immobile e ne analizziamo posizione e stato.</div></li>
+          <li><div><strong>Parere di mercato</strong>Ti presentiamo una valutazione motivata e una strategia di vendita.</div></li>
+        </ul>
+        <div class="contatto-rapido">
+          <strong>Preferisci parlarci subito?</strong>
+          <p style="margin-top: 8px;"><a href="tel:+390185000000">+39 0185 000 000</a></p>
+        </div>
+      </aside>
+
+    </div>
+    <div class="wrap">
+      <a class="torna" href="index.html">← Torna alla home</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <img src="assets/logo.webp" alt="Re Sole Agenzia Immobiliare">
+    <nav aria-label="Footer">
+      <a href="index.html#immobili">Immobili</a>
+      <a href="valuta.html">Valutazione</a>
+      <a href="index.html#chi-siamo">Chi siamo</a>
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+    <p>© 2026 Re Sole Agenzia Immobiliare · Pieve Ligure (GE)</p>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="valuta.js"></script>
+</body>
+</html>
