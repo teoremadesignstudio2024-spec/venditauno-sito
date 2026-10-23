@@ -10,7 +10,8 @@
 //   JARVIS_DAILY_LIMIT   richieste al giorno consentite (default 200)
 
 const CLAUDE_MODEL = "claude-haiku-5-5";
-const STT_MODEL = "gemini-2.5-flash";
+// Modelli per la trascrizione, in ordine di preferenza: si passa al successivo solo se quello non esiste più (404).
+const STT_MODELS = ["gemini-3.6-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
 const TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const VOICE = "Charon";
 // Gemini TTS non ha voci britanniche predefinite: l'accento viene dall'istruzione di stile.
@@ -91,7 +92,7 @@ async function gemini(env, model, body) {
 }
 
 async function transcribe(env, audioB64, mimeType) {
-  const data = await gemini(env, STT_MODEL, {
+  const body = {
     contents: [{
       parts: [
         { text: "Trascrivi fedelmente questo messaggio vocale in italiano. Restituisci solo il testo." },
@@ -99,8 +100,18 @@ async function transcribe(env, audioB64, mimeType) {
       ],
     }],
     generationConfig: { temperature: 0 },
-  });
-  return data.candidates[0].content.parts[0].text.trim();
+  };
+  let lastError;
+  for (const model of STT_MODELS) {
+    try {
+      const data = await gemini(env, model, body);
+      return data.candidates[0].content.parts[0].text.trim();
+    } catch (err) {
+      lastError = err;
+      if (!err.message.includes(" 404")) throw err;
+    }
+  }
+  throw lastError;
 }
 
 async function askClaude(env, memory, messages) {
