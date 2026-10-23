@@ -1,20 +1,19 @@
 <title>Jarvis Console</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Layout: full-bleed command console. Canvas orb centred, metrics on the edges. */
+/* Layout: full-bleed console. Particle form centred, metrics along the edges. */
 :root {
-  --bg: #04080d;
-  --panel: #07111a;
+  --bg: #03060a;
   --ink: #bfefff;
   --ink-dim: #5f8193;
-  --cyan: #3fd3f0;
+  --cyan: #63e6ff;
   --amber: #ffd27a;
   --alert: #ff4d5e;
   color-scheme: dark;
 }
 body {
   margin: 0;
-  background: radial-gradient(ellipse at 50% 45%, #0b1a26 0%, var(--bg) 70%);
+  background: radial-gradient(ellipse at 50% 42%, #0a1822 0%, var(--bg) 65%);
   color: var(--ink);
   font-family: "Share Tech Mono", ui-monospace, Menlo, Consolas, monospace;
   min-height: 100vh;
@@ -44,7 +43,7 @@ header {
   color: var(--cyan);
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 14px rgba(63, 211, 240, 0.5);
+  text-shadow: 0 0 14px rgba(99, 230, 255, 0.5);
   min-width: 0;
 }
 .clock small {
@@ -65,7 +64,7 @@ header {
   font-size: clamp(22px, 4vw, 32px);
   letter-spacing: 0.3em;
   color: var(--ink);
-  text-shadow: 0 0 18px rgba(63, 211, 240, 0.45);
+  text-shadow: 0 0 18px rgba(99, 230, 255, 0.45);
 }
 .brand p {
   margin: 4px 0 0;
@@ -108,7 +107,7 @@ canvas {
 .alert-line {
   position: absolute;
   left: 50%;
-  top: 14%;
+  top: 12%;
   transform: translateX(-50%);
   font-size: 12px;
   color: var(--alert);
@@ -119,7 +118,7 @@ footer {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  border-top: 1px solid rgba(63, 211, 240, 0.2);
+  border-top: 1px solid rgba(99, 230, 255, 0.2);
   padding-top: 12px;
 }
 .metric {
@@ -158,9 +157,6 @@ footer {
   .stats { display: none; }
   .caption { white-space: normal; width: 80%; text-align: center; }
 }
-@media (prefers-reduced-motion: reduce) {
-  canvas { animation: none; }
-}
 </style>
 
 <div class="console">
@@ -195,16 +191,16 @@ footer {
 
 <script>
 (function () {
-  // Labels around the orb: the daily-assistant modules.
+  // Module labels placed around the particle form (fractions of the canvas).
   var LABELS = [
-    { t: "CALENDARIO", x: 0.22, y: 0.30 },
-    { t: "MAIL", x: 0.76, y: 0.28 },
-    { t: "TASK", x: 0.20, y: 0.58 },
-    { t: "METEO", x: 0.80, y: 0.56 },
+    { t: "CALENDARIO", x: 0.20, y: 0.32 },
+    { t: "MAIL", x: 0.80, y: 0.30 },
+    { t: "TASK", x: 0.17, y: 0.62 },
+    { t: "METEO", x: 0.83, y: 0.60 },
     { t: "SPESE", x: 0.30, y: 0.80 },
     { t: "DOCUMENTI", x: 0.70, y: 0.82 }
   ];
-  var HOT = 1; // index of the highlighted label (drawn red)
+  var HOT = 1; // highlighted label, drawn red
 
   var canvas = document.getElementById("orb");
   var ctx = canvas.getContext("2d");
@@ -221,103 +217,99 @@ footer {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  // Points on a sphere (Fibonacci lattice).
-  var N = 240, pts = [];
-  for (var i = 0; i < N; i++) {
-    var y = 1 - (i / (N - 1)) * 2;
-    var r = Math.sqrt(1 - y * y);
-    var phi = i * Math.PI * (3 - Math.sqrt(5));
-    pts.push({ x: Math.cos(phi) * r, y: y, z: Math.sin(phi) * r });
+  // Particle form: a rounded slab with concave sides, denser along the edges.
+  // Coordinates are in units where the slab spans x -1..1 and y -0.62..0.62.
+  function insideForm(x, y) {
+    if (Math.abs(x) > 1 || Math.abs(y) > 0.62) return false;
+    var cutL = Math.hypot(x + 1.08, y), cutR = Math.hypot(x - 1.08, y);
+    return cutL > 0.5 && cutR > 0.5;
   }
-  // Connections between near neighbours.
-  var links = [];
-  for (var a = 0; a < N; a++) {
-    for (var b = a + 1; b < N; b++) {
-      var dx = pts[a].x - pts[b].x, dy = pts[a].y - pts[b].y, dz = pts[a].z - pts[b].z;
-      if (dx * dx + dy * dy + dz * dz < 0.035) links.push([a, b]);
-    }
+  function edgeness(x, y) {
+    var d = Math.min(1 - Math.abs(x), 0.62 - Math.abs(y));
+    return Math.max(0, 1 - d / 0.22);
   }
-  // Dots on the orbit ring.
-  var RING = 90, ring = [];
-  for (var k = 0; k < RING; k++) ring.push(k / RING * Math.PI * 2);
-
-  var angle = 0;
+  var pts = [];
+  var target = window.innerWidth < 600 ? 2600 : 5200;
+  while (pts.length < target) {
+    var x = Math.random() * 2 - 1;
+    var y = (Math.random() * 2 - 1) * 0.62;
+    if (!insideForm(x, y)) continue;
+    var e = edgeness(x, y);
+    if (Math.random() > 0.3 + 0.7 * e) continue;
+    pts.push({
+      x: x, y: y,
+      z: (Math.random() - 0.5) * 0.28 + (1 - Math.abs(y)) * 0.12,
+      s: 0.5 + Math.random() * 1.1,
+      tw: Math.random() * Math.PI * 2,
+      rim: e
+    });
+  }
+  // Faint dust around the form.
+  var dust = [];
+  for (var d = 0; d < 260; d++) {
+    dust.push({
+      x: (Math.random() * 2 - 1) * 1.7,
+      y: (Math.random() * 2 - 1) * 1.1,
+      z: (Math.random() - 0.5) * 1.4,
+      s: 0.4 + Math.random() * 0.6,
+      tw: Math.random() * Math.PI * 2
+    });
+  }
 
   function draw(t) {
     ctx.clearRect(0, 0, W, H);
-    var cx = W / 2, cy = H * 0.48;
-    var R = Math.min(W * 0.26, H * 0.36);
-    var ry = R * 1.45, rx = R * 2.5;
+    ctx.globalCompositeOperation = "lighter";
+    var cx = W / 2, cy = H * 0.46;
+    var R = Math.min(W * 0.3, H * 0.42);
+    var ang = reduce ? 0.35 : Math.sin(t * 0.00018) * 0.55;
+    var cA = Math.cos(ang), sA = Math.sin(ang);
+    var breathe = reduce ? 1 : 1 + Math.sin(t * 0.0006) * 0.025;
+    var f = 2.6;
 
-    // Orbit ring (flat ellipse with dots).
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgba(63,211,240,0.18)";
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    for (var k = 0; k < ring.length; k++) {
-      var p = ring[k] + t * 0.00005;
-      ctx.fillStyle = "rgba(191,239,255," + (0.35 + 0.3 * Math.sin(p * 3 + t * 0.002)) + ")";
-      ctx.beginPath();
-      ctx.arc(cx + Math.cos(p) * rx, cy + Math.sin(p) * ry, 1.6, 0, Math.PI * 2);
-      ctx.fill();
+    // Rotate in normalised units, then scale to pixels, so depth stays small.
+    function project(p, scale) {
+      var x = p.x * scale, y = p.y * scale, z = p.z;
+      var xr = x * cA + z * sA;
+      var zr = -x * sA + z * cA;
+      var k = f / (f + zr);
+      return { x: cx + xr * R * k * breathe, y: cy + y * R * k * breathe, k: k, z: zr };
     }
 
-    // Rotate the sphere.
-    angle = reduce ? 0.6 : t * 0.00025;
-    var cA = Math.cos(angle), sA = Math.sin(angle);
-    var tilt = 0.35, cT = Math.cos(tilt), sT = Math.sin(tilt);
-    var proj = new Array(N);
-    for (var i = 0; i < N; i++) {
-      var q = pts[i];
-      var x1 = q.x * cA + q.z * sA;
-      var z1 = -q.x * sA + q.z * cA;
-      var y1 = q.y * cT - z1 * sT;
-      var z2 = q.y * sT + z1 * cT;
-      var s = (z2 + 2) / 3;
-      proj[i] = { x: cx + x1 * R, y: cy + y1 * R, s: s, z: z2 };
+    for (var i = 0; i < dust.length; i++) {
+      var D = dust[i];
+      var P = project(D, 1.5);
+      var a = (0.12 + 0.12 * Math.sin(t * 0.001 + D.tw)) * P.k;
+      ctx.fillStyle = "rgba(99,230,255," + a + ")";
+      ctx.fillRect(P.x, P.y, D.s, D.s);
     }
 
-    // Lines: warm near the front, cyan toward the back.
-    for (var l = 0; l < links.length; l++) {
-      var A = proj[links[l][0]], B = proj[links[l][1]];
-      var depth = (A.z + B.z + 2) / 4;
-      ctx.strokeStyle = depth > 0.1
-        ? "rgba(255,210,122," + (0.1 + depth * 0.25) + ")"
-        : "rgba(63,211,240," + (0.04 + depth * 0.1 + 0.06) + ")";
-      ctx.beginPath();
-      ctx.moveTo(A.x, A.y);
-      ctx.lineTo(B.x, B.y);
-      ctx.stroke();
+    for (var j = 0; j < pts.length; j++) {
+      var q = pts[j];
+      var Q = project(q, 1);
+      var tw = 0.75 + 0.25 * Math.sin(t * 0.002 + q.tw);
+      var alpha = (0.35 + 0.5 * q.rim) * Q.k * tw;
+      ctx.fillStyle = q.rim > 0.5
+        ? "rgba(200,248,255," + Math.min(alpha * 1.2, 1) + ")"
+        : "rgba(99,230,255," + alpha + ")";
+      var r = q.s * Q.k;
+      ctx.fillRect(Q.x, Q.y, r * 1.6, r * 1.6);
     }
+    ctx.globalCompositeOperation = "source-over";
 
-    // Dots.
-    for (var i = 0; i < N; i++) {
-      var P = proj[i];
-      var warm = P.z > 0.2;
-      ctx.fillStyle = warm
-        ? "rgba(255,240,200," + (0.5 + P.s * 0.5) + ")"
-        : "rgba(191,239,255," + (0.3 + P.s * 0.4) + ")";
-      ctx.beginPath();
-      ctx.arc(P.x, P.y, 1.2 + P.s * 1.4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Module labels with leader lines to the orb.
+    // Module labels with leader lines to the form.
     ctx.font = "12px 'Share Tech Mono', ui-monospace, monospace";
     for (var m = 0; m < LABELS.length; m++) {
       var L = LABELS[m];
       var lx = L.x * W, ly = L.y * H;
-      var toX = cx + (lx < cx ? -R * 0.55 : R * 0.55);
-      var toY = cy + (ly < cy ? -R * 0.2 : R * 0.2);
+      var toX = cx + (lx < cx ? -R * 0.85 : R * 0.85);
+      var toY = cy + (ly < cy ? -R * 0.15 : R * 0.15);
       var isHot = m === HOT;
-      var color = isHot ? "#ff4d5e" : "#3fd3f0";
-      ctx.strokeStyle = isHot ? "rgba(255,77,94,0.6)" : "rgba(63,211,240,0.35)";
+      ctx.strokeStyle = isHot ? "rgba(255,77,94,0.6)" : "rgba(99,230,255,0.3)";
       ctx.beginPath();
       ctx.moveTo(lx, ly);
       ctx.lineTo(toX, toY);
       ctx.stroke();
-      ctx.fillStyle = color;
+      ctx.fillStyle = isHot ? "#ff4d5e" : "#63e6ff";
       ctx.fillRect(lx - 2, ly - 2, 4, 4);
       ctx.textAlign = lx < cx ? "right" : "left";
       ctx.textBaseline = "middle";
