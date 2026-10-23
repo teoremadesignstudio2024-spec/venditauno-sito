@@ -72,14 +72,6 @@ audio { width: 100%; }
     <h1>JARVIS</h1>
   </header>
 
-  <section class="gate card" id="gate" hidden>
-    <div class="label">Codice di accesso</div>
-    <div class="row">
-      <input type="password" id="code" autocomplete="off" placeholder="Inserisci il codice">
-      <button class="btn" id="saveCode">Entra</button>
-    </div>
-  </section>
-
   <section class="card" id="panel" hidden>
     <div class="label">Pannello</div>
     <div class="kpis">
@@ -124,7 +116,7 @@ audio { width: 100%; }
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var gate = $("gate"), panel = $("panel"), talk = $("talk"), memorySec = $("memorySec");
+  var panel = $("panel"), talk = $("talk"), memorySec = $("memorySec");
   var mic = $("mic"), sendBtn = $("send"), textBox = $("text"), errBox = $("err");
   var result = $("result"), said = $("said"), reply = $("reply"), player = $("player");
   var memoryBox = $("memory"), savedNote = $("saved");
@@ -132,17 +124,7 @@ audio { width: 100%; }
   var history = [];
   var recorder = null, chunks = [], busy = false;
 
-  function getCode() {
-    try { return sessionStorage.getItem("jarvis_code") || ""; } catch (e) { return ""; }
-  }
-  function setCode(v) {
-    try { sessionStorage.setItem("jarvis_code", v); } catch (e) {}
-  }
-  function clearCode() {
-    try { sessionStorage.removeItem("jarvis_code"); } catch (e) {}
-  }
   function showAll(on) {
-    gate.hidden = on;
     panel.hidden = !on;
     talk.hidden = !on;
     memorySec.hidden = !on;
@@ -151,36 +133,22 @@ audio { width: 100%; }
 
   function api(path, opts) {
     opts = opts || {};
-    opts.headers = Object.assign({ "Content-Type": "application/json", "X-Jarvis-Code": getCode() }, opts.headers || {});
+    opts.headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
     return fetch(path, opts).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (data) {
-        if (res.status === 401) {
-          clearCode();
-          showAll(false);
-          throw new Error("Codice non valido.");
-        }
         if (!res.ok) throw new Error(data.error || "Errore del server.");
         return data;
       });
     });
   }
 
-  // Entra: il codice si verifica caricando la memoria.
-  $("saveCode").addEventListener("click", function () {
-    var v = $("code").value.trim();
-    if (!v) return;
-    setCode(v);
-    start();
-  });
-
   function start() {
     api("/api/jarvis/memory").then(function (data) {
       memoryBox.value = data.memory || "";
-      showAll(true);
-      setError("");
     }).catch(function (err) {
-      showAll(false);
       setError(err.message);
+    }).then(function () {
+      showAll(true);
     });
   }
 
@@ -415,11 +383,6 @@ audio { width: 100%; }
   resize();
   requestAnimationFrame(frame);
 
-  // Avvio: se c'è un codice salvato per la sessione, entra subito.
-  if (getCode()) {
-    start();
-  } else {
-    gate.hidden = false;
-  }
+  start();
 })();
 </script>

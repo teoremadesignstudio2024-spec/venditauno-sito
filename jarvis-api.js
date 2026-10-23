@@ -6,7 +6,6 @@
 // Configurazione (Cloudflare → Workers → venditauno-sito → Variabili, tipo "Secret"):
 //   ANTHROPIC_API_KEY    chiave Anthropic
 //   GEMINI_API_KEY       chiave Gemini
-//   JARVIS_ACCESS_CODE   codice che la pagina chiede per usare Jarvis
 // Facoltativa, come variabile normale:
 //   JARVIS_DAILY_LIMIT   richieste al giorno consentite (default 200)
 
@@ -32,19 +31,6 @@ function json(data, status = 200) {
     status,
     headers: { "Content-Type": "application/json;charset=UTF-8", "Cache-Control": "no-store" },
   });
-}
-
-// Confronto a tempo costante, per non rivelare il codice dai tempi di risposta.
-function sameText(a, b) {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
-function authorized(request, env) {
-  const code = request.headers.get("X-Jarvis-Code") || "";
-  return Boolean(env.JARVIS_ACCESS_CODE) && sameText(code, env.JARVIS_ACCESS_CODE);
 }
 
 // Contatore giornaliero nel KV: evita costi imprevisti se il link circola.
@@ -172,11 +158,8 @@ export async function handleJarvisApi(request, env) {
   const isMemory = url.pathname === "/api/jarvis/memory";
   if (!isChat && !isMemory) return json({ error: "Non trovato." }, 404);
 
-  if (!env.JARVIS_ACCESS_CODE || !env.ANTHROPIC_API_KEY || !env.GEMINI_API_KEY) {
+  if (!env.ANTHROPIC_API_KEY || !env.GEMINI_API_KEY) {
     return json({ error: "Jarvis non è ancora configurato." }, 503);
-  }
-  if (!authorized(request, env)) {
-    return json({ error: "Codice non valido." }, 401);
   }
   if (isMemory) return handleMemory(request, env);
 
