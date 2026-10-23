@@ -75,7 +75,7 @@ audio { width: 100%; }
   <section class="card" id="panel" hidden>
     <div class="label">Pannello</div>
     <div class="kpis">
-      <div class="kpi"><strong>—</strong><span>fatturato del mese</span></div>
+      <div class="kpi"><strong id="kpiRevenue">—</strong><span>fatturato del mese</span></div>
       <div class="kpi"><strong>—</strong><span>lead</span></div>
       <div class="kpi"><strong>—</strong><span>chiusi</span></div>
       <div class="kpi"><strong>—</strong><span>venditori attivi</span></div>
@@ -142,7 +142,14 @@ audio { width: 100%; }
     });
   }
 
+  function loadRevenue() {
+    api("/api/jarvis/numeri").then(function (data) {
+      $("kpiRevenue").textContent = Number(data.total).toLocaleString("it-IT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+    }).catch(function () {});
+  }
+
   function start() {
+    loadRevenue();
     api("/api/jarvis/memory").then(function (data) {
       memoryBox.value = data.memory || "";
     }).catch(function (err) {

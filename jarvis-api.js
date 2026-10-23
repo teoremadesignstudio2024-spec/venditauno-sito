@@ -147,6 +147,35 @@ async function speak(env, text) {
   return pcmToWavBase64(bytes);
 }
 
+// Fatturato del mese, letto dai dati della dashboard (chiavi "fatturato:AAAA-MM-GG" nel KV).
+function currentMonth() {
+  return new Date().toLocaleString("sv-SE", { timeZone: "Europe/Rome" }).slice(0, 7);
+}
+
+const round2 = (n) => Math.round(n * 100) / 100;
+
+async function revenueMonth(env, month) {
+  const list = await env.ACADEMY_PROGRESS.list({ prefix: `fatturato:${month}-` });
+  const bySeller = {};
+  let total = 0, cashed = 0;
+  for (const key of list.keys) {
+    const raw = await env.ACADEMY_PROGRESS.get(key.name);
+    if (!raw) continue;
+    for (const e of JSON.parse(raw).entries || []) {
+      const amount = Number(e.amount) || 0;
+      total += amount;
+      cashed += Number(e.cashed) || 0;
+      bySeller[e.seller] = round2((bySeller[e.seller] || 0) + amount);
+    }
+  }
+  return { month, total: round2(total), cashed: round2(cashed), bySeller };
+}
+
+function revenueText(r) {
+  const sellers = Object.entries(r.bySeller).map(([name, v]) => `${name} ${v} €`).join(", ") || "nessuna vendita";
+  return `Fatturato del mese ${r.month}: ${r.total} € (incassato ${r.cashed} €). Per venditore: ${sellers}.`;
+}
+
 async function handleMemory(request, env) {
   if (request.method === "GET") {
     const text = (await env.ACADEMY_PROGRESS.get(MEMORY_KEY)) || "";
@@ -170,12 +199,14 @@ export async function handleJarvisApi(request, env) {
   const url = new URL(request.url);
   const isChat = url.pathname === "/api/jarvis/chat" && request.method === "POST";
   const isMemory = url.pathname === "/api/jarvis/memory";
-  if (!isChat && !isMemory) return json({ error: "Non trovato." }, 404);
+  const isNumbers = url.pathname === "/api/jarvis/numeri" && request.method === "GET";
+  if (!isChat && !isMemory && !isNumbers) return json({ error: "Non trovato." }, 404);
 
   if (!env.ANTHROPIC_API_KEY || !env.GEMINI_API_KEY) {
     return json({ error: "Jarvis non è ancora configurato." }, 503);
   }
   if (isMemory) return handleMemory(request, env);
+  if (isNumbers) return json(await revenueMonth(env, currentMonth()));
 
   let body;
   try {
@@ -209,7 +240,8 @@ export async function handleJarvisApi(request, env) {
     const messages = [...past, { role: "user", content: transcript }];
 
     const memory = (await env.ACADEMY_PROGRESS.get(MEMORY_KEY)) || "";
-    const reply = await askClaude(env, memory, messages);
+    const revenue = revenueText(await revenueMonth(env, currentMonth()));
+    const reply = await askClaude(env, `${revenue}\n\n${memory}`.trim(), messages);
     const audio = reply.length <= MAX_VOICE_CHARS ? await speak(env, reply) : null;
 
     return json({ transcript, reply, audio });
