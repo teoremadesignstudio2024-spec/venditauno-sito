@@ -26,7 +26,9 @@ GEMINI_KEY = os.environ["GEMINI_API_KEY"]
 ALLOWED = {int(x) for x in os.environ["TELEGRAM_ALLOWED_CHAT_IDS"].split(",") if x.strip()}
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-haiku-5-5")
 TTS_MODEL = os.environ.get("GEMINI_TTS_MODEL", "gemini-3.1-flash-tts-preview")
-VOICE = os.environ.get("GEMINI_VOICE", "Kore")
+VOICE = os.environ.get("GEMINI_VOICE", "Charon")
+# Gemini TTS non ha voci britanniche predefinite: l'accento viene dall'istruzione di stile.
+ACCENT = "Say in a calm, refined British English accent: "
 STT_MODEL = os.environ.get("GEMINI_STT_MODEL", "gemini-2.5-flash")
 
 TG = f"https://api.telegram.org/bot{TG_TOKEN}"
@@ -83,7 +85,7 @@ def gemini_generate(model, body):
 def text_to_ogg(text):
     """Gemini TTS -> PCM 24 kHz mono 16 bit -> OGG/Opus per Telegram."""
     data = gemini_generate(TTS_MODEL, {
-        "contents": [{"parts": [{"text": text}]}],
+        "contents": [{"parts": [{"text": ACCENT + text}]}],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
             "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": VOICE}}},

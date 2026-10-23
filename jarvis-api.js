@@ -12,7 +12,9 @@
 const CLAUDE_MODEL = "claude-haiku-5-5";
 const STT_MODEL = "gemini-2.5-flash";
 const TTS_MODEL = "gemini-3.1-flash-tts-preview";
-const VOICE = "Kore";
+const VOICE = "Charon";
+// Gemini TTS non ha voci britanniche predefinite: l'accento viene dall'istruzione di stile.
+const ACCENT = "Say in a calm, refined British English accent: ";
 const MAX_VOICE_CHARS = 1500;
 const MAX_AUDIO_B64 = 6 * 1024 * 1024; // circa 4-5 MB di audio
 const MAX_HISTORY = 20;
@@ -120,7 +122,7 @@ async function askClaude(env, messages) {
 
 async function speak(env, text) {
   const data = await gemini(env, TTS_MODEL, {
-    contents: [{ parts: [{ text }] }],
+    contents: [{ parts: [{ text: ACCENT + text }] }],
     generationConfig: {
       responseModalities: ["AUDIO"],
       speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } },
