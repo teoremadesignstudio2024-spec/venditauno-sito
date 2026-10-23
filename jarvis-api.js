@@ -201,6 +201,6 @@ export async function handleJarvisApi(request, env) {
     return json({ transcript, reply, audio });
   } catch (err) {
     console.error("jarvis:", err.message);
-    return json({ error: "Qualcosa è andato storto. Riprova tra poco." }, 502);
+    return json({ error: `Errore: ${err.message}` }, 502);
   }
 }
