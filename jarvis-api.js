@@ -83,7 +83,10 @@ async function gemini(env, model, body) {
     headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Gemini ${model} ${res.status}`);
+  if (!res.ok) {
+    const detail = (await res.text()).slice(0, 300);
+    throw new Error(`Gemini ${model} ${res.status}: ${detail}`);
+  }
   return res.json();
 }
 
