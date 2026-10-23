@@ -1,6 +1,7 @@
-// API di Jarvis per la pagina vocale (/jarvis/voce).
+// API di Jarvis (/jarvis): chat vocale e memoria dell'assistente.
 //
-// Flusso: audio dal browser → trascrizione (Gemini) → risposta (Claude) → voce (Gemini TTS) → WAV.
+// Flusso vocale: audio dal browser → trascrizione (Gemini) → risposta (Claude) → voce (Gemini TTS) → WAV.
+// Memoria: testo libero salvato nel KV, letto da Claude a ogni richiesta (clienti, contesto, regole di vendita).
 //
 // Configurazione (Cloudflare → Workers → venditauno-sito → Variabili, tipo "Secret"):
 //   ANTHROPIC_API_KEY    chiave Anthropic
@@ -16,12 +17,15 @@ const VOICE = "Charon";
 // Gemini TTS non ha voci britanniche predefinite: l'accento viene dall'istruzione di stile.
 const ACCENT = "Say in a calm, refined British English accent: ";
 const MAX_VOICE_CHARS = 1500;
-const MAX_AUDIO_B64 = 6 * 1024 * 1024; // circa 4-5 MB di audio
+const MAX_AUDIO_B64 = 6 * 1024 * 1024;
 const MAX_HISTORY = 20;
+const MAX_MEMORY_CHARS = 20000;
+const MEMORY_KEY = "jarvis:memory";
 
 const SYSTEM =
-  "Sei Jarvis, un assistente personale. Rispondi in italiano, in modo breve e diretto, " +
-  "adatto a essere letto ad alta voce. Niente markdown, niente elenchi lunghi.";
+  "Sei Jarvis, l'assistente personale di chi ti parla. Rispondi in italiano, in modo breve e diretto, " +
+  "adatto a essere letto ad alta voce. Niente markdown, niente elenchi lunghi. " +
+  "Usa la memoria qui sotto quando riguarda clienti, contesto o regole di vendita.";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -36,6 +40,11 @@ function sameText(a, b) {
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
+}
+
+function authorized(request, env) {
+  const code = request.headers.get("X-Jarvis-Code") || "";
+  return Boolean(env.JARVIS_ACCESS_CODE) && sameText(code, env.JARVIS_ACCESS_CODE);
 }
 
 // Contatore giornaliero nel KV: evita costi imprevisti se il link circola.
@@ -105,7 +114,10 @@ async function transcribe(env, audioB64, mimeType) {
   return data.candidates[0].content.parts[0].text.trim();
 }
 
-async function askClaude(env, messages) {
+async function askClaude(env, memory, messages) {
+  const system = memory
+    ? `${SYSTEM}\n\nMEMORIA (scritta da chi ti parla):\n${memory}`
+    : SYSTEM;
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -113,7 +125,7 @@ async function askClaude(env, messages) {
       "x-api-key": env.ANTHROPIC_API_KEY,
       "anthropic-version": "2023-06-01",
     },
-    body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: 1024, system: SYSTEM, messages }),
+    body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: 1024, system, messages }),
   });
   if (!res.ok) throw new Error(`Claude ${res.status}`);
   const data = await res.json();
@@ -135,20 +147,38 @@ async function speak(env, text) {
   return pcmToWavBase64(bytes);
 }
 
+async function handleMemory(request, env) {
+  if (request.method === "GET") {
+    const text = (await env.ACADEMY_PROGRESS.get(MEMORY_KEY)) || "";
+    return json({ memory: text });
+  }
+  if (request.method === "POST") {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: "Richiesta non valida." }, 400);
+    }
+    const text = typeof body.memory === "string" ? body.memory.slice(0, MAX_MEMORY_CHARS) : "";
+    await env.ACADEMY_PROGRESS.put(MEMORY_KEY, text);
+    return json({ ok: true });
+  }
+  return json({ error: "Metodo non consentito." }, 405);
+}
+
 export async function handleJarvisApi(request, env) {
   const url = new URL(request.url);
+  const isChat = url.pathname === "/api/jarvis/chat" && request.method === "POST";
+  const isMemory = url.pathname === "/api/jarvis/memory";
+  if (!isChat && !isMemory) return json({ error: "Non trovato." }, 404);
 
-  if (url.pathname !== "/api/jarvis/chat" || request.method !== "POST") {
-    return json({ error: "Non trovato." }, 404);
-  }
   if (!env.JARVIS_ACCESS_CODE || !env.ANTHROPIC_API_KEY || !env.GEMINI_API_KEY) {
     return json({ error: "Jarvis non è ancora configurato." }, 503);
   }
-
-  const code = request.headers.get("X-Jarvis-Code") || "";
-  if (!sameText(code, env.JARVIS_ACCESS_CODE)) {
+  if (!authorized(request, env)) {
     return json({ error: "Codice non valido." }, 401);
   }
+  if (isMemory) return handleMemory(request, env);
 
   let body;
   try {
@@ -181,7 +211,8 @@ export async function handleJarvisApi(request, env) {
       : [];
     const messages = [...past, { role: "user", content: transcript }];
 
-    const reply = await askClaude(env, messages);
+    const memory = (await env.ACADEMY_PROGRESS.get(MEMORY_KEY)) || "";
+    const reply = await askClaude(env, memory, messages);
     const audio = reply.length <= MAX_VOICE_CHARS ? await speak(env, reply) : null;
 
     return json({ transcript, reply, audio });
