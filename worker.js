@@ -1,6 +1,7 @@
 import usersData from "./academy-users.json";
 import { DASH_PATH, handleDashboard } from "./dashboard.js";
 import { handleAppApi } from "./app-api.js";
+import { handleJarvisApi } from "./jarvis-api.js";
 
 const MODULES = [
   {
@@ -230,6 +231,10 @@ export default {
     // App Vendita Uno: API e pagine (/app). Niente cache, così ogni aggiornamento si vede subito.
     if (url.pathname.startsWith("/api/app/")) {
       return handleAppApi(request, env);
+    }
+    // Jarvis vocale (/jarvis/voce): API con chiavi lato server.
+    if (url.pathname.startsWith("/api/jarvis/")) {
+      return handleJarvisApi(request, env);
     }
     if (url.pathname === "/app-api.js" || url.pathname === "/worker.js" || url.pathname === "/dashboard.js") {
       return new Response("Not found", { status: 404 });

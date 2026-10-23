@@ -1,0 +1,204 @@
+<title>Jarvis Voce</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root { --bg: #04080d; --ink: #bfefff; --dim: #5f8193; --cyan: #63e6ff; --alert: #ff4d5e; color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 50% 30%, #0a1822 0%, var(--bg) 70%);
+  color: var(--ink); font: 15px/1.5 system-ui, -apple-system, sans-serif;
+  padding-block: 20px; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 520px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { margin: 0; font: 600 20px/1.2 "Orbitron", ui-monospace, monospace; letter-spacing: 0.25em; color: var(--ink); }
+.sub { color: var(--dim); font-size: 13px; margin-top: 4px; }
+.gate, .stage { display: grid; gap: 12px; }
+input[type="password"], textarea {
+  width: 100%; background: #07111a; color: var(--ink); border: 1px solid #12324a; border-radius: 10px;
+  padding: 12px 14px; font: inherit; min-width: 0;
+}
+textarea { resize: vertical; min-height: 56px; }
+button {
+  font: inherit; color: #04080d; background: var(--cyan); border: 0; border-radius: 10px;
+  padding: 12px 16px; cursor: pointer;
+}
+button.ghost { background: transparent; color: var(--cyan); border: 1px solid #12324a; }
+button:disabled { opacity: 0.45; cursor: default; }
+.mic {
+  width: 132px; height: 132px; border-radius: 50%; justify-self: center; font-size: 15px; font-weight: 600;
+  box-shadow: 0 0 40px rgba(99, 230, 255, 0.35);
+}
+.mic.rec { background: var(--alert); color: #fff; box-shadow: 0 0 40px rgba(255, 77, 94, 0.5); }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+.card { background: #07111a; border: 1px solid #12324a; border-radius: 12px; padding: 14px 16px; }
+.label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+.reply { white-space: pre-wrap; overflow-wrap: anywhere; }
+.err { color: var(--alert); font-size: 13px; min-height: 1em; }
+audio { width: 100%; }
+</style>
+
+<main>
+  <header>
+    <h1>JARVIS</h1>
+    <div class="sub">Parla o scrivi. Ti rispondo a voce.</div>
+  </header>
+
+  <section class="gate" id="gate">
+    <label class="label" for="code">Codice di accesso</label>
+    <div class="row">
+      <input type="password" id="code" autocomplete="off" placeholder="Inserisci il codice">
+      <button id="saveCode">Entra</button>
+    </div>
+  </section>
+
+  <section class="stage" id="stage" hidden>
+    <button class="mic" id="mic">Tocca per parlare</button>
+    <div class="err" id="err" role="alert"></div>
+
+    <div class="row">
+      <textarea id="text" placeholder="Oppure scrivi qui"></textarea>
+      <button id="send">Invia</button>
+    </div>
+
+    <div class="card" id="result" hidden>
+      <div class="label">Tu</div>
+      <div class="reply" id="said"></div>
+      <div class="label" style="margin-top:12px">Jarvis</div>
+      <div class="reply" id="reply"></div>
+      <audio id="player" controls hidden></audio>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var codeInput = document.getElementById("code");
+  var gate = document.getElementById("gate");
+  var stage = document.getElementById("stage");
+  var mic = document.getElementById("mic");
+  var sendBtn = document.getElementById("send");
+  var textBox = document.getElementById("text");
+  var errBox = document.getElementById("err");
+  var result = document.getElementById("result");
+  var said = document.getElementById("said");
+  var reply = document.getElementById("reply");
+  var player = document.getElementById("player");
+
+  var history = [];
+  var recorder = null;
+  var chunks = [];
+  var busy = false;
+
+  function getCode() {
+    try { return sessionStorage.getItem("jarvis_code") || ""; } catch (e) { return ""; }
+  }
+  function setCode(v) {
+    try { sessionStorage.setItem("jarvis_code", v); } catch (e) { /* senza memoria, chiede il codice ogni volta */ }
+  }
+  function showStage() {
+    gate.hidden = true;
+    stage.hidden = false;
+  }
+  function setError(msg) { errBox.textContent = msg || ""; }
+
+  document.getElementById("saveCode").addEventListener("click", function () {
+    var v = codeInput.value.trim();
+    if (!v) return;
+    setCode(v);
+    showStage();
+  });
+  if (getCode()) showStage();
+
+  function blobToBase64(blob) {
+    return new Promise(function (resolve, reject) {
+      var fr = new FileReader();
+      fr.onload = function () { resolve(String(fr.result).split(",")[1]); };
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  async function send(payload) {
+    if (busy) return;
+    busy = true;
+    setError("");
+    mic.disabled = true;
+    sendBtn.disabled = true;
+    try {
+      var res = await fetch("/api/jarvis/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Jarvis-Code": getCode() },
+        body: JSON.stringify(Object.assign({ history: history }, payload)),
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (res.status === 401) {
+        try { sessionStorage.removeItem("jarvis_code"); } catch (e) {}
+        gate.hidden = false;
+        stage.hidden = true;
+        throw new Error("Codice non valido.");
+      }
+      if (!res.ok) throw new Error(data.error || "Errore del server.");
+
+      said.textContent = data.transcript;
+      reply.textContent = data.reply;
+      result.hidden = false;
+      history.push({ role: "user", content: data.transcript });
+      history.push({ role: "assistant", content: data.reply });
+      history = history.slice(-20);
+
+      if (data.audio) {
+        player.src = "data:audio/wav;base64," + data.audio;
+        player.hidden = false;
+        player.play().catch(function () { /* il browser può richiedere un tocco: il player resta disponibile */ });
+      } else {
+        player.hidden = true;
+      }
+    } catch (err) {
+      setError(err.message || "Errore di rete.");
+    } finally {
+      busy = false;
+      mic.disabled = false;
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener("click", function () {
+    var t = textBox.value.trim();
+    if (!t) return;
+    textBox.value = "";
+    send({ text: t });
+  });
+
+  mic.addEventListener("click", async function () {
+    if (recorder && recorder.state === "recording") {
+      recorder.stop();
+      mic.classList.remove("rec");
+      mic.textContent = "Elaboro…";
+      return;
+    }
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      setError("Questo browser non registra audio. Usa la casella di testo.");
+      return;
+    }
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      var type = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+      recorder = type ? new MediaRecorder(stream, { mimeType: type }) : new MediaRecorder(stream);
+      chunks = [];
+      recorder.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+      recorder.onstop = async function () {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        mic.textContent = "Tocca per parlare";
+        var blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+        var audio = await blobToBase64(blob);
+        send({ audio: audio, mimeType: blob.type.split(";")[0] });
+      };
+      recorder.start();
+      mic.classList.add("rec");
+      mic.textContent = "Tocca per inviare";
+      setError("");
+    } catch (err) {
+      setError("Microfono non disponibile. Controlla il permesso del browser.");
+    }
+  });
+})();
+</script>
