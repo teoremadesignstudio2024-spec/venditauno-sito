@@ -13,6 +13,7 @@ const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 
 const STATE_KEY = "crm:v1";
+const VERSION = "v5"; // si vede in alto nella dashboard: serve a capire quale versione è online
 
 // Regole del percorso cliente
 const CONFIG = {
@@ -137,8 +138,13 @@ async function readState(kv) {
     legacyImported: !!s.legacyImported,
   };
   if (!state.legacyImported) {
-    await importLegacy(kv, state);
-    await kv.put(STATE_KEY, JSON.stringify(state));
+    try {
+      await importLegacy(kv, state);
+      await kv.put(STATE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // Se l'importazione non riesce la dashboard funziona lo stesso; riprova alla prossima apertura
+      state.importError = String(e && e.message || e);
+    }
   }
   return state;
 }
@@ -542,6 +548,14 @@ ${BASE_HEAD}
 <script>
 // Il bundler di Cloudflare aggiunge __name(...) alle funzioni: nel browser non esiste, quindi lo definiamo.
 var __name = (f) => f;
+// Se qualcosa va storto, l'errore si vede sullo schermo (così basta una foto per capire il problema)
+function showError(msg) {
+  var b = document.getElementById("errbox");
+  if (!b) { b = document.createElement("div"); b.id = "errbox"; b.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#7f1d1d;color:#fff;padding:12px 14px;border-radius:10px;font:14px system-ui;white-space:pre-wrap"; document.body.appendChild(b); }
+  b.textContent = "⚠️ " + msg + "  (${VERSION})";
+}
+window.addEventListener("error", function (e) { showError("Errore: " + e.message + (e.lineno ? " — riga " + e.lineno : "")); });
+window.addEventListener("unhandledrejection", function (e) { showError("Errore: " + (e.reason && e.reason.message || e.reason)); });
 const API = ${JSON.stringify(DASH_PATH + "/api/tv")};
 ${SHARED}
 (${tvMain.toString()})();
@@ -653,7 +667,9 @@ function tvMain() {
     try {
       const r = await fetch(API, { cache: "no-store" });
       if (r.status === 401) { location.reload(); return; }
-      render(await r.json());
+      const text = await r.text();
+      if (!r.ok) { showError("Il server ha risposto " + r.status + ": " + text.slice(0, 300)); return; }
+      render(JSON.parse(text));
       $("status").classList.remove("offline");
     } catch (e) { $("status").classList.add("offline"); }
   }
@@ -767,7 +783,7 @@ ${BASE_HEAD}
 <body>
 <header>
   <div class="hrow">
-    <span class="brand">Vendita Uno · Vendite</span>
+    <span class="brand">Vendita Uno · Vendite <small style="opacity:.4;font-weight:400;letter-spacing:0">${VERSION}</small></span>
     <div class="who">Io sono <select id="me"></select></div>
     <button class="btn main" id="newBtn">+ Nuovo cliente</button>
     <div class="kpis">
@@ -791,6 +807,14 @@ ${BASE_HEAD}
 <script>
 // Il bundler di Cloudflare aggiunge __name(...) alle funzioni: nel browser non esiste, quindi lo definiamo.
 var __name = (f) => f;
+// Se qualcosa va storto, l'errore si vede sullo schermo (così basta una foto per capire il problema)
+function showError(msg) {
+  var b = document.getElementById("errbox");
+  if (!b) { b = document.createElement("div"); b.id = "errbox"; b.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#7f1d1d;color:#fff;padding:12px 14px;border-radius:10px;font:14px system-ui;white-space:pre-wrap"; document.body.appendChild(b); }
+  b.textContent = "⚠️ " + msg + "  (${VERSION})";
+}
+window.addEventListener("error", function (e) { showError("Errore: " + e.message + (e.lineno ? " — riga " + e.lineno : "")); });
+window.addEventListener("unhandledrejection", function (e) { showError("Errore: " + (e.reason && e.reason.message || e.reason)); });
 const API = ${JSON.stringify(DASH_PATH + "/api")};
 const CONFIG = ${JSON.stringify(CONFIG)};
 ${SHARED}
@@ -829,9 +853,14 @@ function appMain() {
     try {
       const r = await fetch(API + "/state", { cache: "no-store" });
       if (r.status === 401) { location.reload(); return; }
-      S = await r.json();
+      const text = await r.text();
+      if (!r.ok) { showError("Il server ha risposto " + r.status + ": " + text.slice(0, 300)); return; }
+      S = JSON.parse(text);
       render();
-    } catch (e) { toast("Connessione persa, riprovo…", true); }
+      const eb = document.getElementById("errbox");
+      if (S.state.importError) showError("Importazione clienti di prima non riuscita: " + S.state.importError);
+      else if (eb) eb.remove();
+    } catch (e) { showError("Caricamento non riuscito: " + (e.message || e)); }
   }
   async function op(body, okMsg) {
     let d;
@@ -1163,6 +1192,27 @@ function appMain() {
 
 // ---------- Router ----------
 
+async function handleApi(request, kv, url, path) {
+  const today = romeDate();
+  const state = await readState(kv);
+  const full = () => json({ state, tv: tvSummary(state, today) });
+
+  if (path === `${DASH_PATH}/api/tv` && request.method === "GET") return json(tvSummary(state, today));
+  if (path === `${DASH_PATH}/api/state` && request.method === "GET") return full();
+  if (path === `${DASH_PATH}/api/op` && request.method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    try {
+      applyOp(state, body, today);
+    } catch (e) {
+      return json({ error: e.message }, 400);
+    }
+    await kv.put(STATE_KEY, JSON.stringify(state));
+    return full();
+  }
+  return json({ error: "not found" }, 404);
+}
+
+
 export async function handleDashboard(request, env, url) {
   const kv = env.ACADEMY_PROGRESS;
   if (!kv) return new Response("KV not configured", { status: 500 });
@@ -1188,23 +1238,11 @@ export async function handleDashboard(request, env, url) {
 
   if (path.startsWith(`${DASH_PATH}/api/`)) {
     if (!loggedIn) return json({ error: "unauthorized" }, 401);
-    const today = romeDate();
-    const state = await readState(kv);
-    const full = () => json({ state, tv: tvSummary(state, today) });
-
-    if (path === `${DASH_PATH}/api/tv` && request.method === "GET") return json(tvSummary(state, today));
-    if (path === `${DASH_PATH}/api/state` && request.method === "GET") return full();
-    if (path === `${DASH_PATH}/api/op` && request.method === "POST") {
-      const body = await request.json().catch(() => ({}));
-      try {
-        applyOp(state, body, today);
-      } catch (e) {
-        return json({ error: e.message }, 400);
-      }
-      await kv.put(STATE_KEY, JSON.stringify(state));
-      return full();
+    try {
+      return await handleApi(request, kv, url, path);
+    } catch (e) {
+      return json({ error: "Errore del server: " + (e && e.stack || e) }, 500);
     }
-    return json({ error: "not found" }, 404);
   }
 
   if (path === DASH_PATH || path === `${DASH_PATH}/login`) {
