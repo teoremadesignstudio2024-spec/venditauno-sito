@@ -540,6 +540,8 @@ ${BASE_HEAD}
 <div class="flash" id="flash"></div>
 <div class="status" id="status">Connessione persa, riprovo…</div>
 <script>
+// Il bundler di Cloudflare aggiunge __name(...) alle funzioni: nel browser non esiste, quindi lo definiamo.
+var __name = (f) => f;
 const API = ${JSON.stringify(DASH_PATH + "/api/tv")};
 ${SHARED}
 (${tvMain.toString()})();
@@ -787,6 +789,8 @@ ${BASE_HEAD}
 <div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
 <script>
+// Il bundler di Cloudflare aggiunge __name(...) alle funzioni: nel browser non esiste, quindi lo definiamo.
+var __name = (f) => f;
 const API = ${JSON.stringify(DASH_PATH + "/api")};
 const CONFIG = ${JSON.stringify(CONFIG)};
 ${SHARED}
