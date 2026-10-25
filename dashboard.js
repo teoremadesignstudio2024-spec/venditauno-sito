@@ -864,7 +864,7 @@ function appMain() {
     const card = (c) => {
       const due = toCollect(c), st = stageOf(c, today);
       let info = "entrato " + dShort(c.created);
-      if (st === "onboarding") info = "mar " + dShort(c.onb.tue.date) + (c.onb.tue.present ? " ✓" : "") + " · gio " + dShort(c.onb.thu.date) + (c.onb.thu.present ? " ✓" : "");
+      if (st === "onboarding") info = dShort(c.onb.tue.date) + (c.onb.tue.present ? " ✓" : "") + " · " + dShort(c.onb.thu.date) + (c.onb.thu.present ? " ✓" : "");
       if (st === "live") info = "live " + dShort(c.live.date) + (c.live.invited ? " · link mandato" : "");
       if (st === "richiamare") info = "richiamare " + (c.upsell.recall ? dShort(c.upsell.recall) : "subito");
       if (st === "gestito" || st === "scaduto") info = "scade " + dShort(c.upsell.end);
