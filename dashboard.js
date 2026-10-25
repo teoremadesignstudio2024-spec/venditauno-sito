@@ -13,7 +13,7 @@ const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 
 const STATE_KEY = "crm:v1";
-const VERSION = "v8"; // si vede in alto nella dashboard: serve a capire quale versione è online
+const VERSION = "v9"; // si vede in alto nella dashboard: serve a capire quale versione è online
 
 // Regole del percorso cliente
 const CONFIG = {
@@ -332,6 +332,24 @@ function applyOp(state, op, today) {
         }
         if (isDate(u.end)) c.upsell.end = u.end;
         if ("recall" in u) c.upsell.recall = isDate(u.recall) ? u.recall : null;
+      }
+      return;
+    }
+    case "moveStage": {
+      // Spostamento a mano nella pipeline: si aggiornano i dati che decidono la colonna
+      const c = find(op.id);
+      const set = (fields) => applyOp(state, { op: "updateClient", id: c.id, fields }, today);
+      switch (op.stage) {
+        case "onboarding": c.upsell.status = null; c.campaign.start = null; if (c.live.present == null) c.live.date = null; c.imported = false; break;
+        case "campagna": c.upsell.status = null; c.imported = false; if (!c.campaign.start) set({ campaign: { start: today } }); break;
+        case "richiamare": set({ upsell: { status: "richiamare" } }); break;
+        case "gestito":
+          set({ upsell: { status: "chiuso" } });
+          if (c.upsell.end && c.upsell.end < today) c.upsell.end = addMonths(today, CONFIG.upsellMonths);
+          break;
+        case "lifetime": set({ upsell: { status: "non_chiuso" } }); break;
+        case "scaduto": set({ upsell: { status: "chiuso" } }); if (!c.upsell.end || c.upsell.end >= today) c.upsell.end = addDays(today, -1); break;
+        default: throw new Error("Colonna non valida");
       }
       return;
     }
@@ -818,6 +836,9 @@ ${BASE_HEAD}
   .col h3 { margin: 2px 4px 10px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); display: flex; justify-content: space-between; }
   .cc { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; cursor: pointer; }
   .cc:hover { border-color: #555; }
+  .cc.dragging { opacity: 0.4; }
+  .col.over { border-color: #fff; background: #111; }
+  .cc .move { margin-top: 8px; padding: 6px 8px; font-size: 0.8rem; color: var(--muted); }
   .cc b { display: block; }
   .cc small { color: var(--muted); font-size: 0.78rem; }
 
@@ -1124,15 +1145,34 @@ function appMain() {
       if (st === "campagna") info = "partita " + dShort(c.campaign.start) + " · live " + dShort(c.live.date);
       if (st === "richiamare") info = "richiamare " + (c.upsell.recall ? dShort(c.upsell.recall) : "subito");
       if (st === "gestito" || st === "scaduto") info = "scade " + dShort(c.upsell.end);
-      return `<div class="cc" data-open="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.seller)} · ${esc(info)}</small>
-        <div style="margin-top:6px"><span class="tag g num">${fmt(paid(c))}</span>${due ? ` <span class="tag y num">da incassare ${fmt(due)}</span>` : ""}</div></div>`;
+      return `<div class="cc" data-open="${c.id}" draggable="true" data-drag="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.seller)} · ${esc(info)}</small>
+        <div style="margin-top:6px"><span class="tag g num">${fmt(paid(c))}</span>${due ? ` <span class="tag y num">da incassare ${fmt(due)}</span>` : ""}</div>
+        <select class="move" data-move="${c.id}"><option value="">Sposta in…</option>${STAGES.filter(([k]) => k !== st).map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}</select></div>`;
     };
     $("main").innerHTML = `
       <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap"><input id="search" placeholder="Cerca cliente, telefono, email, venditore…" value="${esc(search)}" style="max-width:420px"><span class="muted" style="align-self:center">${S.state.clients.length} clienti</span></div>
       <div class="pipe">${STAGES.map(([k, label]) => {
         const list = C.filter((c) => stageOf(c, today) === k).sort((a, b) => b.created.localeCompare(a.created));
-        return `<div class="col"><h3><span>${label}</span><span>${list.length}</span></h3>${list.map(card).join("") || '<div class="empty">—</div>'}</div>`;
+        return `<div class="col" data-col="${k}"><h3><span>${label}</span><span>${list.length}</span></h3>${list.map(card).join("") || '<div class="empty">—</div>'}</div>`;
       }).join("")}</div>`;
+    // Spostare i clienti: trascinando la card (PC) o dal menu "Sposta in…" (telefono)
+    const move = (id, stage) => {
+      const c = client(id);
+      if (!c || stageOf(c, S.tv.today) === stage) return;
+      const label = STAGES.find(([k]) => k === stage)[1];
+      op({ op: "moveStage", id, stage }, `${c.name} → ${label}`);
+    };
+    document.querySelectorAll("#main [data-move]").forEach((x) => {
+      x.onclick = (e) => e.stopPropagation();
+      x.onchange = () => { if (x.value) move(x.dataset.move, x.value); };
+    });
+    document.querySelectorAll("#main [data-drag]").forEach((x) => x.ondragstart = (e) => { e.dataTransfer.setData("text/plain", x.dataset.drag); x.classList.add("dragging"); });
+    document.querySelectorAll("#main [data-drag]").forEach((x) => x.ondragend = () => x.classList.remove("dragging"));
+    document.querySelectorAll("#main [data-col]").forEach((col) => {
+      col.ondragover = (e) => { e.preventDefault(); col.classList.add("over"); };
+      col.ondragleave = () => col.classList.remove("over");
+      col.ondrop = (e) => { e.preventDefault(); col.classList.remove("over"); move(e.dataTransfer.getData("text/plain"), col.dataset.col); };
+    });
     const s = $("search");
     s.oninput = () => { search = s.value; const pos = s.selectionStart; renderClients(); const n = $("search"); n.focus(); n.setSelectionRange(pos, pos); };
   }
