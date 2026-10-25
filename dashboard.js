@@ -13,7 +13,7 @@ const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 
 const STATE_KEY = "crm:v1";
-const VERSION = "v7"; // si vede in alto nella dashboard: serve a capire quale versione è online
+const VERSION = "v8"; // si vede in alto nella dashboard: serve a capire quale versione è online
 
 // Regole del percorso cliente
 const CONFIG = {
@@ -144,6 +144,7 @@ async function readState(kv) {
     goals: s.goals || {},
     quotes: s.quotes || DEFAULT_QUOTES,
     news: s.news || [],
+    weekGoal: s.weekGoal || { target: 1000, clients: 5 },
     legacyImported: !!s.legacyImported,
   };
   // Clienti salvati prima della divisione vendite/onboarding: checklist e campagna vuote,
@@ -242,6 +243,11 @@ function applyOp(state, op, today) {
       const list = [...new Set((op.sellers || []).map((s) => str(s, 30)).filter(Boolean))];
       if (!list.length) throw new Error("Serve almeno un venditore");
       state.sellers = list;
+      return;
+    }
+    case "setWeekGoal": {
+      const n = Math.round(Number(op.clients));
+      state.weekGoal = { target: money(op.target, { allowZero: true }), clients: Number.isInteger(n) && n >= 0 && n <= 1000 ? n : 0 };
       return;
     }
     case "setGoal": {
@@ -436,6 +442,13 @@ function tvSummary(state, today) {
     newMonth: state.clients.filter((c) => c.created.startsWith(month)).length,
     upsellMonth: state.clients.filter((c) => c.upsell.status === "chiuso" && (c.upsell.date || "").startsWith(month)).length,
     goal, winner, ranking, lives, ticker,
+    week: (() => {
+      // Settimana da lunedì a domenica
+      let start = today;
+      while (weekday(start) !== 1) start = addDays(start, -1);
+      const end = addDays(start, 6), inWeek = (d) => d >= start && d <= end;
+      return { start, end, ...state.weekGoal, cashed: sumAmounts(pays.filter((p) => inWeek(p.date))), newClients: state.clients.filter((c) => inWeek(c.created)).length };
+    })(),
     onboarding: {
       inProgress: state.clients.filter((c) => stageOf(c, today) === "onboarding").length,
       startedMonth: state.clients.filter((c) => (c.campaign.start || "").startsWith(month)).length,
@@ -512,6 +525,12 @@ ${BASE_HEAD}
   .bump { animation: bump 1.2s ease-out; }
   @keyframes bump { 0% { transform: scale(1); } 15% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
+  .week { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2vw; border-top: 1px solid #333; padding-top: 1.6vh; font-size: clamp(0.9rem, 1.9vw, 2.3rem); font-weight: 800; }
+  .week[hidden] { display: none; }
+  .week .lbl { letter-spacing: 0.12em; text-transform: uppercase; }
+  .week .wbar { height: 2.2vh; min-height: 10px; background: #222; border-radius: 99px; overflow: hidden; }
+  .week .wbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #4ade80, #ffd54a); border-radius: 99px; transition: width 1.2s ease-out; }
+  .week .val small { font-weight: 500; opacity: 0.65; margin-left: 1vw; }
   .bottom { flex: 1; min-height: 0; display: grid; grid-template-columns: 2.2fr 1fr; gap: 3vw; border-top: 1px solid #333; padding-top: 2vh; }
   .podium-wrap { display: flex; flex-direction: column; min-height: 0; }
   h2 { margin: 0 0 0.6vh; font-size: clamp(1rem, 2.2vw, 2.6rem); font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; text-align: center; }
@@ -571,6 +590,7 @@ ${BASE_HEAD}
     <div class="kpi"><div class="label">Incassato di oggi</div><div class="value num" id="cashedToday">0 €</div><div class="sub" id="todaySub"></div></div>
     <div class="kpi"><div class="label">Incassato del mese</div><div class="value num" id="cashedMonth">0 €</div><div class="sub" id="monthSub"></div></div>
   </div>
+  <div class="week" id="week"></div>
   <div class="bottom">
     <div class="podium-wrap">
       <h2>🏆 Top venditore</h2>
@@ -669,6 +689,17 @@ function tvMain() {
       }
       if (d.winner && !last.winner) flash("🏆 " + d.winner.name + " ha raggiunto l'obiettivo!");
       if (d.ranking[0] && last.ranking[0] && d.ranking[0].month > 0 && d.ranking[0].name !== last.ranking[0].name) flash("👑 " + d.ranking[0].name + " passa in testa!");
+    }
+
+    // Obiettivo della settimana
+    const w = d.week, wk = $("week");
+    wk.hidden = !(w.target > 0 || w.clients > 0);
+    if (!wk.hidden) {
+      const pct = w.target > 0 ? Math.min(100, w.cashed / w.target * 100) : Math.min(100, w.newClients / Math.max(1, w.clients) * 100);
+      wk.innerHTML = '<span class="lbl">🎯 Obiettivo settimana</span><span class="wbar"><i style="width:' + pct + '%"></i></span>' +
+        '<span class="val num">' + fmt(w.cashed) + (w.target > 0 ? " / " + fmt(w.target) : "") +
+        (w.clients > 0 ? "<small>" + w.newClients + "/" + w.clients + " clienti</small>" : "") + "</span>";
+      if (last && last.week.cashed < w.target && w.cashed >= w.target && w.target > 0) flash("🎯 Obiettivo della settimana raggiunto!");
     }
 
     // Obiettivo del mese
@@ -1162,6 +1193,12 @@ function appMain() {
           <label>Giorni di campagna attiva prima della live di upsell</label>
           <input id="liveDelay" inputmode="numeric" value="${S.state.liveDelay}" style="max-width:120px">
           <div style="margin-top:10px"><button class="btn main" id="saveSellers">Salva team</button></div></div>
+        <div class="card"><h2>🎯 Obiettivo della settimana</h2>
+          <p class="muted" style="margin-top:0">Di squadra, da lunedì a domenica. Si vede sulla TV con la barra. Metti 0 per nasconderlo.</p>
+          <div class="two"><div><label>Incassato (€)</label><input id="wkT" inputmode="decimal" value="${S.state.weekGoal.target || 0}"></div>
+          <div><label>Nuovi clienti</label><input id="wkC" inputmode="numeric" value="${S.state.weekGoal.clients || 0}"></div></div>
+          <p class="muted" style="font-size:0.85rem">Questa settimana: <b style="color:var(--green)">${fmt(S.tv.week.cashed)}</b> incassati · ${S.tv.week.newClients} nuovi clienti</p>
+          <div><button class="btn main" id="saveWeek">Salva obiettivo settimana</button></div></div>
         <div class="card"><h2>🎯 Obiettivo di ${esc(monthName)}</h2>
           <p class="muted" style="margin-top:0">Incassato da raggiungere a testa. Il primo che ci arriva vince il bonus (si vede sulla TV).</p>
           <div class="two"><div><label>Obiettivo (€ a testa)</label><input id="goalT" inputmode="decimal" value="${g.target || ""}" placeholder="es. 3000"></div>
@@ -1177,6 +1214,7 @@ function appMain() {
       </div>`;
     const lines = (id) => $(id).value.split("\n").map((s) => s.trim()).filter(Boolean);
     $("saveSellers").onclick = () => op({ op: "setTeam", sellers: lines("sellers"), onboarders: lines("onboarders"), liveDelay: Number($("liveDelay").value) }, "Team salvato");
+    $("saveWeek").onclick = () => op({ op: "setWeekGoal", target: parseAmount($("wkT").value) || 0, clients: Number($("wkC").value) || 0 }, "Obiettivo settimana salvato");
     $("saveGoal").onclick = () => op({ op: "setGoal", month, target: parseAmount($("goalT").value) || 0, bonus: parseAmount($("goalB").value) || 0 }, "Obiettivo salvato");
     $("saveTicker").onclick = () => op({ op: "setTicker", news: lines("news"), quotes: lines("quotes") }, "Banner salvato");
   }
