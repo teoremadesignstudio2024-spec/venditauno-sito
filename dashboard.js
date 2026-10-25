@@ -13,13 +13,15 @@ const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 
 const STATE_KEY = "crm:v1";
-const VERSION = "v6"; // si vede in alto nella dashboard: serve a capire quale versione è online
+const VERSION = "v8"; // si vede in alto nella dashboard: serve a capire quale versione è online
 
 // Regole del percorso cliente
 const CONFIG = {
   frontAmount: 200,        // acconto del nuovo cliente (vendita telefonica)
   upsellAmount: 2500,      // upsell della live del venerdì
   upsellMonths: 3,         // durata del servizio gestito dopo l'upsell
+  liveDelay: 7,            // giorni di campagna attiva prima della live di upsell (si cambia dalle impostazioni)
+  steps: { portafoglio: "Portafoglio Business creato", verifica: "Account verificato", campagna: "Campagna creata" },
   sessions: {
     tue: "Tutorial Portafoglio Business",
     thu: "Sessione del giovedì (anti-spam Facebook)",
@@ -85,11 +87,16 @@ function stageOf(c, today) {
   if (u.status === "chiuso") return u.end && u.end < today ? "scaduto" : "gestito";
   if (u.status === "richiamare") return "richiamare";
   if (u.status === "non_chiuso" || c.imported) return "lifetime";
-  if (c.onb.tue.present === true && c.onb.thu.present === true) return "live";
+  if (c.campaign.start) return "campagna";
   return "onboarding";
 }
+// Live di upsell: il primo venerdì dopo X giorni di campagna attiva
+function liveDateFor(start, delay) {
+  const d = addDays(start, delay);
+  return weekday(d) === 5 ? d : nextWeekday(d, 5);
+}
 
-const SHARED = [addDays, weekday, nextWeekday, addMonths, schedule, round2, sumAmounts, toCollect, stageOf]
+const SHARED = [addDays, weekday, nextWeekday, addMonths, schedule, round2, sumAmounts, toCollect, stageOf, liveDateFor]
   .map((f) => f.toString()).join("\n");
 
 // ---------- Server ----------
@@ -131,12 +138,24 @@ async function readState(kv) {
   const s = raw ? JSON.parse(raw) : {};
   const state = {
     sellers: s.sellers || [],
+    onboarders: s.onboarders || [],
+    liveDelay: Number.isInteger(s.liveDelay) ? s.liveDelay : CONFIG.liveDelay,
     clients: s.clients || [],
     goals: s.goals || {},
     quotes: s.quotes || DEFAULT_QUOTES,
     news: s.news || [],
+    weekGoal: s.weekGoal || { target: 1000, clients: 5 },
     legacyImported: !!s.legacyImported,
   };
+  // Clienti salvati prima della divisione vendite/onboarding: checklist e campagna vuote,
+  // e niente live fissata finché la campagna non parte (se la live non è già stata fatta)
+  for (const c of state.clients) {
+    if (!c.campaign) {
+      c.campaign = { start: null };
+      if (!c.upsell.status && c.live.present == null && !c.live.invited) c.live.date = null;
+    }
+    c.onb.steps = c.onb.steps || { portafoglio: false, verifica: false, campagna: false };
+  }
   if (!state.legacyImported) {
     try {
       await importLegacy(kv, state);
@@ -177,6 +196,7 @@ async function importLegacy(kv, state) {
         onb: { tue: { date: sched.tue, present: null }, thu: { date: sched.thu, present: null } },
         live: { date: sched.fri, invited: false, present: null },
         upsell: { status: null, amount: CONFIG.upsellAmount, date: null, start: null, end: null, recall: null },
+        campaign: { start: null },
         payments: cashed > 0 ? [{ id: newId(), date, amount: cashed, seller: who, kind: "acconto", note: "importato", ts: e.ts || 0 }] : [],
       });
     }
@@ -209,10 +229,25 @@ function applyOp(state, op, today) {
   const KINDS = ["acconto", "upsell", "saldo"];
 
   switch (op.op) {
+    case "setTeam": {
+      const clean = (l) => [...new Set((l || []).map((x) => str(x, 30)).filter(Boolean))];
+      const sellers = clean(op.sellers), onb = clean(op.onboarders).filter((n) => !sellers.includes(n));
+      if (!sellers.length) throw new Error("Serve almeno un venditore");
+      state.sellers = sellers;
+      state.onboarders = onb;
+      const d = Number(op.liveDelay);
+      if (Number.isInteger(d) && d >= 0 && d <= 60) state.liveDelay = d;
+      return;
+    }
     case "setSellers": {
       const list = [...new Set((op.sellers || []).map((s) => str(s, 30)).filter(Boolean))];
       if (!list.length) throw new Error("Serve almeno un venditore");
       state.sellers = list;
+      return;
+    }
+    case "setWeekGoal": {
+      const n = Math.round(Number(op.clients));
+      state.weekGoal = { target: money(op.target, { allowZero: true }), clients: Number.isInteger(n) && n >= 0 && n <= 1000 ? n : 0 };
       return;
     }
     case "setGoal": {
@@ -236,10 +271,12 @@ function applyOp(state, op, today) {
         id: newId(), name, phone: str(op.phone, 40), email: str(op.email, 120), seller: who, created: date,
         notes: str(op.notes, 2000),
         onb: { tue: { date: s.tue, present: null }, thu: { date: s.thu, present: null } },
-        live: { date: s.fri, invited: false, present: null },
+        live: { date: null, invited: false, present: null },
         upsell: { status: null, amount: CONFIG.upsellAmount, date: null, start: null, end: null, recall: null },
+        campaign: { start: null },
         payments: [],
       };
+      c.onb.steps = { portafoglio: false, verifica: false, campagna: false };
       if (amount) c.payments.push({ id: newId(), date, amount, seller: who, kind: "acconto", note: "", ts: Date.now() });
       state.clients.push(c);
       return c.id;
@@ -261,6 +298,15 @@ function applyOp(state, op, today) {
         if (!f[k]) continue;
         if (isDate(f[k].date)) c.onb[k].date = f[k].date;
         if ("present" in f[k]) c.onb[k].present = tri(f[k].present);
+      }
+      if (f.steps) for (const k of Object.keys(CONFIG.steps)) if (k in f.steps) c.onb.steps[k] = !!f.steps[k];
+      if (f.campaign && "start" in f.campaign) {
+        const start = isDate(f.campaign.start) ? f.campaign.start : null;
+        if (start !== c.campaign.start) {
+          c.campaign.start = start;
+          // La data della live segue la partenza della campagna, finché la live non è stata fatta
+          if (c.live.present == null && !c.upsell.status) c.live.date = start ? liveDateFor(start, state.liveDelay) : null;
+        }
       }
       if (f.live) {
         if (isDate(f.live.date)) c.live.date = f.live.date;
@@ -374,6 +420,8 @@ function tvSummary(state, today) {
     if (l.date === today) reminders.push(`📅 Oggi: ${l.label} con ${l.count} ${l.count === 1 ? "cliente" : "clienti"}`);
     else if (l.date === addDays(today, 1)) reminders.push(`📅 Domani: ${l.label} con ${l.count} ${l.count === 1 ? "cliente" : "clienti"} — mandate il link!`);
   }
+  const toStart = state.clients.filter((c) => stageOf(c, today) === "onboarding" && c.onb.tue.present === true && c.onb.thu.present === true).length;
+  if (toStart) reminders.push(`🚀 ${toStart} ${toStart === 1 ? "campagna da far partire" : "campagne da far partire"}${state.onboarders.length ? ` (${state.onboarders.join(", ")})` : ""}`);
   for (const c of state.clients) {
     if (c.upsell.status === "richiamare" && (!c.upsell.recall || c.upsell.recall <= today)) reminders.push(`📞 Da richiamare: ${c.name} (${c.seller})`);
     const due = toCollect(c);
@@ -394,6 +442,17 @@ function tvSummary(state, today) {
     newMonth: state.clients.filter((c) => c.created.startsWith(month)).length,
     upsellMonth: state.clients.filter((c) => c.upsell.status === "chiuso" && (c.upsell.date || "").startsWith(month)).length,
     goal, winner, ranking, lives, ticker,
+    week: (() => {
+      // Settimana da lunedì a domenica
+      let start = today;
+      while (weekday(start) !== 1) start = addDays(start, -1);
+      const end = addDays(start, 6), inWeek = (d) => d >= start && d <= end;
+      return { start, end, ...state.weekGoal, cashed: sumAmounts(pays.filter((p) => inWeek(p.date))), newClients: state.clients.filter((c) => inWeek(c.created)).length };
+    })(),
+    onboarding: {
+      inProgress: state.clients.filter((c) => stageOf(c, today) === "onboarding").length,
+      startedMonth: state.clients.filter((c) => (c.campaign.start || "").startsWith(month)).length,
+    },
     last: last ? { id: last.id, seller: last.seller, amount: last.amount, kind: last.kind } : null,
   };
 }
@@ -466,6 +525,12 @@ ${BASE_HEAD}
   .bump { animation: bump 1.2s ease-out; }
   @keyframes bump { 0% { transform: scale(1); } 15% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
+  .week { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2vw; border-top: 1px solid #333; padding-top: 1.6vh; font-size: clamp(0.9rem, 1.9vw, 2.3rem); font-weight: 800; }
+  .week[hidden] { display: none; }
+  .week .lbl { letter-spacing: 0.12em; text-transform: uppercase; }
+  .week .wbar { height: 2.2vh; min-height: 10px; background: #222; border-radius: 99px; overflow: hidden; }
+  .week .wbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #4ade80, #ffd54a); border-radius: 99px; transition: width 1.2s ease-out; }
+  .week .val small { font-weight: 500; opacity: 0.65; margin-left: 1vw; }
   .bottom { flex: 1; min-height: 0; display: grid; grid-template-columns: 2.2fr 1fr; gap: 3vw; border-top: 1px solid #333; padding-top: 2vh; }
   .podium-wrap { display: flex; flex-direction: column; min-height: 0; }
   h2 { margin: 0 0 0.6vh; font-size: clamp(1rem, 2.2vw, 2.6rem); font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; text-align: center; }
@@ -525,6 +590,7 @@ ${BASE_HEAD}
     <div class="kpi"><div class="label">Incassato di oggi</div><div class="value num" id="cashedToday">0 €</div><div class="sub" id="todaySub"></div></div>
     <div class="kpi"><div class="label">Incassato del mese</div><div class="value num" id="cashedMonth">0 €</div><div class="sub" id="monthSub"></div></div>
   </div>
+  <div class="week" id="week"></div>
   <div class="bottom">
     <div class="podium-wrap">
       <h2>🏆 Top venditore</h2>
@@ -538,6 +604,7 @@ ${BASE_HEAD}
     <div class="side">
       <div id="winnerBox"></div>
       <div><h3>Prossime live</h3><div id="lives"></div></div>
+      <div><h3>Onboarding</h3><div id="onbBox"></div></div>
       <div id="othersBox"></div>
     </div>
   </div>
@@ -624,6 +691,17 @@ function tvMain() {
       if (d.ranking[0] && last.ranking[0] && d.ranking[0].month > 0 && d.ranking[0].name !== last.ranking[0].name) flash("👑 " + d.ranking[0].name + " passa in testa!");
     }
 
+    // Obiettivo della settimana
+    const w = d.week, wk = $("week");
+    wk.hidden = !(w.target > 0 || w.clients > 0);
+    if (!wk.hidden) {
+      const pct = w.target > 0 ? Math.min(100, w.cashed / w.target * 100) : Math.min(100, w.newClients / Math.max(1, w.clients) * 100);
+      wk.innerHTML = '<span class="lbl">🎯 Obiettivo settimana</span><span class="wbar"><i style="width:' + pct + '%"></i></span>' +
+        '<span class="val num">' + fmt(w.cashed) + (w.target > 0 ? " / " + fmt(w.target) : "") +
+        (w.clients > 0 ? "<small>" + w.newClients + "/" + w.clients + " clienti</small>" : "") + "</span>";
+      if (last && last.week.cashed < w.target && w.cashed >= w.target && w.target > 0) flash("🎯 Obiettivo della settimana raggiunto!");
+    }
+
     // Obiettivo del mese
     const g = d.goal;
     $("goal").innerHTML = g.target > 0
@@ -644,6 +722,8 @@ function tvMain() {
       if (changed) { step.classList.remove("pop"); void step.offsetWidth; step.classList.add("pop"); }
     });
 
+    $("onbBox").innerHTML = '<div class="row"><span class="l">In onboarding</span><span class="r num">' + d.onboarding.inProgress + '</span></div>' +
+      '<div class="row"><span class="l">Campagne partite nel mese</span><span class="r num">' + d.onboarding.startedMonth + "</span></div>";
     $("winnerBox").innerHTML = !d.winner ? ""
       : '<div class="winner">🏆 ' + esc(d.winner.name) + (g.bonus ? " ha vinto il bonus di " + fmt(g.bonus) + "!" : " ha raggiunto l'obiettivo!") + "</div>";
     $("lives").innerHTML = d.lives.map((l) =>
@@ -771,6 +851,22 @@ ${BASE_HEAD}
   .toast.show { opacity: 1; }
   .toast.err { background: var(--red); }
   .who { display: flex; align-items: center; gap: 8px; }
+  .ot { width: 100%; border-collapse: collapse; }
+  .ot th { text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .ot td { padding: 10px 8px; border-bottom: 1px solid #1b1b1b; vertical-align: top; }
+  .ot td small { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 3px; }
+  .ot .seg { flex-wrap: nowrap; }
+  .ot .seg button { padding: 5px 10px; }
+  @media (max-width: 640px) {
+    .ot, .ot tbody, .ot tr, .ot td { display: block; width: 100%; }
+    .ot tr:first-child { display: none; }
+    .ot tr { border-bottom: 1px solid var(--line); padding: 8px 0; }
+    .ot td { border: 0; padding: 6px 0; }
+    .ot td:nth-child(2), .ot td:nth-child(3) { display: inline-block; width: auto; margin-right: 18px; }
+    .ot td:nth-child(2)::before { content: "Martedì"; display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+    .ot td:nth-child(3)::before { content: "Giovedì"; display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+    .ot td:nth-child(5)::before { content: "Campagna partita il"; display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+  }
   .who select { width: auto; padding: 6px 10px; }
   @media (max-width: 640px) {
     .two, .three { grid-template-columns: 1fr; }
@@ -786,20 +882,9 @@ ${BASE_HEAD}
     <span class="brand">Vendita Uno · Vendite <small style="opacity:.4;font-weight:400;letter-spacing:0">${VERSION}</small></span>
     <div class="who">Io sono <select id="me"></select></div>
     <button class="btn main" id="newBtn">+ Nuovo cliente</button>
-    <div class="kpis">
-      <div>Incassato oggi<b class="num g" id="kToday">—</b></div>
-      <div>Incassato mese<b class="num g" id="kMonth">—</b></div>
-      <div>Nuovi oggi<b class="num" id="kNew">—</b></div>
-      <div>Mio obiettivo<b class="num" id="kGoal">—</b></div>
-    </div>
+    <div class="kpis" id="kpis"></div>
   </div>
-  <nav id="tabs">
-    <button data-t="oggi" class="on">Oggi</button>
-    <button data-t="clienti">Clienti</button>
-    <button data-t="calendario">Calendario</button>
-    <button data-t="impostazioni">Venditori, obiettivo e TV</button>
-    <button onclick="window.open('${DASH_PATH}/tv','_blank')">Apri la TV ↗</button>
-  </nav>
+  <nav id="tabs"></nav>
 </header>
 <main id="main"></main>
 <div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
@@ -816,6 +901,7 @@ function showError(msg) {
 window.addEventListener("error", function (e) { showError("Errore: " + e.message + (e.lineno ? " — riga " + e.lineno : "")); });
 window.addEventListener("unhandledrejection", function (e) { showError("Errore: " + (e.reason && e.reason.message || e.reason)); });
 const API = ${JSON.stringify(DASH_PATH + "/api")};
+const TV_URL = ${JSON.stringify(DASH_PATH + "/tv")};
 const CONFIG = ${JSON.stringify(CONFIG)};
 ${SHARED}
 (${appMain.toString()})();
@@ -833,15 +919,21 @@ function appMain() {
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const dShort = (d) => d ? new Date(d + "T12:00:00Z").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }) : "—";
   const STAGES = [
-    ["onboarding", "Onboarding"], ["live", "Pronti per la live"], ["richiamare", "Da richiamare"],
+    ["onboarding", "Onboarding"], ["campagna", "Campagna partita"], ["richiamare", "Da richiamare"],
     ["gestito", "Gestiti (3 mesi)"], ["lifetime", "Lifetime (no upsell)"], ["scaduto", "Scaduti"],
   ];
+  const TABS = {
+    sales: [["vendite", "Vendite"], ["clienti", "Clienti"], ["calendario", "Calendario"], ["impostazioni", "Impostazioni"]],
+    onb: [["onboarding", "Onboarding"], ["clienti", "Clienti"], ["calendario", "Calendario"], ["impostazioni", "Impostazioni"]],
+  };
   const KIND = { acconto: "Acconto", upsell: "Upsell", saldo: "Saldo/rata" };
-  let S = null, tab = "oggi", calMonth = null, open = null, search = "";
+  let S = null, tab = "vendite", calMonth = null, open = null, search = "", showAll = false;
 
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
-  const me = () => { const m = lsGet("vu_me"); return S && S.state.sellers.includes(m) ? m : (S && S.state.sellers[0]) || ""; };
+  const people = () => (S ? [...S.state.sellers, ...S.state.onboarders] : []);
+  const me = () => { const m = lsGet("vu_me"); return people().includes(m) ? m : people()[0] || ""; };
+  const role = () => (S && S.state.onboarders.includes(me()) ? "onb" : "sales");
 
   function toast(msg, err) {
     const t = $("toast");
@@ -891,45 +983,133 @@ function appMain() {
 
   // ---- testata ----
   function renderHeader() {
-    const t = S.tv;
-    $("kToday").textContent = fmt(t.cashedToday);
-    $("kMonth").textContent = fmt(t.cashedMonth);
-    $("kNew").textContent = t.newToday;
-    const mine = t.ranking.find((r) => r.name === me());
-    $("kGoal").textContent = t.goal.target > 0 ? fmt(mine ? mine.month : 0) + " / " + fmt(t.goal.target) : "da impostare";
+    const t = S.tv, r = role();
+    if (S.state.sellers.length && !TABS[r].some(([k]) => k === tab)) tab = TABS[r][0][0];
+    const kpi = (label, value, green) => `<div>${label}<b class="num ${green ? "g" : ""}">${value}</b></div>`;
+    if (r === "sales") {
+      const mine = t.ranking.find((x) => x.name === me());
+      $("kpis").innerHTML = kpi("Incassato oggi", fmt(t.cashedToday), 1) + kpi("Incassato mese", fmt(t.cashedMonth), 1) + kpi("Nuovi oggi", t.newToday) +
+        kpi("Mio obiettivo", t.goal.target > 0 ? fmt(mine ? mine.month : 0) + " / " + fmt(t.goal.target) : "da impostare");
+    } else {
+      const fri = t.lives.find((l) => l.type === "fri");
+      $("kpis").innerHTML = kpi("In onboarding", t.onboarding.inProgress) + kpi("Da far partire", readyToStart().length) +
+        kpi("Partite nel mese", t.onboarding.startedMonth, 1) + kpi("Live di venerdì", fri ? fri.count : 0);
+    }
+    $("newBtn").style.display = r === "sales" ? "" : "none";
     const sel = $("me");
-    sel.innerHTML = S.state.sellers.map((s) => `<option ${s === me() ? "selected" : ""}>${esc(s)}</option>`).join("");
-    sel.onchange = () => { lsSet("vu_me", sel.value); render(true); };
-    document.querySelectorAll("#tabs button[data-t]").forEach((b) => b.classList.toggle("on", b.dataset.t === tab));
+    const opt = (n) => `<option ${n === me() ? "selected" : ""}>${esc(n)}</option>`;
+    sel.innerHTML = `<optgroup label="Vendite">${S.state.sellers.map(opt).join("")}</optgroup>` +
+      (S.state.onboarders.length ? `<optgroup label="Onboarding">${S.state.onboarders.map(opt).join("")}</optgroup>` : "");
+    sel.onchange = () => { lsSet("vu_me", sel.value); tab = TABS[role()][0][0]; render(true); };
+    $("tabs").innerHTML = TABS[r].map(([k, l]) => `<button data-t="${k}" class="${k === tab ? "on" : ""}">${l}</button>`).join("") +
+      `<button onclick="window.open(TV_URL,'_blank')">Apri la TV ↗</button>`;
   }
+  // Onboarding finito (martedì e giovedì fatti) ma campagna non ancora partita
+  const readyToStart = () => S.state.clients.filter((c) => stageOf(c, S.tv.today) === "onboarding" && c.onb.tue.present === true && c.onb.thu.present === true);
 
   // ---- tab Oggi ----
   const sessionClients = (type, date) => S.state.clients.filter((c) => (type === "fri" ? c.live.date : c.onb[type].date) === date);
-  function renderToday() {
-    const today = S.tv.today, C = S.state.clients;
-    const row = (c, extra) => `<div class="item"><div class="grow"><span class="link" data-open="${c.id}">${esc(c.name)}</span><small>${esc(c.seller)} · ${esc(c.phone || "nessun telefono")}</small></div>${extra || ""}</div>`;
-    const block = (title, items) => `<div class="card"><h2>${title}</h2>${items.length ? items.join("") : '<div class="empty">Niente da fare qui 👌</div>'}</div>`;
+  const row = (c, extra, sub) => `<div class="item"><div class="grow"><span class="link" data-open="${c.id}">${esc(c.name)}</span><small>${sub || esc(c.seller) + " · " + esc(c.phone || "nessun telefono")}</small></div>${extra || ""}</div>`;
+  const block = (title, items, empty) => `<div class="card"><h2>${title}</h2>${items.length ? items.join("") : `<div class="empty">${empty || "Niente da fare qui 👌"}</div>`}</div>`;
 
-    const recall = C.filter((c) => c.upsell.status === "richiamare" && (!c.upsell.recall || c.upsell.recall <= today))
+  function renderSales() {
+    const today = S.tv.today, C = S.state.clients;
+    const mineOnly = (list) => (showAll ? list : list.filter((c) => c.seller === me()));
+    const fri = S.tv.lives.find((l) => l.type === "fri").date;
+    // Live di venerdì: chi ha la live questa settimana, più chi ha fatto la live ma non ha ancora un esito
+    const live = C.filter((c) => !c.upsell.status && c.live.date && c.live.date <= fri).sort((x, y) => x.live.date.localeCompare(y.live.date));
+    const liveRow = (c) => row(c, `
+      <button class="btn sm ${c.live.invited ? "green" : ""}" data-inv="${c.id}">${c.live.invited ? "Link ✓" : "Link mandato?"}</button>
+      <div class="seg"><button data-out="chiuso|${c.id}">Chiuso</button><button data-out="richiamare|${c.id}">Richiamare</button><button data-out="non_chiuso|${c.id}">Non chiuso</button></div>`,
+      `${esc(c.seller)} · ${esc(c.phone || "")} · live ${c.live.date === fri ? "di venerdì" : esc(dShort(c.live.date))}`);
+    const recall = mineOnly(C.filter((c) => c.upsell.status === "richiamare" && (!c.upsell.recall || c.upsell.recall <= today)))
       .map((c) => row(c, `<span class="tag y">${c.upsell.recall ? esc(dShort(c.upsell.recall)) : "subito"}</span>`));
-    const missed = C.filter((c) => !c.upsell.status && !c.imported && ["tue", "thu"].some((k) => c.onb[k].date < today && c.onb[k].present !== true))
-      .map((c) => row(c, `<span class="tag r">onboarding saltato</span>`));
-    const collect = C.filter((c) => toCollect(c) > 0).map((c) => row(c, `<span class="tag y num">${fmt(toCollect(c))}</span>`));
-    const expiring = C.filter((c) => c.upsell.status === "chiuso" && c.upsell.end && c.upsell.end <= addDays(today, 30))
+    const collect = mineOnly(C.filter((c) => toCollect(c) > 0)).map((c) => row(c, `<span class="tag y num">${fmt(toCollect(c))}</span>`));
+    const expiring = mineOnly(C.filter((c) => c.upsell.status === "chiuso" && c.upsell.end && c.upsell.end <= addDays(today, 30)))
       .map((c) => row(c, `<span class="tag ${c.upsell.end < today ? "r" : "y"}">${c.upsell.end < today ? "scaduto" : "scade"} ${esc(dShort(c.upsell.end))}</span>`));
 
     $("main").innerHTML = `
-      <h2>Prossime sessioni</h2>
-      <div class="grid">${S.tv.lives.map((l) => `<div class="card"><div class="item"><div class="grow"><b>${esc(l.label)}</b><small>${l.date === today ? "oggi" : esc(dShort(l.date))} · ${l.count} ${l.count === 1 ? "cliente" : "clienti"}</small></div>
-        <button class="btn sm" data-presence="${l.type}|${l.date}">Presenze</button></div></div>`).join("")}</div>
-      <div class="grid" style="margin-top:12px">
+      <div class="card"><h2>🎥 Live upsell di venerdì ${esc(dShort(fri))}</h2>
+        <p class="muted" style="margin-top:0">Ci vanno i clienti con la campagna partita da almeno ${S.state.liveDelay} giorni. Segna l'esito appena finisce la live.</p>
+        ${live.map(liveRow).join("") || '<div class="empty">Nessun cliente pronto per questa live</div>'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px;gap:10px"><h2 style="margin:0">${showAll ? "Tutti" : "I miei clienti"}</h2>
+        <button class="btn sm" id="toggleAll">${showAll ? "Solo i miei" : "Vedi anche quelli dei colleghi"}</button></div>
+      <div class="grid">
         ${block("📞 Da richiamare", recall)}
-        ${block("⚠️ Onboarding da recuperare", missed)}
         ${block("💶 Da incassare", collect)}
         ${block("⏰ In scadenza (rinnovo)", expiring)}
       </div>
       <h2>Classifica del mese (incassato)</h2>
       <div class="card">${S.tv.ranking.map((r, i) => `<div class="item"><div class="grow"><b>${i + 1}° ${esc(r.name)}</b><small>oggi ${fmt(r.today)} · ${r.newClients} nuovi clienti</small></div><b class="num" style="color:var(--green)">${fmt(r.month)}</b></div>`).join("")}</div>`;
+    $("toggleAll").onclick = () => { showAll = !showAll; renderSales(); };
+    document.querySelectorAll("#main [data-inv]").forEach((b) => b.onclick = () => {
+      const c = client(b.dataset.inv);
+      op({ op: "updateClient", id: c.id, fields: { live: { invited: !c.live.invited } } });
+    });
+    document.querySelectorAll("#main [data-out]").forEach((b) => b.onclick = () => {
+      const [status, id] = b.dataset.out.split("|");
+      if (status === "chiuso") return closedModal(id);
+      op({ op: "updateClient", id, fields: { live: { present: true }, upsell: { status } } }, status === "richiamare" ? "Da richiamare" : "Segnato: non chiuso (resta lifetime)");
+    });
+  }
+
+  // Upsell chiuso in live: importo e quanto è stato incassato subito
+  function closedModal(id) {
+    const c = client(id);
+    open = { type: "closed" };
+    openModal(`<h3>⭐ Upsell chiuso: ${esc(c.name)}</h3>
+      <div class="two"><div><label>Importo upsell (€)</label><input id="xAmount" inputmode="decimal" value="${CONFIG.upsellAmount}"></div>
+      <div><label>Incassato adesso (€)</label><input id="xPaid" inputmode="decimal" placeholder="es. 500"></div></div>
+      <div class="two"><div><label>Chi l'ha chiuso</label><select id="xSeller">${sellerOpts(S.state.sellers.includes(me()) ? me() : c.seller)}</select></div></div>
+      <div class="actions"><button class="btn" id="xCancel">Annulla</button><button class="btn green" id="xSave">Salva</button></div>`);
+    $("xCancel").onclick = closeModal;
+    $("xSave").onclick = async () => {
+      await op({ op: "updateClient", id, fields: { live: { present: true }, upsell: { status: "chiuso", amount: parseAmount($("xAmount").value) } } });
+      const paidNow = parseAmount($("xPaid").value);
+      if (paidNow > 0) await op({ op: "addPayment", clientId: id, amount: paidNow, kind: "upsell", seller: $("xSeller").value });
+      toast("⭐ Upsell registrato");
+      closeModal();
+    };
+  }
+
+  // ---- tab Onboarding ----
+  function renderOnb() {
+    const today = S.tv.today, C = S.state.clients;
+    const inOnb = C.filter((c) => stageOf(c, today) === "onboarding").sort((a, b) => a.created.localeCompare(b.created));
+    const started = C.filter((c) => stageOf(c, today) === "campagna").sort((a, b) => b.campaign.start.localeCompare(a.campaign.start));
+    const pres = (c, k) => {
+      const v = c.onb[k].present, late = c.onb[k].date < today && v !== true;
+      return `<div class="seg" data-op="${k}|${c.id}"><button data-v="true" class="${v === true ? "on" : ""}">✓</button><button data-v="false" class="${v === false ? "on" : ""}">✗</button></div>
+        <small style="${late ? "color:var(--red)" : ""}">${esc(dShort(c.onb[k].date))}</small>`;
+    };
+    const steps = (c) => Object.entries(CONFIG.steps).map(([k, l]) =>
+      `<label style="display:flex;gap:6px;align-items:center;margin:0 0 4px;color:#fff;font-size:0.85rem"><input type="checkbox" style="width:auto" data-step="${k}|${c.id}" ${c.onb.steps[k] ? "checked" : ""}>${l}</label>`).join("");
+    $("main").innerHTML = `
+      <h2 style="margin-top:0">Prossime sessioni</h2>
+      <div class="grid">${S.tv.lives.filter((l) => l.type !== "fri").map((l) => `<div class="card"><div class="item"><div class="grow"><b>${esc(l.label)}</b><small>${l.date === today ? "oggi" : esc(dShort(l.date))} · ${l.count} ${l.count === 1 ? "cliente" : "clienti"}</small></div>
+        <button class="btn sm" data-presence="${l.type}|${l.date}">Presenze</button></div></div>`).join("")}</div>
+      <h2>Clienti in onboarding (${inOnb.length})</h2>
+      <div class="card" style="overflow-x:auto">
+        ${inOnb.length ? `<table class="ot"><tr><th>Cliente</th><th>Martedì</th><th>Giovedì</th><th>Checklist</th><th>Campagna partita il</th></tr>
+        ${inOnb.map((c) => `<tr><td><span class="link" data-open="${c.id}">${esc(c.name)}</span><small>${esc(c.phone || "")} · ${esc(c.seller)}</small></td>
+          <td>${pres(c, "tue")}</td><td>${pres(c, "thu")}</td><td>${steps(c)}</td>
+          <td><input type="date" data-start="${c.id}" style="width:150px"><button class="btn sm" data-today="${c.id}" style="margin-top:6px">Parte oggi</button></td></tr>`).join("")}</table>`
+        : '<div class="empty">Nessun cliente in onboarding 👌</div>'}</div>
+      <h2>Campagne partite: in attesa della live (${started.length})</h2>
+      <div class="card">${started.map((c) => row(c, `<span class="tag g">live ${esc(dShort(c.live.date))}</span>`, `partita ${esc(dShort(c.campaign.start))} · ${esc(c.seller)}`)).join("") || '<div class="empty">Nessuna</div>'}</div>`;
+    document.querySelectorAll("#main [data-op]").forEach((g) => g.onclick = (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      const [k, id] = g.dataset.op.split("|"), c = client(id);
+      const v = String(c.onb[k].present) === b.dataset.v ? null : b.dataset.v === "true";
+      op({ op: "updateClient", id, fields: { [k]: { present: v } } });
+    });
+    document.querySelectorAll("#main [data-step]").forEach((x) => x.onchange = () => {
+      const [k, id] = x.dataset.step.split("|");
+      op({ op: "updateClient", id, fields: { steps: { [k]: x.checked } } });
+    });
+    const start = (id, d) => op({ op: "updateClient", id, fields: { campaign: { start: d } } }, "🚀 Campagna partita: live fissata");
+    document.querySelectorAll("#main [data-start]").forEach((x) => x.onchange = () => { if (x.value) start(x.dataset.start, x.value); });
+    document.querySelectorAll("#main [data-today]").forEach((b) => b.onclick = () => start(b.dataset.today, today));
   }
 
   // ---- tab Clienti (pipeline) ----
@@ -941,7 +1121,7 @@ function appMain() {
       const due = toCollect(c), st = stageOf(c, today);
       let info = "entrato " + dShort(c.created);
       if (st === "onboarding") info = dShort(c.onb.tue.date) + (c.onb.tue.present ? " ✓" : "") + " · " + dShort(c.onb.thu.date) + (c.onb.thu.present ? " ✓" : "");
-      if (st === "live") info = "live " + dShort(c.live.date) + (c.live.invited ? " · link mandato" : "");
+      if (st === "campagna") info = "partita " + dShort(c.campaign.start) + " · live " + dShort(c.live.date);
       if (st === "richiamare") info = "richiamare " + (c.upsell.recall ? dShort(c.upsell.recall) : "subito");
       if (st === "gestito" || st === "scaduto") info = "scade " + dShort(c.upsell.end);
       return `<div class="cc" data-open="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.seller)} · ${esc(info)}</small>
@@ -968,8 +1148,10 @@ function appMain() {
     const add = (d, h) => { (events[d] = events[d] || []).push(h); };
     for (const c of S.state.clients) {
       for (const [type, d] of [["tue", c.onb.tue.date], ["thu", c.onb.thu.date], ["fri", c.live.date]]) {
+        if (!d) continue;
         const k = type + "|" + d; sessions[k] = (sessions[k] || 0) + 1;
       }
+      if (c.campaign.start) add(c.campaign.start, `<span class="ev" data-open="${c.id}">🚀 ${esc(c.name)}</span>`);
       add(c.created, `<span class="ev" data-open="${c.id}">🟢 ${esc(c.name)}</span>`);
       if (c.upsell.status === "chiuso" && c.upsell.date) add(c.upsell.date, `<span class="ev" data-open="${c.id}">⭐ ${esc(c.name)}</span>`);
       if (c.upsell.status === "chiuso" && c.upsell.end) add(c.upsell.end, `<span class="ev" data-open="${c.id}">⏰ ${esc(c.name)} scade</span>`);
@@ -988,7 +1170,7 @@ function appMain() {
     const title = new Date(first + "T12:00:00Z").toLocaleDateString("it-IT", { month: "long", year: "numeric", timeZone: "UTC" });
     $("main").innerHTML = `
       <div class="cal-head"><button class="btn sm" id="calPrev">‹</button><b>${title}</b><button class="btn sm" id="calNext">›</button><button class="btn sm" id="calToday">Oggi</button>
-        <span class="muted" style="margin-left:auto;font-size:0.85rem">🟢 entrato · ⭐ upsell · ⏰ scadenza · 📞 richiamo · clicca una sessione per le presenze</span></div>
+        <span class="muted" style="margin-left:auto;font-size:0.85rem">🟢 entrato · 🚀 campagna partita · ⭐ upsell · ⏰ scadenza · 📞 richiamo · clicca una sessione per le presenze</span></div>
       <div class="cal">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((x) => `<div class="dow">${x}</div>`).join("")}${cells}</div>`;
     const shift = (n) => { calMonth = addMonths(calMonth + "-01", n).slice(0, 7); renderCalendar(); };
     $("calPrev").onclick = () => shift(-1);
@@ -1003,10 +1185,20 @@ function appMain() {
     const monthName = new Date(month + "-01T12:00:00Z").toLocaleDateString("it-IT", { month: "long", year: "numeric", timeZone: "UTC" });
     $("main").innerHTML = `
       <div class="grid">
-        <div class="card"><h2>👥 Venditori</h2>
-          <p class="muted" style="margin-top:0">Uno per riga. Chi non lavora più va tolto: i suoi incassi passati restano.</p>
+        <div class="card"><h2>👥 Team</h2>
+          <p class="muted" style="margin-top:0">Venditori (uno per riga): registrano le vendite e sono nel podio. Chi non lavora più va tolto: i suoi incassi passati restano.</p>
           <textarea id="sellers" style="min-height:120px" placeholder="es.&#10;Samuele&#10;Tomas">${esc(S.state.sellers.join("\n"))}</textarea>
-          <div style="margin-top:10px"><button class="btn main" id="saveSellers">Salva venditori</button></div></div>
+          <label>Onboarding (uno per riga)</label>
+          <textarea id="onboarders" style="min-height:60px" placeholder="es. Marco">${esc(S.state.onboarders.join("\n"))}</textarea>
+          <label>Giorni di campagna attiva prima della live di upsell</label>
+          <input id="liveDelay" inputmode="numeric" value="${S.state.liveDelay}" style="max-width:120px">
+          <div style="margin-top:10px"><button class="btn main" id="saveSellers">Salva team</button></div></div>
+        <div class="card"><h2>🎯 Obiettivo della settimana</h2>
+          <p class="muted" style="margin-top:0">Di squadra, da lunedì a domenica. Si vede sulla TV con la barra. Metti 0 per nasconderlo.</p>
+          <div class="two"><div><label>Incassato (€)</label><input id="wkT" inputmode="decimal" value="${S.state.weekGoal.target || 0}"></div>
+          <div><label>Nuovi clienti</label><input id="wkC" inputmode="numeric" value="${S.state.weekGoal.clients || 0}"></div></div>
+          <p class="muted" style="font-size:0.85rem">Questa settimana: <b style="color:var(--green)">${fmt(S.tv.week.cashed)}</b> incassati · ${S.tv.week.newClients} nuovi clienti</p>
+          <div><button class="btn main" id="saveWeek">Salva obiettivo settimana</button></div></div>
         <div class="card"><h2>🎯 Obiettivo di ${esc(monthName)}</h2>
           <p class="muted" style="margin-top:0">Incassato da raggiungere a testa. Il primo che ci arriva vince il bonus (si vede sulla TV).</p>
           <div class="two"><div><label>Obiettivo (€ a testa)</label><input id="goalT" inputmode="decimal" value="${g.target || ""}" placeholder="es. 3000"></div>
@@ -1021,7 +1213,8 @@ function appMain() {
           <p class="muted" style="font-size:0.8rem">I promemoria (da richiamare, da incassare, live di domani, quanto manca all'obiettivo) si aggiungono da soli.</p></div>
       </div>`;
     const lines = (id) => $(id).value.split("\n").map((s) => s.trim()).filter(Boolean);
-    $("saveSellers").onclick = () => op({ op: "setSellers", sellers: lines("sellers") }, "Venditori salvati");
+    $("saveSellers").onclick = () => op({ op: "setTeam", sellers: lines("sellers"), onboarders: lines("onboarders"), liveDelay: Number($("liveDelay").value) }, "Team salvato");
+    $("saveWeek").onclick = () => op({ op: "setWeekGoal", target: parseAmount($("wkT").value) || 0, clients: Number($("wkC").value) || 0 }, "Obiettivo settimana salvato");
     $("saveGoal").onclick = () => op({ op: "setGoal", month, target: parseAmount($("goalT").value) || 0, bonus: parseAmount($("goalB").value) || 0 }, "Obiettivo salvato");
     $("saveTicker").onclick = () => op({ op: "setTicker", news: lines("news"), quotes: lines("quotes") }, "Banner salvato");
   }
@@ -1036,7 +1229,7 @@ function appMain() {
   function newClientModal() {
     if (!S.state.sellers.length) { tab = "impostazioni"; render(true); toast("Prima scrivi i nomi dei venditori", true); return; }
     open = { type: "new" };
-    openModal(`<h3>🎉 Nuovo cliente</h3><p class="muted" style="margin:0">Vendita telefonica con acconto. Lo metto in automatico nel prossimo martedì, giovedì e live del venerdì.</p>
+    openModal(`<h3>🎉 Nuovo cliente</h3><p class="muted" style="margin:0">Vendita telefonica con acconto. Lo metto in automatico nel prossimo tutorial del martedì e nella sessione del giovedì; la live di upsell si fissa quando parte la campagna.</p>
       <div class="two"><div><label>Nome e cognome *</label><input id="nName" autocomplete="off"></div><div><label>Telefono</label><input id="nPhone" inputmode="tel" autocomplete="off"></div></div>
       <div class="two"><div><label>Email</label><input id="nEmail" inputmode="email" autocomplete="off"></div><div><label>Venditore</label><select id="nSeller">${sellerOpts(me())}</select></div></div>
       <div class="two"><div><label>Incassato ora (€)</label><input id="nAmount" inputmode="decimal" value="${CONFIG.frontAmount}"></div><div><label>Data</label><input id="nDate" type="date" value="${S.tv.today}"></div></div>
@@ -1073,9 +1266,12 @@ function appMain() {
         <label>Note</label><textarea id="cNotes">${esc(c.notes)}</textarea></div>
       <div class="sec"><h4>Onboarding</h4>
         <div class="two"><div><label>📘 ${esc(CONFIG.sessions.tue)}</label><input id="cTue" type="date" value="${c.onb.tue.date}"><div style="margin-top:6px">${segBtns("tue", c.onb.tue.present, presence)}</div></div>
-        <div><label>📗 ${esc(CONFIG.sessions.thu)}</label><input id="cThu" type="date" value="${c.onb.thu.date}"><div style="margin-top:6px">${segBtns("thu", c.onb.thu.present, presence)}</div></div></div></div>
+        <div><label>📗 ${esc(CONFIG.sessions.thu)}</label><input id="cThu" type="date" value="${c.onb.thu.date}"><div style="margin-top:6px">${segBtns("thu", c.onb.thu.present, presence)}</div></div></div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px">${Object.entries(CONFIG.steps).map(([k, l]) =>
+          `<label style="display:flex;gap:6px;align-items:center;margin:0;color:#fff"><input type="checkbox" style="width:auto" id="step_${k}" ${c.onb.steps[k] ? "checked" : ""}>${l}</label>`).join("")}</div>
+        <div class="two"><div><label>🚀 Campagna partita il (la live si fissa dopo ${S.state.liveDelay} giorni)</label><input id="cStart" type="date" value="${c.campaign.start || ""}"></div></div></div>
       <div class="sec"><h4>🎥 Live del venerdì</h4>
-        <div class="two"><div><label>Data live</label><input id="cLive" type="date" value="${c.live.date}"></div>
+        <div class="two"><div><label>Data live</label><input id="cLive" type="date" value="${c.live.date || ""}"></div>
         <div><label>Link della live mandato</label>${segBtns("invited", c.live.invited, [["false", "No"], ["true", "Sì"]])}</div></div>
         <label>Presenza</label>${segBtns("livep", c.live.present, presence)}</div>
       <div class="sec"><h4>⭐ Upsell (${fmt(CONFIG.upsellAmount)} · ${CONFIG.upsellMonths} mesi)</h4>
@@ -1106,6 +1302,8 @@ function appMain() {
       return {
         name: $("cName").value, seller: $("cSeller").value, phone: $("cPhone").value, email: $("cEmail").value, created: $("cCreated").value, notes: $("cNotes").value,
         tue: { date: $("cTue").value, present: triVal(segVal("tue")) }, thu: { date: $("cThu").value, present: triVal(segVal("thu")) },
+        steps: Object.fromEntries(Object.keys(CONFIG.steps).map((k) => [k, $("step_" + k).checked])),
+        campaign: { start: $("cStart").value || null },
         live: { date: $("cLive").value, invited: segVal("invited") === "true", present: triVal(segVal("livep")) },
         upsell: { status: status === "null" ? null : status, amount: parseAmount($("uAmount").value), recall: $("uRecall").value || null,
           ...($("uStart").value && $("uStart").value !== (u.start || "") ? { start: $("uStart").value } : {}),
@@ -1181,7 +1379,7 @@ function appMain() {
     // L'aggiornamento automatico non ridisegna mentre si scrive in un campo
     const a = document.activeElement;
     const typing = a && $("main").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName);
-    if (force || !typing) ({ oggi: renderToday, clienti: renderClients, calendario: renderCalendar, impostazioni: renderSettings })[tab]();
+    if (force || !typing) ({ vendite: renderSales, onboarding: renderOnb, clienti: renderClients, calendario: renderCalendar, impostazioni: renderSettings })[tab]();
     if (!S.state.sellers.length && !welcomed) { welcomed = true; toast("Benvenuto! Scrivi i nomi dei venditori e salva"); }
   }
 
