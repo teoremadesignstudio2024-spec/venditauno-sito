@@ -83,7 +83,7 @@ function stageOf(c, today) {
   const u = c.upsell;
   if (u.status === "chiuso") return u.end && u.end < today ? "scaduto" : "gestito";
   if (u.status === "richiamare") return "richiamare";
-  if (u.status === "non_chiuso") return "lifetime";
+  if (u.status === "non_chiuso" || c.imported) return "lifetime";
   if (c.onb.tue.present === true && c.onb.thu.present === true) return "live";
   return "onboarding";
 }
@@ -128,13 +128,56 @@ function romeDate() {
 async function readState(kv) {
   const raw = await kv.get(STATE_KEY);
   const s = raw ? JSON.parse(raw) : {};
-  return {
+  const state = {
     sellers: s.sellers || [],
     clients: s.clients || [],
     goals: s.goals || {},
     quotes: s.quotes || DEFAULT_QUOTES,
     news: s.news || [],
+    legacyImported: !!s.legacyImported,
   };
+  if (!state.legacyImported) {
+    await importLegacy(kv, state);
+    await kv.put(STATE_KEY, JSON.stringify(state));
+  }
+  return state;
+}
+
+// Una sola volta: porta qui le vendite della dashboard di prima (chiavi "fatturato:AAAA-MM-GG").
+async function importLegacy(kv, state) {
+  const keys = [];
+  let cursor;
+  do {
+    const page = await kv.list({ prefix: "fatturato:", cursor });
+    keys.push(...page.keys.map((k) => k.name));
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  const seen = new Set();
+  for (const key of keys.sort()) {
+    const date = key.slice("fatturato:".length);
+    if (!isDate(date)) continue;
+    const day = JSON.parse((await kv.get(key)) || "{}");
+    for (const e of day.entries || []) {
+      if (state.clients.some((c) => c.legacyId === e.id)) continue;
+      const who = e.seller || "Senza venditore";
+      seen.add(who);
+      const sched = schedule(date);
+      const cashed = round2(Number(e.cashed) || 0);
+      const billed = round2(Number(e.amount) || 0);
+      state.clients.push({
+        id: newId(), legacyId: e.id, imported: true,
+        name: str(e.note, 80) || `Vendita di ${who}`, phone: "", email: "", seller: who, created: date,
+        notes: `Importato dalla dashboard di prima: fatturato ${billed} €, incassato ${cashed} €.`,
+        onb: { tue: { date: sched.tue, present: null }, thu: { date: sched.thu, present: null } },
+        live: { date: sched.fri, invited: false, present: null },
+        upsell: { status: null, amount: CONFIG.upsellAmount, date: null, start: null, end: null, recall: null },
+        payments: cashed > 0 ? [{ id: newId(), date, amount: cashed, seller: who, kind: "acconto", note: "importato", ts: e.ts || 0 }] : [],
+      });
+    }
+  }
+  // Se i venditori non sono ancora stati scritti, si parte da quelli delle vendite importate (Elio non c'è più)
+  if (!state.sellers.length) state.sellers = [...seen].filter((n) => n !== "Elio" && n !== "Senza venditore");
+  state.legacyImported = true;
 }
 
 const isDate = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -836,7 +879,7 @@ function appMain() {
 
     const recall = C.filter((c) => c.upsell.status === "richiamare" && (!c.upsell.recall || c.upsell.recall <= today))
       .map((c) => row(c, `<span class="tag y">${c.upsell.recall ? esc(dShort(c.upsell.recall)) : "subito"}</span>`));
-    const missed = C.filter((c) => !c.upsell.status && ["tue", "thu"].some((k) => c.onb[k].date < today && c.onb[k].present !== true))
+    const missed = C.filter((c) => !c.upsell.status && !c.imported && ["tue", "thu"].some((k) => c.onb[k].date < today && c.onb[k].present !== true))
       .map((c) => row(c, `<span class="tag r">onboarding saltato</span>`));
     const collect = C.filter((c) => toCollect(c) > 0).map((c) => row(c, `<span class="tag y num">${fmt(toCollect(c))}</span>`));
     const expiring = C.filter((c) => c.upsell.status === "chiuso" && c.upsell.end && c.upsell.end <= addDays(today, 30))
@@ -864,7 +907,7 @@ function appMain() {
     const card = (c) => {
       const due = toCollect(c), st = stageOf(c, today);
       let info = "entrato " + dShort(c.created);
-      if (st === "onboarding") info = "mar " + dShort(c.onb.tue.date) + (c.onb.tue.present ? " ✓" : "") + " · gio " + dShort(c.onb.thu.date) + (c.onb.thu.present ? " ✓" : "");
+      if (st === "onboarding") info = dShort(c.onb.tue.date) + (c.onb.tue.present ? " ✓" : "") + " · " + dShort(c.onb.thu.date) + (c.onb.thu.present ? " ✓" : "");
       if (st === "live") info = "live " + dShort(c.live.date) + (c.live.invited ? " · link mandato" : "");
       if (st === "richiamare") info = "richiamare " + (c.upsell.recall ? dShort(c.upsell.recall) : "subito");
       if (st === "gestito" || st === "scaduto") info = "scade " + dShort(c.upsell.end);
