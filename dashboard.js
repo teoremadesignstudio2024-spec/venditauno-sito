@@ -13,7 +13,7 @@ const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 
 const STATE_KEY = "crm:v1";
-const VERSION = "v5"; // si vede in alto nella dashboard: serve a capire quale versione è online
+const VERSION = "v6"; // si vede in alto nella dashboard: serve a capire quale versione è online
 
 // Regole del percorso cliente
 const CONFIG = {
@@ -798,7 +798,7 @@ ${BASE_HEAD}
     <button data-t="clienti">Clienti</button>
     <button data-t="calendario">Calendario</button>
     <button data-t="impostazioni">Venditori, obiettivo e TV</button>
-    <button onclick="window.open('${TV_PATH}','_blank')">Apri la TV ↗</button>
+    <button onclick="window.open('${DASH_PATH}/tv','_blank')">Apri la TV ↗</button>
   </nav>
 </header>
 <main id="main"></main>
@@ -1228,7 +1228,7 @@ export async function handleDashboard(request, env, url) {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: tv ? TV_PATH : DASH_PATH,
+        Location: tv ? `${DASH_PATH}/tv` : DASH_PATH,
         "Set-Cookie": `${DASH_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${DASH_SESSION_DAYS * 86400}`,
       },
     });
@@ -1249,9 +1249,8 @@ export async function handleDashboard(request, env, url) {
     return html(loggedIn ? appPage() : loginPage(null));
   }
 
-  if (path === `${DASH_PATH}/tv`) return new Response(null, { status: 302, headers: { Location: TV_PATH } });
-
-  if (path === TV_PATH) return html(loggedIn ? tvPage() : loginPage(null, true));
+  // La TV risponde sia su /tv sia su /dashboardvenditatop/tv (quest'ultimo non può scontrarsi con altre pagine)
+  if (path === TV_PATH || path === `${DASH_PATH}/tv`) return html(loggedIn ? tvPage() : loginPage(null, true));
 
   return new Response(null, { status: 302, headers: { Location: DASH_PATH } });
 }
