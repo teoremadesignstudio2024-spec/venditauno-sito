@@ -10,3 +10,12 @@ not_found_handling = "404-page"
 [[kv_namespaces]]
 binding = "ACADEMY_PROGRESS"
 id = "16990aca669849f8905453df22aea689"
+
+# Dati della dashboard vendite: un Durable Object, così le letture sono sempre aggiornate
+[[durable_objects.bindings]]
+name = "CRM"
+class_name = "CrmStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CrmStore"]

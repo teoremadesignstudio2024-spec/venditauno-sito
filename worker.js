@@ -1,5 +1,8 @@
 import usersData from "./academy-users.json";
 import { DASH_PATH, TV_PATH, handleDashboard } from "./dashboard.js";
+
+// Archivio dei dati della dashboard vendite (vedi wrangler.toml)
+export { CrmStore } from "./dashboard.js";
 import { handleAppApi } from "./app-api.js";
 
 const MODULES = [
