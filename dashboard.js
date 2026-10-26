@@ -16,7 +16,7 @@ const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 
 const STATE_KEY = "crm:v1";
-const VERSION = "v11"; // si vede in alto nella dashboard: serve a capire quale versione è online
+const VERSION = "v12"; // si vede in alto nella dashboard: serve a capire quale versione è online
 
 // Regole del percorso cliente
 const CONFIG = {
@@ -99,7 +99,18 @@ function liveDateFor(start, delay) {
   return weekday(d) === 5 ? d : nextWeekday(d, 5);
 }
 
-const SHARED = [addDays, weekday, nextWeekday, addMonths, schedule, round2, sumAmounts, toCollect, stageOf, liveDateFor]
+// Valori di base del riepilogo TV, se qualcosa manca
+function tvDefaults(t) {
+  for (const k of ["ranking", "lives", "ticker"]) if (!Array.isArray(t[k])) t[k] = [];
+  t.goal = t.goal || { target: 0, bonus: 0 };
+  t.week = t.week || { target: 0, clients: 0, cashed: 0, newClients: 0 };
+  t.onboarding = t.onboarding || { inProgress: 0, startedMonth: 0 };
+  t.closing = t.closing || { openValue: 0, openCount: 0, wonToday: 0, bySeller: [] };
+  for (const k of ["cashedToday", "cashedMonth", "newToday", "newMonth", "upsellMonth"]) t[k] = t[k] || 0;
+  return t;
+}
+
+const SHARED = [addDays, weekday, nextWeekday, addMonths, schedule, round2, sumAmounts, toCollect, stageOf, liveDateFor, tvDefaults]
   .map((f) => f.toString()).join("\n");
 
 // ---------- Server ----------
@@ -851,7 +862,7 @@ function tvMain() {
       if (r.status === 401) { location.reload(); return; }
       const text = await r.text();
       if (!r.ok) { showError("Il server ha risposto " + r.status + ": " + text.slice(0, 300)); return; }
-      render(JSON.parse(text));
+      render(tvDefaults(JSON.parse(text)));
       $("status").classList.remove("offline");
     } catch (e) { $("status").classList.add("offline"); }
   }
@@ -1052,12 +1063,12 @@ function appMain() {
       if (r.status === 401) { location.reload(); return; }
       const text = await r.text();
       if (!r.ok) { showError("Il server ha risposto " + r.status + ": " + text.slice(0, 300)); return; }
-      S = JSON.parse(text);
+      S = fillDefaults(JSON.parse(text));
       render();
       const eb = document.getElementById("errbox");
       if (S.state.importError) showError("Importazione clienti di prima non riuscita: " + S.state.importError);
       else if (eb) eb.remove();
-    } catch (e) { showError("Caricamento non riuscito: " + (e.message || e)); }
+    } catch (e) { showError("Caricamento non riuscito: " + (e.message || e) + where(e)); }
   }
   async function op(body, okMsg) {
     let d;
@@ -1066,12 +1077,32 @@ function appMain() {
       d = await r.json();
       if (!r.ok) throw new Error(d.error || "Errore");
     } catch (e) { toast(e.message || "Errore, riprova", true); throw e; }
-    S = d;
+    S = fillDefaults(d);
     render(true);
     if (okMsg) toast(okMsg);
     return d;
   }
 
+  // Se un elenco manca (es. dati di una versione precedente) lo si considera vuoto invece di bloccarsi
+  function fillDefaults(d) {
+    const st = d.state || (d.state = {});
+    for (const k of ["sellers", "onboarders", "clients", "closings", "quotes", "news"]) if (!Array.isArray(st[k])) st[k] = [];
+    st.goals = st.goals || {};
+    st.weekGoal = st.weekGoal || { target: 0, clients: 0 };
+    st.liveDelay = Number.isInteger(st.liveDelay) ? st.liveDelay : CONFIG.liveDelay;
+    for (const c of st.clients) {
+      c.payments = c.payments || [];
+      c.campaign = c.campaign || { start: null };
+      c.onb = c.onb || { tue: { date: null, present: null }, thu: { date: null, present: null } };
+      c.onb.steps = c.onb.steps || {};
+      c.live = c.live || { date: null, invited: false, present: null };
+      c.upsell = c.upsell || { status: null, amount: CONFIG.upsellAmount };
+    }
+    d.tv = tvDefaults(d.tv || {});
+    return d;
+  }
+  // Punto del codice dove è nato l'errore (per capire il problema da una foto)
+  const where = (e) => { const m = String(e && e.stack || "").split("\n").find((l) => /at /.test(l)); return m ? " — " + m.trim().replace(/\(.*\)/, "").replace(/^at /, "in ") : ""; };
   const client = (id) => S.state.clients.find((c) => c.id === id);
   const sellerOpts = (sel) => {
     const list = !sel || S.state.sellers.includes(sel) ? S.state.sellers : [...S.state.sellers, sel];
