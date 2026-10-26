@@ -1,7 +1,10 @@
+import { DurableObject } from "cloudflare:workers";
+
 // Dashboard vendite Vendita Uno.
 // Pagine: /dashboardvenditatop = gestionale per i venditori (clienti, onboarding, live, upsell, calendario)
 //         /tv                  = schermata per la TV dell'ufficio (incassato, podio, obiettivo, banner)
-// Tutti i dati stanno in un'unica chiave del KV ACADEMY_PROGRESS: "crm:v1".
+// I dati stanno nel Durable Object CrmStore (letture sempre aggiornate, una modifica alla volta);
+// a ogni modifica se ne salva una copia anche nel KV ACADEMY_PROGRESS, chiave "crm:v1".
 
 export const DASH_PATH = "/dashboardvenditatop";
 export const TV_PATH = "/tv";
@@ -13,7 +16,7 @@ const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 
 const STATE_KEY = "crm:v1";
-const VERSION = "v9"; // si vede in alto nella dashboard: serve a capire quale versione è online
+const VERSION = "v10"; // si vede in alto nella dashboard: serve a capire quale versione è online
 
 // Regole del percorso cliente
 const CONFIG = {
@@ -133,9 +136,7 @@ function romeDate() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
 }
 
-async function readState(kv) {
-  const raw = await kv.get(STATE_KEY);
-  const s = raw ? JSON.parse(raw) : {};
+function normalizeState(s) {
   const state = {
     sellers: s.sellers || [],
     onboarders: s.onboarders || [],
@@ -156,6 +157,12 @@ async function readState(kv) {
     }
     c.onb.steps = c.onb.steps || { portafoglio: false, verifica: false, campagna: false };
   }
+  return state;
+}
+
+async function readState(kv) {
+  const raw = await kv.get(STATE_KEY);
+  const state = normalizeState(raw ? JSON.parse(raw) : {});
   if (!state.legacyImported) {
     try {
       await importLegacy(kv, state);
@@ -428,7 +435,7 @@ function tvSummary(state, today) {
     ["fri", (c) => c.live.date, 5],
   ].map(([type, get, wd]) => {
     const date = weekday(today) === wd ? today : nextWeekday(today, wd);
-    return { type, label: CONFIG.sessions[type], date, count: state.clients.filter((c) => get(c) === date).length };
+    return { type, label: CONFIG.sessions[type], short: { tue: "Tutorial del martedì", thu: "Sessione del giovedì", fri: "Live upsell del venerdì" }[type], date, count: state.clients.filter((c) => get(c) === date).length };
   }).sort((a, b) => a.date.localeCompare(b.date));
 
   // Banner: news, promemoria automatici e frasi motivazionali
@@ -534,16 +541,16 @@ ${BASE_HEAD}
   html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
   .num { font-variant-numeric: tabular-nums; }
   .screen { height: 100vh; display: flex; flex-direction: column; padding: 2.5vh 3.5vw 0; gap: 2vh; }
-  .top { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(0.9rem, 1.9vw, 2.2rem); opacity: 0.75; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(0.8rem, min(1.9vw, 3.2vh), 2.2rem); opacity: 0.75; }
   .top .date { text-transform: capitalize; }
   .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; text-align: center; }
-  .kpi .label { font-size: clamp(0.9rem, 2vw, 2.4rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
-  .kpi .value { font-size: clamp(2.2rem, 6.6vw, 8.5rem); font-weight: 900; line-height: 1.05; margin-top: 0.6vh; letter-spacing: -0.02em; }
-  .kpi .sub { font-size: clamp(0.8rem, 1.4vw, 1.7rem); opacity: 0.6; margin-top: 0.4vh; }
+  .kpi .label { font-size: clamp(0.8rem, min(2vw, 3.4vh), 2.4rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+  .kpi .value { font-size: clamp(1.8rem, min(6.6vw, 11vh), 8.5rem); font-weight: 900; line-height: 1.15; margin-top: 0.6vh; letter-spacing: -0.02em; }
+  .kpi .sub { font-size: clamp(0.7rem, min(1.4vw, 2.4vh), 1.7rem); opacity: 0.6; margin-top: 0.4vh; }
   .bump { animation: bump 1.2s ease-out; }
   @keyframes bump { 0% { transform: scale(1); } 15% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
-  .week { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2vw; border-top: 1px solid #333; padding-top: 1.6vh; font-size: clamp(0.9rem, 1.9vw, 2.3rem); font-weight: 800; }
+  .week { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2vw; border-top: 1px solid #333; padding-top: 1.6vh; font-size: clamp(0.8rem, min(1.9vw, 3.2vh), 2.3rem); font-weight: 800; }
   .week[hidden] { display: none; }
   .week .lbl { letter-spacing: 0.12em; text-transform: uppercase; }
   .week .wbar { height: 2.2vh; min-height: 10px; background: #222; border-radius: 99px; overflow: hidden; }
@@ -551,16 +558,16 @@ ${BASE_HEAD}
   .week .val small { font-weight: 500; opacity: 0.65; margin-left: 1vw; }
   .bottom { flex: 1; min-height: 0; display: grid; grid-template-columns: 2.2fr 1fr; gap: 3vw; border-top: 1px solid #333; padding-top: 2vh; }
   .podium-wrap { display: flex; flex-direction: column; min-height: 0; }
-  h2 { margin: 0 0 0.6vh; font-size: clamp(1rem, 2.2vw, 2.6rem); font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; text-align: center; }
-  .goal { text-align: center; font-size: clamp(0.8rem, 1.5vw, 1.8rem); opacity: 0.8; }
+  h2 { margin: 0 0 0.6vh; font-size: clamp(0.9rem, min(2.2vw, 3.6vh), 2.6rem); font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; text-align: center; }
+  .goal { text-align: center; font-size: clamp(0.7rem, min(1.5vw, 2.5vh), 1.8rem); opacity: 0.8; }
   .goal b { color: #ffd54a; }
   .podium { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 1.2vw; min-height: 0; }
   .step { flex: 1; max-width: 22vw; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; text-align: center; }
   .step[hidden] { display: none; }
-  .step .medal { font-size: clamp(1.4rem, 3.2vw, 4rem); line-height: 1; }
-  .step .name { font-size: clamp(1.1rem, 2.6vw, 3.2rem); font-weight: 900; margin-top: 0.4vh; }
-  .step .amt { font-size: clamp(1rem, 2.4vw, 3rem); font-weight: 900; color: #4ade80; }
-  .step .inc { font-size: clamp(0.7rem, 1.2vw, 1.4rem); opacity: 0.65; }
+  .step .medal { font-size: clamp(1.1rem, min(3.2vw, 5vh), 4rem); line-height: 1; }
+  .step .name { font-size: clamp(0.9rem, min(2.6vw, 4.4vh), 3.2rem); font-weight: 900; margin-top: 0.4vh; }
+  .step .amt { font-size: clamp(0.9rem, min(2.4vw, 4vh), 3rem); font-weight: 900; color: #4ade80; }
+  .step .inc { font-size: clamp(0.65rem, min(1.2vw, 2vh), 1.4rem); opacity: 0.65; }
   .bar { width: 80%; height: 0.9vh; min-height: 5px; background: #222; border-radius: 99px; overflow: hidden; margin: 0.8vh 0 1vh; }
   .bar i { display: block; height: 100%; width: 0; background: #ffd54a; border-radius: 99px; transition: width 1.2s ease-out; }
   .step .block { width: 100%; border-radius: 1.2vw 1.2vw 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 1.2vh;
@@ -571,15 +578,15 @@ ${BASE_HEAD}
   .step.pop .name, .step.pop .medal { animation: pop 1.2s ease-out; }
   @keyframes pop { 0% { transform: scale(1); } 20% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
-  .side { display: flex; flex-direction: column; gap: 2vh; min-height: 0; border-left: 1px solid #222; padding-left: 2.5vw; }
-  .side h3 { margin: 0 0 1vh; font-size: clamp(0.8rem, 1.4vw, 1.7rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
-  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 1vw; padding: 0.9vh 0; border-bottom: 1px solid #1a1a1a; font-size: clamp(0.9rem, 1.7vw, 2rem); }
+  .side { display: flex; flex-direction: column; gap: 1.6vh; min-height: 0; overflow: hidden; border-left: 1px solid #222; padding-left: 2.5vw; }
+  .side h3 { margin: 0 0 0.6vh; font-size: clamp(0.7rem, min(1.4vw, 2.3vh), 1.7rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 1vw; padding: 0.7vh 0; border-bottom: 1px solid #1a1a1a; font-size: clamp(0.75rem, min(1.7vw, 2.8vh), 2rem); }
   .row .l { font-weight: 700; }
   .row .l small { display: block; font-weight: 400; opacity: 0.55; font-size: 0.7em; text-transform: capitalize; }
   .row .r { font-weight: 900; }
   .winner { background: #1a1503; border: 1px solid #ffd54a; border-radius: 1vw; padding: 1.2vh 1vw; text-align: center; font-size: clamp(0.9rem, 1.7vw, 2rem); font-weight: 800; }
 
-  .ticker { height: 6.5vh; min-height: 34px; border-top: 1px solid #333; overflow: hidden; display: flex; align-items: center; white-space: nowrap; font-size: clamp(0.9rem, 2vw, 2.4rem); font-weight: 600; }
+  .ticker { height: 6.5vh; min-height: 30px; flex: none; border-top: 1px solid #333; overflow: hidden; display: flex; align-items: center; white-space: nowrap; font-size: clamp(0.8rem, min(2vw, 3.4vh), 2.4rem); background: #000; position: relative; z-index: 2; font-weight: 600; }
   .ticker .track { display: inline-block; padding-left: 100%; animation: scroll linear infinite; }
   .ticker .track span { margin-right: 6vw; }
   @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
@@ -745,7 +752,7 @@ function tvMain() {
     $("winnerBox").innerHTML = !d.winner ? ""
       : '<div class="winner">🏆 ' + esc(d.winner.name) + (g.bonus ? " ha vinto il bonus di " + fmt(g.bonus) + "!" : " ha raggiunto l'obiettivo!") + "</div>";
     $("lives").innerHTML = d.lives.map((l) =>
-      '<div class="row"><span class="l">' + esc(l.label) + "<small>" + (l.date === d.today ? "oggi" : esc(dayLabel(l.date))) + '</small></span><span class="r num">' + l.count + "</span></div>").join("");
+      '<div class="row"><span class="l">' + esc(l.short) + "<small>" + (l.date === d.today ? "oggi" : esc(dayLabel(l.date))) + '</small></span><span class="r num">' + l.count + "</span></div>").join("");
     const rest = d.ranking.slice(3);
     $("othersBox").innerHTML = rest.length ? "<h3>Fuori dal podio</h3>" + rest.map((r, i) =>
       '<div class="row"><span class="l">' + (i + 4) + "° " + esc(r.name) + '</span><span class="r num">' + fmt(r.month) + "</span></div>").join("") : "";
@@ -1430,22 +1437,63 @@ function appMain() {
 
 // ---------- Router ----------
 
-async function handleApi(request, kv, url, path) {
-  const today = romeDate();
-  const state = await readState(kv);
-  const full = () => json({ state, tv: tvSummary(state, today) });
+// Archivio dei dati: un solo Durable Object, quindi ogni lettura vede l'ultima modifica
+// e due salvataggi contemporanei non si sovrascrivono a vicenda.
+export class CrmStore extends DurableObject {
+  async load() {
+    let s = await this.ctx.storage.get("state");
+    if (s === undefined) {
+      // Prima volta: si parte dai dati salvati finora nel KV
+      s = await readState(this.env.ACADEMY_PROGRESS);
+      await this.ctx.storage.put("state", s);
+    }
+    return normalizeState(s);
+  }
+  async read(today) {
+    const state = await this.load();
+    return { state, tv: tvSummary(state, today) };
+  }
+  async tv(today) {
+    return tvSummary(await this.load(), today);
+  }
+  async apply(op, today) {
+    const state = await this.load();
+    try {
+      applyOp(state, op, today);
+    } catch (e) {
+      return { error: e.message };
+    }
+    await this.ctx.storage.put("state", state);
+    try {
+      await this.env.ACADEMY_PROGRESS.put(STATE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // la copia nel KV è solo di scorta
+    }
+    return { state, tv: tvSummary(state, today) };
+  }
+}
 
-  if (path === `${DASH_PATH}/api/tv` && request.method === "GET") return json(tvSummary(state, today));
-  if (path === `${DASH_PATH}/api/state` && request.method === "GET") return full();
+async function handleApi(request, env, path) {
+  const today = romeDate();
+  const kv = env.ACADEMY_PROGRESS;
+  // Se il Durable Object non è configurato si usa il KV come prima
+  const store = env.CRM ? env.CRM.get(env.CRM.idFromName("main")) : {
+    async read(t) { const state = await readState(kv); return { state, tv: tvSummary(state, t) }; },
+    async tv(t) { return tvSummary(await readState(kv), t); },
+    async apply(op, t) {
+      const state = await readState(kv);
+      try { applyOp(state, op, t); } catch (e) { return { error: e.message }; }
+      await kv.put(STATE_KEY, JSON.stringify(state));
+      return { state, tv: tvSummary(state, t) };
+    },
+  };
+
+  if (path === `${DASH_PATH}/api/tv` && request.method === "GET") return json(await store.tv(today));
+  if (path === `${DASH_PATH}/api/state` && request.method === "GET") return json(await store.read(today));
   if (path === `${DASH_PATH}/api/op` && request.method === "POST") {
     const body = await request.json().catch(() => ({}));
-    try {
-      applyOp(state, body, today);
-    } catch (e) {
-      return json({ error: e.message }, 400);
-    }
-    await kv.put(STATE_KEY, JSON.stringify(state));
-    return full();
+    const r = await store.apply(body, today);
+    return r.error ? json({ error: r.error }, 400) : json(r);
   }
   return json({ error: "not found" }, 404);
 }
@@ -1477,7 +1525,7 @@ export async function handleDashboard(request, env, url) {
   if (path.startsWith(`${DASH_PATH}/api/`)) {
     if (!loggedIn) return json({ error: "unauthorized" }, 401);
     try {
-      return await handleApi(request, kv, url, path);
+      return await handleApi(request, env, path);
     } catch (e) {
       return json({ error: "Errore del server: " + (e && e.stack || e) }, 500);
     }
