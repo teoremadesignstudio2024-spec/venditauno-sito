@@ -16,7 +16,7 @@ const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 
 const STATE_KEY = "crm:v1";
-const VERSION = "v10"; // si vede in alto nella dashboard: serve a capire quale versione è online
+const VERSION = "v11"; // si vede in alto nella dashboard: serve a capire quale versione è online
 
 // Regole del percorso cliente
 const CONFIG = {
@@ -146,6 +146,7 @@ function normalizeState(s) {
     quotes: s.quotes || DEFAULT_QUOTES,
     news: s.news || [],
     weekGoal: s.weekGoal || { target: 1000, clients: 5 },
+    closings: s.closings || [],
     legacyImported: !!s.legacyImported,
   };
   // Clienti salvati prima della divisione vendite/onboarding: checklist e campagna vuote,
@@ -342,6 +343,43 @@ function applyOp(state, op, today) {
       }
       return;
     }
+    case "addClosing": {
+      const name = str(op.name, 80);
+      if (!name) throw new Error("Scrivi nome e cognome");
+      state.closings.push({
+        id: newId(), name, phone: str(op.phone, 40), seller: seller(op.seller),
+        value: op.value === undefined || op.value === "" ? CONFIG.frontAmount : money(op.value, { allowZero: true }),
+        date: isDate(op.date) ? op.date : today, status: "open", closedOn: null, clientId: null, ts: Date.now(),
+      });
+      return;
+    }
+    case "closeClosing": {
+      // Chiuso: diventa cliente con l'incasso. Non chiuso: resta nello storico.
+      const k = state.closings.find((x) => x.id === op.id);
+      if (!k) throw new Error("Closing non trovato");
+      if (k.status !== "open") throw new Error("Questo closing è già stato segnato");
+      if (op.won) {
+        const amount = op.amount === undefined || op.amount === "" ? k.value : money(op.amount, { allowZero: true });
+        k.clientId = applyOp(state, { op: "addClient", name: k.name, phone: k.phone, seller: k.seller, amount, date: today }, today);
+        k.status = "won";
+      } else {
+        k.status = "lost";
+      }
+      k.closedOn = today;
+      return;
+    }
+    case "reopenClosing": {
+      const k = state.closings.find((x) => x.id === op.id);
+      if (!k) throw new Error("Closing non trovato");
+      if (k.status === "won") throw new Error("È già diventato cliente: per annullare elimina il cliente");
+      k.status = "open";
+      k.closedOn = null;
+      return;
+    }
+    case "deleteClosing": {
+      state.closings = state.closings.filter((x) => x.id !== op.id);
+      return;
+    }
     case "moveStage": {
       // Spostamento a mano nella pipeline: si aggiornano i dati che decidono la colonna
       const c = find(op.id);
@@ -440,6 +478,10 @@ function tvSummary(state, today) {
 
   // Banner: news, promemoria automatici e frasi motivazionali
   const reminders = [];
+  for (const name of state.sellers) {
+    const n = state.closings.filter((k) => k.status === "open" && k.seller === name).length;
+    if (n) reminders.push(`📞 ${name}: ${n} ${n === 1 ? "closing da chiudere" : "closing da chiudere"}`);
+  }
   for (const l of lives) {
     if (!l.count) continue;
     if (l.date === today) reminders.push(`📅 Oggi: ${l.label} con ${l.count} ${l.count === 1 ? "cliente" : "clienti"}`);
@@ -467,6 +509,20 @@ function tvSummary(state, today) {
     newMonth: state.clients.filter((c) => c.created.startsWith(month)).length,
     upsellMonth: state.clients.filter((c) => c.upsell.status === "chiuso" && (c.upsell.date || "").startsWith(month)).length,
     goal, winner, ranking, lives, ticker,
+    closing: (() => {
+      const open = state.closings.filter((k) => k.status === "open");
+      const people = [...new Set([...state.sellers, ...open.map((k) => k.seller)])];
+      return {
+        openValue: sumAmounts(open.map((k) => ({ amount: k.value }))),
+        openCount: open.length,
+        wonToday: state.closings.filter((k) => k.status === "won" && k.closedOn === today).length,
+        bySeller: people.map((name) => ({
+          name,
+          open: open.filter((k) => k.seller === name).sort((a, b) => a.date.localeCompare(b.date)).map((k) => k.name),
+          wonToday: state.closings.filter((k) => k.seller === name && k.status === "won" && k.closedOn === today).map((k) => k.name),
+        })).filter((x) => x.open.length || x.wonToday.length),
+      };
+    })(),
     week: (() => {
       // Settimana da lunedì a domenica
       let start = today;
@@ -543,7 +599,7 @@ ${BASE_HEAD}
   .screen { height: 100vh; display: flex; flex-direction: column; padding: 2.5vh 3.5vw 0; gap: 2vh; }
   .top { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(0.8rem, min(1.9vw, 3.2vh), 2.2rem); opacity: 0.75; }
   .top .date { text-transform: capitalize; }
-  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; text-align: center; }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2vw; text-align: center; }
   .kpi .label { font-size: clamp(0.8rem, min(2vw, 3.4vh), 2.4rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
   .kpi .value { font-size: clamp(1.8rem, min(6.6vw, 11vh), 8.5rem); font-weight: 900; line-height: 1.15; margin-top: 0.6vh; letter-spacing: -0.02em; }
   .kpi .sub { font-size: clamp(0.7rem, min(1.4vw, 2.4vh), 1.7rem); opacity: 0.6; margin-top: 0.4vh; }
@@ -584,6 +640,10 @@ ${BASE_HEAD}
   .row .l { font-weight: 700; }
   .row .l small { display: block; font-weight: 400; opacity: 0.55; font-size: 0.7em; text-transform: capitalize; }
   .row .r { font-weight: 900; }
+  .cl { padding: 0.6vh 0; border-bottom: 1px solid #1a1a1a; font-size: clamp(0.75rem, min(1.5vw, 2.5vh), 1.8rem); }
+  .cl b { display: block; }
+  .cl .names { opacity: 0.8; font-size: 0.85em; }
+  .cl .won { color: #4ade80; font-size: 0.85em; }
   .winner { background: #1a1503; border: 1px solid #ffd54a; border-radius: 1vw; padding: 1.2vh 1vw; text-align: center; font-size: clamp(0.9rem, 1.7vw, 2rem); font-weight: 800; }
 
   .ticker { height: 6.5vh; min-height: 30px; flex: none; border-top: 1px solid #333; overflow: hidden; display: flex; align-items: center; white-space: nowrap; font-size: clamp(0.8rem, min(2vw, 3.4vh), 2.4rem); background: #000; position: relative; z-index: 2; font-weight: 600; }
@@ -614,6 +674,7 @@ ${BASE_HEAD}
   <div class="kpis">
     <div class="kpi"><div class="label">Incassato di oggi</div><div class="value num" id="cashedToday">0 €</div><div class="sub" id="todaySub"></div></div>
     <div class="kpi"><div class="label">Incassato del mese</div><div class="value num" id="cashedMonth">0 €</div><div class="sub" id="monthSub"></div></div>
+    <div class="kpi"><div class="label">Da chiudere</div><div class="value num" id="toClose" style="color:#ffd54a">0 €</div><div class="sub" id="toCloseSub"></div></div>
   </div>
   <div class="week" id="week"></div>
   <div class="bottom">
@@ -628,8 +689,9 @@ ${BASE_HEAD}
     </div>
     <div class="side">
       <div id="winnerBox"></div>
-      <div><h3>Prossime live</h3><div id="lives"></div></div>
-      <div><h3>Onboarding</h3><div id="onbBox"></div></div>
+      <div id="closeBox"></div>
+      <div id="livesWrap"><h3>Prossime live</h3><div id="lives"></div></div>
+      <div id="onbWrap"><h3>Onboarding</h3><div id="onbBox"></div></div>
       <div id="othersBox"></div>
     </div>
   </div>
@@ -704,10 +766,20 @@ function tvMain() {
     $("todaySub").textContent = plural(d.newToday, "nuovo cliente", "nuovi clienti") + " oggi";
     $("monthSub").textContent = plural(d.newMonth, "nuovo cliente", "nuovi clienti") + " · " + d.upsellMonth + " upsell nel mese";
 
-    if (!last) { $("cashedToday").textContent = fmt(d.cashedToday); $("cashedMonth").textContent = fmt(d.cashedMonth); }
+    // Closing: quanto c'è da chiudere e chi deve chiudere chi
+    const cl = d.closing;
+    $("toCloseSub").textContent = plural(cl.openCount, "closing aperto", "closing aperti") + (cl.wonToday ? " · " + cl.wonToday + " chiusi oggi" : "");
+    const short = (list) => list.slice(0, 4).map(esc).join(", ") + (list.length > 4 ? " +" + (list.length - 4) : "");
+    $("closeBox").innerHTML = cl.bySeller.length ? "<h3>📞 Closing</h3>" + cl.bySeller.map((x) =>
+      '<div class="cl"><b>' + esc(x.name) + (x.open.length ? " deve chiudere " + x.open.length : "") + "</b>" +
+      (x.open.length ? '<div class="names">' + short(x.open) + "</div>" : "") +
+      (x.wonToday.length ? '<div class="won">✓ ha chiuso oggi: ' + short(x.wonToday) + "</div>" : "") + "</div>").join("") : "";
+
+    if (!last) { $("cashedToday").textContent = fmt(d.cashedToday); $("cashedMonth").textContent = fmt(d.cashedMonth); $("toClose").textContent = fmt(cl.openValue); }
     else {
       if (d.cashedToday !== last.cashedToday) animateTo("cashedToday", last.cashedToday, d.cashedToday);
       if (d.cashedMonth !== last.cashedMonth) animateTo("cashedMonth", last.cashedMonth, d.cashedMonth);
+      if (cl.openValue !== last.closing.openValue) animateTo("toClose", last.closing.openValue, cl.openValue);
       if (d.last && (!last.last || d.last.id !== last.last.id)) {
         const k = d.last.kind;
         flash((k === "acconto" ? "🎉 Nuovo cliente! " : k === "upsell" ? "⭐ Upsell chiuso! " : "💶 Incasso! ") + d.last.seller + " +" + fmt(d.last.amount));
@@ -756,6 +828,11 @@ function tvMain() {
     const rest = d.ranking.slice(3);
     $("othersBox").innerHTML = rest.length ? "<h3>Fuori dal podio</h3>" + rest.map((r, i) =>
       '<div class="row"><span class="l">' + (i + 4) + "° " + esc(r.name) + '</span><span class="r num">' + fmt(r.month) + "</span></div>").join("") : "";
+
+    // Colonna di destra: se non c'è spazio si nascondono prima onboarding, poi le prossime live
+    const side = document.querySelector(".side");
+    ["onbWrap", "livesWrap"].forEach((id) => { $(id).hidden = false; });
+    for (const id of ["onbWrap", "livesWrap"]) if (side.scrollHeight > side.clientHeight + 2) $(id).hidden = true;
 
     // Banner che scorre: si rigenera solo se cambia il testo, così non riparte da capo
     const key = d.ticker.join("|");
@@ -1050,6 +1127,7 @@ function appMain() {
       <button class="btn sm ${c.live.invited ? "green" : ""}" data-inv="${c.id}">${c.live.invited ? "Link ✓" : "Link mandato?"}</button>
       <div class="seg"><button data-out="chiuso|${c.id}">Chiuso</button><button data-out="richiamare|${c.id}">Richiamare</button><button data-out="non_chiuso|${c.id}">Non chiuso</button></div>`,
       `${esc(c.seller)} · ${esc(c.phone || "")} · live ${c.live.date === fri ? "di venerdì" : esc(dShort(c.live.date))}`);
+    const closings = mineOnly(S.state.closings.filter((k) => k.status === "open")).sort((a, b) => a.date.localeCompare(b.date));
     const recall = mineOnly(C.filter((c) => c.upsell.status === "richiamare" && (!c.upsell.recall || c.upsell.recall <= today)))
       .map((c) => row(c, `<span class="tag y">${c.upsell.recall ? esc(dShort(c.upsell.recall)) : "subito"}</span>`));
     const collect = mineOnly(C.filter((c) => toCollect(c) > 0)).map((c) => row(c, `<span class="tag y num">${fmt(toCollect(c))}</span>`));
@@ -1057,7 +1135,13 @@ function appMain() {
       .map((c) => row(c, `<span class="tag ${c.upsell.end < today ? "r" : "y"}">${c.upsell.end < today ? "scaduto" : "scade"} ${esc(dShort(c.upsell.end))}</span>`));
 
     $("main").innerHTML = `
-      <div class="card"><h2>🎥 Live upsell di venerdì ${esc(dShort(fri))}</h2>
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📞 Closing da chiudere</h2>
+          <button class="btn main sm" id="addClosing">+ Closing</button></div>
+        <p class="muted" style="margin:6px 0 4px">Totale da chiudere: <b style="color:var(--gold)">${fmt(S.tv.closing.openValue)}</b> · ${S.tv.closing.openCount} aperti${S.tv.closing.wonToday ? ` · ${S.tv.closing.wonToday} chiusi oggi` : ""}</p>
+        ${closings.map((k) => `<div class="item"><div class="grow"><b>${esc(k.name)}</b><small>${esc(k.seller)}${k.phone ? " · " + esc(k.phone) : ""} · ${esc(dShort(k.date))} · vale ${fmt(k.value)}</small></div>
+          <div class="seg"><button data-won="${k.id}">Chiuso</button><button data-lost="${k.id}">Non chiuso</button></div>
+          <button class="btn danger sm" data-delk="${k.id}">Elimina</button></div>`).join("") || '<div class="empty">Nessun closing aperto: aggiungine uno con "+ Closing"</div>'}</div>
+      <div class="card" style="margin-top:12px"><h2>🎥 Live upsell di venerdì ${esc(dShort(fri))}</h2>
         <p class="muted" style="margin-top:0">Ci vanno i clienti con la campagna partita da almeno ${S.state.liveDelay} giorni. Segna l'esito appena finisce la live.</p>
         ${live.map(liveRow).join("") || '<div class="empty">Nessun cliente pronto per questa live</div>'}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px;gap:10px"><h2 style="margin:0">${showAll ? "Tutti" : "I miei clienti"}</h2>
@@ -1070,6 +1154,13 @@ function appMain() {
       <h2>Classifica del mese (incassato)</h2>
       <div class="card">${S.tv.ranking.map((r, i) => `<div class="item"><div class="grow"><b>${i + 1}° ${esc(r.name)}</b><small>oggi ${fmt(r.today)} · ${r.newClients} nuovi clienti</small></div><b class="num" style="color:var(--green)">${fmt(r.month)}</b></div>`).join("")}</div>`;
     $("toggleAll").onclick = () => { showAll = !showAll; renderSales(); };
+    $("addClosing").onclick = closingModal;
+    document.querySelectorAll("#main [data-won]").forEach((b) => b.onclick = () => wonModal(b.dataset.won));
+    document.querySelectorAll("#main [data-lost]").forEach((b) => b.onclick = () => op({ op: "closeClosing", id: b.dataset.lost, won: false }, "Segnato: non chiuso"));
+    document.querySelectorAll("#main [data-delk]").forEach((b) => b.onclick = () => {
+      if (!twoClick(b, "Sicuro?")) return;
+      op({ op: "deleteClosing", id: b.dataset.delk }, "Closing eliminato");
+    });
     document.querySelectorAll("#main [data-inv]").forEach((b) => b.onclick = () => {
       const c = client(b.dataset.inv);
       op({ op: "updateClient", id: c.id, fields: { live: { invited: !c.live.invited } } });
@@ -1079,6 +1170,35 @@ function appMain() {
       if (status === "chiuso") return closedModal(id);
       op({ op: "updateClient", id, fields: { live: { present: true }, upsell: { status } } }, status === "richiamare" ? "Da richiamare" : "Segnato: non chiuso (resta lifetime)");
     });
+  }
+
+  function closingModal() {
+    open = { type: "closing" };
+    openModal(`<h3>📞 Nuovo closing</h3><p class="muted" style="margin:0">Un potenziale cliente da chiudere. Sulla TV si vede chi lo deve chiudere.</p>
+      <div class="two"><div><label>Nome e cognome *</label><input id="kName" autocomplete="off"></div><div><label>Telefono</label><input id="kPhone" inputmode="tel" autocomplete="off"></div></div>
+      <div class="three"><div><label>Di chi è</label><select id="kSeller">${sellerOpts(S.state.sellers.includes(me()) ? me() : S.state.sellers[0])}</select></div>
+        <div><label>Vale (€)</label><input id="kValue" inputmode="decimal" value="${CONFIG.frontAmount}"></div>
+        <div><label>Data del closing</label><input id="kDate" type="date" value="${S.tv.today}"></div></div>
+      <div class="actions"><button class="btn" id="kCancel">Annulla</button><button class="btn main" id="kSave">Aggiungi</button></div>`);
+    $("kName").focus();
+    $("kCancel").onclick = closeModal;
+    $("kSave").onclick = async () => {
+      await op({ op: "addClosing", name: $("kName").value, phone: $("kPhone").value, seller: $("kSeller").value, value: parseAmount($("kValue").value), date: $("kDate").value }, "Closing aggiunto");
+      closeModal();
+    };
+  }
+
+  function wonModal(id) {
+    const k = S.state.closings.find((x) => x.id === id);
+    open = { type: "won" };
+    openModal(`<h3>🎉 Chiuso: ${esc(k.name)}</h3><p class="muted" style="margin:0">Diventa cliente di ${esc(k.seller)} e parte l'onboarding.</p>
+      <div class="two"><div><label>Incassato adesso (€)</label><input id="wAmount" inputmode="decimal" value="${k.value}"></div></div>
+      <div class="actions"><button class="btn" id="wCancel">Annulla</button><button class="btn green" id="wSave">Conferma</button></div>`);
+    $("wCancel").onclick = closeModal;
+    $("wSave").onclick = async () => {
+      await op({ op: "closeClosing", id, won: true, amount: parseAmount($("wAmount").value) }, "🎉 Chiuso: nuovo cliente");
+      closeModal();
+    };
   }
 
   // Upsell chiuso in live: importo e quanto è stato incassato subito
