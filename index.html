@@ -106,7 +106,7 @@ section { position: relative; padding: 100px 0; }
 .cta {
   display: inline-flex; align-items: center; gap: 10px;
   padding: 19px 34px; margin-top: 18px;
-  border-radius: 999px;
+  border-radius: 999px; border: none; cursor: pointer; font-family: inherit;
   background: var(--accent);
   color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 0.01em; text-transform: uppercase;
   box-shadow: 0 10px 24px -8px rgba(60,131,245,.5);
@@ -189,14 +189,17 @@ section { position: relative; padding: 100px 0; }
 .map-badge { position: absolute; right: 2%; top: 10%; background: var(--accent); color: #fff; border-radius: 14px; padding: 14px 18px; font-size: 13px; line-height: 1.3; box-shadow: 0 14px 30px -10px rgba(60,131,245,.5); }
 .map-badge b { font-size: 24px; display: block; color: #fff; }
 
-/* ---------- 8b. Banner file Excel ---------- */
-.excel-banner { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 48px; }
+/* ---------- Banner file Excel (compatto) ---------- */
+.excel-section { padding: 56px 0; }
+.excel-banner { display: grid; grid-template-columns: 0.8fr 1fr; gap: 32px; align-items: center; max-width: 920px; margin: 0 auto;
+  background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 32px; }
 .excel-banner-media .media-placeholder {
-  aspect-ratio: 4/3; border-radius: 16px; border: 1px dashed var(--border); background: var(--bg-soft);
-  display: flex; align-items: center; justify-content: center; color: var(--muted-2); font-size: 14px; text-align: center; padding: 20px;
+  aspect-ratio: 4/3; border-radius: 14px; border: 1px dashed var(--border); background: var(--bg-soft);
+  display: flex; align-items: center; justify-content: center; color: var(--muted-2); font-size: 13px; text-align: center; padding: 16px;
 }
 .excel-banner-content .tag { display: block; width: fit-content; }
-.excel-banner-content h2 { margin: 14px 0 22px; }
+.excel-banner-content h2 { font-size: clamp(22px, 2.4vw, 30px); margin: 12px 0 18px; }
+.excel-banner-content .cta { margin-top: 0; padding: 15px 26px; font-size: 14px; }
 
 /* ---------- 8c. Formazione gratuita ---------- */
 .freebies-grid { margin-top: 48px; }
@@ -204,11 +207,6 @@ section { position: relative; padding: 100px 0; }
   border: 1px dashed var(--border); border-radius: 16px; padding: 60px 24px; text-align: center;
   color: var(--muted-2); font-size: 15px; background: var(--bg-soft);
 }
-
-.final { text-align: center; padding: 110px 0; background: var(--ink); color: #fff; }
-.final .big-title { color: #fff; }
-.final .big-title .hl { color: #7fb0ff; }
-.final p { color: #b9c0cf; font-size: 18px; max-width: 680px; margin: 18px auto 0; text-wrap: balance; }
 
 footer { border-top: 1px solid var(--border); padding: 30px 0; color: var(--muted-2); font-size: 13px; text-align: center; }
 footer .foot-links { margin-top: 16px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
@@ -233,6 +231,27 @@ footer p { margin-top: 8px; }
 }
 .wa-float:hover { transform: scale(1.06); }
 .wa-float svg { width: 30px; height: 30px; fill: #fff; }
+
+/* ---------- Modal (pop-up download con lead capture) ---------- */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 100; padding: 20px;
+  background: rgba(10,14,26,.6); align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: #fff; border-radius: 20px; max-width: 560px; width: 100%; max-height: 90vh; overflow: auto;
+  padding: 28px; position: relative; box-shadow: 0 30px 70px -20px rgba(10,14,26,.5);
+}
+.modal-close {
+  position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--border); background: #fff; color: var(--ink); font-size: 16px; cursor: pointer;
+  display: grid; place-items: center; font-family: inherit;
+}
+.modal-box h3 { font-size: 22px; font-weight: 900; margin: 0 28px 18px 0; }
+.modal-embed-placeholder {
+  border: 1px dashed var(--border); border-radius: 14px; padding: 60px 20px; text-align: center;
+  color: var(--muted-2); font-size: 14px; background: var(--bg-soft);
+}
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
@@ -463,31 +482,37 @@ footer p { margin-top: 8px; }
 </section>
 
 <!-- =========================================================
-     6. CHI C'È DIETRO AL METODO — founder
+     6b. FORMAZIONE GRATUITA
      ========================================================= -->
-<section>
+<section id="risorse-gratuite">
   <div class="container">
-    <div class="split top-align" style="margin-top:0">
-      <div class="duo">
-        <div>
-          <div class="founder-photo"><img src="assets/img/samuele-diotti.jpg" alt="Samuele Diotti, fondatore di Vendita Uno"></div>
-          <p class="founder-tag"><b>Samuele Diotti</b><br>Fondatore · ex agente Gabetti</p>
-        </div>
-        <div>
-          <div class="founder-photo"><img src="assets/img/marco-diotti.jpg" alt="Marco Diotti, account manager delle agenzie partner Vendita Uno"></div>
-          <p class="founder-tag"><b>Marco Diotti</b><br>Account Manager</p>
-        </div>
+    <h2 class="big-title">Formazione <span class="hl">gratuita.</span></h2>
+    <p class="lead-muted" style="max-width:640px;margin:12px auto 0;">Intanto ti diamo formazione gratuita con ebook, guide, modelli, download e molto altro per aiutarti a far crescere la tua agenzia immobiliare o il tuo lavoro da agente immobiliare.</p>
+
+    <div class="freebies-grid">
+      <!-- In attesa dei titoli/copertine delle risorse: ogni card avrà un pulsante "Scarica ora" che apre un pop-up con l'embed GoHighLevel per lasciare il lead -->
+      <div class="freebie-placeholder">Risorse in arrivo</div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     6c. BANNER FILE EXCEL (lead magnet, pop-up GoHighLevel)
+     ========================================================= -->
+<section class="sec-soft excel-section">
+  <div class="container">
+    <div class="excel-banner">
+      <div class="excel-banner-media">
+        <!-- In attesa dell'immagine dei 3 file Excel da affiancare qui -->
+        <div class="media-placeholder">In attesa dell'immagine dei 3 file Excel</div>
       </div>
-      <div class="body-copy">
-        <span class="tag blue">Chi c'è dietro</span>
-        <h2 class="title-md">Il metodo <span class="hl">Vendita Uno.</span></h2>
-        <p style="margin-top:28px">Samuele ha fatto il tuo stesso lavoro: <strong>5 anni da agente immobiliare in Gabetti</strong>, con gli stessi problemi che hai tu oggi. Mentre i colleghi citofonavano, ha studiato marketing fino a prendere il monopolio della sua zona. Quel metodo oggi lo usano oltre 470 agenzie in Italia.</p>
-        <p>Marco segue ogni agenzia partner giorno per giorno: non ti lascia solo con un software da capire, ma con una persona che risponde quando hai un problema con il metodo.</p>
-        <p><strong>Non devi formarci: siamo già attrezzati.</strong> Costiamo meno di un agente che ti gira la zona a cercare case, e al contrario di lui garantiamo il risultato per contratto.</p>
-        <a href="#form" class="cta">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-          Candida la tua agenzia
-        </a>
+      <div class="excel-banner-content">
+        <span class="tag">Nuovo di zecca</span>
+        <h2 class="title-md">3 file Excel per aumentare il fatturato della tua agenzia</h2>
+        <button type="button" class="cta" onclick="openModal('modal-excel')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Scarica i file gratuiti
+        </button>
       </div>
     </div>
   </div>
@@ -521,51 +546,32 @@ footer p { margin-top: 8px; }
 </section>
 
 <!-- =========================================================
-     8b. BANNER FILE EXCEL (lead magnet)
+     9. CHI C'È DIETRO AL METODO — founder (ultima sezione di contenuto)
      ========================================================= -->
 <section class="sec-soft">
   <div class="container">
-    <div class="excel-banner">
-      <div class="excel-banner-media">
-        <!-- In attesa dell'immagine dei 3 file Excel da affiancare qui -->
-        <div class="media-placeholder">In attesa dell'immagine dei 3 file Excel</div>
+    <div class="split top-align" style="margin-top:0">
+      <div class="duo">
+        <div>
+          <div class="founder-photo"><img src="assets/img/samuele-diotti.jpg" alt="Samuele Diotti, fondatore di Vendita Uno"></div>
+          <p class="founder-tag"><b>Samuele Diotti</b><br>Fondatore · ex agente Gabetti</p>
+        </div>
+        <div>
+          <div class="founder-photo"><img src="assets/img/marco-diotti.jpg" alt="Marco Diotti, account manager delle agenzie partner Vendita Uno"></div>
+          <p class="founder-tag"><b>Marco Diotti</b><br>Account Manager</p>
+        </div>
       </div>
-      <div class="excel-banner-content">
-        <span class="tag">Nuovo di zecca</span>
-        <h2 class="title-md">3 file Excel per aumentare il fatturato della tua agenzia</h2>
-        <a href="#risorse-gratuite" class="cta">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          Scarica i file gratuiti
+      <div class="body-copy">
+        <span class="tag blue">Chi c'è dietro</span>
+        <h2 class="title-md">Il metodo <span class="hl">Vendita Uno.</span></h2>
+        <p style="margin-top:28px">Samuele ha fatto il tuo stesso lavoro: <strong>5 anni da agente immobiliare in Gabetti</strong>, con gli stessi problemi che hai tu oggi. Mentre i colleghi citofonavano, ha studiato marketing fino a prendere il monopolio della sua zona. Quel metodo oggi lo usano oltre 470 agenzie in Italia.</p>
+        <p>Marco segue ogni agenzia partner giorno per giorno: non ti lascia solo con un software da capire, ma con una persona che risponde quando hai un problema con il metodo.</p>
+        <p><strong>Non devi formarci: siamo già attrezzati.</strong> Costiamo meno di un agente che ti gira la zona a cercare case, e al contrario di lui garantiamo il risultato per contratto.</p>
+        <a href="#form" class="cta">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+          Candida la tua agenzia
         </a>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================
-     8c. FORMAZIONE GRATUITA
-     ========================================================= -->
-<section id="risorse-gratuite">
-  <div class="container">
-    <h2 class="big-title">Formazione <span class="hl">gratuita.</span></h2>
-    <p class="lead-muted" style="max-width:640px;margin:12px auto 0;">Intanto ti diamo formazione gratuita con ebook, guide, modelli, download e molto altro per aiutarti a far crescere la tua agenzia immobiliare o il tuo lavoro da agente immobiliare.</p>
-
-    <div class="freebies-grid">
-      <!-- In attesa dei titoli/copertine delle risorse e dell'embed GoHighLevel per sbloccare il download -->
-      <div class="freebie-placeholder">Risorse in arrivo</div>
-    </div>
-  </div>
-</section>
-
-<section class="final">
-  <div class="container">
-    <h2 class="big-title">Il prossimo caso studio può essere la <span class="hl">tua agenzia.</span></h2>
-    <p>Verifica subito se la tua zona è ancora libera: un consulente ti richiama entro 48 ore.</p>
-    <div class="center-cta">
-      <a href="#form" class="cta">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-        Candida la tua agenzia
-      </a>
     </div>
   </div>
 </section>
@@ -614,7 +620,45 @@ footer p { margin-top: 8px; }
   <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.82L2 22l5.4-1.42a9.87 9.87 0 0 0 4.64 1.18h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.51 2 12.05 2h-.01Zm5.8 14.02c-.24.68-1.4 1.3-1.93 1.36-.5.06-1.05.28-3.53-.74-2.98-1.23-4.9-4.24-5.05-4.44-.15-.2-1.2-1.6-1.2-3.04 0-1.45.76-2.16 1.03-2.46.27-.3.6-.37.8-.37.2 0 .4.002.57.01.18.008.43-.07.67.51.24.6.83 2.07.9 2.22.07.15.12.33.02.53-.1.2-.15.32-.3.5-.15.17-.31.39-.44.52-.15.15-.3.31-.13.6.17.3.75 1.25 1.62 2.02 1.11.99 2.05 1.3 2.35 1.44.3.15.47.13.65-.08.18-.2.76-.89.96-1.19.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.13.08.75-.16 1.44Z"/></svg>
 </a>
 
-<script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+<!-- Pop-up download: 3 file Excel (in attesa dell'embed GoHighLevel) -->
+<div class="modal-overlay" id="modal-excel" aria-hidden="true">
+  <div class="modal-box">
+    <button type="button" class="modal-close" onclick="closeModal('modal-excel')" aria-label="Chiudi">✕</button>
+    <h3>Scarica i 3 file Excel</h3>
+    <div class="modal-embed-placeholder">In attesa dell'embed GoHighLevel per sbloccare questo download</div>
+  </div>
+</div>
+
+<script>
+document.getElementById('y').textContent = new Date().getFullYear();
+
+function openModal(id) {
+  const m = document.getElementById(id);
+  if (!m) return;
+  m.classList.add('open');
+  m.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  const m = document.getElementById(id);
+  if (!m) return;
+  m.classList.remove('open');
+  m.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeModal(overlay.id);
+  });
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(function (overlay) {
+      closeModal(overlay.id);
+    });
+  }
+});
+</script>
 <script src="https://link.msgsndr.com/js/form_embed.js"></script>
 </body>
 </html>
