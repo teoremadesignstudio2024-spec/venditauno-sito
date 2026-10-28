@@ -189,6 +189,22 @@ section { position: relative; padding: 100px 0; }
 .map-badge { position: absolute; right: 2%; top: 10%; background: var(--accent); color: #fff; border-radius: 14px; padding: 14px 18px; font-size: 13px; line-height: 1.3; box-shadow: 0 14px 30px -10px rgba(60,131,245,.5); }
 .map-badge b { font-size: 24px; display: block; color: #fff; }
 
+/* ---------- 8b. Banner file Excel ---------- */
+.excel-banner { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 48px; }
+.excel-banner-media .media-placeholder {
+  aspect-ratio: 4/3; border-radius: 16px; border: 1px dashed var(--border); background: var(--bg-soft);
+  display: flex; align-items: center; justify-content: center; color: var(--muted-2); font-size: 14px; text-align: center; padding: 20px;
+}
+.excel-banner-content .tag { display: block; width: fit-content; }
+.excel-banner-content h2 { margin: 14px 0 22px; }
+
+/* ---------- 8c. Formazione gratuita ---------- */
+.freebies-grid { margin-top: 48px; }
+.freebie-placeholder {
+  border: 1px dashed var(--border); border-radius: 16px; padding: 60px 24px; text-align: center;
+  color: var(--muted-2); font-size: 15px; background: var(--bg-soft);
+}
+
 .final { text-align: center; padding: 110px 0; background: var(--ink); color: #fff; }
 .final .big-title { color: #fff; }
 .final .big-title .hl { color: #7fb0ff; }
@@ -236,6 +252,7 @@ footer p { margin-top: 8px; }
   .map-badge { right: 0; top: 0; }
   .price-grid { grid-template-columns: 1fr; }
   .price-arrow { transform: rotate(90deg); padding: 4px 0; }
+  .excel-banner { grid-template-columns: 1fr; padding: 28px; gap: 28px; }
 }
 @media (max-width: 480px) {
   .container { padding: 0 16px; }
@@ -384,7 +401,7 @@ footer p { margin-top: 8px; }
 <section class="sec-soft">
   <div class="container">
     <h2 class="big-title">Come funziona, <span class="hl">passo per passo.</span></h2>
-    <p class="lead-muted" style="max-width:600px;margin:12px auto 0;">Nessuna magia: un processo che ripetiamo ogni giorno in oltre 150 agenzie, e che mettiamo per iscritto nel tuo contratto.</p>
+    <p class="lead-muted" style="max-width:600px;margin:12px auto 0;">Nessuna magia: un processo che ripetiamo ogni giorno in oltre 470 agenzie, e che mettiamo per iscritto nel tuo contratto.</p>
 
     <div class="steps">
       <div class="step">
@@ -464,7 +481,7 @@ footer p { margin-top: 8px; }
       <div class="body-copy">
         <span class="tag blue">Chi c'è dietro</span>
         <h2 class="title-md">Il metodo <span class="hl">Vendita Uno.</span></h2>
-        <p style="margin-top:28px">Samuele ha fatto il tuo stesso lavoro: <strong>5 anni da agente immobiliare in Gabetti</strong>, con gli stessi problemi che hai tu oggi. Mentre i colleghi citofonavano, ha studiato marketing fino a prendere il monopolio della sua zona. Quel metodo oggi lo usano oltre 150 agenzie in Italia.</p>
+        <p style="margin-top:28px">Samuele ha fatto il tuo stesso lavoro: <strong>5 anni da agente immobiliare in Gabetti</strong>, con gli stessi problemi che hai tu oggi. Mentre i colleghi citofonavano, ha studiato marketing fino a prendere il monopolio della sua zona. Quel metodo oggi lo usano oltre 470 agenzie in Italia.</p>
         <p>Marco segue ogni agenzia partner giorno per giorno: non ti lascia solo con un software da capire, ma con una persona che risponde quando hai un problema con il metodo.</p>
         <p><strong>Non devi formarci: siamo già attrezzati.</strong> Costiamo meno di un agente che ti gira la zona a cercare case, e al contrario di lui garantiamo il risultato per contratto.</p>
         <a href="#form" class="cta">
@@ -484,7 +501,7 @@ footer p { margin-top: 8px; }
     <div class="split" style="margin-top:0">
       <div class="map-wrap order-first-mobile">
         <img src="assets/img/italy-map.png" alt="Agenzie partner Vendita Uno in Italia">
-        <div class="map-badge"><b>+150</b>agenzie partner<br>in tutta Italia</div>
+        <div class="map-badge"><b>+470</b>agenzie partner<br>in tutta Italia</div>
       </div>
       <div>
         <span class="tag blue">Zona esclusiva</span>
@@ -499,6 +516,43 @@ footer p { margin-top: 8px; }
           Candida la tua agenzia
         </a>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     8b. BANNER FILE EXCEL (lead magnet)
+     ========================================================= -->
+<section class="sec-soft">
+  <div class="container">
+    <div class="excel-banner">
+      <div class="excel-banner-media">
+        <!-- In attesa dell'immagine dei 3 file Excel da affiancare qui -->
+        <div class="media-placeholder">In attesa dell'immagine dei 3 file Excel</div>
+      </div>
+      <div class="excel-banner-content">
+        <span class="tag">Nuovo di zecca</span>
+        <h2 class="title-md">3 file Excel per aumentare il fatturato della tua agenzia</h2>
+        <a href="#risorse-gratuite" class="cta">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Scarica i file gratuiti
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     8c. FORMAZIONE GRATUITA
+     ========================================================= -->
+<section id="risorse-gratuite">
+  <div class="container">
+    <h2 class="big-title">Formazione <span class="hl">gratuita.</span></h2>
+    <p class="lead-muted" style="max-width:640px;margin:12px auto 0;">Intanto ti diamo formazione gratuita con ebook, guide, modelli, download e molto altro per aiutarti a far crescere la tua agenzia immobiliare o il tuo lavoro da agente immobiliare.</p>
+
+    <div class="freebies-grid">
+      <!-- In attesa dei titoli/copertine delle risorse e dell'embed GoHighLevel per sbloccare il download -->
+      <div class="freebie-placeholder">Risorse in arrivo</div>
     </div>
   </div>
 </section>
