@@ -74,7 +74,10 @@ strong { color: var(--ink); font-weight: 800; }
 
 /* ---------- Announcement bar ---------- */
 .announce { background: var(--accent); color: #fff; text-align: center; padding: 12px 0; font-size: 14px; font-weight: 600; }
-.announce a { text-decoration: underline; text-underline-offset: 3px; font-weight: 800; }
+.announce-link {
+  background: none; border: none; cursor: pointer; font-family: inherit; color: #fff;
+  font-size: inherit; text-decoration: underline; text-underline-offset: 3px; font-weight: 800;
+}
 
 /* ---------- Nav ---------- */
 .nav { border-bottom: 1px solid var(--border); padding: 18px 0; }
@@ -214,13 +217,6 @@ footer .foot-links a { color: var(--muted); }
 footer .foot-links a:hover { color: var(--ink); }
 footer p { margin-top: 8px; }
 
-/* ---------- Form finale ---------- */
-.form-card {
-  max-width: 680px; margin: 44px auto 0;
-  background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 26px;
-  box-shadow: 0 24px 50px -20px rgba(10,14,26,.15);
-}
-
 /* ---------- WhatsApp float ---------- */
 .wa-float {
   position: fixed; right: 20px; bottom: 20px; z-index: 60;
@@ -283,11 +279,11 @@ footer p { margin-top: 8px; }
 </head>
 <body>
 
-<div class="announce"><div class="container">🆕 <strong>Candidature aperte</strong> per nuove zone &nbsp;<a href="#form">Candida la tua agenzia →</a></div></div>
+<div class="announce"><div class="container">🆕 <strong>Candidature aperte</strong> per nuove zone &nbsp;<button type="button" class="announce-link" onclick="openModal('modal-candidati')">Candida la tua agenzia →</button></div></div>
 <header class="nav">
   <div class="container nav-row">
     <img src="assets/img/logo.png" alt="Vendita Uno">
-    <a href="#form" class="cta cta-sm">Candidati</a>
+    <button type="button" class="cta cta-sm" onclick="openModal('modal-candidati')">Candidati</button>
   </div>
 </header>
 
@@ -298,10 +294,10 @@ footer p { margin-top: 8px; }
   <div class="container">
     <h1>Quanto fatturerà la tua agenzia nei prossimi <span class="hl">90 giorni?</span></h1>
     <p class="hero-note">Scopri come il nostro team ha portato più di <strong>23 milioni di euro</strong> per i nostri partner.</p>
-    <a href="#form" class="cta">
+    <button type="button" class="cta" onclick="openModal('modal-candidati')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
       Candida la tua agenzia
-    </a>
+    </button>
 
     <div class="stats">
       <div class="stat"><div class="n">+470</div><div class="l">Agenzie partner in Italia</div></div>
@@ -331,10 +327,10 @@ footer p { margin-top: 8px; }
           <b>I collaboratori stanchi se ne vanno</b>
           <p>Giri a vuoto per mesi, il collaboratore si stanca e lascia l'agenzia. Con lui se ne va anche il tempo che hai speso a formarlo.</p>
         </div>
-        <a href="#form" class="cta">
+        <button type="button" class="cta" onclick="openModal('modal-candidati')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
           Candida la tua agenzia
-        </a>
+        </button>
       </div>
 
       <div class="order-first-mobile">
@@ -360,10 +356,10 @@ footer p { margin-top: 8px; }
           <p>Sono numeri che fanno bella figura in un report, ma non diventano mai una provvigione.</p>
           <p>E quando chiedi indietro i soldi della garanzia? Sede all'estero, email senza risposta, e un contratto che ti obbliga a pagare comunque.</p>
         </div>
-        <a href="#form" class="cta">
+        <button type="button" class="cta" onclick="openModal('modal-candidati')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
           Candida la tua agenzia
-        </a>
+        </button>
       </div>
 
       <div>
@@ -401,10 +397,10 @@ footer p { margin-top: 8px; }
           <p>Ragioniamo da imprenditori, come te: non ti vendiamo click, contatti o "visibilità". Parti con 65 € al mese e <strong>verifichi tu stesso</strong> se il metodo funziona nella tua zona, senza vincoli a lungo termine.</p>
           <p>Quando funziona, diventiamo soci: guadagniamo una percentuale sugli incarichi che firmi, non una fee fissa. Il nostro interesse è lo stesso tuo.</p>
         </div>
-        <a href="#form" class="cta">
+        <button type="button" class="cta" onclick="openModal('modal-candidati')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
           Candida la tua agenzia
-        </a>
+        </button>
       </div>
 
       <div class="versus-img">
@@ -473,10 +469,10 @@ footer p { margin-top: 8px; }
     </div>
 
     <div class="center-cta">
-      <a href="#form" class="cta">
+      <button type="button" class="cta" onclick="openModal('modal-candidati')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
         Candida la tua agenzia
-      </a>
+      </button>
     </div>
   </div>
 </section>
@@ -536,10 +532,10 @@ footer p { margin-top: 8px; }
           <p>Di ogni agenzia siamo partner, non fornitori: prendiamo una percentuale da socio. <strong>Se non cresci tu, non guadagniamo noi.</strong></p>
           <p>Ed essendo una sola agenzia per zona, se la tua è ancora libera oggi, domani potrebbe non esserlo più.</p>
         </div>
-        <a href="#form" class="cta">
+        <button type="button" class="cta" onclick="openModal('modal-candidati')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
           Candida la tua agenzia
-        </a>
+        </button>
       </div>
     </div>
   </div>
@@ -567,39 +563,12 @@ footer p { margin-top: 8px; }
         <p style="margin-top:28px">Samuele ha fatto il tuo stesso lavoro: <strong>5 anni da agente immobiliare in Gabetti</strong>, con gli stessi problemi che hai tu oggi. Mentre i colleghi citofonavano, ha studiato marketing fino a prendere il monopolio della sua zona. Quel metodo oggi lo usano oltre 470 agenzie in Italia.</p>
         <p>Marco segue ogni agenzia partner giorno per giorno: non ti lascia solo con un software da capire, ma con una persona che risponde quando hai un problema con il metodo.</p>
         <p><strong>Non devi formarci: siamo già attrezzati.</strong> Costiamo meno di un agente che ti gira la zona a cercare case, e al contrario di lui garantiamo il risultato per contratto.</p>
-        <a href="#form" class="cta">
+        <button type="button" class="cta" onclick="openModal('modal-candidati')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
           Candida la tua agenzia
-        </a>
+        </button>
       </div>
     </div>
-  </div>
-</section>
-
-<section id="form">
-  <div class="container">
-    <h2 class="big-title">Candida la tua agenzia a <span class="hl">Vendita Uno.</span></h2>
-    <p class="lead-muted" style="max-width:600px;margin:12px auto 0;">Compila il form: un consulente ti richiama entro 48 ore per verificare se la tua zona è ancora libera.</p>
-    <div class="form-card">
-      <iframe
-        src="https://api.leadconnectorhq.com/widget/form/8vx2XL5HDzcJHA4QFjmG"
-        style="width:100%;height:1174px;border:none;"
-        id="inline-8vx2XL5HDzcJHA4QFjmG"
-        data-layout="{'id':'INLINE'}"
-        data-trigger-type="alwaysShow"
-        data-trigger-value=""
-        data-activation-type="alwaysActivated"
-        data-activation-value=""
-        data-deactivation-type="neverDeactivate"
-        data-deactivation-value=""
-        data-form-name="TITOLARI"
-        data-height="1174"
-        data-layout-iframe-id="inline-8vx2XL5HDzcJHA4QFjmG"
-        data-form-id="8vx2XL5HDzcJHA4QFjmG"
-        title="TITOLARI"
-      ></iframe>
-    </div>
-    <p style="text-align:center;font-size:0.8rem;color:var(--muted-2);margin-top:16px;">Dati protetti. Non condividiamo con terze parti. GDPR compliant.</p>
   </div>
 </section>
 
@@ -620,15 +589,15 @@ footer p { margin-top: 8px; }
   <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.82L2 22l5.4-1.42a9.87 9.87 0 0 0 4.64 1.18h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.51 2 12.05 2h-.01Zm5.8 14.02c-.24.68-1.4 1.3-1.93 1.36-.5.06-1.05.28-3.53-.74-2.98-1.23-4.9-4.24-5.05-4.44-.15-.2-1.2-1.6-1.2-3.04 0-1.45.76-2.16 1.03-2.46.27-.3.6-.37.8-.37.2 0 .4.002.57.01.18.008.43-.07.67.51.24.6.83 2.07.9 2.22.07.15.12.33.02.53-.1.2-.15.32-.3.5-.15.17-.31.39-.44.52-.15.15-.3.31-.13.6.17.3.75 1.25 1.62 2.02 1.11.99 2.05 1.3 2.35 1.44.3.15.47.13.65-.08.18-.2.76-.89.96-1.19.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.13.08.75-.16 1.44Z"/></svg>
 </a>
 
-<!-- Pop-up download: 3 file Excel -->
-<div class="modal-overlay" id="modal-excel" aria-hidden="true">
+<!-- Pop-up: candidatura agenzia (usato da tutti i pulsanti "Candida la tua agenzia" / "Candidati") -->
+<div class="modal-overlay" id="modal-candidati" aria-hidden="true">
   <div class="modal-box">
-    <button type="button" class="modal-close" onclick="closeModal('modal-excel')" aria-label="Chiudi">✕</button>
-    <h3>Scarica i 3 file Excel</h3>
+    <button type="button" class="modal-close" onclick="closeModal('modal-candidati')" aria-label="Chiudi">✕</button>
+    <h3>Candida la tua agenzia a Vendita Uno</h3>
     <iframe
-      src="https://api.leadconnectorhq.com/widget/form/zRN9Kv9D6yLem52yX4aa"
+      data-src="https://api.leadconnectorhq.com/widget/form/zRN9Kv9D6yLem52yX4aa"
       style="width:100%;height:619px;border:none;border-radius:8px"
-      id="inline-zRN9Kv9D6yLem52yX4aa"
+      id="inline-candidati"
       data-layout="{'id':'INLINE'}"
       data-trigger-type="alwaysShow"
       data-trigger-value=""
@@ -638,7 +607,34 @@ footer p { margin-top: 8px; }
       data-deactivation-value=""
       data-form-name="download"
       data-height="619"
-      data-layout-iframe-id="inline-zRN9Kv9D6yLem52yX4aa"
+      data-layout-iframe-id="inline-candidati"
+      data-form-id="zRN9Kv9D6yLem52yX4aa"
+      data-cookie-consent="true"
+      data-cookie-consent-provider="auto"
+      title="Candida la tua agenzia"
+    ></iframe>
+  </div>
+</div>
+
+<!-- Pop-up download: 3 file Excel -->
+<div class="modal-overlay" id="modal-excel" aria-hidden="true">
+  <div class="modal-box">
+    <button type="button" class="modal-close" onclick="closeModal('modal-excel')" aria-label="Chiudi">✕</button>
+    <h3>Scarica i 3 file Excel</h3>
+    <iframe
+      data-src="https://api.leadconnectorhq.com/widget/form/zRN9Kv9D6yLem52yX4aa"
+      style="width:100%;height:619px;border:none;border-radius:8px"
+      id="inline-excel"
+      data-layout="{'id':'INLINE'}"
+      data-trigger-type="alwaysShow"
+      data-trigger-value=""
+      data-activation-type="alwaysActivated"
+      data-activation-value=""
+      data-deactivation-type="neverDeactivate"
+      data-deactivation-value=""
+      data-form-name="download"
+      data-height="619"
+      data-layout-iframe-id="inline-excel"
       data-form-id="zRN9Kv9D6yLem52yX4aa"
       data-cookie-consent="true"
       data-cookie-consent-provider="auto"
@@ -653,6 +649,8 @@ document.getElementById('y').textContent = new Date().getFullYear();
 function openModal(id) {
   const m = document.getElementById(id);
   if (!m) return;
+  const iframe = m.querySelector('iframe[data-src]');
+  if (iframe && !iframe.src) iframe.src = iframe.dataset.src;
   m.classList.add('open');
   m.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
