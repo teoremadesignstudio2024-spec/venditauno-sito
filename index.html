@@ -186,12 +186,6 @@ section { position: relative; padding: 100px 0; }
 .founder-tag b { color: var(--ink); }
 .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 52px; max-width: 640px; }
 
-/* ---------- 8. Zona esclusiva ---------- */
-.map-wrap { position: relative; }
-.map-wrap img { width: 100%; max-width: 440px; margin: 0 auto; }
-.map-badge { position: absolute; right: 2%; top: 10%; background: var(--accent); color: #fff; border-radius: 14px; padding: 14px 18px; font-size: 13px; line-height: 1.3; box-shadow: 0 14px 30px -10px rgba(60,131,245,.5); }
-.map-badge b { font-size: 24px; display: block; color: #fff; }
-
 /* ---------- Banner file Excel (compatto) ---------- */
 .excel-section { padding: 56px 0; }
 .excel-banner { display: grid; grid-template-columns: 0.8fr 1fr; gap: 32px; align-items: center; max-width: 920px; margin: 0 auto;
@@ -204,12 +198,16 @@ section { position: relative; padding: 100px 0; }
 .excel-banner-content h2 { font-size: clamp(22px, 2.4vw, 30px); margin: 12px 0 18px; }
 .excel-banner-content .cta { margin-top: 0; padding: 15px 26px; font-size: 14px; }
 
-/* ---------- 8c. Formazione gratuita ---------- */
-.freebies-grid { margin-top: 48px; }
-.freebie-placeholder {
-  border: 1px dashed var(--border); border-radius: 16px; padding: 60px 24px; text-align: center;
-  color: var(--muted-2); font-size: 15px; background: var(--bg-soft);
+/* ---------- Formazione gratuita ---------- */
+.freebies-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 48px; }
+.freebie-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; }
+.freebie-media {
+  aspect-ratio: 3/4; border-radius: 10px; border: 1px dashed var(--border); background: var(--bg-soft);
+  display: flex; align-items: center; justify-content: center; color: var(--muted-2); font-size: 12.5px; line-height: 1.4;
+  margin-bottom: 14px; padding: 10px;
 }
+.freebie-card h4 { font-size: 14px; font-weight: 800; margin-bottom: 14px; }
+.freebie-card .cta { width: 100%; justify-content: center; padding: 12px 16px; font-size: 13px; margin-top: 0; }
 
 footer { border-top: 1px solid var(--border); padding: 30px 0; color: var(--muted-2); font-size: 13px; text-align: center; }
 footer .foot-links { margin-top: 16px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
@@ -264,15 +262,16 @@ footer p { margin-top: 8px; }
   .kpi .n { font-size: 18px; }
   .steps { grid-template-columns: 1fr 1fr; gap: 14px; }
   .duo { grid-template-columns: 1fr 1fr; gap: 20px; max-width: none; }
-  .map-badge { right: 0; top: 0; }
   .price-grid { grid-template-columns: 1fr; }
   .price-arrow { transform: rotate(90deg); padding: 4px 0; }
   .excel-banner { grid-template-columns: 1fr; padding: 28px; gap: 28px; }
+  .freebies-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 480px) {
   .container { padding: 0 16px; }
   .body-copy p, .problem-list .point p { font-size: 15.5px; }
   .steps { grid-template-columns: 1fr; }
+  .freebies-grid { grid-template-columns: 1fr; }
   .announce { font-size: 12.5px; padding: 10px 16px; }
 }
 </style>
@@ -301,7 +300,63 @@ footer p { margin-top: 8px; }
 
     <div class="stats">
       <div class="stat"><div class="n">+470</div><div class="l">Agenzie partner in Italia</div></div>
-      <div class="stat"><div class="n">+23 Mln €</div><div class="l">Generati in pubblicità per i partner</div></div>
+      <div class="stat"><div class="n">+23 Mln €</div><div class="l">Generati per i nostri partner</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     1b. BANNER FILE EXCEL (lead magnet, pop-up GoHighLevel)
+     ========================================================= -->
+<section class="sec-soft excel-section">
+  <div class="container">
+    <div class="excel-banner">
+      <div class="excel-banner-media">
+        <!-- In attesa dell'immagine dei 3 file Excel da affiancare qui -->
+        <div class="media-placeholder">In attesa dell'immagine dei 3 file Excel</div>
+      </div>
+      <div class="excel-banner-content">
+        <span class="tag">Nuovo di zecca</span>
+        <h2 class="title-md">3 file Excel per aumentare il fatturato della tua agenzia</h2>
+        <button type="button" class="cta" onclick="openModal('modal-excel')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Scarica i 3 file Excel
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     1c. FORMAZIONE GRATUITA
+     ========================================================= -->
+<section id="risorse-gratuite">
+  <div class="container">
+    <h2 class="big-title">Formazione <span class="hl">gratuita.</span></h2>
+    <p class="lead-muted" style="max-width:640px;margin:12px auto 0;">Intanto ti diamo formazione gratuita con ebook, guide, modelli, download e molto altro per aiutarti a far crescere la tua agenzia immobiliare o il tuo lavoro da agente immobiliare.</p>
+
+    <div class="freebies-grid">
+      <!-- In attesa dei titoli/copertine reali: 4 card placeholder, ciascuna con pulsante "Scarica ora" collegato al pop-up GoHighLevel -->
+      <div class="freebie-card">
+        <div class="freebie-media">Risorsa 1<br>in arrivo</div>
+        <h4>Titolo risorsa 1</h4>
+        <button type="button" class="cta" onclick="openModal('modal-excel')">Scarica ora</button>
+      </div>
+      <div class="freebie-card">
+        <div class="freebie-media">Risorsa 2<br>in arrivo</div>
+        <h4>Titolo risorsa 2</h4>
+        <button type="button" class="cta" onclick="openModal('modal-excel')">Scarica ora</button>
+      </div>
+      <div class="freebie-card">
+        <div class="freebie-media">Risorsa 3<br>in arrivo</div>
+        <h4>Titolo risorsa 3</h4>
+        <button type="button" class="cta" onclick="openModal('modal-excel')">Scarica ora</button>
+      </div>
+      <div class="freebie-card">
+        <div class="freebie-media">Risorsa 4<br>in arrivo</div>
+        <h4>Titolo risorsa 4</h4>
+        <button type="button" class="cta" onclick="openModal('modal-excel')">Scarica ora</button>
+      </div>
     </div>
   </div>
 </section>
@@ -477,69 +532,6 @@ footer p { margin-top: 8px; }
   </div>
 </section>
 
-<!-- =========================================================
-     6b. FORMAZIONE GRATUITA
-     ========================================================= -->
-<section id="risorse-gratuite">
-  <div class="container">
-    <h2 class="big-title">Formazione <span class="hl">gratuita.</span></h2>
-    <p class="lead-muted" style="max-width:640px;margin:12px auto 0;">Intanto ti diamo formazione gratuita con ebook, guide, modelli, download e molto altro per aiutarti a far crescere la tua agenzia immobiliare o il tuo lavoro da agente immobiliare.</p>
-
-    <div class="freebies-grid">
-      <!-- In attesa dei titoli/copertine delle risorse: ogni card avrà un pulsante "Scarica ora" che apre un pop-up con l'embed GoHighLevel per lasciare il lead -->
-      <div class="freebie-placeholder">Risorse in arrivo</div>
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================
-     6c. BANNER FILE EXCEL (lead magnet, pop-up GoHighLevel)
-     ========================================================= -->
-<section class="sec-soft excel-section">
-  <div class="container">
-    <div class="excel-banner">
-      <div class="excel-banner-media">
-        <!-- In attesa dell'immagine dei 3 file Excel da affiancare qui -->
-        <div class="media-placeholder">In attesa dell'immagine dei 3 file Excel</div>
-      </div>
-      <div class="excel-banner-content">
-        <span class="tag">Nuovo di zecca</span>
-        <h2 class="title-md">3 file Excel per aumentare il fatturato della tua agenzia</h2>
-        <button type="button" class="cta" onclick="openModal('modal-excel')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          Scarica i file gratuiti
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================
-     8. ZONA ESCLUSIVA
-     ========================================================= -->
-<section>
-  <div class="container">
-    <div class="split" style="margin-top:0">
-      <div class="map-wrap order-first-mobile">
-        <img src="assets/img/italy-map.png" alt="Agenzie partner Vendita Uno in Italia">
-        <div class="map-badge"><b>+470</b>agenzie partner<br>in tutta Italia</div>
-      </div>
-      <div>
-        <span class="tag blue">Zona esclusiva</span>
-        <h2 class="title-md">Una sola agenzia <span class="hl">per zona.</span></h2>
-        <div class="body-copy" style="margin-top:28px">
-          <p>Lo stesso metodo funziona oggi da nord a sud, in città e in provincia, in zone di lusso e in zone popolari.</p>
-          <p>Di ogni agenzia siamo partner, non fornitori: prendiamo una percentuale da socio. <strong>Se non cresci tu, non guadagniamo noi.</strong></p>
-          <p>Ed essendo una sola agenzia per zona, se la tua è ancora libera oggi, domani potrebbe non esserlo più.</p>
-        </div>
-        <button type="button" class="cta" onclick="openModal('modal-candidati')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-          Candida la tua agenzia
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- =========================================================
      9. CHI C'È DIETRO AL METODO — founder (ultima sezione di contenuto)
