@@ -71,6 +71,7 @@ strong { color: var(--ink); font-weight: 800; }
 .tag { display: inline-block; background: var(--tag); color: #fff; font-size: 11px; font-weight: 800;
   letter-spacing: .08em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; margin-bottom: 14px; }
 .tag.blue { background: var(--accent); }
+.tag.grey { background: var(--muted-2); }
 
 /* ---------- Announcement bar ---------- */
 .announce { background: var(--accent); color: #fff; text-align: center; padding: 12px 0; font-size: 14px; font-weight: 600; }
@@ -125,10 +126,20 @@ section { position: relative; padding: 100px 0; }
 .hero .hero-note strong { color: var(--ink); }
 
 /* ---------- 2. Il problema ---------- */
-.problem-list .point { border-left: 4px solid var(--border); padding: 4px 0 4px 20px; margin-bottom: 30px; }
-.problem-list .point b { display: block; font-size: 19px; color: var(--ink); margin-bottom: 8px; }
-.problem-list .point p { color: var(--muted); font-size: 16px; line-height: 1.6; margin: 0; }
-.phone-photo { width: 100%; max-width: 400px; margin: 0 auto; filter: drop-shadow(0 20px 40px rgba(10,14,26,.18)); }
+.problem-intro { max-width: 700px; margin: 28px auto 0; text-align: center; }
+.problem-sub { text-align: center; margin-top: 56px; }
+.agency-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px; max-width: 900px; margin-left: auto; margin-right: auto; }
+.agency-card { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 28px; }
+.agency-card.active { border: 2px solid var(--accent); }
+.agency-card h4 { font-size: 21px; font-weight: 900; margin: 14px 0; }
+.agency-card p { color: var(--muted); font-size: 15px; line-height: 1.55; margin-bottom: 12px; }
+.agency-verdict { font-weight: 800; color: var(--ink); font-size: 15px; margin-top: 4px; }
+.projection-list { list-style: none; margin: 16px 0; padding: 0; }
+.projection-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); font-size: 14.5px; color: var(--muted); }
+.projection-list li:first-child { border-top: 0; }
+.projection-list li span { font-weight: 800; color: var(--ink); }
+.projection-list li strong { color: var(--accent); }
+.projection-note { font-size: 13px; color: var(--muted-2); }
 
 /* ---------- 3. Report mockup ---------- */
 .report {
@@ -219,7 +230,7 @@ footer p { margin-top: 8px; }
 @media (max-width: 900px) {
   section { padding: 68px 0; }
   .split { grid-template-columns: 1fr; gap: 40px; margin-top: 40px; }
-  .split .order-first-mobile { order: -1; }
+  .agency-compare { grid-template-columns: 1fr; }
   .cta { width: 100%; justify-content: center; padding: 18px 18px; font-size: 15px; }
   .nav .cta-sm { width: auto; padding: 11px 18px; font-size: 13px; }
   .nav img { height: 30px; }
@@ -303,31 +314,51 @@ footer p { margin-top: 8px; }
   <div class="container">
     <h2 class="big-title">Il problema non è il mercato. <span class="hl">È che non hai un metodo.</span></h2>
 
-    <div class="split">
-      <div class="problem-list">
-        <div class="point">
-          <b>Il passaparola non è un piano</b>
-          <p>Dipende da chi si ricorda di te per caso, non da te. Non puoi prevederlo e non puoi scalarlo: a fine mese l'affitto e i collaboratori arrivano comunque, il fatturato no.</p>
-        </div>
-        <div class="point">
-          <b>Citofoni e pagine bianche bruciano la tua agenzia</b>
-          <p>Ogni porta chiusa in faccia e ogni numero a caso che riattacca è una chiamata in meno che il tuo nome può permettersi in quella zona.</p>
-        </div>
-        <div class="point">
-          <b>I collaboratori stanchi se ne vanno</b>
-          <p>Giri a vuoto per mesi, il collaboratore si stanca e lascia l'agenzia. Con lui se ne va anche il tempo che hai speso a formarlo.</p>
-        </div>
-        <button type="button" class="cta" onclick="openModal('modal-candidati')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-          Candida la tua agenzia
-        </button>
-      </div>
+    <div class="body-copy problem-intro">
+      <p><strong>Il passaparola non è un piano.</strong> Fare zona non è un metodo.</p>
+      <p>Citofonare, fare porta a porta e aspettare che qualcuno ti consigli a un amico può portarti degli incarichi.</p>
+      <p>Ma quanti ne arriveranno il mese prossimo? E tra tre mesi? Come chiuderai l'anno?</p>
+      <p>Se non sai rispondere, non hai un sistema di acquisizione. <strong>Hai una speranza.</strong></p>
+    </div>
 
-      <div class="order-first-mobile">
-        <div class="phone-photo">
-          <img src="assets/img/phone-mockup-luca.png" alt="Chat WhatsApp tra un titolare e il suo collaboratore Luca sulla zona">
-        </div>
+    <h3 class="title-md problem-sub">Esistono due tipi di agenzie immobiliari.</h3>
+
+    <div class="agency-compare">
+      <div class="agency-card">
+        <span class="tag grey">Agenzia A</span>
+        <h4>Quella che scopre.</h4>
+        <p>Ogni mattina si sveglia senza sapere quanti nuovi proprietari riuscirà a intercettare.</p>
+        <p>Un mese acquisisce 5 incarichi. Il mese dopo 1. Quello successivo, forse 3.</p>
+        <p>Non può programmare la crescita, perché non conosce i risultati che può generare.</p>
+        <p class="agency-verdict">Subisce il mercato.</p>
       </div>
+      <div class="agency-card active">
+        <span class="tag blue">Agenzia B</span>
+        <h4>Quella che decide.</h4>
+        <p>Conosce i propri numeri. Sa quanto investe per generare un incarico e può pianificare il budget in base ai propri obiettivi.</p>
+        <p>Se i suoi dati dimostrano che mediamente ogni 150 € investiti genera un incarico, può ragionare così:</p>
+        <ul class="projection-list">
+          <li><span>150 €</span> investiti <strong>1 incarico</strong></li>
+          <li><span>300 €</span> investiti <strong>2 incarichi</strong></li>
+          <li><span>600 €</span> investiti <strong>4 incarichi</strong></li>
+          <li><span>1.500 €</span> investiti <strong>10 incarichi</strong></li>
+        </ul>
+        <p class="projection-note">Non sono promesse. Sono proiezioni basate sui dati raccolti, da verificare nel tempo.</p>
+        <p class="agency-verdict">Pianifica come generarli.</p>
+      </div>
+    </div>
+
+    <div class="body-copy problem-intro" style="margin-top:40px">
+      <p><strong>Questa è la differenza tra sperare e avere un metodo.</strong></p>
+      <p>Non significa smettere di fare zona o rinunciare al passaparola. Significa non dover dipendere esclusivamente da loro.</p>
+      <p>Con <strong>Campagne+</strong> inizi a costruire un sistema di acquisizione online misurabile, per prendere decisioni basate sui numeri, non sulla fortuna.</p>
+    </div>
+
+    <div style="text-align:center">
+      <button type="button" class="cta" onclick="openModal('modal-candidati')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+        Candida la tua agenzia
+      </button>
     </div>
   </div>
 </section>
