@@ -54,23 +54,6 @@ strong { color: var(--ink); font-weight: 800; }
 .after-video p { color: var(--muted); font-size: clamp(18px, 4.2vw, 21px); max-width: 560px; margin: 0 auto 22px; text-wrap: balance; }
 .tilt { display: inline-block; color: var(--accent); font-weight: 800; transform: rotate(-2deg); }
 
-.gift {
-  text-align: center; margin: 48px 0 0; padding: 32px 28px;
-  background: var(--card); border: 1px solid var(--border); border-radius: 18px;
-}
-.gift p { color: var(--muted); font-size: clamp(17px, 4vw, 19px); max-width: 500px; margin: 0 auto 20px; text-wrap: balance; }
-.gift p strong { color: var(--ink); }
-
-.cta {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 19px 34px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit;
-  background: var(--accent);
-  color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 0.01em; text-transform: uppercase;
-  box-shadow: 0 10px 24px -8px rgba(60,131,245,.5);
-  transition: transform .2s, box-shadow .2s, background .2s;
-}
-.cta:hover { transform: translateY(-2px); background: var(--accent-ink); box-shadow: 0 14px 30px -8px rgba(60,131,245,.6); }
-
 footer { border-top: 1px solid var(--border); padding: 30px 0; color: var(--muted-2); font-size: 13px; text-align: center; margin-top: 70px; }
 footer .foot-links { margin-top: 16px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 footer .foot-links a { color: var(--muted); }
@@ -78,7 +61,6 @@ footer .foot-links a:hover { color: var(--ink); }
 
 @media (max-width: 480px) {
   .container { padding: 0 16px; }
-  .cta { width: 100%; justify-content: center; padding: 18px 18px; font-size: 15px; }
 }
 </style>
 </head>
@@ -100,15 +82,6 @@ footer .foot-links a:hover { color: var(--ink); }
   <div class="after-video">
     <p>Non hai aspettato il prossimo passaparola. Hai deciso di <strong>prendere in mano il fatturato della tua agenzia</strong>, e hai prenotato la call. Nel video qui sopra ti faccio vedere esattamente come costruiamo <span class="tilt">un flusso di acquisizione costante</span>, zona per zona.</p>
     <p>Ci vediamo alla call. Ma guarda il video adesso, fino alla fine: chi arriva preparato ottiene di più. Chi lo salta, no.</p>
-  </div>
-
-  <div class="gift">
-    <p>Visto che vogliamo ringraziarti, abbiamo deciso di regalarti la nostra <strong>intelligenza artificiale</strong>: ti aiuta a capire i tuoi dati e a scalare la tua agenzia.</p>
-    <!-- In attesa del link al GPT personalizzato -->
-    <a href="#" target="_blank" rel="noopener" class="cta">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>
-      Apri la tua IA gratuita
-    </a>
   </div>
 </div>
 
