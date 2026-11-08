@@ -70,17 +70,51 @@ const GHL_LOCATION = "5Rz7mxEzHiMRzNoYTcXD";
 const GHL_PIPELINE = "muKtKFvxMNIqxHkKrmDt"; // VENDITA PIPELINE: l'unica che si guarda (lead, chiamate, demo, vinte)
 // Fasi della VENDITA PIPELINE mostrate in tabella, nell'ordine di GoHighLevel (da NUOVI LEAD a DEMO FISSATA).
 // recall = da richiamare (soldi da prendere). I nomi si prendono da GoHighLevel, questi servono di riserva.
+// owner: setting = Thomas (fino allo show in discovery), closing = Samuele (discovery, demo, chiusura).
+// rank: fin dove è arrivato il lead nel funnel (serve per le percentuali).
 const GHL_STAGES = [
-  { id: "f852ed7f-e8c1-47ed-93fb-f08c32c28814", name: "NUOVI LEAD", toCall: true },
-  { id: "499bfa5d-13a7-4ef1-9471-ad90f1177d3f", name: "NR 1", recall: true },
-  { id: "348bef16-a14d-47d9-b500-89376bf97036", name: "NR 2", recall: true },
-  { id: "195cae2f-ee26-4f35-a9d4-7ff60ed68ff4", name: "NR 3", recall: true },
-  { id: "a1ff2013-67fe-4ad2-9d44-bc9e4ead3656", name: "CHIAMATO MA NON POTEVA RICHIAMARE", recall: true },
-  { id: "dd5a6442-809e-4bc6-adac-cc3fcc6694c5", name: "NO SHOW DISCO", recall: true },
-  { id: "8068e5d9-d1b9-488c-a9bf-108447133504", name: "DISCO FISSATA" },
-  { id: "79808f73-52c0-4221-a8e0-9caedb29fa41", name: "NO SHOW DEMO", recall: true },
-  { id: "f529954b-d016-4d25-8269-0b96bfd84b77", name: "DEMO FISSATA" },
+  { id: "f852ed7f-e8c1-47ed-93fb-f08c32c28814", name: "NUOVI LEAD", toCall: true, owner: "setting", rank: 0 },
+  { id: "499bfa5d-13a7-4ef1-9471-ad90f1177d3f", name: "NR 1", recall: true, owner: "setting", rank: 1 },
+  { id: "348bef16-a14d-47d9-b500-89376bf97036", name: "NR 2", recall: true, owner: "setting", rank: 1 },
+  { id: "195cae2f-ee26-4f35-a9d4-7ff60ed68ff4", name: "NR 3", recall: true, owner: "setting", rank: 1 },
+  { id: "a1ff2013-67fe-4ad2-9d44-bc9e4ead3656", name: "CHIAMATO MA NON POTEVA RICHIAMARE", recall: true, owner: "setting", rank: 1 },
+  { id: "dd5a6442-809e-4bc6-adac-cc3fcc6694c5", name: "NO SHOW DISCO", recall: true, owner: "setting", rank: 2 },
+  { id: "8068e5d9-d1b9-488c-a9bf-108447133504", name: "DISCO FISSATA", owner: "closing", rank: 3 },
+  { id: "79808f73-52c0-4221-a8e0-9caedb29fa41", name: "NO SHOW DEMO", recall: true, owner: "closing", rank: 4 },
+  { id: "f529954b-d016-4d25-8269-0b96bfd84b77", name: "DEMO FISSATA", owner: "closing", rank: 5 },
 ];
+// Fasi dei chiusi: CHIUSO VINTO MESE e UP SELL contano nell'incassato anche se l'opportunità non è segnata won.
+const GHL_WON_STAGE = "13142cf4-d73b-4088-917d-2be4a7364651";
+const GHL_UPSELL_STAGE = "5710267f-315b-44b8-9895-4674b933a515";
+const STAGE_RANK = Object.fromEntries(GHL_STAGES.map((st) => [st.id, st.rank]));
+STAGE_RANK[GHL_WON_STAGE] = 6;
+STAGE_RANK[GHL_UPSELL_STAGE] = 6;
+const ROME_MONTH = (iso) => ROME_DAY.format(new Date(iso)).slice(0, 7);
+
+// Fin dove è arrivato ogni lead, salvato nel KV: quando un lead finisce in PERSO o FUORI TARGET
+// GoHighLevel non dice più se aveva fatto la discovery o la demo. Si scrive solo quando un lead avanza.
+const RANK_KEY = "dash:fasi";
+let rankMem = { at: 0, map: null };
+async function trackRanks(env, opps, rankNow) {
+  const kv = env.ACADEMY_PROGRESS;
+  if (!kv) return {};
+  try {
+    if (!rankMem.map || Date.now() - rankMem.at > 600000) rankMem = { at: Date.now(), map: JSON.parse((await kv.get(RANK_KEY)) || "{}") };
+    const ups = {};
+    for (const o of opps) {
+      const r = rankNow(o);
+      if (r != null && r > (rankMem.map[o.id] ?? -1)) ups[o.id] = r;
+    }
+    if (Object.keys(ups).length) {
+      const stored = JSON.parse((await kv.get(RANK_KEY)) || "{}");
+      for (const id in ups) if (ups[id] > (stored[id] ?? -1)) stored[id] = ups[id];
+      for (const id in rankMem.map) if (rankMem.map[id] > (stored[id] ?? -1)) stored[id] = rankMem.map[id];
+      await kv.put(RANK_KEY, JSON.stringify(stored));
+      rankMem = { at: Date.now(), map: stored };
+    }
+  } catch (e) { if (!rankMem.map) rankMem = { at: 0, map: {} }; }
+  return rankMem.map;
+}
 
 async function ghl(env, path) {
   const r = await fetch(GHL_API + path, {
@@ -134,38 +168,63 @@ async function readGHL(env) {
   const who = (o) => String((o.contact && o.contact.name) || o.name || "").trim().slice(0, 80);
   const now = Date.now();
 
-  // Lead arrivati: opportunità per giorno di creazione (ora di Roma).
+  // Lead arrivati: opportunità per giorno di creazione (ora di Roma). Gli upsell non sono lead nuovi.
+  const isUpsell = (o) => o.pipelineStageId === GHL_UPSELL_STAGE;
   const leadsByDay = {};
   for (const o of opps) {
+    if (isUpsell(o)) continue;
     const day = ROME_DAY.format(new Date(o.createdAt));
     leadsByDay[day] = (leadsByDay[day] || 0) + 1;
   }
 
-  // Incassato: opportunità vinte (status won), al giorno in cui sono diventate vinte.
+  // Incassato: opportunità vinte (status won) oppure aperte in CHIUSO VINTO MESE o UP SELL,
+  // al giorno in cui sono diventate vinte (o sono entrate in quella fase).
+  const isClosed = (o) => o.status === "won" || (o.status === "open" && (o.pipelineStageId === GHL_WON_STAGE || o.pipelineStageId === GHL_UPSELL_STAGE));
   const wonByDay = {};
   for (const o of opps) {
-    if (o.status !== "won") continue;
-    const at = o.lastStatusChangeAt || o.updatedAt || o.createdAt;
-    const w = { id: String(o.id), name: who(o), amount: num(Number(o.monetaryValue) || 0), ts: Date.parse(at) || 0, day: ROME_DAY.format(new Date(at)), seller: (users[o.assignedTo] || "").slice(0, 30) };
+    if (!isClosed(o)) continue;
+    const at = (o.status === "won" ? o.lastStatusChangeAt : o.lastStageChangeAt) || o.updatedAt || o.createdAt;
+    const w = { id: String(o.id), name: who(o), amount: num(Number(o.monetaryValue) || 0), ts: Date.parse(at) || 0, day: ROME_DAY.format(new Date(at)),
+      seller: (users[o.assignedTo] || "").slice(0, 30), upsell: isUpsell(o), leadMonth: ROME_MONTH(o.createdAt) };
     (wonByDay[w.day] = wonByDay[w.day] || []).push(w);
   }
   for (const d in wonByDay) wonByDay[d].sort((a, b) => a.ts - b.ts);
 
+  // Funnel per mese di arrivo del lead: fin dove è arrivato ognuno (rank), chiusi e incassato da quei lead.
+  const rankNow = (o) => (isClosed(o) ? 6 : STAGE_RANK[o.pipelineStageId] ?? null);
+  const stored = await trackRanks(env, opps, rankNow);
+  const cohorts = {};
+  for (const o of opps) {
+    if (isUpsell(o)) continue;
+    const ym = ROME_MONTH(o.createdAt);
+    const c = cohorts[ym] || (cohorts[ym] = { leads: 0, discoBooked: 0, discoNoShow: 0, discoDone: 0, demoNoShow: 0, demoDone: 0, closed: 0, cashed: 0, unknown: 0 });
+    c.leads++;
+    const now0 = rankNow(o), was = stored[o.id];
+    const r = now0 == null ? (was ?? null) : Math.max(now0, was ?? -1);
+    if (r == null) { c.unknown++; continue; }
+    if (r >= 2) c.discoBooked++;
+    if (r === 2) c.discoNoShow++;
+    if (r >= 4) c.discoDone++;
+    if (r === 4) c.demoNoShow++;
+    if (r >= 5) c.demoDone++;
+    if (isClosed(o)) { c.closed++; c.cashed = round2(c.cashed + num(Number(o.monetaryValue) || 0)); }
+  }
+
   // Tabella delle fasi: quanti lead e quanti soldi in ogni fase, con chi c'è dentro.
   const stages = GHL_STAGES.map((st) => {
-    const inStage = opps.filter((o) => o.pipelineStageId === st.id && o.status !== "won" && o.status !== "lost");
+    const inStage = opps.filter((o) => o.pipelineStageId === st.id && o.status === "open");
     const items = inStage.map((o) => {
       const since = Date.parse(o.lastStageChangeAt || o.updatedAt || o.createdAt) || now;
       return { name: who(o), seller: (users[o.assignedTo] || "").slice(0, 30), value: num(Number(o.monetaryValue) || 0), days: Math.max(0, Math.floor((now - since) / 86400000)) };
     }).sort((a, b) => a.days - b.days);
     return {
-      id: st.id, name: stageNames[st.id] || st.name, recall: !!st.recall, toCall: !!st.toCall,
+      id: st.id, name: stageNames[st.id] || st.name, recall: !!st.recall, toCall: !!st.toCall, owner: st.owner,
       count: items.length, value: round2(items.reduce((s2, x) => s2 + x.value, 0)), items: items.slice(0, 150),
     };
   });
   const recall = stages.filter((st) => st.recall);
   const data = {
-    leadsByDay, wonByDay, stages,
+    leadsByDay, wonByDay, stages, cohorts,
     toCall: stages.filter((st) => st.toCall).reduce((a, st) => a + st.count, 0),
     toRecall: recall.reduce((a, st) => a + st.count, 0),
     recallValue: round2(recall.reduce((a, st) => a + st.value, 0)),
@@ -208,6 +267,7 @@ function monthPayload(ym, today, g, ads) {
   const leads = pastDates.reduce((s, d) => s + leadsOn(d), 0);
   const adsSpend = ads ? round2(pastDates.reduce((s, d) => s + (ads[d] ? ads[d].spend : 0), 0)) : 0;
   const adsLeads = ads ? pastDates.reduce((s, d) => s + (ads[d] ? ads[d].leads : 0), 0) : null;
+  const cohort = (g && g.cohorts[ym]) || { leads: 0, discoBooked: 0, discoNoShow: 0, discoDone: 0, demoNoShow: 0, demoDone: 0, closed: 0, cashed: 0, unknown: 0 };
 
   // Proiezione: incassato finora / giorni passati x giorni del mese.
   let projection = null, projectionNote = null;
@@ -235,12 +295,15 @@ function monthPayload(ym, today, g, ads) {
       cashed, clients, leads, adsSpend, adsLeads, adsOk: !!ads,
       won: pastDates.flatMap((d) => wonOn(d).map((w) => ({ ...w, day: d }))).sort((a, b) => b.ts - a.ts),
       cpl: adsLeads > 0 && adsSpend > 0 ? round2(adsSpend / adsLeads) : null,
-      cac: clients > 0 && adsSpend > 0 ? round2(adsSpend / clients) : null,
-      roas: adsSpend > 0 ? round2(cashed / adsSpend) : null,
+      // CAC e ritorno: solo i clienti nati da lead arrivati in questo mese, chiusi quando vuoi.
+      cohortClients: cohort.closed, cohortCashed: cohort.cashed,
+      cac: cohort.closed > 0 && adsSpend > 0 ? round2(adsSpend / cohort.closed) : null,
+      roas: adsSpend > 0 ? round2(cohort.cashed / adsSpend) : null,
       projection, projectionNote,
       isCurrent: ym === todayYm, isFuture: ym > todayYm,
     },
     stages: g ? g.stages : null,
+    funnel: g ? cohort : null,
     ok: !!g,
   };
 }
@@ -402,14 +465,15 @@ ${BASE_HEAD}
 ${GLASS_CSS}
   :root { --pad: clamp(14px, 2vw, 40px); --gap: clamp(12px, 1.15vw, 22px); }
   .layout { display: grid; gap: var(--gap); padding: var(--pad); max-width: 1680px; margin: 0 auto;
-    grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
-    grid-template-areas: "top hole" "tiles hole" "chart side" "pipe side"; }
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-areas: "top top hole" "tiles tiles hole" "chart chart side" "pipe funnel side"; }
   .top { grid-area: top; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; min-height: 48px; }
   .tiles { grid-area: tiles; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
   .hole { grid-area: hole; position: relative; display: flex; align-items: flex-end; padding: 0 0 6px 6px; min-height: 240px; }
   .chart-card { grid-area: chart; }
   .pipe-card { grid-area: side; }
   .side { grid-area: pipe; min-width: 0; }
+  .funnel-card { grid-area: funnel; }
 
   /* Testata */
   .top img { height: 28px; display: block; }
@@ -498,6 +562,34 @@ ${GLASS_CSS}
   .person .pv { text-align: right; color: var(--bone-2); }
   .money-chip { flex: none; padding: 7px 14px; border-radius: 999px; color: #f6d27a; background: rgba(242,193,78,0.12); box-shadow: inset 0 0 0 1px rgba(242,193,78,0.35); font-size: 0.92rem; }
   .money-chip:empty { display: none; }
+  .tgroup { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; padding: 8px 14px 2px; color: var(--bone-3); font-size: 0.78rem; }
+  .tgroup .o { letter-spacing: 0.04em; text-transform: uppercase; }
+  .tgroup .r { white-space: nowrap; }
+  .tgroup b { color: #f6d27a; font-weight: 600; }
+  body.tv .tgroup { padding-top: 4px; padding-bottom: 0; }
+
+  /* Funnel del mese */
+  .funnel { display: flex; flex-direction: column; gap: 3px; flex: 1; min-height: 0; }
+  .fowner { font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--bone-3); padding: 6px 12px 2px; }
+  .fowner:first-child { padding-top: 0; }
+  .fstep { display: grid; grid-template-columns: minmax(0, 1fr) 3rem 8.2rem minmax(0, 6.5rem); gap: 10px; align-items: center; padding: 7px 12px; border-radius: var(--r-md); background: rgba(255,255,255,0.035); }
+  .fstep .l { color: var(--bone); font-weight: 600; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fstep .n { font-size: 1.15rem; font-weight: 600; color: var(--bone); text-align: right; }
+  .fstep .p { justify-self: start; font-size: 0.8rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--bone); white-space: nowrap; }
+  .fstep .p:empty { display: none; }
+  .fstep .p.hi { background: rgba(111,220,154,0.16); color: #9fe8bb; }
+  .fstep .p.lo { background: rgba(255,138,128,0.16); color: #ffb2aa; }
+  .fstep .s { font-size: 0.8rem; color: var(--bone-3); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .funnel-card { container-type: inline-size; }
+  @container (max-width: 540px) {
+    .fstep { grid-template-columns: minmax(0, 1fr) 2.4rem 7.6rem; gap: 2px 8px; padding: 8px 10px; }
+    .fstep .s { grid-column: 1 / -1; text-align: left; }
+    .fstep .s:empty { display: none; }
+  }
+  body.tv .fstep { padding-top: 4px; padding-bottom: 4px; line-height: 1.2; }
+  body.tv .funnel-card .card-head { margin-bottom: 6px; }
+  body.tv .fowner { padding-top: 3px; padding-bottom: 1px; }
+  .tag-up { font-size: 0.7rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: rgba(242,193,78,0.16); color: #f6d27a; margin-left: 6px; vertical-align: 1px; }
   .pipe-card .card-head { flex-wrap: wrap; }
   .pipe-card .card-head .meta { white-space: nowrap; }
   .money-chip b { font-size: 1.1rem; }
@@ -537,13 +629,14 @@ ${GLASS_CSS}
 
   /* TV: tutto in uno schermo */
   body.tv { height: 100vh; overflow: hidden; }
-  body.tv .layout { height: 100vh; max-width: none; grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "top hole" "tiles hole" "chart side" "pipe side"; }
+  body.tv .layout { height: 100vh; max-width: none; grid-template-rows: auto auto minmax(0, 0.92fr) minmax(0, 1.18fr); grid-template-areas: "top top hole" "tiles tiles hole" "chart chart side" "pipe funnel side"; }
   body.tv .chart { min-height: 0; }
-  body.tv .pipe-card .tr { padding-top: 6px; padding-bottom: 6px; }
+  body.tv .pipe-card .tr { padding-top: 4px; padding-bottom: 4px; }
+  body.tv .pipe-card .thead { padding-bottom: 2px; }
   body.tv .pipe-card .card-head { margin-bottom: 6px; }
 
   @media (max-width: 1180px) {
-    .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "hole" "tiles" "side" "chart" "pipe"; }
+    .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "hole" "tiles" "side" "funnel" "chart" "pipe"; }
     .hole { min-height: 300px; }
     .side .clients { max-height: 420px; }
   }
@@ -628,6 +721,11 @@ ${GLASS_CSS}
     <div class="card-head"><div><h2 id="clTitle">Chiusi oggi</h2><div class="meta" id="clMeta"></div></div>
       <div class="seg well" role="group" aria-label="Quali chiusi vedere"><button type="button" id="vToday" class="on">Oggi</button><button type="button" id="vMonth">Mese</button></div></div>
     <div class="clients" id="clients"></div>
+  </section>
+
+  <section class="card glass funnel-card">
+    <div class="card-head"><div><h2 id="fnTitle">Funnel del mese</h2><div class="meta" id="fnMeta"></div></div></div>
+    <div class="funnel" id="funnel"></div>
   </section>
 
 </div>
@@ -819,7 +917,7 @@ function setView(v) {
 function closedRow(c, showDay, isNew) {
   const time = new Date(c.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
   return '<div class="cl' + (isNew ? ' new' : '') + '"><div class="av">' + esc((c.name.trim()[0] || '?').toUpperCase()) + '</div>' +
-    '<div class="who"><div class="name">' + esc(c.name) + '</div><div class="time">' + (showDay ? '<span class="day">' + esc(dayLabel(c.day)) + '</span> ' : '') + time +
+    '<div class="who"><div class="name">' + esc(c.name) + (c.upsell ? '<span class="tag-up">upsell</span>' : '') + '</div><div class="time">' + (showDay ? '<span class="day">' + esc(dayLabel(c.day)) + '</span> ' : '') + time +
     (c.seller ? ' <span class="seller">' + esc(c.seller) + '</span>' : '') + '</div></div>' +
     '<div class="amt num">' + money(c.amount) + '</div></div>';
 }
@@ -860,14 +958,42 @@ function renderPipe(d) {
     return;
   }
   setHTML('recallTotal', d.todayData.toRecall ? '<b>' + money0(d.todayData.recallValue) + '</b> da prendere richiamando' : '');
-  setHTML('pipe', d.stages.map((st) => {
+  const OWNER = { setting: 'Thomas · setting', closing: 'Samuele · discovery e demo' };
+  setHTML('pipe', d.stages.map((st, i) => {
     const open = !tvMode && openStage === st.id && st.items.length > 0;
-    return '<div class="tr srow' + (st.recall ? ' recall' : '') + (open ? ' open' : '') + '" data-id="' + esc(st.id) + '"' +
+    let head = '';
+    if (i === 0 || d.stages[i - 1].owner !== st.owner) {
+      const grp0 = d.stages.filter((x) => x.owner === st.owner && x.recall);
+      const nR = grp0.reduce((a, x) => a + x.count, 0), vR = grp0.reduce((a, x) => a + x.value, 0);
+      head = '<div class="tgroup"><span class="o">' + esc(OWNER[st.owner] || '') + '</span>' + (nR ? '<span class="r"><b>' + grp(nR) + '</b> da richiamare · <b>' + money0(vR) + '</b></span>' : '') + '</div>';
+    }
+    return head + '<div class="tr srow' + (st.recall ? ' recall' : '') + (open ? ' open' : '') + '" data-id="' + esc(st.id) + '"' +
       (tvMode ? '' : ' role="button" tabindex="0" aria-expanded="' + open + '"') + '>' +
       '<span class="n">' + esc(st.name) + '</span><span class="v num">' + grp(st.count) + '</span><span class="w num">' + money0(st.value) + '</span></div>' +
       (open ? '<div class="people">' + st.items.map((x) => '<div class="person"><span class="pn">' + esc(x.name) + '</span><span class="ps">' + esc(x.seller || ' ') + '</span>' +
         '<span class="pd">' + waited(x.days) + '</span><span class="pv num">' + money0(x.value) + '</span></div>').join('') + '</div>' : '');
   }).join(''));
+}
+// Funnel dei lead arrivati nel mese scelto: fin dove sono arrivati e con che percentuale.
+function pct(a, b) { return b > 0 ? Math.round((a / b) * 100) : null; }
+function fstep(label, n, p, pLabel, sub, good) {
+  const cls = p == null ? '' : p >= good ? ' hi' : p < good / 2 ? ' lo' : '';
+  return '<div class="fstep"><span class="l">' + label + '</span><span class="n num">' + grp(n) + '</span>' +
+    '<span class="p' + cls + '">' + (p != null ? p + '% ' + pLabel : '') + '</span><span class="s">' + sub + '</span></div>';
+}
+function renderFunnel(d) {
+  const mo = d.month, f = d.funnel, monthName = mo.label.split(' ')[0];
+  setText('fnTitle', f ? 'Funnel dei ' + grp(f.leads) + ' lead di ' + monthName : 'Funnel dei lead di ' + monthName);
+  if (!f) { setText('fnMeta', ''); setHTML('funnel', '<div class="none">GoHighLevel non risponde.</div>'); return; }
+  const conv = pct(f.closed, f.leads);
+  setText('fnMeta', (conv != null ? 'Da lead a cliente ' + conv + '%' : 'Nessun lead in questo mese') + (f.unknown ? ', ' + plural(f.unknown, 'perso', 'persi') + ' senza storico' : ''));
+  setHTML('funnel',
+    '<div class="fowner">Thomas · setting</div>' +
+    fstep('Discovery fissate', f.discoBooked, pct(f.discoBooked, f.leads), 'dei lead', '', 40) +
+    fstep('Discovery fatte', f.discoDone, pct(f.discoDone, f.discoDone + f.discoNoShow), 'show', plural(f.discoNoShow, 'no show', 'no show'), 70) +
+    '<div class="fowner">Samuele · demo e chiusura</div>' +
+    fstep('Demo fatte', f.demoDone, pct(f.demoDone, f.demoDone + f.demoNoShow), 'show', plural(f.demoNoShow, 'no show', 'no show'), 70) +
+    fstep('Chiusi', f.closed, pct(f.closed, f.demoDone), 'chiusura', money0(f.cashed), 30));
 }
 function toggleStage(id) {
   openStage = openStage === id ? '' : id;
@@ -904,7 +1030,8 @@ function render(d) {
   setText('kRoasLabel', 'Ritorno sulle ads a ' + monthName);
   setText('kRoas', mo.roas != null ? nf1.format(mo.roas).replace(',0', '') + 'x' : 'n.d.');
   setHTML('kRoasSub', mo.adsSpend > 0
-    ? '<span><b>' + money0(mo.adsSpend) + '</b> spesi</span>' + (mo.adsLeads != null ? '<span><b>' + grp(mo.adsLeads) + '</b> lead dalle ads</span>' : '') + (mo.cpl != null ? '<span>CPL <b>' + money0(mo.cpl) + '</b></span>' : '') + (mo.cac != null ? '<span>CAC <b>' + money0(mo.cac) + '</b></span>' : '')
+    ? '<span><b>' + money0(mo.adsSpend) + '</b> spesi</span>' + (mo.adsLeads != null ? '<span><b>' + grp(mo.adsLeads) + '</b> lead dalle ads</span>' : '') + (mo.cpl != null ? '<span>CPL <b>' + money0(mo.cpl) + '</b></span>' : '') +
+      '<span>CAC <b>' + (mo.cac != null ? money0(mo.cac) : 'n.d.') + '</b></span><span><b>' + grp(mo.cohortClients || 0) + '</b> ' + (mo.cohortClients === 1 ? 'chiuso' : 'chiusi') + ' dai lead di ' + monthName + '</span>'
     : '<span>' + (mo.adsOk ? 'Nessuna spesa ads in questo mese' : 'Spesa ads non disponibile da GoHighLevel') + '</span>');
 
   // Grafico
@@ -915,6 +1042,7 @@ function render(d) {
   drawChartIfNeeded();
 
   renderPipe(d);
+  renderFunnel(d);
 
   // Annuncio sulla TV quando arriva una nuova vinta oggi
   const todayIds = t.clients.map((c) => c.id);
