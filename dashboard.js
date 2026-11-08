@@ -64,28 +64,23 @@ function titleCase(s) {
   return s.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (m, p, c) => p + c.toUpperCase());
 }
 
-// Data e ora (fuso di Roma) da una data ISO di GoHighLevel.
-function parseWhen(raw) {
-  const t = new Date(raw || "");
-  if (!raw || isNaN(t)) return null;
-  const time = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" }).format(t);
-  return { date: ROME_DAY.format(t), time };
-}
-
 // GoHighLevel, sotto-account Vendita Uno. Il token è il segreto GHL_TOKEN del worker (Private Integration).
 const GHL_API = "https://services.leadconnectorhq.com";
 const GHL_LOCATION = "5Rz7mxEzHiMRzNoYTcXD";
 const GHL_PIPELINE = "muKtKFvxMNIqxHkKrmDt"; // VENDITA PIPELINE: l'unica che si guarda (lead, chiamate, demo, vinte)
-const GHL_STAGE = {
-  nuovi: "f852ed7f-e8c1-47ed-93fb-f08c32c28814", // NUOVI LEAD: ancora da chiamare
-  richiamare: [
-    "499bfa5d-13a7-4ef1-9471-ad90f1177d3f", // NR 1
-    "348bef16-a14d-47d9-b500-89376bf97036", // NR 2
-    "195cae2f-ee26-4f35-a9d4-7ff60ed68ff4", // NR 3
-    "a1ff2013-67fe-4ad2-9d44-bc9e4ead3656", // CHIAMATO MA NON POTEVA RICHIAMARE
-  ],
-  demo: "f529954b-d016-4d25-8269-0b96bfd84b77", // DEMO FISSATA
-};
+// Fasi della VENDITA PIPELINE mostrate in tabella, nell'ordine di GoHighLevel (da NUOVI LEAD a DEMO FISSATA).
+// recall = da richiamare (soldi da prendere). I nomi si prendono da GoHighLevel, questi servono di riserva.
+const GHL_STAGES = [
+  { id: "f852ed7f-e8c1-47ed-93fb-f08c32c28814", name: "NUOVI LEAD", toCall: true },
+  { id: "499bfa5d-13a7-4ef1-9471-ad90f1177d3f", name: "NR 1", recall: true },
+  { id: "348bef16-a14d-47d9-b500-89376bf97036", name: "NR 2", recall: true },
+  { id: "195cae2f-ee26-4f35-a9d4-7ff60ed68ff4", name: "NR 3", recall: true },
+  { id: "a1ff2013-67fe-4ad2-9d44-bc9e4ead3656", name: "CHIAMATO MA NON POTEVA RICHIAMARE", recall: true },
+  { id: "dd5a6442-809e-4bc6-adac-cc3fcc6694c5", name: "NO SHOW DISCO", recall: true },
+  { id: "8068e5d9-d1b9-488c-a9bf-108447133504", name: "DISCO FISSATA" },
+  { id: "79808f73-52c0-4221-a8e0-9caedb29fa41", name: "NO SHOW DEMO", recall: true },
+  { id: "f529954b-d016-4d25-8269-0b96bfd84b77", name: "DEMO FISSATA" },
+];
 
 async function ghl(env, path) {
   const r = await fetch(GHL_API + path, {
@@ -112,16 +107,13 @@ async function allOpps(env, extra, stop = () => false) {
   return out;
 }
 
-// Risposte tenute 20 secondi (i venditori un'ora): TV e PC aggiornano spesso e GoHighLevel ha dei limiti.
-let ghlCache = { at: 0, from: "", data: null };
+// Risposte tenute 20 secondi (venditori e nomi delle fasi un'ora): TV e PC aggiornano spesso e GoHighLevel ha dei limiti.
+let ghlCache = { at: 0, data: null };
 let ghlUsers = { at: 0, map: {} };
+let ghlStageNames = { at: 0, map: {} };
 
-async function readGHL(env, fromDate) {
-  if (ghlCache.data && Date.now() - ghlCache.at < 20000 && ghlCache.from <= fromDate) return ghlCache.data;
-  const count = async (stage) => {
-    const d = await ghl(env, oppSearch(`${inPipeline}&pipeline_stage_id=${stage}&limit=1`));
-    return (d.meta && d.meta.total) || 0;
-  };
+async function readGHL(env) {
+  if (ghlCache.data && Date.now() - ghlCache.at < 20000) return ghlCache.data;
   const usersP = Date.now() - ghlUsers.at < 3600000 ? Promise.resolve(ghlUsers.map)
     : ghl(env, `/users/?locationId=${GHL_LOCATION}`).then((d) => {
       const map = {};
@@ -129,37 +121,56 @@ async function readGHL(env, fromDate) {
       ghlUsers = { at: Date.now(), map };
       return map;
     }).catch(() => ghlUsers.map);
-  const [leads, won, toCall, recallCounts, demoRes, users] = await Promise.all([
-    // Lead: opportunità della VENDITA PIPELINE per giorno di creazione; ci si ferma prima di fromDate.
-    allOpps(env, inPipeline, (o) => ROME_DAY.format(new Date(o.createdAt)) < fromDate),
-    // Incassato: opportunità vinte (status won) che sono ADESSO nella VENDITA PIPELINE, al giorno in cui
-    // sono diventate vinte. Le altre pipeline non si guardano: un cliente spostato in "Clienti Attivi pro"
-    // (clienti dei mesi passati, onboarding) esce dai conti.
-    allOpps(env, `${inPipeline}&status=won`),
-    count(GHL_STAGE.nuovi),
-    Promise.all(GHL_STAGE.richiamare.map(count)),
-    ghl(env, oppSearch(`${inPipeline}&pipeline_stage_id=${GHL_STAGE.demo}&limit=100`)),
-    usersP,
-  ]);
+  const namesP = Date.now() - ghlStageNames.at < 3600000 ? Promise.resolve(ghlStageNames.map)
+    : ghl(env, `/opportunities/pipelines?locationId=${GHL_LOCATION}`).then((d) => {
+      const map = {};
+      for (const p of d.pipelines || []) if (p.id === GHL_PIPELINE) for (const st of p.stages || []) map[st.id] = String(st.name || "").trim();
+      ghlStageNames = { at: Date.now(), map };
+      return map;
+    }).catch(() => ghlStageNames.map);
+  // Tutta la VENDITA PIPELINE in una lettura: da qui lead per giorno, vinte e tabella delle fasi.
+  // Le altre pipeline non si guardano: un cliente spostato in "Clienti Attivi pro" esce dai conti.
+  const [opps, users, stageNames] = await Promise.all([allOpps(env, inPipeline), usersP, namesP]);
   const who = (o) => String((o.contact && o.contact.name) || o.name || "").trim().slice(0, 80);
+  const now = Date.now();
+
+  // Lead arrivati: opportunità per giorno di creazione (ora di Roma).
   const leadsByDay = {};
-  for (const o of leads) {
+  for (const o of opps) {
     const day = ROME_DAY.format(new Date(o.createdAt));
     leadsByDay[day] = (leadsByDay[day] || 0) + 1;
   }
-  const wonList = won.filter((o) => o.status === "won").map((o) => {
-    const at = o.lastStatusChangeAt || o.updatedAt || o.createdAt;
-    return { id: String(o.id), name: who(o), amount: num(Number(o.monetaryValue) || 0), ts: Date.parse(at) || 0, day: ROME_DAY.format(new Date(at)), seller: (users[o.assignedTo] || "").slice(0, 30) };
-  });
-  const demos = (demoRes.opportunities || []).map((o) => {
-    const w = parseWhen(o.lastStageChangeAt || o.createdAt);
-    return { name: who(o), seller: (users[o.assignedTo] || "").slice(0, 30), date: w ? w.date : "", time: w ? w.time : "" };
-  }).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+  // Incassato: opportunità vinte (status won), al giorno in cui sono diventate vinte.
   const wonByDay = {};
-  for (const w of wonList) (wonByDay[w.day] = wonByDay[w.day] || []).push(w);
+  for (const o of opps) {
+    if (o.status !== "won") continue;
+    const at = o.lastStatusChangeAt || o.updatedAt || o.createdAt;
+    const w = { id: String(o.id), name: who(o), amount: num(Number(o.monetaryValue) || 0), ts: Date.parse(at) || 0, day: ROME_DAY.format(new Date(at)), seller: (users[o.assignedTo] || "").slice(0, 30) };
+    (wonByDay[w.day] = wonByDay[w.day] || []).push(w);
+  }
   for (const d in wonByDay) wonByDay[d].sort((a, b) => a.ts - b.ts);
-  const data = { leadsByDay, wonByDay, toCall, toRecall: recallCounts.reduce((a, b) => a + b, 0), demos };
-  ghlCache = { at: Date.now(), from: fromDate, data };
+
+  // Tabella delle fasi: quanti lead e quanti soldi in ogni fase, con chi c'è dentro.
+  const stages = GHL_STAGES.map((st) => {
+    const inStage = opps.filter((o) => o.pipelineStageId === st.id && o.status !== "won" && o.status !== "lost");
+    const items = inStage.map((o) => {
+      const since = Date.parse(o.lastStageChangeAt || o.updatedAt || o.createdAt) || now;
+      return { name: who(o), seller: (users[o.assignedTo] || "").slice(0, 30), value: num(Number(o.monetaryValue) || 0), days: Math.max(0, Math.floor((now - since) / 86400000)) };
+    }).sort((a, b) => a.days - b.days);
+    return {
+      id: st.id, name: stageNames[st.id] || st.name, recall: !!st.recall, toCall: !!st.toCall,
+      count: items.length, value: round2(items.reduce((s2, x) => s2 + x.value, 0)), items: items.slice(0, 150),
+    };
+  });
+  const recall = stages.filter((st) => st.recall);
+  const data = {
+    leadsByDay, wonByDay, stages,
+    toCall: stages.filter((st) => st.toCall).reduce((a, st) => a + st.count, 0),
+    toRecall: recall.reduce((a, st) => a + st.count, 0),
+    recallValue: round2(recall.reduce((a, st) => a + st.value, 0)),
+  };
+  ghlCache = { at: Date.now(), data };
   return data;
 }
 
@@ -214,6 +225,7 @@ function monthPayload(ym, today, g, ads) {
       leads: leadsOn(today),
       toCall: g ? g.toCall : null,
       toRecall: g ? g.toRecall : null,
+      recallValue: g ? g.recallValue : null,
     },
     yesterday: { cashed: cashedOn(yesterday), leads: leadsOn(yesterday) },
     series: dates.map((d, i) => ({ date: d, d: i + 1, today: d === today, future: d > today, cashed: cashedOn(d), leads: leadsOn(d) })),
@@ -228,21 +240,16 @@ function monthPayload(ym, today, g, ads) {
       projection, projectionNote,
       isCurrent: ym === todayYm, isFuture: ym > todayYm,
     },
-    demos: g ? {
-      today: g.demos.filter((x) => x.date === today).length,
-      waiting: g.demos.length,
-      list: g.demos.slice(0, 12),
-    } : null,
+    stages: g ? g.stages : null,
     ok: !!g,
   };
 }
 
 async function payload(ym, today, env) {
   if (!env.GHL_TOKEN) return monthPayload(ym, today, null, null);
-  const fromDate = [`${ym}-01`, addDays(today, -1)].sort()[0];
   const lastDay = `${ym}-${pad2(daysInMonth(ym))}`;
   const [g, ads] = await Promise.all([
-    readGHL(env, fromDate).catch(() => null),
+    readGHL(env).catch(() => null),
     `${ym}-01` <= today ? readAds(env, `${ym}-01`, lastDay < today ? lastDay : today).catch(() => null) : null,
   ]);
   return monthPayload(ym, today, g, ads);
@@ -396,13 +403,13 @@ ${GLASS_CSS}
   :root { --pad: clamp(14px, 2vw, 40px); --gap: clamp(12px, 1.15vw, 22px); }
   .layout { display: grid; gap: var(--gap); padding: var(--pad); max-width: 1680px; margin: 0 auto;
     grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
-    grid-template-areas: "top hole" "tiles hole" "chart side" "demos side"; }
+    grid-template-areas: "top hole" "tiles hole" "chart side" "pipe side"; }
   .top { grid-area: top; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; min-height: 48px; }
   .tiles { grid-area: tiles; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
   .hole { grid-area: hole; position: relative; display: flex; align-items: flex-end; padding: 0 0 6px 6px; min-height: 240px; }
   .chart-card { grid-area: chart; }
-  .demos-card { grid-area: demos; }
-  .side { grid-area: side; min-width: 0; }
+  .pipe-card { grid-area: side; }
+  .side { grid-area: pipe; min-width: 0; }
 
   /* Testata */
   .top img { height: 28px; display: block; }
@@ -468,16 +475,32 @@ ${GLASS_CSS}
   .tip b { display: block; font-size: 1rem; font-weight: 600; }
   .tip span { color: var(--bone-3); }
 
-  /* Tabella demo fissate */
+  /* Tabella della pipeline */
   .table { display: flex; flex-direction: column; min-height: 0; overflow: hidden; flex: 1; }
-  .tr { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: center; padding: 10px 14px; }
+  .tr { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem 7rem; gap: 14px; align-items: center; padding: 10px 14px; }
   .thead { color: var(--bone-3); font-size: 0.82rem; padding-top: 0; padding-bottom: 8px; }
   .tbody { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; min-height: 0; }
   .tbody .tr { border-radius: var(--r-md); }
   .tbody .tr:nth-child(odd) { background: rgba(255,255,255,0.035); }
   .tr .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tr .v, .tr .w { color: var(--bone-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tr .w.today { color: var(--bone); font-weight: 600; }
+  .tr .v, .tr .w { text-align: right; color: var(--bone-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .srow .v, .srow .w { color: var(--bone); font-weight: 600; }
+  .srow .n { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+  .srow.recall .n::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f2c14e; margin-right: 9px; vertical-align: 1px; box-shadow: 0 0 0 3px rgba(242,193,78,0.16); }
+  body.pc .srow { cursor: pointer; }
+  body.pc .srow:hover { background: rgba(255,255,255,0.07); }
+  .srow:focus-visible { outline: 2px solid var(--bone); outline-offset: -2px; }
+  .srow.open { background: rgba(255,255,255,0.08); }
+  .people { display: flex; flex-direction: column; gap: 2px; margin: 2px 0 8px 18px; }
+  .person { display: grid; grid-template-columns: minmax(0, 1fr) 6rem 6.5rem 5.5rem; gap: 12px; padding: 7px 12px; border-radius: 10px; font-size: 0.88rem; background: rgba(0,0,0,0.14); }
+  .person .pn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .person .ps, .person .pd { color: var(--bone-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .person .pv { text-align: right; color: var(--bone-2); }
+  .money-chip { flex: none; padding: 7px 14px; border-radius: 999px; color: #f6d27a; background: rgba(242,193,78,0.12); box-shadow: inset 0 0 0 1px rgba(242,193,78,0.35); font-size: 0.92rem; }
+  .money-chip:empty { display: none; }
+  .pipe-card .card-head { flex-wrap: wrap; }
+  .pipe-card .card-head .meta { white-space: nowrap; }
+  .money-chip b { font-size: 1.1rem; }
   .table .none { color: var(--bone-3); padding: 18px 14px; }
 
   /* Clienti di oggi */
@@ -514,11 +537,13 @@ ${GLASS_CSS}
 
   /* TV: tutto in uno schermo */
   body.tv { height: 100vh; overflow: hidden; }
-  body.tv .layout { height: 100vh; max-width: none; grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "top hole" "tiles hole" "chart side" "demos side"; }
+  body.tv .layout { height: 100vh; max-width: none; grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "top hole" "tiles hole" "chart side" "pipe side"; }
   body.tv .chart { min-height: 0; }
+  body.tv .pipe-card .tr { padding-top: 6px; padding-bottom: 6px; }
+  body.tv .pipe-card .card-head { margin-bottom: 6px; }
 
   @media (max-width: 1180px) {
-    .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "hole" "tiles" "side" "chart" "demos"; }
+    .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "hole" "tiles" "side" "chart" "pipe"; }
     .hole { min-height: 300px; }
     .side .clients { max-height: 420px; }
   }
@@ -538,9 +563,10 @@ ${GLASS_CSS}
     .card { padding: 16px 14px 14px; border-radius: 24px; }
     .card-head { flex-wrap: wrap; }
     .chart { min-height: 210px; }
-    .tr { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n v" "w v"; gap: 2px 10px; padding: 10px 12px; }
-    .tr .n { grid-area: n; } .tr .w { grid-area: w; font-size: 0.82rem; } .tr .v { grid-area: v; }
-    .thead { display: none; }
+    .tr { grid-template-columns: minmax(0, 1fr) 2.6rem 5.4rem; gap: 8px; padding: 9px 10px; font-size: 0.9rem; }
+    .people { margin-left: 6px; }
+    .person { grid-template-columns: minmax(0, 1fr) 4.6rem; gap: 2px 8px; }
+    .person .ps { grid-column: 1; } .person .pd { grid-column: 2; grid-row: 2; text-align: right; }
   }
 </style>
 </head>
@@ -587,14 +613,14 @@ ${GLASS_CSS}
     <div class="chart" id="chCash"></div>
   </section>
 
-  <section class="card glass demos-card">
+  <section class="card glass pipe-card">
     <div class="card-head">
-      <div><h2>Demo fissate</h2><div class="meta">Fase DEMO FISSATA di GoHighLevel, le più recenti prima</div></div>
-      <div class="counts" id="demoCounts"></div>
+      <div><h2>Pipeline</h2><div class="meta">VENDITA PIPELINE, adesso</div></div>
+      <div class="money-chip" id="recallTotal"></div>
     </div>
-    <div class="table" id="demoTable">
-      <div class="tr thead"><span class="n">Nome</span><span class="v">Venditore</span><span class="w">Spostata in demo fissata</span></div>
-      <div class="tbody" id="demos"></div>
+    <div class="table">
+      <div class="tr thead"><span class="n">Fase</span><span class="v">Lead</span><span class="w">Valore</span></div>
+      <div class="tbody" id="pipe"></div>
     </div>
   </section>
 
@@ -783,13 +809,6 @@ function announce(c) {
   clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('on'), 4500);
 }
 
-function whenLabel(x, today) {
-  if (!x.date) return '';
-  const y = new Date(today + 'T12:00:00'); y.setDate(y.getDate() - 1);
-  const yIso = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
-  const d = x.date === today ? 'oggi' : x.date === yIso ? 'ieri' : new Date(x.date + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-  return d + (x.time ? ' ' + x.time : '');
-}
 
 // Scheda "Chiusi": oggi (predefinito), un giorno scelto dal grafico, o tutto il mese.
 let view = { mode: 'today', day: '' };
@@ -829,6 +848,30 @@ function renderClosed(freshIds) {
   const showDay = mode !== 'today';
   $('clients').innerHTML = list.length ? list.map((c) => closedRow(c, showDay, tvMode && freshIds.indexOf(c.id) >= 0)).join('')
     : '<div class="none">' + (mode === 'today' ? 'Nessun chiuso oggi.' + (mo.won.length ? ' Premi "Mese" per vedere quelli di ' + monthName + '.' : '') : 'Nessun chiuso in questo periodo.') + '</div>';
+}
+
+// Scheda "Pipeline": fasi in ordine con lead e valore; sul PC un clic su una fase mostra chi c'è dentro.
+let openStage = '';
+function waited(n) { return n === 0 ? 'da oggi' : n === 1 ? 'da ieri' : 'da ' + n + ' giorni'; }
+function renderPipe(d) {
+  if (!d.stages) {
+    setHTML('recallTotal', '');
+    setHTML('pipe', '<div class="none">GoHighLevel non risponde: la pipeline torna appena è raggiungibile.</div>');
+    return;
+  }
+  setHTML('recallTotal', d.todayData.toRecall ? '<b>' + money0(d.todayData.recallValue) + '</b> da prendere richiamando' : '');
+  setHTML('pipe', d.stages.map((st) => {
+    const open = !tvMode && openStage === st.id && st.items.length > 0;
+    return '<div class="tr srow' + (st.recall ? ' recall' : '') + (open ? ' open' : '') + '" data-id="' + esc(st.id) + '"' +
+      (tvMode ? '' : ' role="button" tabindex="0" aria-expanded="' + open + '"') + '>' +
+      '<span class="n">' + esc(st.name) + '</span><span class="v num">' + grp(st.count) + '</span><span class="w num">' + money0(st.value) + '</span></div>' +
+      (open ? '<div class="people">' + st.items.map((x) => '<div class="person"><span class="pn">' + esc(x.name) + '</span><span class="ps">' + esc(x.seller || ' ') + '</span>' +
+        '<span class="pd">' + waited(x.days) + '</span><span class="pv num">' + money0(x.value) + '</span></div>').join('') + '</div>' : '');
+  }).join(''));
+}
+function toggleStage(id) {
+  openStage = openStage === id ? '' : id;
+  if (data) renderPipe(data);
 }
 
 function render(d) {
@@ -871,17 +914,7 @@ function render(d) {
   setText('cashMeta', best ? 'Giorno migliore: ' + dayLabel(best.date) + ', ' + money0(best.cashed) : 'Nessun incasso in questo mese');
   drawChartIfNeeded();
 
-  // Demo fissate
-  if (d.demos) {
-    setHTML('demoCounts', '<span class="count"><b>' + d.demos.today + '</b> oggi</span><span class="count"><b>' + d.demos.waiting + '</b> in attesa</span>');
-    setHTML('demos', d.demos.list.length ? d.demos.list.map((x) =>
-      '<div class="tr"><span class="n">' + esc(x.name) + '</span><span class="v">' + esc(x.seller || ' ') + '</span>' +
-      '<span class="w' + (x.date === d.today ? ' today' : '') + '">' + esc(whenLabel(x, d.today)) + '</span></div>'
-    ).join('') : '<div class="none">Nessuna opportunità in DEMO FISSATA.</div>');
-  } else {
-    setHTML('demoCounts', '');
-    setHTML('demos', '<div class="none">GoHighLevel non risponde: le demo torneranno appena è raggiungibile.</div>');
-  }
+  renderPipe(d);
 
   // Annuncio sulla TV quando arriva una nuova vinta oggi
   const todayIds = t.clients.map((c) => c.id);
@@ -921,6 +954,8 @@ keepAwake(); document.addEventListener('visibilitychange', () => { if (!document
 $('screen').addEventListener('dblclick', () => document.documentElement.requestFullscreen?.());
 $('mPrev').onclick = () => refresh(shift(curMonth, -1));
 $('mNext').onclick = () => { if (!$('mNext').disabled) refresh(shift(curMonth, 1)); };
+$('pipe').onclick = (e) => { const r = e.target.closest('.srow'); if (r && !tvMode) toggleStage(r.dataset.id); };
+$('pipe').onkeydown = (e) => { const r = e.target.closest('.srow'); if (r && !tvMode && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleStage(r.dataset.id); } };
 $('vToday').onclick = () => setView({ mode: 'today', day: '' });
 $('vMonth').onclick = () => setView({ mode: 'month', day: '' });
 $('tileMonth').onclick = () => setView({ mode: 'month', day: '' });
