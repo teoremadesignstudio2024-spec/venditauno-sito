@@ -245,7 +245,7 @@ ${BASE_HEAD}
     <div><span class="date" id="date"></span></div>
     <div class="napo">
       <span class="say">Conquistiamo <span id="clock" class="num"></span></span>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/9/9b/David_-_Napoleon_crossing_the_Alps_-_Malmaison2.jpg" alt="Napoleone che ci carica">
+      <img src="/assets/img/napoleone.jpg" alt="Napoleone che ci carica">
     </div>
   </div>
 
