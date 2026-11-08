@@ -196,7 +196,25 @@ main { display: grid; gap: 28px; padding: 28px 0 40px; }
 .vs-col.us li { color: var(--frost); }
 .vs-col.us li::before { background-color: rgba(95,227,154,0.16); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235fe39a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E"); }
 
-/* Caso studio */
+/* Casi studio */
+.cases { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 44px; }
+.case { border-radius: var(--r-card); padding: 10px; display: flex; flex-direction: column; }
+.yt { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; padding: 0; border-radius: 18px; overflow: hidden; cursor: pointer; background: #000; }
+.yt img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s, filter .4s; filter: saturate(1.05) brightness(0.85); }
+.yt:hover img { transform: scale(1.03); filter: saturate(1.1) brightness(0.95); }
+.yt .play { position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0) 55%), rgba(47,107,255,0.85); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 12px 30px -8px rgba(47,107,255,0.8); }
+.yt .play::after { content: ""; position: absolute; left: 31px; top: 25px; border-style: solid; border-width: 13px 0 13px 21px; border-color: transparent transparent transparent #fff; }
+.yt:focus-visible { outline: 2px solid #cfe0ff; outline-offset: 3px; }
+.yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.case-t { padding: 20px 16px 14px; }
+.case-n { font-size: clamp(2.2rem, 3.6vw, 3rem); font-weight: 800; letter-spacing: -0.05em; line-height: 1; }
+.case-t p { color: var(--frost-2); margin-top: 10px; }
+.case-t p b { color: var(--frost); font-weight: 600; }
+.case-t span { display: block; margin-top: 12px; color: var(--frost-3); font-size: 0.9rem; }
+
+/* Caso studio (vecchio) */
 .video { max-width: 900px; margin: 44px auto 0; border-radius: var(--r-card); overflow: hidden; padding: 10px; }
 .video video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 18px; background: #000; }
 .video .t { padding: 18px 14px 10px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -260,7 +278,7 @@ footer a:hover { color: #fff; }
 
 @media (max-width: 960px) {
   .nav-links { display: none; }
-  .split, .versus, .step, .books, .hero-panel { grid-template-columns: minmax(0, 1fr); }
+  .split, .versus, .step, .books, .hero-panel, .cases { grid-template-columns: minmax(0, 1fr); }
   .step:nth-child(even) .step-text { order: 0; }
   .glass { -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6); }
 }
@@ -322,8 +340,8 @@ footer a:hover { color: #fff; }
     </div>
     <div class="hp-col well">
       <div class="hp-title">Incarichi firmati</div>
-      <div class="bignum">+6</div>
-      <div class="hp-note">in un mese, esempio di un'agenzia partner</div>
+      <div class="bignum">6</div>
+      <div class="hp-note">in esclusiva ogni mese: la media di oggi di Giuseppe Lanza, agenzia partner</div>
       <div class="hp-bars" aria-hidden="true"><i style="height:30%"></i><i style="height:42%"></i><i style="height:38%"></i><i style="height:58%"></i><i style="height:66%"></i><i style="height:80%"></i><i style="height:100%"></i></div>
     </div>
   </div>
@@ -414,13 +432,31 @@ footer a:hover { color: #fff; }
   <div class="center"><button type="button" class="cta" style="margin-top:40px" onclick="openModal('modal-candidati')">Candida adesso la tua agenzia</button></div>
 </section>
 
-<!-- Caso studio -->
+<!-- Casi studio -->
 <section class="slab glass" id="casi">
   <h2 class="h1 center">Non crederci sulla parola. <em>Guarda.</em></h2>
-  <p class="lead center" style="max-width:640px;margin:18px auto 0">Un caso studio reale, dalla campagna all'incarico firmato.</p>
-  <div class="video well">
-    <video controls preload="none" playsinline poster="assets/img/landingads-poster.jpg"><source src="assets/video/landingads-caso-studio.mp4" type="video/mp4"></video>
-    <div class="t"><b>Caso studio</b><span>Come nasce un incarico con il metodo Vendita Uno</span></div>
+  <p class="lead center" style="max-width:640px;margin:18px auto 0">Agenzie vere, che raccontano in prima persona cosa è cambiato con Vendita Uno.</p>
+  <div class="cases">
+    <article class="case well">
+      <button type="button" class="yt" data-id="jqOjebgNQvk" aria-label="Guarda il caso studio di Giuseppe Lanza">
+        <img src="https://i.ytimg.com/vi/jqOjebgNQvk/hqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span class="play" aria-hidden="true"></span>
+      </button>
+      <div class="case-t">
+        <div class="case-n">22.000 €</div>
+        <p><b>incassati in un mese.</b> E oggi una media di 6 incarichi in esclusiva al mese.</p>
+        <span>Giuseppe Lanza, agenzia partner</span>
+      </div>
+    </article>
+    <article class="case well">
+      <button type="button" class="yt" data-id="D-DQiwgqWYg" aria-label="Guarda il caso studio di Massimiliano Bonomo">
+        <img src="https://i.ytimg.com/vi/D-DQiwgqWYg/hqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span class="play" aria-hidden="true"></span>
+      </button>
+      <div class="case-t">
+        <div class="case-n">Caso studio</div>
+        <p><b>Come lavora con il metodo Vendita Uno,</b> raccontato da lui.</p>
+        <span>Massimiliano Bonomo, agenzia partner</span>
+      </div>
+    </article>
   </div>
 </section>
 
@@ -615,6 +651,17 @@ footer a:hover { color: #fff; }
 
 <script>
 document.getElementById('y').textContent = new Date().getFullYear();
+// Video YouTube: si carica solo quando lo premi (la pagina resta veloce).
+document.querySelectorAll('.yt').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var f = document.createElement('iframe');
+    f.src = 'https://www.youtube-nocookie.com/embed/' + btn.dataset.id + '?autoplay=1&rel=0';
+    f.title = btn.getAttribute('aria-label');
+    f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    f.allowFullscreen = true;
+    btn.innerHTML = ''; btn.appendChild(f); btn.style.cursor = 'default';
+  }, { once: true });
+});
 var lastFocus = null;
 function openModal(id) {
   var m = document.getElementById(id);
