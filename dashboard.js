@@ -5,7 +5,7 @@
 //   clients  = nuovi clienti pagati (nome, importo): l'incassato del giorno è la loro somma
 //   adsSpend = spesa ads del giorno (vecchio modo, usato solo se manca il totale del mese)
 // Chiave "adsmese:AAAA-MM": spesa ads totale del mese finora, scritta a mano e corretta ogni giorno.
-// Lead arrivati e lead da chiamare arrivano dal foglio Google (vedi readSheet).
+// Lead arrivati, lead da chiamare e demo fissate arrivano da GoHighLevel (readGHL); di riserva dal foglio Google (readSheet).
 
 export const DASH_PATH = "/dashboardvenditatop";
 export const TV_PATH = "/tv";
@@ -301,6 +301,92 @@ function parseWhen(raw) {
 }
 
 // written = giorno appena salvato: si usa così com'è (senza KV in mezzo che potrebbe essere indietro).
+// GoHighLevel: sotto-account Vendita Uno, pipeline "VENDITA PIPELINE". Il token è il segreto GHL_TOKEN
+// del worker (Private Integration, sola lettura). Senza token, o se GoHighLevel non risponde, si usa il foglio.
+const GHL_API = "https://services.leadconnectorhq.com";
+const GHL_LOCATION = "5Rz7mxEzHiMRzNoYTcXD";
+const GHL_PIPELINE = "muKtKFvxMNIqxHkKrmDt";
+const GHL_STAGE = {
+  nuovi: "f852ed7f-e8c1-47ed-93fb-f08c32c28814", // NUOVI LEAD: ancora da chiamare
+  richiamare: [
+    "499bfa5d-13a7-4ef1-9471-ad90f1177d3f", // NR 1
+    "348bef16-a14d-47d9-b500-89376bf97036", // NR 2
+    "195cae2f-ee26-4f35-a9d4-7ff60ed68ff4", // NR 3
+    "a1ff2013-67fe-4ad2-9d44-bc9e4ead3656", // CHIAMATO MA NON POTEVA RICHIAMARE
+  ],
+  demo: "f529954b-d016-4d25-8269-0b96bfd84b77", // DEMO FISSATA
+};
+
+async function ghl(env, path) {
+  const r = await fetch(GHL_API + path, {
+    headers: { Authorization: `Bearer ${env.GHL_TOKEN}`, Version: "2021-07-28", Accept: "application/json" },
+  });
+  if (!r.ok) throw new Error(`GoHighLevel ${r.status}`);
+  return r.json();
+}
+const oppSearch = (extra) => `/opportunities/search?location_id=${GHL_LOCATION}&pipeline_id=${GHL_PIPELINE}${extra}`;
+
+// Le risposte restano buone 60 secondi (i venditori dal sito si leggono una volta l'ora): la TV e il
+// PC aggiornano spesso e GoHighLevel ha dei limiti sul numero di richieste.
+let ghlCache = { at: 0, from: "", data: null };
+let ghlUsers = { at: 0, map: {} };
+
+async function readGHL(env, fromDate) {
+  if (ghlCache.data && Date.now() - ghlCache.at < 60000 && ghlCache.from <= fromDate) return ghlCache.data;
+  const count = async (stage) => {
+    const d = await ghl(env, oppSearch(`&pipeline_stage_id=${stage}&limit=1`));
+    return (d.meta && d.meta.total) || 0;
+  };
+  const usersP = Date.now() - ghlUsers.at < 3600000 ? Promise.resolve(ghlUsers.map)
+    : ghl(env, `/users/?locationId=${GHL_LOCATION}`).then((d) => {
+      const map = {};
+      for (const u of d.users || []) map[u.id] = titleCase(String(u.firstName || u.name || "").trim());
+      ghlUsers = { at: Date.now(), map };
+      return map;
+    }).catch(() => ghlUsers.map);
+  // Le opportunità arrivano dalla più nuova: ci si ferma appena si supera fromDate.
+  const oppsP = (async () => {
+    const opps = [];
+    let after = "";
+    for (let i = 0; i < 30; i++) {
+      const d = await ghl(env, oppSearch(`&limit=100${after}`));
+      const list = d.opportunities || [];
+      opps.push(...list);
+      const last = list[list.length - 1];
+      if (!last || !d.meta || !d.meta.nextPage || ROME_DAY.format(new Date(last.createdAt)) < fromDate) break;
+      after = `&startAfter=${d.meta.startAfter}&startAfterId=${d.meta.startAfterId}`;
+    }
+    return opps;
+  })();
+  const [opps, toCall, recallCounts, demoRes, users] = await Promise.all([
+    oppsP,
+    count(GHL_STAGE.nuovi),
+    Promise.all(GHL_STAGE.richiamare.map(count)),
+    ghl(env, oppSearch(`&pipeline_stage_id=${GHL_STAGE.demo}&limit=100`)),
+    usersP,
+  ]);
+  const leadsByDay = {};
+  for (const o of opps) {
+    const day = ROME_DAY.format(new Date(o.createdAt));
+    leadsByDay[day] = (leadsByDay[day] || 0) + 1;
+  }
+  const who = (o) => String((o.contact && o.contact.name) || o.name || "").trim();
+  const demos = (demoRes.opportunities || []).map((o) => {
+    const w = parseWhen(o.lastStageChangeAt || o.createdAt);
+    return { name: who(o).slice(0, 80), city: "", seller: (users[o.assignedTo] || "").slice(0, 30), outcome: "", date: w ? w.date : "", time: w ? w.time : "" };
+  }).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+  const data = {
+    source: "ghl",
+    leadsByDay,
+    toCall,
+    toRecall: recallCounts.reduce((a, b) => a + b, 0),
+    demos,
+    names: [...new Set([...demos.map((d) => d.name), ...opps.map(who)].filter(Boolean))].slice(0, 400),
+  };
+  ghlCache = { at: Date.now(), from: fromDate, data };
+  return data;
+}
+
 async function monthPayload(store, ym, today, sheet = null, written = null) {
   const nDays = daysInMonth(ym);
   const dates = Array.from({ length: nDays }, (_, i) => `${ym}-${pad2(i + 1)}`);
@@ -316,7 +402,7 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
   const todayYm = today.slice(0, 7);
   const upTo = ym === todayYm ? Number(today.slice(8, 10)) : ym > todayYm ? 0 : nDays;
   const pastDates = dates.slice(0, upTo);
-  // I lead arrivano dal foglio Google; se il foglio non risponde si usano quelli salvati (se ci sono).
+  // I lead arrivano da GoHighLevel o dal foglio; se nessuno risponde si usano quelli salvati (se ci sono).
   const leadsOn = (d, rec) => (sheet ? sheet.leadsByDay[d] || 0 : rec ? rec.leads || 0 : 0);
 
   const cashed = round2(pastDates.reduce((s, d) => s + dayCashed(days[d]), 0));
@@ -347,6 +433,7 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
       adsSpend: todayData.adsSpend,
       leads: leadsOn(today, todayRec),
       toCall: sheet && sheet.toCall != null ? sheet.toCall : todayData.toCall,
+      toRecall: sheet && sheet.toRecall != null ? sheet.toRecall : null,
     },
     yesterday: { cashed: dayCashed(yRec), leads: leadsOn(yesterday, yRec) },
     days,
@@ -367,16 +454,20 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
     demos: sheet ? {
       today: sheet.demos.filter((x) => x.date === today).length,
       month: sheet.demos.filter((x) => x.date.startsWith(todayYm)).length,
+      waiting: sheet.source === "ghl" ? sheet.demos.length : null,
       list: sheet.demos.slice(0, 12),
     } : null,
     sheetOk: !!sheet,
+    source: sheet ? sheet.source || "sheet" : null,
     strong: !!store.strong,
     names: sheet ? sheet.names : [],
   };
 }
 
-async function payload(store, ym, today, written = null) {
-  const sheet = await readSheet().catch(() => null);
+async function payload(store, ym, today, written = null, env = {}) {
+  const fromDate = [`${ym}-01`, addDays(today, -1)].sort()[0];
+  let sheet = env.GHL_TOKEN ? await readGHL(env, fromDate).catch(() => null) : null;
+  if (!sheet) sheet = await readSheet().catch(() => null);
   return monthPayload(store, ym, today, sheet, written);
 }
 
@@ -565,6 +656,9 @@ ${GLASS_CSS}
   .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border-radius: 999px; font-weight: 600; color: var(--bone); background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
   .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 3px rgba(255,138,128,0.18); }
   .chip.ok i { background: var(--good); box-shadow: 0 0 0 3px rgba(111,220,154,0.18); }
+  .chip.warn i { background: #f2c14e; box-shadow: 0 0 0 3px rgba(242,193,78,0.18); }
+  .no-city .tr { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) 7.5rem; }
+  .no-city .tr .c { display: none; }
 
   /* Schede grandi */
   .card { padding: 20px 22px 18px; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
@@ -700,7 +794,7 @@ ${GLASS_CSS}
 <div class="layout" id="screen">
   <header class="top">
     <img src="/assets/img/logo.png" alt="Vendita Uno">
-    <div class="when glass"><span class="alert" id="alert">Foglio Google non raggiungibile</span><span class="d" id="date"></span><span class="clock num well" id="clock"></span></div>
+    <div class="when glass"><span class="alert" id="alert">Dati dei lead non raggiungibili</span><span class="d" id="date"></span><span class="clock num well" id="clock"></span></div>
   </header>
 
   <section class="tiles" aria-label="Numeri principali">
@@ -740,11 +834,11 @@ ${GLASS_CSS}
 
   <section class="card glass demos-card">
     <div class="card-head">
-      <div><h2>Demo fissate</h2><div class="meta">Le ultime dal foglio Google</div></div>
+      <div><h2>Demo fissate</h2><div class="meta" id="demoMeta"></div></div>
       <div class="counts" id="demoCounts"></div>
     </div>
-    <div class="table">
-      <div class="tr thead"><span>Nome</span><span>Città</span><span>Venditore</span><span>Fissata</span><span>Esito</span></div>
+    <div class="table" id="demoTable">
+      <div class="tr thead"><span class="n">Nome</span><span class="c">Città</span><span class="v">Venditore</span><span class="w">Fissata</span><span class="e">Esito</span></div>
       <div class="tbody" id="demos"></div>
     </div>
   </section>
@@ -757,7 +851,7 @@ ${GLASS_CSS}
 ${tv ? "" : `  <section class="forms">
     <form class="form glass" id="clientForm">
       <h2>Nuovo cliente</h2>
-      <p class="note">Ha pagato? Registralo qui: entra subito nell'incassato e compare sulla TV. Scrivi le prime lettere e ti suggerisce i nomi dal foglio Google.</p>
+      <p class="note">Ha pagato? Registralo qui: entra subito nell'incassato e compare sulla TV. Scrivi le prime lettere e ti suggerisce i nomi dei lead.</p>
       <div class="row">
         <div><label for="cname">Nome cliente</label><input class="well" id="cname" list="cnames" maxlength="80" placeholder="Mario Rossi" autocomplete="off"></div>
         <div><label for="camount">Incassato (€)</label><input class="well" id="camount" inputmode="decimal" placeholder="1500" autocomplete="off"></div>
@@ -876,7 +970,7 @@ function drawCash(box, series) {
   const pw = Math.max(10, W - m.l - m.r), ph = Math.max(10, H - m.t - m.b);
   const past = series.filter((s) => !s.future);
   const maxV = Math.max.apply(null, past.map((s) => s.cashed).concat([0]));
-  const max = niceMax(maxV);
+  const max = maxV > 0 ? niceMax(maxV) : 1000;
   const y = (v) => m.t + ph - (v / max) * ph, base = m.t + ph;
   const svg = el('svg', { width: W, height: H, viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Incassato giorno per giorno' });
   [0, 0.5, 1].forEach((f) => {
@@ -975,7 +1069,7 @@ function render(d) {
   data = d; curMonth = d.month.ym;
   const t = d.todayData, mo = d.month, monthName = mo.label.split(' ')[0];
   setText('date', cap(new Date(d.today + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })));
-  setText('alert', 'Foglio Google non raggiungibile');
+  setText('alert', 'Dati dei lead non raggiungibili');
   $('alert').classList.toggle('on', !d.sheetOk);
 
   // Incassato oggi
@@ -993,7 +1087,8 @@ function render(d) {
 
   // Lead
   setNum('kLeads', t.leads, 'int');
-  setHTML('kLeadsSub', '<span class="chip' + (t.toCall ? '' : ' ok') + '"><i></i>' + grp(t.toCall || 0) + ' da chiamare</span>' + trend(t.leads - d.yesterday.leads, grp));
+  setHTML('kLeadsSub', '<span class="chip' + (t.toCall ? '' : ' ok') + '"><i></i>' + grp(t.toCall || 0) + ' da chiamare</span>' +
+    (t.toRecall != null ? '<span class="chip warn"><i></i>' + grp(t.toRecall) + ' da richiamare</span>' : '') + trend(t.leads - d.yesterday.leads, grp));
 
   // Ritorno sulla spesa ads del mese
   setText('kRoasLabel', 'Ritorno sulle ads a ' + monthName);
@@ -1011,7 +1106,10 @@ function render(d) {
 
   // Demo fissate
   if (d.demos) {
-    setHTML('demoCounts', '<span class="count"><b>' + d.demos.today + '</b> oggi</span><span class="count"><b>' + d.demos.month + '</b> questo mese</span>');
+    setHTML('demoCounts', '<span class="count"><b>' + d.demos.today + '</b> oggi</span>' +
+      (d.demos.waiting != null ? '<span class="count"><b>' + d.demos.waiting + '</b> in attesa</span>' : '<span class="count"><b>' + d.demos.month + '</b> questo mese</span>'));
+    setText('demoMeta', d.source === 'ghl' ? 'Fase DEMO FISSATA di GoHighLevel, le più recenti prima' : 'Le ultime dal foglio Google');
+    $('demoTable').classList.toggle('no-city', !d.demos.list.some((x) => x.city));
     setHTML('demos', d.demos.list.length ? d.demos.list.map((x) =>
       '<div class="tr"><span class="n">' + esc(x.name) + '</span><span class="c">' + esc(x.city || ' ') + '</span><span class="v">' + esc(x.seller || ' ') + '</span>' +
       '<span class="w' + (x.date === d.today ? ' today' : '') + '">' + esc(whenLabel(x, d.today)) + '</span>' +
@@ -1019,7 +1117,8 @@ function render(d) {
     ).join('') : '<div class="none">Nessuna demo fissata nel foglio.</div>');
   } else {
     setHTML('demoCounts', '');
-    setHTML('demos', '<div class="none">Il foglio Google non risponde: le demo torneranno appena è raggiungibile.</div>');
+    setText('demoMeta', '');
+    setHTML('demos', '<div class="none">GoHighLevel e foglio Google non rispondono: le demo torneranno appena sono raggiungibili.</div>');
   }
 
   // Clienti di oggi
@@ -1215,7 +1314,7 @@ export async function handleDashboard(request, env, url) {
 
     if (request.method === "GET") {
       const ym = /^\d{4}-\d{2}$/.test(url.searchParams.get("month") || "") ? url.searchParams.get("month") : today.slice(0, 7);
-      return json(await payload(store, ym, today));
+      return json(await payload(store, ym, today, null, env));
     }
 
     if (request.method === "POST") {
@@ -1225,7 +1324,7 @@ export async function handleDashboard(request, env, url) {
       const adsSpend = round2(Number(body.adsSpend) || 0);
       if (!isFinite(adsSpend) || adsSpend < 0 || adsSpend > 100000000) return json({ error: "valore non valido" }, 400);
       const value = await store.setAds(ym, adsSpend);
-      return json(await payload(store, ym, today, { ads: { ym, value } }));
+      return json(await payload(store, ym, today, { ads: { ym, value } }, env));
     }
 
     return new Response("Method not allowed", { status: 405 });
@@ -1245,14 +1344,14 @@ export async function handleDashboard(request, env, url) {
       if (!isFinite(amount) || amount <= 0 || amount > 100000000) return json({ error: "importo non valido" }, 400);
       const client = { id: toHex(crypto.getRandomValues(new Uint8Array(6))), name, amount, ts: Date.now() };
       const rec = await store.mutate(date, { type: "addClient", client });
-      return json(await payload(store, date.slice(0, 7), today, { date, rec }));
+      return json(await payload(store, date.slice(0, 7), today, { date, rec }, env));
     }
 
     if (request.method === "DELETE") {
       const date = DATE_RE.test(url.searchParams.get("date") || "") ? url.searchParams.get("date") : today;
       const id = url.searchParams.get("id") || "";
       const rec = await store.mutate(date, { type: "delClient", id });
-      return json(await payload(store, date.slice(0, 7), today, { date, rec }));
+      return json(await payload(store, date.slice(0, 7), today, { date, rec }, env));
     }
 
     return new Response("Method not allowed", { status: 405 });
