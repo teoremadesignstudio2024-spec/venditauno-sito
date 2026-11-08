@@ -20,12 +20,11 @@ new_sqlite_classes = ["CrmStore"]
 tag = "v2"
 deleted_classes = ["CrmStore"]
 
-# Archivio dei giorni della dashboard vendite (incassi e spesa ads): letture sempre aggiornate,
-# con copia nel KV ACADEMY_PROGRESS. Senza questo binding la dashboard usa solo il KV.
-[[durable_objects.bindings]]
-name = "DASH"
-class_name = "DashStore"
-
 [[migrations]]
 tag = "v3"
 new_sqlite_classes = ["DashStore"]
+
+# La dashboard ora legge tutto da GoHighLevel: l'archivio DashStore non serve più.
+[[migrations]]
+tag = "v4"
+deleted_classes = ["DashStore"]

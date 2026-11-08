@@ -1,11 +1,8 @@
 // Dashboard soldi/lead per l'ufficio (e per la TV), stile Liquid Glass con Napoleone di sfondo.
-// Pagine: /dashboardvenditatop    = PC, si vedono i numeri e si registrano clienti e spesa ads
-//         /dashboardvenditatop/tv = TV, solo visualizzazione (anche /tv)
-// Dati nel KV ACADEMY_PROGRESS, chiave "fatturato:AAAA-MM-GG" (giorno di Roma):
-//   clients  = nuovi clienti pagati (nome, importo): l'incassato del giorno è la loro somma
-//   adsSpend = spesa ads del giorno (vecchio modo, usato solo se manca il totale del mese)
-// Chiave "adsmese:AAAA-MM": spesa ads totale del mese finora, scritta a mano e corretta ogni giorno.
-// Lead arrivati, lead da chiamare e demo fissate arrivano da GoHighLevel (readGHL); di riserva dal foglio Google (readSheet).
+// Pagine: /dashboardvenditatop    = PC
+//         /dashboardvenditatop/tv = TV, tutto in uno schermo (anche /tv)
+// Tutti i numeri arrivano da GoHighLevel (vedi readGHL e readAds): niente inserimenti a mano.
+// Il KV ACADEMY_PROGRESS serve solo per le sessioni di accesso.
 
 export const DASH_PATH = "/dashboardvenditatop";
 export const TV_PATH = "/tv";
@@ -61,251 +58,24 @@ function addDays(dateStr, delta) {
 const round2 = (n) => Math.round(n * 100) / 100;
 const num = (n) => (isFinite(n) ? round2(n) : 0);
 
-function normDay(d) {
-  if (!d || typeof d !== "object") return null;
-  const clients = Array.isArray(d.clients) ? d.clients.map((c) => ({
-    id: String(c.id || "").slice(0, 20), name: String(c.name || "").slice(0, 80), amount: num(c.amount), ts: Number(c.ts) || 0,
-  })) : [];
-  return { clients, adsSpend: num(d.adsSpend), leads: num(d.leads), toCall: num(d.toCall) };
-}
-
-async function readDayKV(kv, date) {
-  const raw = await kv.get(`fatturato:${date}`);
-  return raw ? normDay(JSON.parse(raw)) : null;
-}
-
-function applyOp(day, op) {
-  const d = normDay(day) || { clients: [], adsSpend: 0, leads: 0, toCall: 0 };
-  if (op.type === "addClient") return { ...d, clients: [...d.clients, op.client] };
-  if (op.type === "delClient") return { ...d, clients: d.clients.filter((c) => c.id !== op.id) };
-  return d;
-}
-
-// Archivio dei giorni in un Durable Object: le letture sono sempre aggiornate e le modifiche passano
-// una alla volta (il KV da solo può restituire per qualche secondo la versione vecchia e, leggendo e
-// riscrivendo, perdere un cliente appena aggiunto). Ogni giorno salvato è copiato anche nel KV, e i
-// giorni che il Durable Object non ha ancora vengono presi dal KV la prima volta.
-export class DashStore {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
-    this.chain = Promise.resolve();
-  }
-
-  async load(date) {
-    const key = `day:${date}`;
-    let v = await this.ctx.storage.get(key);
-    if (v !== undefined) return v;
-    const fromKv = await readDayKV(this.env.ACADEMY_PROGRESS, date);
-    // Durante la lettura dal KV può essere arrivata una modifica: in quel caso vince quella.
-    v = await this.ctx.storage.get(key);
-    if (v !== undefined) return v;
-    v = fromKv || "none";
-    await this.ctx.storage.put(key, v);
-    return v;
-  }
-
-  // Spesa ads totale del mese: un solo numero per mese, sovrascritto a ogni correzione.
-  async loadAds(ym) {
-    const key = `ads:${ym}`;
-    let v = await this.ctx.storage.get(key);
-    if (v !== undefined) return v;
-    const fromKv = await readAdsKV(this.env.ACADEMY_PROGRESS, ym);
-    v = await this.ctx.storage.get(key);
-    if (v !== undefined) return v;
-    v = fromKv === null ? "none" : fromKv;
-    await this.ctx.storage.put(key, v);
-    return v;
-  }
-
-  async fetch(request) {
-    const body = await request.json().catch(() => ({}));
-    if (body.action === "getAds" && YM_RE.test(body.ym || "")) {
-      const v = await this.loadAds(body.ym);
-      return Response.json({ value: v === "none" ? null : v });
-    }
-    if (body.action === "setAds" && YM_RE.test(body.ym || "") && isFinite(body.value)) {
-      const value = round2(Number(body.value));
-      await this.ctx.storage.put(`ads:${body.ym}`, value);
-      try { await this.env.ACADEMY_PROGRESS.put(`adsmese:${body.ym}`, JSON.stringify(value)); } catch (e) { /* copia di riserva */ }
-      return Response.json({ value });
-    }
-    if (body.action === "get" && Array.isArray(body.dates)) {
-      const out = {};
-      for (const d of body.dates.slice(0, 40)) {
-        if (!DATE_RE.test(d)) continue;
-        const v = await this.load(d);
-        out[d] = v === "none" ? null : v;
-      }
-      return Response.json(out);
-    }
-    if (body.action === "mutate" && DATE_RE.test(body.date || "") && body.op) {
-      const run = async () => {
-        const cur = await this.load(body.date);
-        const next = applyOp(cur === "none" ? null : cur, body.op);
-        await this.ctx.storage.put(`day:${body.date}`, next);
-        try { await this.env.ACADEMY_PROGRESS.put(`fatturato:${body.date}`, JSON.stringify(next)); } catch (e) { /* la copia nel KV è solo di riserva */ }
-        return next;
-      };
-      const p = this.chain.then(run, run);
-      this.chain = p.catch(() => {});
-      return Response.json(await p);
-    }
-    return new Response("richiesta non valida", { status: 400 });
-  }
-}
-
-// Stessa interfaccia con o senza Durable Object: senza binding DASH si usa solo il KV.
-function dayStore(env) {
-  const kv = env.ACADEMY_PROGRESS;
-  if (env.DASH) {
-    const stub = env.DASH.get(env.DASH.idFromName("dashboard"));
-    const call = async (body) => {
-      const r = await stub.fetch("https://dash.internal/", { method: "POST", body: JSON.stringify(body) });
-      if (!r.ok) throw new Error(`archivio ${r.status}`);
-      return r.json();
-    };
-    return {
-      strong: true,
-      get: async (dates) => {
-        const o = await call({ action: "get", dates });
-        for (const k in o) o[k] = normDay(o[k]);
-        return o;
-      },
-      mutate: async (date, op) => normDay(await call({ action: "mutate", date, op })),
-      getAds: async (ym) => (await call({ action: "getAds", ym })).value,
-      setAds: async (ym, value) => (await call({ action: "setAds", ym, value })).value,
-    };
-  }
-  return {
-    get: async (dates) => {
-      const vals = await Promise.all(dates.map((d) => readDayKV(kv, d)));
-      return Object.fromEntries(dates.map((d, i) => [d, vals[i]]));
-    },
-    mutate: async (date, op) => {
-      const next = applyOp(await readDayKV(kv, date), op);
-      await kv.put(`fatturato:${date}`, JSON.stringify(next));
-      return normDay(next);
-    },
-    getAds: (ym) => readAdsKV(kv, ym),
-    setAds: async (ym, value) => {
-      await kv.put(`adsmese:${ym}`, JSON.stringify(value));
-      return value;
-    },
-  };
-}
-
-async function readAdsKV(kv, ym) {
-  const raw = await kv.get(`adsmese:${ym}`);
-  if (raw === null) return null;
-  const v = Number(JSON.parse(raw));
-  return isFinite(v) ? round2(v) : null;
-}
-
-const dayCashed = (day) => round2((day ? day.clients || [] : []).reduce((s, c) => s + (c.amount || 0), 0));
-
-const EMPTY_DAY = { clients: [], adsSpend: 0, leads: 0, toCall: 0 };
 const MONTH_LABEL = new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" });
-
-// Foglio Google "Vendita Uno – Gestione Lead" (condiviso: chiunque abbia il link può vedere).
-// Tab LEAD: col A id lead (l:...), col B data/ora Facebook, col P nome.
-// Tab KPI: riga "Lead senza stato" = lead ancora da chiamare.
-// Tab APPUNTAMENTI FISSATI: col A nome, usato per suggerire i nomi dei nuovi clienti.
-const SHEET_ID = "11tIi1O0MN8JqEZbuzI-ensYC7aPpb0GIym3IWRmAqf8";
-
-function sheetUrl(sheet, tq, headers) {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=${headers}&sheet=${encodeURIComponent(sheet)}&tq=${encodeURIComponent(tq)}`;
-}
-
-function parseCsv(text) {
-  const rows = [];
-  let row = [], field = "", quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (quoted) {
-      if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; }
-      else if (ch === '"') quoted = false;
-      else field += ch;
-    } else if (ch === '"') quoted = true;
-    else if (ch === ",") { row.push(field); field = ""; }
-    else if (ch === "\n" || ch === "\r") {
-      if (ch === "\r" && text[i + 1] === "\n") i++;
-      row.push(field); rows.push(row); row = []; field = "";
-    } else field += ch;
-  }
-  if (field !== "" || row.length) { row.push(field); rows.push(row); }
-  return rows;
-}
-
-async function fetchCsv(url) {
-  // cacheTtl: Cloudflare tiene la risposta 60 secondi, così il refresh ogni pochi secondi non martella Google.
-  const r = await fetch(url, { cf: { cacheTtl: 60, cacheEverything: true } });
-  if (!r.ok) throw new Error(`foglio ${r.status}`);
-  if ((r.headers.get("content-type") || "").includes("text/html")) throw new Error("foglio non condiviso");
-  return parseCsv(await r.text());
-}
-
-async function readSheet() {
-  const [leadRows, appRows, kpiRows] = await Promise.all([
-    fetchCsv(sheetUrl("LEAD", "select A, B, P", 0)),
-    fetchCsv(sheetUrl("APPUNTAMENTI FISSATI", "select A, D, G, H, I", 1)),
-    fetchCsv(sheetUrl("KPI", "select C where B = 'Lead senza stato'", 1)),
-  ]);
-  const leadsByDay = {}, leadNames = [];
-  for (const [id, created, name] of leadRows) {
-    if (!/^l:/.test(id || "")) continue;
-    const t = new Date(created);
-    if (isNaN(t)) continue;
-    const day = ROME_DAY.format(t);
-    leadsByDay[day] = (leadsByDay[day] || 0) + 1;
-    if (name && name.trim()) leadNames.push(name.trim());
-  }
-  // Demo fissate: NOME (A), CITTÀ (D), VENDITORE (G), ESITO (H), FISSATO IL (I, "05/11/2026 13:15").
-  const demos = [];
-  for (const [name, city, seller, outcome, at] of appRows) {
-    const n = (name || "").trim();
-    if (!n || n.toUpperCase() === "NOME") continue;
-    const when = parseWhen(at);
-    demos.push({
-      name: n.slice(0, 80),
-      city: titleCase((city || "").trim()).slice(0, 40),
-      seller: titleCase((seller || "").trim().replace(/^venditore\s+/i, "")).slice(0, 30),
-      outcome: (outcome || "").trim().slice(0, 30),
-      date: when ? when.date : "",
-      time: when ? when.time : "",
-    });
-  }
-  demos.sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-  const toCallCell = kpiRows.map((r) => (r[0] || "").trim()).find((v) => v !== "" && isFinite(Number(v.replace(",", "."))));
-  return {
-    leadsByDay,
-    toCall: toCallCell !== undefined ? Number(toCallCell.replace(",", ".")) : null,
-    names: [...new Set([...demos.map((d) => d.name), ...leadNames])].slice(0, 400),
-    demos,
-  };
-}
 
 function titleCase(s) {
   return s.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (m, p, c) => p + c.toUpperCase());
 }
 
-// Date del foglio: "05/11/2026 13:15" (giorno/mese/anno) oppure ISO.
+// Data e ora (fuso di Roma) da una data ISO di GoHighLevel.
 function parseWhen(raw) {
-  const s = (raw || "").trim();
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{1,2}):(\d{2}))?/);
-  if (m) return { date: `${m[3]}-${pad2(m[2])}-${pad2(m[1])}`, time: m[4] ? `${pad2(m[4])}:${m[5]}` : "" };
-  const t = new Date(s);
-  if (!s || isNaN(t)) return null;
+  const t = new Date(raw || "");
+  if (!raw || isNaN(t)) return null;
   const time = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" }).format(t);
   return { date: ROME_DAY.format(t), time };
 }
 
-// written = giorno appena salvato: si usa così com'è (senza KV in mezzo che potrebbe essere indietro).
-// GoHighLevel: sotto-account Vendita Uno, pipeline "VENDITA PIPELINE". Il token è il segreto GHL_TOKEN
-// del worker (Private Integration, sola lettura). Senza token, o se GoHighLevel non risponde, si usa il foglio.
+// GoHighLevel, sotto-account Vendita Uno. Il token è il segreto GHL_TOKEN del worker (Private Integration).
 const GHL_API = "https://services.leadconnectorhq.com";
 const GHL_LOCATION = "5Rz7mxEzHiMRzNoYTcXD";
-const GHL_PIPELINE = "muKtKFvxMNIqxHkKrmDt";
+const GHL_PIPELINE = "muKtKFvxMNIqxHkKrmDt"; // VENDITA PIPELINE: l'unica che si guarda (lead, chiamate, demo, vinte)
 const GHL_STAGE = {
   nuovi: "f852ed7f-e8c1-47ed-93fb-f08c32c28814", // NUOVI LEAD: ancora da chiamare
   richiamare: [
@@ -324,17 +94,32 @@ async function ghl(env, path) {
   if (!r.ok) throw new Error(`GoHighLevel ${r.status}`);
   return r.json();
 }
-const oppSearch = (extra) => `/opportunities/search?location_id=${GHL_LOCATION}&pipeline_id=${GHL_PIPELINE}${extra}`;
+const oppSearch = (extra) => `/opportunities/search?location_id=${GHL_LOCATION}${extra}`;
+const inPipeline = `&pipeline_id=${GHL_PIPELINE}`;
 
-// Le risposte restano buone 60 secondi (i venditori dal sito si leggono una volta l'ora): la TV e il
-// PC aggiornano spesso e GoHighLevel ha dei limiti sul numero di richieste.
+// Scorre le pagine (100 alla volta, dalla più nuova); stop(opp) dice quando fermarsi.
+async function allOpps(env, extra, stop = () => false) {
+  const out = [];
+  let after = "";
+  for (let i = 0; i < 30; i++) {
+    const d = await ghl(env, oppSearch(`${extra}&limit=100${after}`));
+    const list = d.opportunities || [];
+    out.push(...list);
+    const last = list[list.length - 1];
+    if (!last || !d.meta || !d.meta.nextPage || stop(last)) break;
+    after = `&startAfter=${d.meta.startAfter}&startAfterId=${d.meta.startAfterId}`;
+  }
+  return out;
+}
+
+// Risposte tenute 60 secondi (i venditori un'ora): TV e PC aggiornano spesso e GoHighLevel ha dei limiti.
 let ghlCache = { at: 0, from: "", data: null };
 let ghlUsers = { at: 0, map: {} };
 
 async function readGHL(env, fromDate) {
   if (ghlCache.data && Date.now() - ghlCache.at < 60000 && ghlCache.from <= fromDate) return ghlCache.data;
   const count = async (stage) => {
-    const d = await ghl(env, oppSearch(`&pipeline_stage_id=${stage}&limit=1`));
+    const d = await ghl(env, oppSearch(`${inPipeline}&pipeline_stage_id=${stage}&limit=1`));
     return (d.meta && d.meta.total) || 0;
   };
   const usersP = Date.now() - ghlUsers.at < 3600000 ? Promise.resolve(ghlUsers.map)
@@ -344,47 +129,91 @@ async function readGHL(env, fromDate) {
       ghlUsers = { at: Date.now(), map };
       return map;
     }).catch(() => ghlUsers.map);
-  // Le opportunità arrivano dalla più nuova: ci si ferma appena si supera fromDate.
-  const oppsP = (async () => {
-    const opps = [];
-    let after = "";
-    for (let i = 0; i < 30; i++) {
-      const d = await ghl(env, oppSearch(`&limit=100${after}`));
-      const list = d.opportunities || [];
-      opps.push(...list);
-      const last = list[list.length - 1];
-      if (!last || !d.meta || !d.meta.nextPage || ROME_DAY.format(new Date(last.createdAt)) < fromDate) break;
-      after = `&startAfter=${d.meta.startAfter}&startAfterId=${d.meta.startAfterId}`;
-    }
-    return opps;
-  })();
-  const [opps, toCall, recallCounts, demoRes, users] = await Promise.all([
-    oppsP,
+  const [leads, won, toCall, recallCounts, demoRes, users] = await Promise.all([
+    // Lead: opportunità della VENDITA PIPELINE per giorno di creazione; ci si ferma prima di fromDate.
+    allOpps(env, inPipeline, (o) => ROME_DAY.format(new Date(o.createdAt)) < fromDate),
+    // Incassato: opportunità vinte (status won) della VENDITA PIPELINE, al giorno in cui sono diventate vinte.
+    // Le altre pipeline (es. "Clienti Attivi pro", onboarding) non si guardano.
+    allOpps(env, `${inPipeline}&status=won`),
     count(GHL_STAGE.nuovi),
     Promise.all(GHL_STAGE.richiamare.map(count)),
-    ghl(env, oppSearch(`&pipeline_stage_id=${GHL_STAGE.demo}&limit=100`)),
+    ghl(env, oppSearch(`${inPipeline}&pipeline_stage_id=${GHL_STAGE.demo}&limit=100`)),
     usersP,
   ]);
+  const who = (o) => String((o.contact && o.contact.name) || o.name || "").trim().slice(0, 80);
   const leadsByDay = {};
-  for (const o of opps) {
+  for (const o of leads) {
     const day = ROME_DAY.format(new Date(o.createdAt));
     leadsByDay[day] = (leadsByDay[day] || 0) + 1;
   }
-  const who = (o) => String((o.contact && o.contact.name) || o.name || "").trim();
+  const wonList = won.filter((o) => o.status === "won").map((o) => {
+    const at = o.lastStatusChangeAt || o.updatedAt || o.createdAt;
+    return { id: String(o.id), name: who(o), amount: num(Number(o.monetaryValue) || 0), ts: Date.parse(at) || 0, day: ROME_DAY.format(new Date(at)), seller: (users[o.assignedTo] || "").slice(0, 30) };
+  });
   const demos = (demoRes.opportunities || []).map((o) => {
     const w = parseWhen(o.lastStageChangeAt || o.createdAt);
-    return { name: who(o).slice(0, 80), city: "", seller: (users[o.assignedTo] || "").slice(0, 30), outcome: "", date: w ? w.date : "", time: w ? w.time : "" };
+    return { name: who(o), seller: (users[o.assignedTo] || "").slice(0, 30), date: w ? w.date : "", time: w ? w.time : "" };
   }).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-  const data = {
-    source: "ghl",
-    leadsByDay,
-    toCall,
-    toRecall: recallCounts.reduce((a, b) => a + b, 0),
-    demos,
-    names: [...new Set([...demos.map((d) => d.name), ...opps.map(who)].filter(Boolean))].slice(0, 400),
-  };
+  const data = { leadsByDay, wonList, toCall, toRecall: recallCounts.reduce((a, b) => a + b, 0), demos };
   ghlCache = { at: Date.now(), from: fromDate, data };
   return data;
+}
+
+// Registro delle vinte. Un'opportunità vinta nella VENDITA PIPELINE, se poi viene spostata in un'altra
+// pipeline (es. "Clienti Attivi pro" per l'onboarding), sparirebbe dalla ricerca e dall'incassato. Per
+// questo ogni vinta vista qui si ricorda nel KV (chiave "vinte:AAAA-MM": id -> giorno, importo, nome).
+// Se una ricordata non è più tra le vinte: ogni 10 minuti si controlla; se è ancora nella VENDITA
+// PIPELINE ma non più vinta, o è stata cancellata, si toglie; se è in un'altra pipeline resta.
+let wonMerged = { key: "", data: null };
+let wonCheckAt = 0;
+async function mergeWon(env, live, months, freshAt) {
+  const cacheKey = freshAt + "|" + months.join(",");
+  if (wonMerged.key === cacheKey) return wonMerged.data;
+  const kv = env.ACADEMY_PROGRESS;
+  const all = [...new Set([...months, ...live.map((w) => w.day.slice(0, 7))])];
+  const recs = {};
+  await Promise.all(all.map(async (m) => {
+    let r = {};
+    try { r = JSON.parse((await kv.get(`vinte:${m}`)) || "{}"); } catch (e) { r = {}; }
+    recs[m] = r && typeof r === "object" ? r : {};
+  }));
+  const dirty = new Set();
+  const liveById = new Map(live.map((w) => [w.id, w]));
+  for (const w of live) {
+    const m = w.day.slice(0, 7), cur = recs[m][w.id];
+    const entry = { name: w.name, amount: w.amount, ts: w.ts, day: w.day, seller: w.seller };
+    if (!cur || JSON.stringify(cur) !== JSON.stringify(entry)) { recs[m][w.id] = entry; dirty.add(m); }
+  }
+  for (const m of all) {
+    for (const id of Object.keys(recs[m])) {
+      const w = liveById.get(id);
+      if (w && w.day.slice(0, 7) !== m) { delete recs[m][id]; dirty.add(m); }
+    }
+  }
+  if (Date.now() - wonCheckAt > 600000) {
+    wonCheckAt = Date.now();
+    const missing = [];
+    for (const m of all) for (const id of Object.keys(recs[m])) if (!liveById.has(id)) missing.push([m, id]);
+    for (const [m, id] of missing.slice(0, 20)) {
+      try {
+        const r = await fetch(`${GHL_API}/opportunities/${encodeURIComponent(id)}`, {
+          headers: { Authorization: `Bearer ${env.GHL_TOKEN}`, Version: "2021-07-28", Accept: "application/json" },
+        });
+        if (r.status === 404) { delete recs[m][id]; dirty.add(m); continue; }
+        if (!r.ok) continue;
+        const o = (await r.json()).opportunity;
+        if (o && o.pipelineId === GHL_PIPELINE && o.status !== "won") { delete recs[m][id]; dirty.add(m); }
+      } catch (e) { /* si riprova al prossimo controllo */ }
+    }
+  }
+  await Promise.all([...dirty].map((m) => kv.put(`vinte:${m}`, JSON.stringify(recs[m])).catch(() => {})));
+  const byDay = {};
+  for (const m of all) {
+    for (const [id, w] of Object.entries(recs[m])) (byDay[w.day] = byDay[w.day] || []).push({ id, name: w.name, amount: num(w.amount), ts: w.ts, seller: w.seller || "" });
+  }
+  for (const d in byDay) byDay[d].sort((a, b) => a.ts - b.ts);
+  wonMerged = { key: cacheKey, data: byDay };
+  return byDay;
 }
 
 // Spesa ads Facebook dall'Ad Manager di GoHighLevel, giorno per giorno, con i lead che Facebook
@@ -404,37 +233,25 @@ async function readAds(env, from, to) {
   return byDay;
 }
 
-async function monthPayload(store, ym, today, sheet = null, written = null, ads = null) {
+function monthPayload(ym, today, g, ads) {
   const nDays = daysInMonth(ym);
   const dates = Array.from({ length: nDays }, (_, i) => `${ym}-${pad2(i + 1)}`);
-  const yesterday = addDays(today, -1);
-  const [got, adsMonth] = await Promise.all([
-    store.get([...new Set([...dates, today, yesterday])]),
-    written && written.ads && written.ads.ym === ym ? written.ads.value : store.getAds(ym),
-  ]);
-  if (written && written.date) got[written.date] = written.rec;
-  const days = {};
-  dates.forEach((d) => { if (got[d]) days[d] = got[d]; });
-
   const todayYm = today.slice(0, 7);
   const upTo = ym === todayYm ? Number(today.slice(8, 10)) : ym > todayYm ? 0 : nDays;
   const pastDates = dates.slice(0, upTo);
-  // I lead arrivano da GoHighLevel o dal foglio; se nessuno risponde si usano quelli salvati (se ci sono).
-  const leadsOn = (d, rec) => (sheet ? sheet.leadsByDay[d] || 0 : rec ? rec.leads || 0 : 0);
+  const yesterday = addDays(today, -1);
 
-  const cashed = round2(pastDates.reduce((s, d) => s + dayCashed(days[d]), 0));
-  // Spesa ads: prima quella letta da Facebook (tramite GoHighLevel); se non c'è, il totale del mese
-  // scritto a mano; se manca anche quello, la somma dei vecchi valori giornalieri.
-  const adsDaily = round2(pastDates.reduce((s, d) => s + (days[d] ? days[d].adsSpend : 0), 0));
-  const adsSet = adsMonth !== null && adsMonth !== undefined;
-  const adsApi = ads ? round2(pastDates.reduce((s, d) => s + (ads[d] ? ads[d].spend : 0), 0)) : 0;
+  const wonOn = (d) => (g && g.wonByDay[d]) || [];
+  const cashedOn = (d) => round2(wonOn(d).reduce((s, c) => s + c.amount, 0));
+  const leadsOn = (d) => (g ? g.leadsByDay[d] || 0 : 0);
+
+  const cashed = round2(pastDates.reduce((s, d) => s + cashedOn(d), 0));
+  const clients = pastDates.reduce((s, d) => s + wonOn(d).length, 0);
+  const leads = pastDates.reduce((s, d) => s + leadsOn(d), 0);
+  const adsSpend = ads ? round2(pastDates.reduce((s, d) => s + (ads[d] ? ads[d].spend : 0), 0)) : 0;
   const adsLeads = ads ? pastDates.reduce((s, d) => s + (ads[d] ? ads[d].leads : 0), 0) : null;
-  const adsAuto = adsApi > 0;
-  const adsSpend = adsAuto ? adsApi : adsSet ? adsMonth : adsDaily;
-  const leads = pastDates.reduce((s, d) => s + leadsOn(d, days[d]), 0);
-  const clientsCount = pastDates.reduce((s, d) => s + (days[d] ? days[d].clients.length : 0), 0);
 
-  // Proiezione: incassato finora / giorni passati x giorni del mese (non gonfiata dai giorni senza dati).
+  // Proiezione: incassato finora / giorni passati x giorni del mese.
   let projection = null, projectionNote = null;
   if (ym === todayYm) {
     if (upTo < 3) projectionNote = "La proiezione parte dal 3 del mese";
@@ -442,61 +259,53 @@ async function monthPayload(store, ym, today, sheet = null, written = null, ads 
     else projection = round2((cashed / upTo) * nDays);
   }
 
-  // "Oggi" e "ieri" sono sempre i giorni veri, anche quando si sfogliano i mesi passati.
-  const todayRec = got[today] || null, yRec = got[yesterday] || null;
-  const todayData = todayRec || EMPTY_DAY;
-
   return {
     today,
     todayData: {
-      clients: todayData.clients,
-      cashed: dayCashed(todayData),
-      adsSpend: todayData.adsSpend,
-      leads: leadsOn(today, todayRec),
-      toCall: sheet && sheet.toCall != null ? sheet.toCall : todayData.toCall,
-      toRecall: sheet && sheet.toRecall != null ? sheet.toRecall : null,
+      clients: wonOn(today),
+      cashed: cashedOn(today),
+      leads: leadsOn(today),
+      toCall: g ? g.toCall : null,
+      toRecall: g ? g.toRecall : null,
     },
-    yesterday: { cashed: dayCashed(yRec), leads: leadsOn(yesterday, yRec) },
-    days,
-    series: dates.map((d, i) => ({
-      date: d, d: i + 1, today: d === today, future: d > today,
-      cashed: dayCashed(days[d]), leads: leadsOn(d, days[d]),
-    })),
+    yesterday: { cashed: cashedOn(yesterday), leads: leadsOn(yesterday) },
+    series: dates.map((d, i) => ({ date: d, d: i + 1, today: d === today, future: d > today, cashed: cashedOn(d), leads: leadsOn(d) })),
     month: {
       ym, label: MONTH_LABEL.format(new Date(ym + "-01T12:00:00Z")),
       daysInMonth: nDays, elapsed: upTo,
-      cashed, adsSpend, adsSet, adsManual: adsSet ? adsMonth : null, adsAuto, adsLeads: adsAuto ? adsLeads : null, leads, clients: clientsCount,
-      // CPL sui lead che Facebook attribuisce alle ads quando la spesa è automatica, altrimenti su tutti i lead.
-      cpl: adsAuto && adsLeads > 0 ? round2(adsSpend / adsLeads) : leads > 0 && adsSpend > 0 ? round2(adsSpend / leads) : null,
-      cac: clientsCount > 0 && adsSpend > 0 ? round2(adsSpend / clientsCount) : null,
+      cashed, clients, leads, adsSpend, adsLeads, adsOk: !!ads,
+      cpl: adsLeads > 0 && adsSpend > 0 ? round2(adsSpend / adsLeads) : null,
+      cac: clients > 0 && adsSpend > 0 ? round2(adsSpend / clients) : null,
       roas: adsSpend > 0 ? round2(cashed / adsSpend) : null,
       projection, projectionNote,
       isCurrent: ym === todayYm, isFuture: ym > todayYm,
     },
-    demos: sheet ? {
-      today: sheet.demos.filter((x) => x.date === today).length,
-      month: sheet.demos.filter((x) => x.date.startsWith(todayYm)).length,
-      waiting: sheet.source === "ghl" ? sheet.demos.length : null,
-      list: sheet.demos.slice(0, 12),
+    demos: g ? {
+      today: g.demos.filter((x) => x.date === today).length,
+      waiting: g.demos.length,
+      list: g.demos.slice(0, 12),
     } : null,
-    sheetOk: !!sheet,
-    source: sheet ? sheet.source || "sheet" : null,
-    strong: !!store.strong,
-    names: sheet ? sheet.names : [],
+    ok: !!g,
   };
 }
 
-async function payload(store, ym, today, written = null, env = {}) {
+async function payload(ym, today, env) {
+  if (!env.GHL_TOKEN) return monthPayload(ym, today, null, null);
   const fromDate = [`${ym}-01`, addDays(today, -1)].sort()[0];
   const lastDay = `${ym}-${pad2(daysInMonth(ym))}`;
-  const adsTo = lastDay < today ? lastDay : today;
-  const [ghlData, ads] = await Promise.all([
-    env.GHL_TOKEN ? readGHL(env, fromDate).catch(() => null) : null,
-    env.GHL_TOKEN && `${ym}-01` <= today ? readAds(env, `${ym}-01`, adsTo).catch(() => null) : null,
+  const [g, ads] = await Promise.all([
+    readGHL(env, fromDate).catch(() => null),
+    `${ym}-01` <= today ? readAds(env, `${ym}-01`, lastDay < today ? lastDay : today).catch(() => null) : null,
   ]);
-  let sheet = ghlData;
-  if (!sheet) sheet = await readSheet().catch(() => null);
-  return monthPayload(store, ym, today, sheet, written, ads);
+  if (g) {
+    const months = [...new Set([ym, today.slice(0, 7), addDays(today, -1).slice(0, 7)])].sort();
+    g.wonByDay = await mergeWon(env, g.wonList, months, ghlCache.at).catch(() => {
+      const byDay = {};
+      for (const w of g.wonList) (byDay[w.day] = byDay[w.day] || []).push(w);
+      return byDay;
+    });
+  }
+  return monthPayload(ym, today, g, ads);
 }
 
 function json(data, status = 200) {
@@ -647,14 +456,13 @@ ${GLASS_CSS}
   :root { --pad: clamp(14px, 2vw, 40px); --gap: clamp(12px, 1.15vw, 22px); }
   .layout { display: grid; gap: var(--gap); padding: var(--pad); max-width: 1680px; margin: 0 auto;
     grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
-    grid-template-areas: "top hole" "tiles hole" "chart side" "demos side" "forms forms"; }
+    grid-template-areas: "top hole" "tiles hole" "chart side" "demos side"; }
   .top { grid-area: top; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; min-height: 48px; }
   .tiles { grid-area: tiles; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
   .hole { grid-area: hole; position: relative; display: flex; align-items: flex-end; padding: 0 0 6px 6px; min-height: 240px; }
   .chart-card { grid-area: chart; }
   .demos-card { grid-area: demos; }
   .side { grid-area: side; min-width: 0; }
-  .forms { grid-area: forms; }
 
   /* Testata */
   .top img { height: 28px; display: block; }
@@ -685,8 +493,6 @@ ${GLASS_CSS}
   .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 3px rgba(255,138,128,0.18); }
   .chip.ok i { background: var(--good); box-shadow: 0 0 0 3px rgba(111,220,154,0.18); }
   .chip.warn i { background: #f2c14e; box-shadow: 0 0 0 3px rgba(242,193,78,0.18); }
-  .no-city .tr { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr) 7.5rem; }
-  .no-city .tr .c { display: none; }
 
   /* Schede grandi */
   .card { padding: 20px 22px 18px; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
@@ -724,19 +530,14 @@ ${GLASS_CSS}
 
   /* Tabella demo fissate */
   .table { display: flex; flex-direction: column; min-height: 0; overflow: hidden; flex: 1; }
-  .tr { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 0.9fr) 7.5rem; gap: 14px; align-items: center; padding: 10px 14px; }
+  .tr { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: center; padding: 10px 14px; }
   .thead { color: var(--bone-3); font-size: 0.82rem; padding-top: 0; padding-bottom: 8px; }
-  .thead span:last-child { text-align: right; }
   .tbody { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; min-height: 0; }
   .tbody .tr { border-radius: var(--r-md); }
   .tbody .tr:nth-child(odd) { background: rgba(255,255,255,0.035); }
   .tr .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tr .c, .tr .v, .tr .w { color: var(--bone-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tr .v, .tr .w { color: var(--bone-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tr .w.today { color: var(--bone); font-weight: 600; }
-  .esito { justify-self: end; display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 9px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; background: rgba(255,255,255,0.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10); white-space: nowrap; }
-  .esito i { width: 7px; height: 7px; border-radius: 50%; background: var(--bone-3); }
-  .esito.good i { background: var(--good); }
-  .esito.bad i { background: var(--bad); }
   .table .none { color: var(--bone-3); padding: 18px 14px; }
 
   /* Clienti di oggi */
@@ -749,8 +550,7 @@ ${GLASS_CSS}
   .cl .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cl .time { color: var(--bone-3); font-size: 0.8rem; }
   .cl .amt { font-weight: 600; font-size: 1.05rem; }
-  .cl .del { background: none; border: 0; box-shadow: inset 0 0 0 1px rgba(255,138,128,0.45); color: var(--bad); cursor: pointer; font: inherit; font-size: 0.78rem; font-weight: 600; padding: 5px 10px; border-radius: 999px; flex: none; }
-  .cl .del.sure { background: #d9443b; box-shadow: none; color: #fff; }
+  .cl .seller { color: var(--bone-3); }
   .cl.new { animation: newcl 1.6s ease-out; }
   @keyframes newcl { 0% { box-shadow: inset 0 0 0 1px rgba(243,213,140,0.9), 0 0 30px rgba(243,213,140,0.35); } 100% { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); } }
   .clients .none { color: var(--bone-3); padding: 14px 4px; }
@@ -763,28 +563,6 @@ ${GLASS_CSS}
   .toast .a { font-size: clamp(1.6rem, 3.2vw, 3.2rem); font-weight: 600; color: var(--good); letter-spacing: -0.02em; }
   @media (prefers-reduced-motion: reduce) { .toast { transition: opacity .2s; } .cl.new { animation: none; } }
 
-  /* Moduli (solo PC) */
-  .forms { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--gap); }
-  .form { padding: 24px; }
-  .form h2 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 600; }
-  .form .note { color: var(--bone-3); font-size: 0.88rem; margin: 0 0 18px; max-width: 60ch; }
-  .form label { display: block; font-size: 0.85rem; color: var(--bone-2); margin: 0 0 6px 4px; }
-  .form input, .form select { width: 100%; padding: 14px 16px; font: inherit; font-size: 1.05rem; color: var(--bone); border: 0; margin-bottom: 14px; outline: none; color-scheme: dark; }
-  .form select { appearance: none; -webkit-appearance: none; cursor: pointer; text-transform: capitalize;
-    background-image: linear-gradient(45deg, transparent 50%, var(--bone-2) 50%), linear-gradient(135deg, var(--bone-2) 50%, transparent 50%);
-    background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
-  .form select option { background: #24211c; color: var(--bone); }
-  .form input:focus-visible, .form select:focus-visible { box-shadow: inset 0 1px 1px rgba(0,0,0,0.25), 0 0 0 2px rgba(236,230,218,0.5); }
-  .form .row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; }
-  .btn { width: 100%; padding: 14px; font: inherit; font-size: 1rem; font-weight: 600; border-radius: 999px; cursor: pointer; border: 0; background: var(--bone); color: #14181e; }
-  .btn.ghost { background: rgba(255,255,255,0.10); color: var(--bone); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16); }
-  .form .auto-info { display: none; }
-  .form.auto .auto-info { display: block; }
-  .form.auto .manual { display: none; }
-  .auto-val { padding: 14px 16px; font-size: 1.05rem; font-weight: 600; margin-bottom: 14px; }
-  .btn:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
-  .msg { min-height: 1.3em; font-size: 0.9rem; margin: 0 0 10px; text-align: center; color: var(--bone-2); }
-  .tv-link { display: block; text-align: center; color: var(--bone-2); font-size: 0.9rem; margin-top: 14px; }
 
   /* TV: tutto in uno schermo */
   body.tv { height: 100vh; overflow: hidden; }
@@ -792,10 +570,9 @@ ${GLASS_CSS}
   body.tv .chart { min-height: 0; }
 
   @media (max-width: 1180px) {
-    .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "hole" "tiles" "side" "chart" "demos" "forms"; }
+    .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "hole" "tiles" "side" "chart" "demos"; }
     .hole { min-height: 300px; }
     .side .clients { max-height: 420px; }
-    .forms { grid-template-columns: 1fr; }
   }
   @media (max-width: 640px) {
     body { font-size: 14px; }
@@ -813,11 +590,9 @@ ${GLASS_CSS}
     .card { padding: 16px 14px 14px; border-radius: 24px; }
     .card-head { flex-wrap: wrap; }
     .chart { min-height: 210px; }
-    .tr { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n e" "w e"; gap: 2px 10px; padding: 10px 12px; }
-    .tr .n { grid-area: n; } .tr .w { grid-area: w; font-size: 0.82rem; } .tr .esito { grid-area: e; }
-    .tr .c, .tr .v, .thead { display: none; }
-    .form { padding: 18px; border-radius: 24px; }
-    .form .row { grid-template-columns: 1fr; gap: 0; }
+    .tr { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n v" "w v"; gap: 2px 10px; padding: 10px 12px; }
+    .tr .n { grid-area: n; } .tr .w { grid-area: w; font-size: 0.82rem; } .tr .v { grid-area: v; }
+    .thead { display: none; }
   }
 </style>
 </head>
@@ -826,7 +601,7 @@ ${GLASS_CSS}
 <div class="layout" id="screen">
   <header class="top">
     <img src="/assets/img/logo.png" alt="Vendita Uno">
-    <div class="when glass"><span class="alert" id="alert">Dati dei lead non raggiungibili</span><span class="d" id="date"></span><span class="clock num well" id="clock"></span></div>
+    <div class="when glass"><span class="alert" id="alert">GoHighLevel non raggiungibile</span><span class="d" id="date"></span><span class="clock num well" id="clock"></span></div>
   </header>
 
   <section class="tiles" aria-label="Numeri principali">
@@ -866,46 +641,20 @@ ${GLASS_CSS}
 
   <section class="card glass demos-card">
     <div class="card-head">
-      <div><h2>Demo fissate</h2><div class="meta" id="demoMeta"></div></div>
+      <div><h2>Demo fissate</h2><div class="meta">Fase DEMO FISSATA di GoHighLevel, le più recenti prima</div></div>
       <div class="counts" id="demoCounts"></div>
     </div>
     <div class="table" id="demoTable">
-      <div class="tr thead"><span class="n">Nome</span><span class="c">Città</span><span class="v">Venditore</span><span class="w">Fissata</span><span class="e">Esito</span></div>
+      <div class="tr thead"><span class="n">Nome</span><span class="v">Venditore</span><span class="w">Spostata in demo fissata</span></div>
       <div class="tbody" id="demos"></div>
     </div>
   </section>
 
   <section class="card glass side">
-    <div class="card-head"><div><h2>Clienti di oggi</h2><div class="meta" id="clMeta"></div></div></div>
+    <div class="card-head"><div><h2>Chiusi oggi</h2><div class="meta" id="clMeta"></div></div></div>
     <div class="clients" id="clients"></div>
   </section>
 
-${tv ? "" : `  <section class="forms">
-    <form class="form glass" id="clientForm">
-      <h2>Nuovo cliente</h2>
-      <p class="note">Ha pagato? Registralo qui: entra subito nell'incassato e compare sulla TV. Scrivi le prime lettere e ti suggerisce i nomi dei lead.</p>
-      <div class="row">
-        <div><label for="cname">Nome cliente</label><input class="well" id="cname" list="cnames" maxlength="80" placeholder="Mario Rossi" autocomplete="off"></div>
-        <div><label for="camount">Incassato (€)</label><input class="well" id="camount" inputmode="decimal" placeholder="1500" autocomplete="off"></div>
-      </div>
-      <datalist id="cnames"></datalist>
-      <div class="msg" id="cmsg" role="status"></div>
-      <button type="submit" class="btn">Registra cliente</button>
-    </form>
-    <form class="form glass" id="adsForm">
-      <h2>Spesa ads del mese</h2>
-      <p class="note manual">Scrivi quanto hai speso in ads in tutto nel mese, fino a oggi. Domani correggi il numero con il nuovo totale: CPL, CAC e ritorno sulle ads si ricalcolano da soli.</p>
-      <p class="note auto-info">Letta da sola da Facebook tramite GoHighLevel e aggiornata ogni pochi minuti: non serve scriverla.</p>
-      <div class="row">
-        <div><label for="fmonth">Mese</label><select class="well" id="fmonth"></select></div>
-        <div class="manual"><label for="fads">Totale speso (€)</label><input class="well" id="fads" inputmode="decimal" placeholder="1200" autocomplete="off"></div>
-        <div class="auto-info"><label>Speso finora</label><div class="well auto-val num" id="adsAutoVal"></div></div>
-      </div>
-      <div class="msg" id="msg" role="status"></div>
-      <button type="submit" class="btn ghost manual">Salva totale del mese</button>
-      <a class="tv-link" href="${DASH_PATH}/tv" target="_blank">Apri la schermata della TV</a>
-    </form>
-  </section>`}
 </div>
 <div class="toast glass" id="toast" role="status" aria-live="polite"><div class="k">Nuovo cliente</div><div class="n" id="toastName"></div><div class="a num" id="toastAmt"></div></div>
 
@@ -931,7 +680,7 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const dayLabel = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
 const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
-let data = null, curMonth = null, lastClientsKey = null, seen = null, lastNames = '';
+let data = null, curMonth = null, lastClientsKey = null, seen = null;
 const anims = {};
 
 function setNum(id, to, kind) {
@@ -1091,25 +840,19 @@ function whenLabel(x, today) {
   const d = x.date === today ? 'oggi' : x.date === yIso ? 'ieri' : new Date(x.date + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
   return d + (x.time ? ' ' + x.time : '');
 }
-function esitoClass(o) {
-  const s = o.toLowerCase();
-  if (/vint|chius|cliente|pres/.test(s)) return 'good';
-  if (/pers|no |non |annull|disdett/.test(s + ' ')) return 'bad';
-  return '';
-}
 
 function render(d) {
   const firstLoad = data === null;
   data = d; curMonth = d.month.ym;
   const t = d.todayData, mo = d.month, monthName = mo.label.split(' ')[0];
   setText('date', cap(new Date(d.today + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })));
-  setText('alert', 'Dati dei lead non raggiungibili');
-  $('alert').classList.toggle('on', !d.sheetOk);
+  setText('alert', 'GoHighLevel non raggiungibile');
+  $('alert').classList.toggle('on', !d.ok);
 
   // Incassato oggi
   setNum('kToday', t.cashed, 'money');
   const nC = t.clients.length;
-  setHTML('kTodaySub', '<div class="stat">' + (nC ? '<b>' + nC + '</b> ' + (nC === 1 ? 'cliente' : 'clienti') : 'Ancora nessun cliente') + '</div>' +
+  setHTML('kTodaySub', '<div class="stat">' + (nC ? '<b>' + nC + '</b> ' + (nC === 1 ? 'chiuso' : 'chiusi') : 'Ancora nessun chiuso') + '</div>' +
     '<div class="stat">' + trend(Math.round((t.cashed - d.yesterday.cashed) * 100) / 100, money0) + '</div>');
 
   // Incassato del mese e proiezione
@@ -1117,7 +860,7 @@ function render(d) {
   setNum('kMonth', mo.cashed, 'money');
   setHTML('kMonthSub',
     (mo.projection != null ? '<span>Proiezione <b>' + money0(mo.projection) + '</b></span>' : mo.projectionNote ? '<span>' + esc(mo.projectionNote) + '</span>' : mo.isFuture ? '' : '<span>Mese chiuso</span>') +
-    (mo.clients ? '<span><b>' + mo.clients + '</b> ' + (mo.clients === 1 ? 'cliente' : 'clienti') + '</span>' : ''));
+    (mo.clients ? '<span><b>' + mo.clients + '</b> ' + (mo.clients === 1 ? 'chiuso' : 'chiusi') + '</span>' : ''));
 
   // Lead
   setNum('kLeads', t.leads, 'int');
@@ -1129,7 +872,7 @@ function render(d) {
   setText('kRoas', mo.roas != null ? nf1.format(mo.roas).replace(',0', '') + 'x' : 'n.d.');
   setHTML('kRoasSub', mo.adsSpend > 0
     ? '<span><b>' + money0(mo.adsSpend) + '</b> spesi</span>' + (mo.adsLeads != null ? '<span><b>' + grp(mo.adsLeads) + '</b> lead dalle ads</span>' : '') + (mo.cpl != null ? '<span>CPL <b>' + money0(mo.cpl) + '</b></span>' : '') + (mo.cac != null ? '<span>CAC <b>' + money0(mo.cac) + '</b></span>' : '')
-    : '<span>Scrivi la spesa ads per vedere CPL e CAC</span>');
+    : '<span>' + (mo.adsOk ? 'Nessuna spesa ads in questo mese' : 'Spesa ads non disponibile da GoHighLevel') + '</span>');
 
   // Grafico
   setText('mLabel', cap(mo.label));
@@ -1140,107 +883,51 @@ function render(d) {
 
   // Demo fissate
   if (d.demos) {
-    setHTML('demoCounts', '<span class="count"><b>' + d.demos.today + '</b> oggi</span>' +
-      (d.demos.waiting != null ? '<span class="count"><b>' + d.demos.waiting + '</b> in attesa</span>' : '<span class="count"><b>' + d.demos.month + '</b> questo mese</span>'));
-    setText('demoMeta', d.source === 'ghl' ? 'Fase DEMO FISSATA di GoHighLevel, le più recenti prima' : 'Le ultime dal foglio Google');
-    $('demoTable').classList.toggle('no-city', !d.demos.list.some((x) => x.city));
+    setHTML('demoCounts', '<span class="count"><b>' + d.demos.today + '</b> oggi</span><span class="count"><b>' + d.demos.waiting + '</b> in attesa</span>');
     setHTML('demos', d.demos.list.length ? d.demos.list.map((x) =>
-      '<div class="tr"><span class="n">' + esc(x.name) + '</span><span class="c">' + esc(x.city || ' ') + '</span><span class="v">' + esc(x.seller || ' ') + '</span>' +
-      '<span class="w' + (x.date === d.today ? ' today' : '') + '">' + esc(whenLabel(x, d.today)) + '</span>' +
-      '<span class="esito ' + esitoClass(x.outcome) + '"><i></i>' + esc(x.outcome || 'In attesa') + '</span></div>'
-    ).join('') : '<div class="none">Nessuna demo fissata nel foglio.</div>');
+      '<div class="tr"><span class="n">' + esc(x.name) + '</span><span class="v">' + esc(x.seller || ' ') + '</span>' +
+      '<span class="w' + (x.date === d.today ? ' today' : '') + '">' + esc(whenLabel(x, d.today)) + '</span></div>'
+    ).join('') : '<div class="none">Nessuna opportunità in DEMO FISSATA.</div>');
   } else {
     setHTML('demoCounts', '');
-    setText('demoMeta', '');
-    setHTML('demos', '<div class="none">GoHighLevel e foglio Google non rispondono: le demo torneranno appena sono raggiungibili.</div>');
+    setHTML('demos', '<div class="none">GoHighLevel non risponde: le demo torneranno appena è raggiungibile.</div>');
   }
 
-  // Clienti di oggi
+  // Chiusi oggi (vinte della VENDITA PIPELINE)
   const list = t.clients.slice().reverse();
   const key = list.map((c) => c.id).join(',');
   if (key !== lastClientsKey) {
     lastClientsKey = key;
     const fresh = seen ? list.filter((c) => !seen.has(c.id)) : [];
-    setText('clMeta', nC ? money0(t.cashed) + ' da ' + plural(nC, 'cliente', 'clienti') : '');
+    setText('clMeta', nC ? money0(t.cashed) + ' da ' + plural(nC, 'chiuso', 'chiusi') : '');
     $('clients').innerHTML = list.length ? list.map((c) =>
       '<div class="cl' + (tvMode && fresh.indexOf(c) >= 0 ? ' new' : '') + '"><div class="av">' + esc((c.name.trim()[0] || '?').toUpperCase()) + '</div>' +
-      '<div class="who"><div class="name">' + esc(c.name) + '</div><div class="time">' + new Date(c.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + '</div></div>' +
-      '<div class="amt num">' + money(c.amount) + '</div>' +
-      (tvMode ? '' : '<button type="button" class="del" data-id="' + esc(c.id) + '">Elimina</button>') + '</div>'
-    ).join('') : '<div class="none">Il primo cliente di oggi comparirà qui.</div>';
+      '<div class="who"><div class="name">' + esc(c.name) + '</div><div class="time">' + new Date(c.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) +
+      (c.seller ? ' <span class="seller">' + esc(c.seller) + '</span>' : '') + '</div></div>' +
+      '<div class="amt num">' + money(c.amount) + '</div></div>'
+    ).join('') : '<div class="none">Quando una vinta della VENDITA PIPELINE arriva, compare qui.</div>';
     if (tvMode && fresh.length && !firstLoad) announce(fresh[0]);
     seen = new Set(list.map((c) => c.id));
   }
 
-  if ($('cnames') && d.names && d.names.join('|') !== lastNames) {
-    lastNames = d.names.join('|');
-    $('cnames').innerHTML = d.names.map((n) => '<option value="' + esc(n) + '">').join('');
-  }
-  if ($('fmonth') && !$('fmonth').options.length) fillMonths(d);
-  else if ($('fmonth') && $('fmonth').value === d.month.ym && d.month.adsAuto) showAds(d.month);
   placeNapo();
 }
 
-// Ordine delle risposte: una lettura partita prima dell'ultimo salvataggio è vecchia e si scarta,
-// così un cliente appena registrato o eliminato non sparisce e ricompare.
-// Se l'archivio non è "forte" (solo KV), per 70 secondi dopo un salvataggio si scartano anche le
-// letture che non contengono ancora quel salvataggio: il KV può essere indietro fino a un minuto.
-let seq = 0, lastApplied = 0, lastChangeStart = 0, lastChange = null;
-const fingerprint = (d) => d.todayData.clients.map((c) => c.id).join(',') + '|' + d.month.ym + '|' + d.month.adsSpend;
+// Ordine delle risposte: se si cambia mese in fretta, una risposta arrivata tardi non copre quella nuova.
+let seq = 0, lastApplied = 0;
 function apply(d, mySeq) {
   if (mySeq < lastApplied) return;
   lastApplied = mySeq;
   render(d);
 }
-function monthName(ym) {
-  return new Date(ym + '-15T12:00:00').toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
-}
-// Ultimi 12 mesi, il corrente per primo; si parte dal totale già salvato per quel mese.
-function fillMonths(d) {
-  const sel = $('fmonth'), now = d.today.slice(0, 7);
-  for (let i = 0; i < 12; i++) {
-    const ym = shift(now, -i);
-    const o = document.createElement('option'); o.value = ym; o.textContent = monthName(ym);
-    sel.appendChild(o);
-  }
-  sel.value = now;
-  if (d.month.ym === now) showAds(d.month);
-  else loadAdsFor(now);
-}
-// Spesa automatica da Facebook: si mostra; altrimenti la casella per il totale scritto a mano.
-function showAds(m) {
-  $('adsForm').classList.toggle('auto', !!m.adsAuto);
-  $('adsAutoVal').textContent = m.adsAuto ? money(m.adsSpend) + (m.adsLeads != null ? ', ' + grp(m.adsLeads) + ' lead' : '') : '';
-  if (document.activeElement !== $('fads')) $('fads').value = m.adsManual != null ? String(m.adsManual).replace('.', ',') : '';
-}
-async function loadAdsFor(ym) {
-  $('fads').value = '';
-  $('msg').textContent = '';
-  try {
-    const r = await fetch(API + '?month=' + ym, { cache: 'no-store' });
-    const d = await r.json();
-    if ($('fmonth').value === ym) showAds(d.month);
-  } catch (e) {}
-}
 
 async function refresh(ym) {
-  const mySeq = ++seq, startedAt = Date.now();
+  const mySeq = ++seq;
   try {
     const r = await fetch(API + (ym ? '?month=' + ym : ''), { cache: 'no-store' });
     if (r.status === 401) { location.reload(); return; }
-    const d = await r.json();
-    if (startedAt < lastChangeStart) return;
-    if (lastChange && !d.strong && Date.now() - lastChange.at < 70000 && d.month.ym === lastChange.ym && fingerprint(d) !== lastChange.fp) return;
-    apply(d, mySeq);
+    apply(await r.json(), mySeq);
   } catch (e) { setText('alert', 'Connessione persa, riprovo'); $('alert').classList.add('on'); }
-}
-async function change(run) {
-  const mySeq = ++seq;
-  lastChangeStart = Date.now();
-  const d = await run();
-  lastChange = { at: Date.now(), ym: d.month.ym, fp: fingerprint(d) };
-  apply(d, mySeq);
-  return d;
 }
 function shift(ym, n) { const p = ym.split('-').map(Number); const t = p[0] * 12 + p[1] - 1 + n; return Math.floor(t / 12) + '-' + String(t % 12 + 1).padStart(2, '0'); }
 
@@ -1254,66 +941,6 @@ $('screen').addEventListener('dblclick', () => document.documentElement.requestF
 $('mPrev').onclick = () => refresh(shift(curMonth, -1));
 $('mNext').onclick = () => { if (!$('mNext').disabled) refresh(shift(curMonth, 1)); };
 
-if ($('clientForm')) {
-  const parseAmount = (s) => {
-    s = String(s || '').split('€').join('').split(' ').join('').trim();
-    if (!s) return 0;
-    if (s.indexOf(',') >= 0) s = s.split('.').join('').replace(',', '.');
-    else if (/^[0-9]{1,3}([.][0-9]{3})+$/.test(s)) s = s.split('.').join('');
-    return Number(s);
-  };
-  const post = async (url, body) => {
-    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!r.ok) throw new Error();
-    return r.json();
-  };
-
-  $('clientForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const name = $('cname').value.trim(), amount = parseAmount($('camount').value);
-    if (!name) { $('cmsg').textContent = 'Scrivi il nome del cliente'; return; }
-    if (!isFinite(amount) || amount <= 0) { $('cmsg').textContent = "Scrivi l'importo incassato, ad esempio 1500"; return; }
-    $('cmsg').textContent = 'Registro…';
-    try {
-      await change(() => post(API + '/client', { date: data.today, name, amount }));
-      $('cname').value = ''; $('camount').value = '';
-      $('cmsg').textContent = name + ' registrato';
-    } catch (err) { $('cmsg').textContent = 'Non registrato: controlla la connessione e riprova'; }
-  };
-
-  $('fmonth').onchange = () => loadAdsFor($('fmonth').value);
-
-  $('adsForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const adsSpend = parseAmount($('fads').value);
-    if (!isFinite(adsSpend) || adsSpend < 0) { $('msg').textContent = 'Scrivi il totale speso, ad esempio 1200'; return; }
-    const ym = $('fmonth').value;
-    $('msg').textContent = 'Salvo…';
-    try {
-      await change(() => post(API, { month: ym, adsSpend }));
-      $('msg').textContent = 'Totale di ' + monthName(ym) + ' salvato: ' + money(adsSpend);
-    } catch (err) { $('msg').textContent = 'Non salvato: controlla la connessione e riprova'; }
-  };
-
-  // Primo clic: "Sicuro?", secondo clic: elimina
-  $('clients').onclick = async (e) => {
-    const btn = e.target.closest('.del');
-    if (!btn) return;
-    if (!btn.classList.contains('sure')) {
-      btn.classList.add('sure'); btn.textContent = 'Sicuro?';
-      setTimeout(() => { if (btn.isConnected && btn.textContent === 'Sicuro?') { btn.classList.remove('sure'); btn.textContent = 'Elimina'; } }, 4000);
-      return;
-    }
-    btn.disabled = true; btn.textContent = 'Elimino…';
-    try {
-      await change(async () => {
-        const r = await fetch(API + '/client?date=' + encodeURIComponent(data.today) + '&id=' + encodeURIComponent(btn.dataset.id), { method: 'DELETE' });
-        if (!r.ok) throw new Error();
-        return r.json();
-      });
-    } catch (err) { btn.disabled = false; btn.classList.remove('sure'); btn.textContent = 'Elimina'; }
-  };
-}
 </script>
 </body>
 </html>`;
@@ -1347,55 +974,13 @@ export async function handleDashboard(request, env, url) {
   }
 
   const loggedIn = await isLoggedIn(request, kv);
-  const store = dayStore(env);
 
   if (path === `${DASH_PATH}/api`) {
     if (!loggedIn) return json({ error: "unauthorized" }, 401);
+    if (request.method !== "GET") return new Response("Method not allowed", { status: 405 });
     const today = romeDate();
-
-    if (request.method === "GET") {
-      const ym = /^\d{4}-\d{2}$/.test(url.searchParams.get("month") || "") ? url.searchParams.get("month") : today.slice(0, 7);
-      return json(await payload(store, ym, today, null, env));
-    }
-
-    if (request.method === "POST") {
-      const body = await request.json().catch(() => ({}));
-      const ym = YM_RE.test(body.month || "") ? body.month : today.slice(0, 7);
-      if (ym > today.slice(0, 7)) return json({ error: "mese non valido" }, 400);
-      const adsSpend = round2(Number(body.adsSpend) || 0);
-      if (!isFinite(adsSpend) || adsSpend < 0 || adsSpend > 100000000) return json({ error: "valore non valido" }, 400);
-      const value = await store.setAds(ym, adsSpend);
-      return json(await payload(store, ym, today, { ads: { ym, value } }, env));
-    }
-
-    return new Response("Method not allowed", { status: 405 });
-  }
-
-  if (path === `${DASH_PATH}/api/client`) {
-    if (!loggedIn) return json({ error: "unauthorized" }, 401);
-    const today = romeDate();
-
-    if (request.method === "POST") {
-      const body = await request.json().catch(() => ({}));
-      const date = DATE_RE.test(body.date || "") ? body.date : today;
-      if (date > today) return json({ error: "data non valida" }, 400);
-      const name = String(body.name || "").trim().slice(0, 80);
-      const amount = round2(Number(body.amount) || 0);
-      if (!name) return json({ error: "nome del cliente mancante" }, 400);
-      if (!isFinite(amount) || amount <= 0 || amount > 100000000) return json({ error: "importo non valido" }, 400);
-      const client = { id: toHex(crypto.getRandomValues(new Uint8Array(6))), name, amount, ts: Date.now() };
-      const rec = await store.mutate(date, { type: "addClient", client });
-      return json(await payload(store, date.slice(0, 7), today, { date, rec }, env));
-    }
-
-    if (request.method === "DELETE") {
-      const date = DATE_RE.test(url.searchParams.get("date") || "") ? url.searchParams.get("date") : today;
-      const id = url.searchParams.get("id") || "";
-      const rec = await store.mutate(date, { type: "delClient", id });
-      return json(await payload(store, date.slice(0, 7), today, { date, rec }, env));
-    }
-
-    return new Response("Method not allowed", { status: 405 });
+    const ym = YM_RE.test(url.searchParams.get("month") || "") ? url.searchParams.get("month") : today.slice(0, 7);
+    return json(await payload(ym, today, env));
   }
 
   if (path === DASH_PATH || path === `${DASH_PATH}/login`) {
