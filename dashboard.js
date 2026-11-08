@@ -647,18 +647,39 @@ ${GLASS_CSS}
     .when .d { display: none; }
     .when { padding: 5px; gap: 8px; }
     .alert { font-size: 0.75rem; padding: 6px 10px; }
-    .hole { min-height: 230px; }
+    :root { --gap: 10px; --pad: 12px; }
+    /* Telefono: prima i numeri. Napoleone resta una fascia in alto, non mezzo schermo. */
+    .hole { min-height: 118px; padding: 0 0 2px 4px; }
+    .motto { font-size: 2.3rem; }
     .tiles { grid-template-columns: 1fr 1fr; }
     .tiles .tile:last-child { grid-column: 1 / -1; }
-    .hero { flex-direction: column; align-items: flex-start; gap: 12px; border-radius: 28px; }
-    .hero .side-stats { flex-direction: row; flex-wrap: wrap; gap: 6px 16px; align-items: center; text-align: left; padding: 0; }
-    .tile { padding: 16px 16px 14px; border-radius: 24px; }
-    .tile .big { font-size: 1.9rem; }
-    .hero .big { font-size: 3rem; }
-    .card { padding: 16px 14px 14px; border-radius: 24px; }
-    .card-head { flex-wrap: wrap; }
-    .chart { min-height: 210px; }
-    .tr { grid-template-columns: minmax(0, 1fr) 2.6rem 5.4rem; gap: 8px; padding: 9px 10px; font-size: 0.9rem; }
+    .hero { flex-direction: row; align-items: flex-end; gap: 10px; border-radius: 24px; padding: 16px 18px; }
+    .hero .side-stats { flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; padding: 0 0 4px; font-size: 0.82rem; }
+    .tile { padding: 14px 14px 12px; border-radius: 22px; }
+    .tile h3, .card h2 { font-size: 0.82rem; }
+    .card h2 { font-size: 0.95rem; }
+    .tile .big { font-size: 1.75rem; margin: 8px 0 10px; }
+    .hero .big { font-size: 2.7rem; margin-top: 6px; }
+    .tile .sub { font-size: 0.78rem; gap: 5px 10px; }
+    .chip { padding: 4px 9px 4px 8px; gap: 6px; white-space: nowrap; font-size: 0.78rem; }
+    .chip i { width: 7px; height: 7px; }
+    .card { padding: 14px 12px 12px; border-radius: 22px; }
+    .card-head { flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .card .meta { font-size: 0.78rem; }
+    .money-chip { padding: 5px 11px; font-size: 0.8rem; }
+    .money-chip b { font-size: 0.95rem; }
+    .chart { min-height: 150px; }
+    .tr { grid-template-columns: minmax(0, 1fr) 2.2rem 4.9rem; gap: 6px; padding: 7px 9px; font-size: 0.82rem; }
+    .thead { font-size: 0.72rem; }
+    .tgroup { padding: 8px 9px 2px; font-size: 0.68rem; }
+    .srow.recall .n::before { width: 6px; height: 6px; margin-right: 7px; }
+    .fstep { padding: 7px 9px !important; }
+    .fstep .l { font-size: 0.84rem; }
+    .fstep .n { font-size: 1rem; }
+    .fstep .p { font-size: 0.72rem; padding: 2px 7px; }
+    .fstep .s { font-size: 0.72rem; }
+    .fowner { font-size: 0.66rem; padding-left: 9px; }
+    .seg button { padding: 6px 12px; font-size: 0.82rem; }
     .people { margin-left: 6px; }
     .person { grid-template-columns: minmax(0, 1fr) 4.6rem; gap: 2px 8px; }
     .person .ps { grid-column: 1; } .person .pd { grid-column: 2; grid-row: 2; text-align: right; }
@@ -787,9 +808,16 @@ let napoKey = '';
 function placeNapo() {
   const hole = $('hole'), napo = $('napo');
   const r = hole.getBoundingClientRect();
-  const h = Math.round(r.bottom + window.scrollY + Math.min(80, r.height * 0.25));
-  const w = Math.round(h * 582 / 343);
-  const left = Math.round(r.left + window.scrollX - w * 0.26);
+  let h = Math.round(r.bottom + window.scrollY + Math.min(80, r.height * 0.25));
+  let w = Math.round(h * 582 / 343);
+  let left = Math.round(r.left + window.scrollX - w * 0.26);
+  // Telefono: il quadro prende tutta la larghezza, come una fascia in alto.
+  if (window.innerWidth <= 640) {
+    w = Math.round(window.innerWidth * 1.12);
+    h = Math.max(Math.round(w * 343 / 582), Math.round(r.bottom + window.scrollY + 30));
+    w = Math.round(h * 582 / 343);
+    left = Math.round(window.innerWidth - w * 0.96);
+  }
   const key = h + ',' + w + ',' + left;
   if (key === napoKey) return;
   napoKey = key;
