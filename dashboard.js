@@ -60,14 +60,109 @@ function addDays(dateStr, delta) {
 const round2 = (n) => Math.round(n * 100) / 100;
 const num = (n) => (isFinite(n) ? round2(n) : 0);
 
-async function readDay(kv, date) {
-  const raw = await kv.get(`fatturato:${date}`);
-  if (!raw) return null;
-  const d = JSON.parse(raw);
+function normDay(d) {
+  if (!d || typeof d !== "object") return null;
   const clients = Array.isArray(d.clients) ? d.clients.map((c) => ({
     id: String(c.id || "").slice(0, 20), name: String(c.name || "").slice(0, 80), amount: num(c.amount), ts: Number(c.ts) || 0,
   })) : [];
   return { clients, adsSpend: num(d.adsSpend), leads: num(d.leads), toCall: num(d.toCall) };
+}
+
+async function readDayKV(kv, date) {
+  const raw = await kv.get(`fatturato:${date}`);
+  return raw ? normDay(JSON.parse(raw)) : null;
+}
+
+function applyOp(day, op) {
+  const d = normDay(day) || { clients: [], adsSpend: 0, leads: 0, toCall: 0 };
+  if (op.type === "addClient") return { ...d, clients: [...d.clients, op.client] };
+  if (op.type === "delClient") return { ...d, clients: d.clients.filter((c) => c.id !== op.id) };
+  if (op.type === "setAds") return { ...d, adsSpend: op.adsSpend };
+  return d;
+}
+
+// Archivio dei giorni in un Durable Object: le letture sono sempre aggiornate e le modifiche passano
+// una alla volta (il KV da solo può restituire per qualche secondo la versione vecchia e, leggendo e
+// riscrivendo, perdere un cliente appena aggiunto). Ogni giorno salvato è copiato anche nel KV, e i
+// giorni che il Durable Object non ha ancora vengono presi dal KV la prima volta.
+export class DashStore {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+    this.chain = Promise.resolve();
+  }
+
+  async load(date) {
+    const key = `day:${date}`;
+    let v = await this.ctx.storage.get(key);
+    if (v !== undefined) return v;
+    const fromKv = await readDayKV(this.env.ACADEMY_PROGRESS, date);
+    // Durante la lettura dal KV può essere arrivata una modifica: in quel caso vince quella.
+    v = await this.ctx.storage.get(key);
+    if (v !== undefined) return v;
+    v = fromKv || "none";
+    await this.ctx.storage.put(key, v);
+    return v;
+  }
+
+  async fetch(request) {
+    const body = await request.json().catch(() => ({}));
+    if (body.action === "get" && Array.isArray(body.dates)) {
+      const out = {};
+      for (const d of body.dates.slice(0, 40)) {
+        if (!DATE_RE.test(d)) continue;
+        const v = await this.load(d);
+        out[d] = v === "none" ? null : v;
+      }
+      return Response.json(out);
+    }
+    if (body.action === "mutate" && DATE_RE.test(body.date || "") && body.op) {
+      const run = async () => {
+        const cur = await this.load(body.date);
+        const next = applyOp(cur === "none" ? null : cur, body.op);
+        await this.ctx.storage.put(`day:${body.date}`, next);
+        try { await this.env.ACADEMY_PROGRESS.put(`fatturato:${body.date}`, JSON.stringify(next)); } catch (e) { /* la copia nel KV è solo di riserva */ }
+        return next;
+      };
+      const p = this.chain.then(run, run);
+      this.chain = p.catch(() => {});
+      return Response.json(await p);
+    }
+    return new Response("richiesta non valida", { status: 400 });
+  }
+}
+
+// Stessa interfaccia con o senza Durable Object: senza binding DASH si usa solo il KV.
+function dayStore(env) {
+  const kv = env.ACADEMY_PROGRESS;
+  if (env.DASH) {
+    const stub = env.DASH.get(env.DASH.idFromName("dashboard"));
+    const call = async (body) => {
+      const r = await stub.fetch("https://dash.internal/", { method: "POST", body: JSON.stringify(body) });
+      if (!r.ok) throw new Error(`archivio ${r.status}`);
+      return r.json();
+    };
+    return {
+      strong: true,
+      get: async (dates) => {
+        const o = await call({ action: "get", dates });
+        for (const k in o) o[k] = normDay(o[k]);
+        return o;
+      },
+      mutate: async (date, op) => normDay(await call({ action: "mutate", date, op })),
+    };
+  }
+  return {
+    get: async (dates) => {
+      const vals = await Promise.all(dates.map((d) => readDayKV(kv, d)));
+      return Object.fromEntries(dates.map((d, i) => [d, vals[i]]));
+    },
+    mutate: async (date, op) => {
+      const next = applyOp(await readDayKV(kv, date), op);
+      await kv.put(`fatturato:${date}`, JSON.stringify(next));
+      return normDay(next);
+    },
+  };
 }
 
 const dayCashed = (day) => round2((day ? day.clients || [] : []).reduce((s, c) => s + (c.amount || 0), 0));
@@ -168,12 +263,15 @@ function parseWhen(raw) {
   return { date: ROME_DAY.format(t), time };
 }
 
-async function monthPayload(kv, ym, today, sheet = null) {
+// written = giorno appena salvato: si usa così com'è (senza KV in mezzo che potrebbe essere indietro).
+async function monthPayload(store, ym, today, sheet = null, written = null) {
   const nDays = daysInMonth(ym);
   const dates = Array.from({ length: nDays }, (_, i) => `${ym}-${pad2(i + 1)}`);
-  const records = await Promise.all(dates.map((d) => readDay(kv, d)));
+  const yesterday = addDays(today, -1);
+  const got = await store.get([...new Set([...dates, today, yesterday])]);
+  if (written) got[written.date] = written.rec;
   const days = {};
-  dates.forEach((d, i) => { if (records[i]) days[d] = records[i]; });
+  dates.forEach((d) => { if (got[d]) days[d] = got[d]; });
 
   const todayYm = today.slice(0, 7);
   const upTo = ym === todayYm ? Number(today.slice(8, 10)) : ym > todayYm ? 0 : nDays;
@@ -195,11 +293,7 @@ async function monthPayload(kv, ym, today, sheet = null) {
   }
 
   // "Oggi" e "ieri" sono sempre i giorni veri, anche quando si sfogliano i mesi passati.
-  const yesterday = addDays(today, -1);
-  const [todayRec, yRec] = await Promise.all([
-    today.startsWith(ym) ? days[today] || null : readDay(kv, today),
-    yesterday.startsWith(ym) ? days[yesterday] || null : readDay(kv, yesterday),
-  ]);
+  const todayRec = got[today] || null, yRec = got[yesterday] || null;
   const todayData = todayRec || EMPTY_DAY;
 
   return {
@@ -233,13 +327,14 @@ async function monthPayload(kv, ym, today, sheet = null) {
       list: sheet.demos.slice(0, 12),
     } : null,
     sheetOk: !!sheet,
+    strong: !!store.strong,
     names: sheet ? sheet.names : [],
   };
 }
 
-async function payload(kv, ym, today) {
+async function payload(store, ym, today, written = null) {
   const sheet = await readSheet().catch(() => null);
-  return monthPayload(kv, ym, today, sheet);
+  return monthPayload(store, ym, today, sheet, written);
 }
 
 function json(data, status = 200) {
@@ -258,23 +353,24 @@ function html(body) {
 const BASE_HEAD = `<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#12161c">
+<meta name="theme-color" content="#2b2a25">
 <link rel="icon" type="image/png" href="/assets/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">`;
 
-// Palette presa dal quadro: cielo in tempesta (ardesia), mantello (cremisi), galloni (oro), cavallo (avorio).
+// Palette presa dai colori reali del quadro (campionati dall'immagine): grigi caldi del cielo in
+// tempesta, terra d'ombra delle rocce, ruggine del mantello, oro dei galloni, avorio del cavallo.
 const GLASS_CSS = `
   :root {
-    --slate-1: #1a2029;
-    --slate-2: #0f1318;
-    --crimson: #9e2a22;
+    --storm: #2b2a25;
+    --earth: #1c1a16;
+    --night: #14130f;
+    --rust: #96482f;
     --gold: #b98318;
     --bone: #ece6da;
     --bone-2: rgba(236,230,218,0.70);
     --bone-3: rgba(236,230,218,0.48);
-    --hair: rgba(236,230,218,0.10);
     --good: #6fdc9a;
     --bad: #ff8a80;
     --sans: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
@@ -284,32 +380,47 @@ const GLASS_CSS = `
     --r-md: 14px;
   }
   * { box-sizing: border-box; }
+  /* Sfondo: livelli di misura fissa (non dipendono da quanto è lunga la pagina, così scorrendo o
+     aggiungendo righe i colori non si spostano). Niente livelli "fixed" o in fusione: davano lampi. */
   html {
     overflow-x: clip;
-    background:
-      radial-gradient(760px 560px at 86% 220px, rgba(158,42,34,0.30), rgba(158,42,34,0) 70%),
-      radial-gradient(50% 40% at 8% 105%, rgba(185,131,24,0.10), rgba(185,131,24,0) 70%),
-      linear-gradient(165deg, var(--slate-1) 0%, #151a21 45%, var(--slate-2) 100%);
-    background-color: var(--slate-2);
     min-height: 100%;
+    background-color: var(--night);
+    /* Più colori del quadro, sfumati uno nell'altro: grigio-oliva del cielo, oro dei galloni,
+       ruggine e rosso del mantello, terra d'ombra delle rocce, un velo avorio del cavallo. */
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.045'/></svg>"),
+      radial-gradient(1000px 740px at 90% 250px, rgba(192,72,40,0.55), rgba(192,72,40,0) 68%),
+      radial-gradient(940px 640px at 46% -140px, rgba(200,148,58,0.44), rgba(200,148,58,0) 70%),
+      radial-gradient(1000px 780px at -6% 60px, rgba(134,134,114,0.50), rgba(134,134,114,0) 70%),
+      radial-gradient(680px 440px at 30% 330px, rgba(226,214,190,0.09), rgba(226,214,190,0) 70%),
+      radial-gradient(920px 780px at 12% 820px, rgba(156,52,34,0.44), rgba(156,52,34,0) 70%),
+      radial-gradient(1000px 760px at 64% 1080px, rgba(112,114,86,0.36), rgba(112,114,86,0) 70%),
+      radial-gradient(820px 620px at 98% 1260px, rgba(196,142,58,0.26), rgba(196,142,58,0) 70%),
+      radial-gradient(1100px 820px at -4% 1420px, rgba(128,100,70,0.42), rgba(128,100,70,0) 70%),
+      linear-gradient(175deg, #2c2a24 0px, #1f1c17 700px, #17140f 1500px);
+    background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+    background-size: 200px 200px, auto, auto, auto, auto, auto, auto, auto, auto, 100% 1500px;
   }
   body { margin: 0; color: var(--bone); font-family: var(--sans); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; background: transparent; }
   .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "ss01" 1; }
 
-  /* Napoleone: attaccato al bordo destro, sfuma a sinistra e in basso nel gradiente della pagina */
-  .napo { position: absolute; top: 0; right: 0; height: 60vh; width: calc(60vh * 582 / 343); z-index: -1; pointer-events: none;
+  /* Napoleone: posizionato dallo script accanto allo spazio libero (cavallo compreso); sfuma a
+     sinistra e in basso nel gradiente della pagina. */
+  .napo { position: absolute; top: 0; right: 0; height: 520px; width: 882px; z-index: -1; pointer-events: none;
     background: url(/assets/img/napoleone.jpg) center / cover no-repeat;
-    filter: saturate(1.06) contrast(1.05) brightness(0.96);
-    -webkit-mask-image: linear-gradient(90deg, transparent 8%, rgba(0,0,0,0.5) 30%, #000 52%), linear-gradient(180deg, #000 48%, rgba(0,0,0,0.62) 68%, rgba(0,0,0,0.22) 86%, transparent 100%);
+    filter: saturate(1.04) contrast(1.04) brightness(0.97);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.45) 12%, #000 27%), linear-gradient(180deg, #000 48%, rgba(0,0,0,0.62) 68%, rgba(0,0,0,0.22) 86%, transparent 100%);
     -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(90deg, transparent 8%, rgba(0,0,0,0.5) 30%, #000 52%), linear-gradient(180deg, #000 48%, rgba(0,0,0,0.62) 68%, rgba(0,0,0,0.22) 86%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.45) 12%, #000 27%), linear-gradient(180deg, #000 48%, rgba(0,0,0,0.62) 68%, rgba(0,0,0,0.22) 86%, transparent 100%);
     mask-composite: intersect; }
-  .grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.06; mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  /* Contenitore che taglia la foto sul bordo destro: senza, la pagina si allargherebbe e scivolerebbe di lato. */
+  .napo-clip { position: absolute; top: 0; left: 0; width: 100%; height: 600px; overflow: hidden; z-index: -1; pointer-events: none; }
+  .napo-clip .napo { z-index: auto; }
 
   /* Vetro: base quasi trasparente, bordo che si accende negli angoli, riflesso in alto, ombra doppia */
   .glass { position: relative; isolation: isolate; border-radius: var(--r-xl);
-    background: linear-gradient(180deg, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.035) 38%, rgba(255,255,255,0.02) 100%), rgba(17,21,27,0.38);
+    background: linear-gradient(180deg, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.035) 38%, rgba(255,255,255,0.02) 100%), rgba(22,20,17,0.40);
     -webkit-backdrop-filter: blur(32px) saturate(1.6);
     backdrop-filter: blur(32px) saturate(1.6);
     box-shadow:
@@ -337,7 +448,7 @@ ${BASE_HEAD}
 <style>
 ${GLASS_CSS}
   body { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
-  .napo { height: 82vh; width: calc(82vh * 582 / 343); }
+  .napo { height: 82vh; width: calc(82vh * 582 / 343); height: 82svh; width: calc(82svh * 582 / 343); }
   form { width: 100%; max-width: 380px; padding: 34px 28px 28px; text-align: center; }
   @media (min-width: 900px) { body { place-items: center start; padding-left: 9vw; } }
   img.logo { height: 30px; margin: 0 auto 22px; display: block; }
@@ -350,7 +461,7 @@ ${GLASS_CSS}
 </style>
 </head>
 <body>
-<div class="napo" aria-hidden="true"></div><div class="grain"></div>
+<div class="napo" aria-hidden="true"></div>
 <form class="glass" method="POST" action="${DASH_PATH}/login${tv ? "?tv=1" : ""}">
   <img class="logo" src="/assets/img/logo.png" alt="Vendita Uno">
   <h1>Conquistiamo.</h1>
@@ -374,8 +485,8 @@ ${GLASS_CSS}
   :root { --pad: clamp(14px, 2vw, 40px); --gap: clamp(12px, 1.15vw, 22px); }
   .layout { display: grid; gap: var(--gap); padding: var(--pad); max-width: 1680px; margin: 0 auto;
     grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
-    grid-template-areas: "top top" "tiles hole" "chart side" "demos side" "forms forms"; }
-  .top { grid-area: top; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; }
+    grid-template-areas: "top hole" "tiles hole" "chart side" "demos side" "forms forms"; }
+  .top { grid-area: top; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; min-height: 48px; }
   .tiles { grid-area: tiles; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
   .hole { grid-area: hole; position: relative; display: flex; align-items: flex-end; padding: 0 0 6px 6px; min-height: 240px; }
   .chart-card { grid-area: chart; }
@@ -385,7 +496,7 @@ ${GLASS_CSS}
 
   /* Testata */
   .top img { height: 28px; display: block; }
-  .when { display: flex; align-items: center; gap: 14px; padding: 7px 8px 7px 18px; border-radius: 999px; }
+  .when { display: flex; align-items: center; gap: 14px; padding: 7px 8px 7px 18px; border-radius: 999px; max-width: 100%; margin-left: auto; }
   .when .d { font-family: var(--serif); font-size: 1.35rem; line-height: 1; }
   .when .clock { font-weight: 600; font-size: 1rem; padding: 7px 13px; border-radius: 999px; }
   .alert { display: none; color: #fff; background: rgba(255,90,80,0.22); box-shadow: inset 0 0 0 1px rgba(255,138,128,0.55); border-radius: 999px; padding: 7px 13px; font-size: 0.85rem; font-weight: 600; }
@@ -441,7 +552,7 @@ ${GLASS_CSS}
   .chart .hit { fill: transparent; }
   .chart .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--bone-3); text-align: center; padding: 0 20px; }
   .tip { position: absolute; pointer-events: none; transform: translate(-50%, calc(-100% - 12px)); padding: 8px 12px; border-radius: var(--r-md); font-size: 0.85rem; white-space: nowrap; opacity: 0; transition: opacity .12s;
-    background: rgba(24,28,36,0.72); -webkit-backdrop-filter: blur(16px) saturate(1.6); backdrop-filter: blur(16px) saturate(1.6); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 10px 24px -10px rgba(0,0,0,0.6); }
+    background: rgba(30,28,24,0.78); -webkit-backdrop-filter: blur(16px) saturate(1.6); backdrop-filter: blur(16px) saturate(1.6); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 10px 24px -10px rgba(0,0,0,0.6); }
   .tip.on { opacity: 1; }
   .tip b { display: block; font-size: 1rem; font-weight: 600; }
   .tip span { color: var(--bone-3); }
@@ -480,8 +591,8 @@ ${GLASS_CSS}
   .clients .none { color: var(--bone-3); padding: 14px 4px; }
 
   /* Annuncio nuovo cliente: l'unico momento animato */
-  .toast { position: fixed; left: 50%; top: 44%; z-index: 20; transform: translate(-50%, -50%) scale(0.94); opacity: 0; pointer-events: none; text-align: center; padding: 28px 48px 30px; border-radius: 40px; transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2); }
-  .toast.on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .toast { position: fixed; left: 50%; top: 44%; z-index: 20; transform: translate(-50%, -50%) scale(0.94); opacity: 0; pointer-events: none; text-align: center; padding: 28px 48px 30px; border-radius: 40px; visibility: hidden; transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s .45s; }
+  .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s; }
   .toast .k { font-family: var(--serif); font-style: italic; font-size: clamp(1.4rem, 2.2vw, 2.2rem); color: var(--bone-2); }
   .toast .n { font-size: clamp(2rem, 4.4vw, 4.4rem); font-weight: 600; letter-spacing: -0.035em; margin-top: 4px; }
   .toast .a { font-size: clamp(1.6rem, 3.2vw, 3.2rem); font-weight: 600; color: var(--good); letter-spacing: -0.02em; }
@@ -504,7 +615,7 @@ ${GLASS_CSS}
 
   /* TV: tutto in uno schermo */
   body.tv { height: 100vh; overflow: hidden; }
-  body.tv .layout { height: 100vh; max-width: none; grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "top top" "tiles hole" "chart side" "demos side"; }
+  body.tv .layout { height: 100vh; max-width: none; grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "top hole" "tiles hole" "chart side" "demos side"; }
   body.tv .chart { min-height: 0; }
 
   @media (max-width: 1180px) {
@@ -516,7 +627,8 @@ ${GLASS_CSS}
   @media (max-width: 640px) {
     body { font-size: 14px; }
     .when .d { display: none; }
-    .when { padding: 5px 5px 5px 5px; }
+    .when { padding: 5px; gap: 8px; }
+    .alert { font-size: 0.75rem; padding: 6px 10px; }
     .hole { min-height: 230px; }
     .tiles { grid-template-columns: 1fr 1fr; }
     .tiles .tile:last-child { grid-column: 1 / -1; }
@@ -537,8 +649,7 @@ ${GLASS_CSS}
 </style>
 </head>
 <body class="${tv ? "tv" : "pc"}">
-<div class="napo" id="napo" aria-hidden="true"></div>
-<div class="grain"></div>
+<div class="napo-clip" id="napoClip" aria-hidden="true"><div class="napo" id="napo"></div></div>
 <div class="layout" id="screen">
   <header class="top">
     <img src="/assets/img/logo.png" alt="Vendita Uno">
@@ -670,13 +781,21 @@ function trend(diff, fmt) {
   return '<span class="' + (diff > 0 ? 'up' : 'down') + '">' + (diff > 0 ? '▲ ' : '▼ ') + fmt(Math.abs(diff)) + ' rispetto a ieri</span>';
 }
 
-// Napoleone si allinea al buco: la foto parte dall'alto della pagina e finisce poco sotto il buco.
+// Napoleone si allinea al buco: la foto parte dall'alto della pagina, finisce poco sotto il buco e il
+// muso del cavallo (circa il 26% della larghezza del quadro) cade sul bordo sinistro del buco.
+// Si riscrive solo se la misura cambia davvero: niente salti mentre si scorre.
+let napoKey = '';
 function placeNapo() {
   const hole = $('hole'), napo = $('napo');
   const r = hole.getBoundingClientRect();
   const h = Math.round(r.bottom + window.scrollY + Math.min(80, r.height * 0.25));
-  napo.style.height = h + 'px';
-  napo.style.width = Math.round(h * 582 / 343) + 'px';
+  const w = Math.round(h * 582 / 343);
+  const left = Math.round(r.left + window.scrollX - w * 0.26);
+  const key = h + ',' + w + ',' + left;
+  if (key === napoKey) return;
+  napoKey = key;
+  napo.style.cssText = 'height:' + h + 'px;width:' + w + 'px;left:' + left + 'px;right:auto';
+  $('napoClip').style.height = h + 'px';
 }
 
 // ---- Grafico incassato (SVG disegnato alla misura reale del riquadro) ----
@@ -757,9 +876,28 @@ function drawCash(box, series) {
   }
 }
 
-let rz;
-window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { placeNapo(); if (data) drawCash($('chCash'), data.series); }, 120); });
-if (document.fonts) document.fonts.ready.then(placeNapo);
+// Scrive nel DOM solo se il contenuto è cambiato: con i dati uguali la pagina resta ferma, niente lampi.
+const lastSet = {};
+function setHTML(id, html) { if (lastSet[id] === html) return; lastSet[id] = html; $(id).innerHTML = html; }
+function setText(id, text) { if (lastSet[id] === text) return; lastSet[id] = text; $(id).textContent = text; }
+
+// Il grafico si ridisegna solo se cambiano i dati o la misura del riquadro.
+let chartKey = '', chartSize = '';
+function drawChartIfNeeded(force) {
+  if (!data) return;
+  const box = $('chCash');
+  const size = box.clientWidth + 'x' + box.clientHeight;
+  const key = data.month.ym + '|' + data.series.map((s) => s.cashed + (s.today ? 't' : '') + (s.future ? 'f' : '')).join(',');
+  if (!force && key === chartKey && size === chartSize) return;
+  chartKey = key; chartSize = size;
+  drawCash(box, data.series);
+}
+if (window.ResizeObserver) {
+  new ResizeObserver(() => drawChartIfNeeded()).observe($('chCash'));
+  new ResizeObserver(() => placeNapo()).observe($('hole'));
+}
+window.addEventListener('resize', () => placeNapo());
+if (document.fonts) document.fonts.ready.then(() => { placeNapo(); drawChartIfNeeded(); });
 placeNapo();
 
 // ---- Annuncio nuovo cliente ----
@@ -789,52 +927,52 @@ function render(d) {
   const firstLoad = data === null;
   data = d; curMonth = d.month.ym;
   const t = d.todayData, mo = d.month, monthName = mo.label.split(' ')[0];
-  $('date').textContent = cap(new Date(d.today + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }));
-  $('alert').textContent = 'Foglio Google non raggiungibile';
+  setText('date', cap(new Date(d.today + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })));
+  setText('alert', 'Foglio Google non raggiungibile');
   $('alert').classList.toggle('on', !d.sheetOk);
 
   // Incassato oggi
   setNum('kToday', t.cashed, 'money');
   const nC = t.clients.length;
-  $('kTodaySub').innerHTML = '<div class="stat">' + (nC ? '<b>' + nC + '</b> ' + (nC === 1 ? 'cliente' : 'clienti') : 'Ancora nessun cliente') + '</div>' +
-    '<div class="stat">' + trend(Math.round((t.cashed - d.yesterday.cashed) * 100) / 100, money0) + '</div>';
+  setHTML('kTodaySub', '<div class="stat">' + (nC ? '<b>' + nC + '</b> ' + (nC === 1 ? 'cliente' : 'clienti') : 'Ancora nessun cliente') + '</div>' +
+    '<div class="stat">' + trend(Math.round((t.cashed - d.yesterday.cashed) * 100) / 100, money0) + '</div>');
 
   // Incassato del mese e proiezione
-  $('kMonthLabel').textContent = 'Incassato a ' + monthName;
+  setText('kMonthLabel', 'Incassato a ' + monthName);
   setNum('kMonth', mo.cashed, 'money');
-  $('kMonthSub').innerHTML =
+  setHTML('kMonthSub',
     (mo.projection != null ? '<span>Proiezione <b>' + money0(mo.projection) + '</b></span>' : mo.projectionNote ? '<span>' + esc(mo.projectionNote) + '</span>' : mo.isFuture ? '' : '<span>Mese chiuso</span>') +
-    (mo.clients ? '<span><b>' + mo.clients + '</b> ' + (mo.clients === 1 ? 'cliente' : 'clienti') + '</span>' : '');
+    (mo.clients ? '<span><b>' + mo.clients + '</b> ' + (mo.clients === 1 ? 'cliente' : 'clienti') + '</span>' : ''));
 
   // Lead
   setNum('kLeads', t.leads, 'int');
-  $('kLeadsSub').innerHTML = '<span class="chip' + (t.toCall ? '' : ' ok') + '"><i></i>' + grp(t.toCall || 0) + ' da chiamare</span>' + trend(t.leads - d.yesterday.leads, grp);
+  setHTML('kLeadsSub', '<span class="chip' + (t.toCall ? '' : ' ok') + '"><i></i>' + grp(t.toCall || 0) + ' da chiamare</span>' + trend(t.leads - d.yesterday.leads, grp));
 
   // Ritorno sulla spesa ads del mese
-  $('kRoasLabel').textContent = 'Ritorno sulle ads a ' + monthName;
-  $('kRoas').textContent = mo.roas != null ? nf1.format(mo.roas).replace(',0', '') + 'x' : 'n.d.';
-  $('kRoasSub').innerHTML = mo.adsSpend > 0
+  setText('kRoasLabel', 'Ritorno sulle ads a ' + monthName);
+  setText('kRoas', mo.roas != null ? nf1.format(mo.roas).replace(',0', '') + 'x' : 'n.d.');
+  setHTML('kRoasSub', mo.adsSpend > 0
     ? '<span><b>' + money0(mo.adsSpend) + '</b> spesi</span>' + (mo.cpl != null ? '<span>CPL <b>' + money0(mo.cpl) + '</b></span>' : '') + (mo.cac != null ? '<span>CAC <b>' + money0(mo.cac) + '</b></span>' : '')
-    : '<span>Scrivi la spesa ads per vedere CPL e CAC</span>';
+    : '<span>Scrivi la spesa ads per vedere CPL e CAC</span>');
 
   // Grafico
-  $('mLabel').textContent = cap(mo.label);
+  setText('mLabel', cap(mo.label));
   $('mNext').disabled = mo.isCurrent || mo.isFuture;
   const best = d.series.filter((s) => !s.future).reduce((b, s) => (s.cashed > (b ? b.cashed : 0) ? s : b), null);
-  $('cashMeta').textContent = best ? 'Giorno migliore: ' + dayLabel(best.date) + ', ' + money0(best.cashed) : 'Nessun incasso in questo mese';
-  drawCash($('chCash'), d.series);
+  setText('cashMeta', best ? 'Giorno migliore: ' + dayLabel(best.date) + ', ' + money0(best.cashed) : 'Nessun incasso in questo mese');
+  drawChartIfNeeded();
 
   // Demo fissate
   if (d.demos) {
-    $('demoCounts').innerHTML = '<span class="count"><b>' + d.demos.today + '</b> oggi</span><span class="count"><b>' + d.demos.month + '</b> questo mese</span>';
-    $('demos').innerHTML = d.demos.list.length ? d.demos.list.map((x) =>
+    setHTML('demoCounts', '<span class="count"><b>' + d.demos.today + '</b> oggi</span><span class="count"><b>' + d.demos.month + '</b> questo mese</span>');
+    setHTML('demos', d.demos.list.length ? d.demos.list.map((x) =>
       '<div class="tr"><span class="n">' + esc(x.name) + '</span><span class="c">' + esc(x.city || ' ') + '</span><span class="v">' + esc(x.seller || ' ') + '</span>' +
       '<span class="w' + (x.date === d.today ? ' today' : '') + '">' + esc(whenLabel(x, d.today)) + '</span>' +
       '<span class="esito ' + esitoClass(x.outcome) + '"><i></i>' + esc(x.outcome || 'In attesa') + '</span></div>'
-    ).join('') : '<div class="none">Nessuna demo fissata nel foglio.</div>';
+    ).join('') : '<div class="none">Nessuna demo fissata nel foglio.</div>');
   } else {
-    $('demoCounts').innerHTML = '';
-    $('demos').innerHTML = '<div class="none">Il foglio Google non risponde: le demo torneranno appena è raggiungibile.</div>';
+    setHTML('demoCounts', '');
+    setHTML('demos', '<div class="none">Il foglio Google non risponde: le demo torneranno appena è raggiungibile.</div>');
   }
 
   // Clienti di oggi
@@ -843,14 +981,14 @@ function render(d) {
   if (key !== lastClientsKey) {
     lastClientsKey = key;
     const fresh = seen ? list.filter((c) => !seen.has(c.id)) : [];
-    $('clMeta').textContent = nC ? money0(t.cashed) + ' da ' + plural(nC, 'cliente', 'clienti') : '';
+    setText('clMeta', nC ? money0(t.cashed) + ' da ' + plural(nC, 'cliente', 'clienti') : '');
     $('clients').innerHTML = list.length ? list.map((c) =>
-      '<div class="cl' + (fresh.indexOf(c) >= 0 ? ' new' : '') + '"><div class="av">' + esc((c.name.trim()[0] || '?').toUpperCase()) + '</div>' +
+      '<div class="cl' + (tvMode && fresh.indexOf(c) >= 0 ? ' new' : '') + '"><div class="av">' + esc((c.name.trim()[0] || '?').toUpperCase()) + '</div>' +
       '<div class="who"><div class="name">' + esc(c.name) + '</div><div class="time">' + new Date(c.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + '</div></div>' +
       '<div class="amt num">' + money(c.amount) + '</div>' +
       (tvMode ? '' : '<button type="button" class="del" data-id="' + esc(c.id) + '">Elimina</button>') + '</div>'
     ).join('') : '<div class="none">Il primo cliente di oggi comparirà qui.</div>';
-    if (fresh.length && !firstLoad) announce(fresh[0]);
+    if (tvMode && fresh.length && !firstLoad) announce(fresh[0]);
     seen = new Set(list.map((c) => c.id));
   }
 
@@ -865,12 +1003,35 @@ function render(d) {
   placeNapo();
 }
 
+// Ordine delle risposte: una lettura partita prima dell'ultimo salvataggio è vecchia e si scarta,
+// così un cliente appena registrato o eliminato non sparisce e ricompare.
+// Se l'archivio non è "forte" (solo KV), per 70 secondi dopo un salvataggio si scartano anche le
+// letture che non contengono ancora quel salvataggio: il KV può essere indietro fino a un minuto.
+let seq = 0, lastApplied = 0, lastChangeStart = 0, lastChange = null;
+const fingerprint = (d) => d.todayData.clients.map((c) => c.id).join(',') + '|' + d.month.ym + '|' + d.month.adsSpend;
+function apply(d, mySeq) {
+  if (mySeq < lastApplied) return;
+  lastApplied = mySeq;
+  render(d);
+}
 async function refresh(ym) {
+  const mySeq = ++seq, startedAt = Date.now();
   try {
     const r = await fetch(API + (ym ? '?month=' + ym : ''), { cache: 'no-store' });
     if (r.status === 401) { location.reload(); return; }
-    render(await r.json());
-  } catch (e) { $('alert').textContent = 'Connessione persa, riprovo'; $('alert').classList.add('on'); }
+    const d = await r.json();
+    if (startedAt < lastChangeStart) return;
+    if (lastChange && !d.strong && Date.now() - lastChange.at < 70000 && d.month.ym === lastChange.ym && fingerprint(d) !== lastChange.fp) return;
+    apply(d, mySeq);
+  } catch (e) { setText('alert', 'Connessione persa, riprovo'); $('alert').classList.add('on'); }
+}
+async function change(run) {
+  const mySeq = ++seq;
+  lastChangeStart = Date.now();
+  const d = await run();
+  lastChange = { at: Date.now(), ym: d.month.ym, fp: fingerprint(d) };
+  apply(d, mySeq);
+  return d;
 }
 function shift(ym, n) { const p = ym.split('-').map(Number); const t = p[0] * 12 + p[1] - 1 + n; return Math.floor(t / 12) + '-' + String(t % 12 + 1).padStart(2, '0'); }
 
@@ -905,7 +1066,7 @@ if ($('clientForm')) {
     if (!isFinite(amount) || amount <= 0) { $('cmsg').textContent = "Scrivi l'importo incassato, ad esempio 1500"; return; }
     $('cmsg').textContent = 'Registro…';
     try {
-      render(await post(API + '/client', { date: data.today, name, amount }));
+      await change(() => post(API + '/client', { date: data.today, name, amount }));
       $('cname').value = ''; $('camount').value = '';
       $('cmsg').textContent = name + ' registrato';
     } catch (err) { $('cmsg').textContent = 'Non registrato: controlla la connessione e riprova'; }
@@ -926,7 +1087,7 @@ if ($('clientForm')) {
     if (!isFinite(adsSpend) || adsSpend < 0) { $('msg').textContent = 'Scrivi la spesa, ad esempio 300'; return; }
     $('msg').textContent = 'Salvo…';
     try {
-      render(await post(API, { date: $('fdate').value, adsSpend }));
+      await change(() => post(API, { date: $('fdate').value, adsSpend }));
       $('msg').textContent = 'Spesa salvata';
     } catch (err) { $('msg').textContent = 'Non salvata: controlla la connessione e riprova'; }
   };
@@ -942,9 +1103,11 @@ if ($('clientForm')) {
     }
     btn.disabled = true; btn.textContent = 'Elimino…';
     try {
-      const r = await fetch(API + '/client?date=' + encodeURIComponent(data.today) + '&id=' + encodeURIComponent(btn.dataset.id), { method: 'DELETE' });
-      if (!r.ok) throw new Error();
-      render(await r.json());
+      await change(async () => {
+        const r = await fetch(API + '/client?date=' + encodeURIComponent(data.today) + '&id=' + encodeURIComponent(btn.dataset.id), { method: 'DELETE' });
+        if (!r.ok) throw new Error();
+        return r.json();
+      });
     } catch (err) { btn.disabled = false; btn.classList.remove('sure'); btn.textContent = 'Elimina'; }
   };
 }
@@ -980,6 +1143,7 @@ export async function handleDashboard(request, env, url) {
   }
 
   const loggedIn = await isLoggedIn(request, kv);
+  const store = dayStore(env);
 
   if (path === `${DASH_PATH}/api`) {
     if (!loggedIn) return json({ error: "unauthorized" }, 401);
@@ -987,7 +1151,7 @@ export async function handleDashboard(request, env, url) {
 
     if (request.method === "GET") {
       const ym = /^\d{4}-\d{2}$/.test(url.searchParams.get("month") || "") ? url.searchParams.get("month") : today.slice(0, 7);
-      return json(await payload(kv, ym, today));
+      return json(await payload(store, ym, today));
     }
 
     if (request.method === "POST") {
@@ -996,9 +1160,8 @@ export async function handleDashboard(request, env, url) {
       if (date > today) return json({ error: "data non valida" }, 400);
       const adsSpend = round2(Number(body.adsSpend) || 0);
       if (!isFinite(adsSpend) || adsSpend < 0 || adsSpend > 100000000) return json({ error: "valore non valido" }, 400);
-      const day = (await readDay(kv, date)) || EMPTY_DAY;
-      await kv.put(`fatturato:${date}`, JSON.stringify({ ...day, adsSpend }));
-      return json(await payload(kv, date.slice(0, 7), today));
+      const rec = await store.mutate(date, { type: "setAds", adsSpend });
+      return json(await payload(store, date.slice(0, 7), today, { date, rec }));
     }
 
     return new Response("Method not allowed", { status: 405 });
@@ -1016,19 +1179,16 @@ export async function handleDashboard(request, env, url) {
       const amount = round2(Number(body.amount) || 0);
       if (!name) return json({ error: "nome del cliente mancante" }, 400);
       if (!isFinite(amount) || amount <= 0 || amount > 100000000) return json({ error: "importo non valido" }, 400);
-      const day = (await readDay(kv, date)) || EMPTY_DAY;
-      const clients = [...day.clients, { id: toHex(crypto.getRandomValues(new Uint8Array(6))), name, amount, ts: Date.now() }];
-      await kv.put(`fatturato:${date}`, JSON.stringify({ ...day, clients }));
-      return json(await payload(kv, date.slice(0, 7), today));
+      const client = { id: toHex(crypto.getRandomValues(new Uint8Array(6))), name, amount, ts: Date.now() };
+      const rec = await store.mutate(date, { type: "addClient", client });
+      return json(await payload(store, date.slice(0, 7), today, { date, rec }));
     }
 
     if (request.method === "DELETE") {
       const date = DATE_RE.test(url.searchParams.get("date") || "") ? url.searchParams.get("date") : today;
       const id = url.searchParams.get("id") || "";
-      const day = (await readDay(kv, date)) || EMPTY_DAY;
-      const clients = day.clients.filter((c) => c.id !== id);
-      await kv.put(`fatturato:${date}`, JSON.stringify({ ...day, clients }));
-      return json(await payload(kv, date.slice(0, 7), today));
+      const rec = await store.mutate(date, { type: "delClient", id });
+      return json(await payload(store, date.slice(0, 7), today, { date, rec }));
     }
 
     return new Response("Method not allowed", { status: 405 });

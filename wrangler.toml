@@ -15,8 +15,17 @@ id = "16990aca669849f8905453df22aea689"
 tag = "v1"
 new_sqlite_classes = ["CrmStore"]
 
-# Il gestionale CRM (clienti/onboarding/upsell) è stato tolto: la dashboard vendite
-# ora usa solo il KV ACADEMY_PROGRESS, niente più Durable Object.
+# Il gestionale CRM (clienti/onboarding/upsell) è stato tolto.
 [[migrations]]
 tag = "v2"
 deleted_classes = ["CrmStore"]
+
+# Archivio dei giorni della dashboard vendite (incassi e spesa ads): letture sempre aggiornate,
+# con copia nel KV ACADEMY_PROGRESS. Senza questo binding la dashboard usa solo il KV.
+[[durable_objects.bindings]]
+name = "DASH"
+class_name = "DashStore"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["DashStore"]

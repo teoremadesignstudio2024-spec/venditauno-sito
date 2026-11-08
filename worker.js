@@ -2,6 +2,9 @@ import usersData from "./academy-users.json";
 import { DASH_PATH, TV_PATH, handleDashboard } from "./dashboard.js";
 import { handleAppApi } from "./app-api.js";
 
+// Archivio della dashboard vendite (vedi wrangler.toml)
+export { DashStore } from "./dashboard.js";
+
 const MODULES = [
   {
     id: "m1",
