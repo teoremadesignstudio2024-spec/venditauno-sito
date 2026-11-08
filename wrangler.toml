@@ -10,3 +10,13 @@ not_found_handling = "404-page"
 [[kv_namespaces]]
 binding = "ACADEMY_PROGRESS"
 id = "16990aca669849f8905453df22aea689"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CrmStore"]
+
+# Il gestionale CRM (clienti/onboarding/upsell) è stato tolto: la dashboard vendite
+# ora usa solo il KV ACADEMY_PROGRESS, niente più Durable Object.
+[[migrations]]
+tag = "v2"
+deleted_classes = ["CrmStore"]

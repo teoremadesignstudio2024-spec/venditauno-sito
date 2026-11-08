@@ -6,6 +6,7 @@
 // Lead e spesa ads sono inseriti a mano per ora: quando collegheremo GoHighLevel/Meta Ads questi numeri potranno arrivare in automatico senza cambiare il resto.
 
 export const DASH_PATH = "/dashboardvenditatop";
+export const TV_PATH = "/tv";
 
 // Password di accesso: salvata solo come hash PBKDF2. Per cambiarla chiedi a Claude un nuovo hash.
 const DASH_SALT = "dc9c1720bf64430ece096b2650befaac";
@@ -498,7 +499,7 @@ export async function handleDashboard(request, env, url) {
     return html(loggedIn ? dashboardPage(false) : loginPage(null));
   }
 
-  if (path === `${DASH_PATH}/tv`) {
+  if (path === `${DASH_PATH}/tv` || path === TV_PATH) {
     return html(loggedIn ? dashboardPage(true) : loginPage(null, true));
   }
 
