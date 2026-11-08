@@ -112,12 +112,12 @@ async function allOpps(env, extra, stop = () => false) {
   return out;
 }
 
-// Risposte tenute 60 secondi (i venditori un'ora): TV e PC aggiornano spesso e GoHighLevel ha dei limiti.
+// Risposte tenute 20 secondi (i venditori un'ora): TV e PC aggiornano spesso e GoHighLevel ha dei limiti.
 let ghlCache = { at: 0, from: "", data: null };
 let ghlUsers = { at: 0, map: {} };
 
 async function readGHL(env, fromDate) {
-  if (ghlCache.data && Date.now() - ghlCache.at < 60000 && ghlCache.from <= fromDate) return ghlCache.data;
+  if (ghlCache.data && Date.now() - ghlCache.at < 20000 && ghlCache.from <= fromDate) return ghlCache.data;
   const count = async (stage) => {
     const d = await ghl(env, oppSearch(`${inPipeline}&pipeline_stage_id=${stage}&limit=1`));
     return (d.meta && d.meta.total) || 0;
@@ -132,8 +132,9 @@ async function readGHL(env, fromDate) {
   const [leads, won, toCall, recallCounts, demoRes, users] = await Promise.all([
     // Lead: opportunità della VENDITA PIPELINE per giorno di creazione; ci si ferma prima di fromDate.
     allOpps(env, inPipeline, (o) => ROME_DAY.format(new Date(o.createdAt)) < fromDate),
-    // Incassato: opportunità vinte (status won) della VENDITA PIPELINE, al giorno in cui sono diventate vinte.
-    // Le altre pipeline (es. "Clienti Attivi pro", onboarding) non si guardano.
+    // Incassato: opportunità vinte (status won) che sono ADESSO nella VENDITA PIPELINE, al giorno in cui
+    // sono diventate vinte. Le altre pipeline non si guardano: un cliente spostato in "Clienti Attivi pro"
+    // (clienti dei mesi passati, onboarding) esce dai conti.
     allOpps(env, `${inPipeline}&status=won`),
     count(GHL_STAGE.nuovi),
     Promise.all(GHL_STAGE.richiamare.map(count)),
@@ -154,66 +155,12 @@ async function readGHL(env, fromDate) {
     const w = parseWhen(o.lastStageChangeAt || o.createdAt);
     return { name: who(o), seller: (users[o.assignedTo] || "").slice(0, 30), date: w ? w.date : "", time: w ? w.time : "" };
   }).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-  const data = { leadsByDay, wonList, toCall, toRecall: recallCounts.reduce((a, b) => a + b, 0), demos };
+  const wonByDay = {};
+  for (const w of wonList) (wonByDay[w.day] = wonByDay[w.day] || []).push(w);
+  for (const d in wonByDay) wonByDay[d].sort((a, b) => a.ts - b.ts);
+  const data = { leadsByDay, wonByDay, toCall, toRecall: recallCounts.reduce((a, b) => a + b, 0), demos };
   ghlCache = { at: Date.now(), from: fromDate, data };
   return data;
-}
-
-// Registro delle vinte. Un'opportunità vinta nella VENDITA PIPELINE, se poi viene spostata in un'altra
-// pipeline (es. "Clienti Attivi pro" per l'onboarding), sparirebbe dalla ricerca e dall'incassato. Per
-// questo ogni vinta vista qui si ricorda nel KV (chiave "vinte:AAAA-MM": id -> giorno, importo, nome).
-// Se una ricordata non è più tra le vinte: ogni 10 minuti si controlla; se è ancora nella VENDITA
-// PIPELINE ma non più vinta, o è stata cancellata, si toglie; se è in un'altra pipeline resta.
-let wonMerged = { key: "", data: null };
-let wonCheckAt = 0;
-async function mergeWon(env, live, months, freshAt) {
-  const cacheKey = freshAt + "|" + months.join(",");
-  if (wonMerged.key === cacheKey) return wonMerged.data;
-  const kv = env.ACADEMY_PROGRESS;
-  const all = [...new Set([...months, ...live.map((w) => w.day.slice(0, 7))])];
-  const recs = {};
-  await Promise.all(all.map(async (m) => {
-    let r = {};
-    try { r = JSON.parse((await kv.get(`vinte:${m}`)) || "{}"); } catch (e) { r = {}; }
-    recs[m] = r && typeof r === "object" ? r : {};
-  }));
-  const dirty = new Set();
-  const liveById = new Map(live.map((w) => [w.id, w]));
-  for (const w of live) {
-    const m = w.day.slice(0, 7), cur = recs[m][w.id];
-    const entry = { name: w.name, amount: w.amount, ts: w.ts, day: w.day, seller: w.seller };
-    if (!cur || JSON.stringify(cur) !== JSON.stringify(entry)) { recs[m][w.id] = entry; dirty.add(m); }
-  }
-  for (const m of all) {
-    for (const id of Object.keys(recs[m])) {
-      const w = liveById.get(id);
-      if (w && w.day.slice(0, 7) !== m) { delete recs[m][id]; dirty.add(m); }
-    }
-  }
-  if (Date.now() - wonCheckAt > 600000) {
-    wonCheckAt = Date.now();
-    const missing = [];
-    for (const m of all) for (const id of Object.keys(recs[m])) if (!liveById.has(id)) missing.push([m, id]);
-    for (const [m, id] of missing.slice(0, 20)) {
-      try {
-        const r = await fetch(`${GHL_API}/opportunities/${encodeURIComponent(id)}`, {
-          headers: { Authorization: `Bearer ${env.GHL_TOKEN}`, Version: "2021-07-28", Accept: "application/json" },
-        });
-        if (r.status === 404) { delete recs[m][id]; dirty.add(m); continue; }
-        if (!r.ok) continue;
-        const o = (await r.json()).opportunity;
-        if (o && o.pipelineId === GHL_PIPELINE && o.status !== "won") { delete recs[m][id]; dirty.add(m); }
-      } catch (e) { /* si riprova al prossimo controllo */ }
-    }
-  }
-  await Promise.all([...dirty].map((m) => kv.put(`vinte:${m}`, JSON.stringify(recs[m])).catch(() => {})));
-  const byDay = {};
-  for (const m of all) {
-    for (const [id, w] of Object.entries(recs[m])) (byDay[w.day] = byDay[w.day] || []).push({ id, name: w.name, amount: num(w.amount), ts: w.ts, seller: w.seller || "" });
-  }
-  for (const d in byDay) byDay[d].sort((a, b) => a.ts - b.ts);
-  wonMerged = { key: cacheKey, data: byDay };
-  return byDay;
 }
 
 // Spesa ads Facebook dall'Ad Manager di GoHighLevel, giorno per giorno, con i lead che Facebook
@@ -298,14 +245,6 @@ async function payload(ym, today, env) {
     readGHL(env, fromDate).catch(() => null),
     `${ym}-01` <= today ? readAds(env, `${ym}-01`, lastDay < today ? lastDay : today).catch(() => null) : null,
   ]);
-  if (g) {
-    const months = [...new Set([ym, today.slice(0, 7), addDays(today, -1).slice(0, 7)])].sort();
-    g.wonByDay = await mergeWon(env, g.wonList, months, ghlCache.at).catch(() => {
-      const byDay = {};
-      for (const w of g.wonList) (byDay[w.day] = byDay[w.day] || []).push(w);
-      return byDay;
-    });
-  }
   return monthPayload(ym, today, g, ads);
 }
 
@@ -853,14 +792,13 @@ function whenLabel(x, today) {
 }
 
 // Scheda "Chiusi": oggi (predefinito), un giorno scelto dal grafico, o tutto il mese.
-// Se oggi non c'è ancora nessuno, si mostrano i chiusi del mese, così la scheda non resta vuota.
 let view = { mode: 'today', day: '' };
 function setView(v) {
   view = v;
   if (data) { renderClosed([]); drawChartIfNeeded(true); }
 }
 function closedRow(c, showDay, isNew) {
-  const time = new Date(c.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  const time = new Date(c.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
   return '<div class="cl' + (isNew ? ' new' : '') + '"><div class="av">' + esc((c.name.trim()[0] || '?').toUpperCase()) + '</div>' +
     '<div class="who"><div class="name">' + esc(c.name) + '</div><div class="time">' + (showDay ? '<span class="day">' + esc(dayLabel(c.day)) + '</span> ' : '') + time +
     (c.seller ? ' <span class="seller">' + esc(c.seller) + '</span>' : '') + '</div></div>' +
@@ -870,11 +808,10 @@ function renderClosed(freshIds) {
   const d = data, mo = d.month, monthName = mo.label.split(' ')[0];
   if (view.mode === 'day' && !view.day.startsWith(mo.ym)) view = { mode: 'today', day: '' };
   let mode = view.mode, list, title;
-  if (mode === 'today' && !d.todayData.clients.length && mo.isCurrent && mo.won.length) mode = 'month-fallback';
   if (mode === 'day') {
     list = mo.won.filter((c) => c.day === view.day);
     title = 'Chiusi ' + dayLabel(view.day);
-  } else if (mode === 'month' || mode === 'month-fallback') {
+  } else if (mode === 'month') {
     list = mo.won;
     title = 'Chiusi a ' + monthName;
   } else {
@@ -883,8 +820,7 @@ function renderClosed(freshIds) {
   }
   const total = list.reduce((s, c) => s + c.amount, 0);
   setText('clTitle', title);
-  setText('clMeta', mode === 'month-fallback' ? 'Ancora nessuno oggi: ecco il mese, ' + money0(total) + ' da ' + plural(list.length, 'chiuso', 'chiusi')
-    : list.length ? money0(total) + ' da ' + plural(list.length, 'chiuso', 'chiusi') : '');
+  setText('clMeta', list.length ? money0(total) + ' da ' + plural(list.length, 'chiuso', 'chiusi') : '');
   $('vToday').classList.toggle('on', view.mode === 'today');
   $('vMonth').classList.toggle('on', view.mode === 'month');
   const key = mode + '|' + view.day + '|' + mo.ym + '|' + list.map((c) => c.id + ':' + c.amount).join(',');
@@ -892,7 +828,7 @@ function renderClosed(freshIds) {
   lastClientsKey = key;
   const showDay = mode !== 'today';
   $('clients').innerHTML = list.length ? list.map((c) => closedRow(c, showDay, tvMode && freshIds.indexOf(c.id) >= 0)).join('')
-    : '<div class="none">' + (mode === 'today' ? 'Quando una vinta della VENDITA PIPELINE arriva, compare qui.' : 'Nessun chiuso in questo periodo.') + '</div>';
+    : '<div class="none">' + (mode === 'today' ? 'Nessun chiuso oggi.' + (mo.won.length ? ' Premi "Mese" per vedere quelli di ' + monthName + '.' : '') : 'Nessun chiuso in questo periodo.') + '</div>';
 }
 
 function render(d) {
@@ -975,9 +911,10 @@ async function refresh(ym) {
 }
 function shift(ym, n) { const p = ym.split('-').map(Number); const t = p[0] * 12 + p[1] - 1 + n; return Math.floor(t / 12) + '-' + String(t % 12 + 1).padStart(2, '0'); }
 
-function tick() { $('clock').textContent = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
+function tick() { $('clock').textContent = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' }); }
 tick(); setInterval(tick, 1000);
-refresh(); setInterval(() => refresh(curMonth), 6000);
+// Ogni 5 secondi: con TV e PC sempre aperti resta sotto le 100.000 richieste al giorno del piano gratuito di Cloudflare.
+refresh(); setInterval(() => refresh(curMonth), 5000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(curMonth); });
 async function keepAwake() { try { await navigator.wakeLock?.request('screen'); } catch (e) {} }
 keepAwake(); document.addEventListener('visibilitychange', () => { if (!document.hidden) keepAwake(); });
