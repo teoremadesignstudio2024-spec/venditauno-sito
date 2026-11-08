@@ -387,7 +387,24 @@ async function readGHL(env, fromDate) {
   return data;
 }
 
-async function monthPayload(store, ym, today, sheet = null, written = null) {
+// Spesa ads Facebook dall'Ad Manager di GoHighLevel, giorno per giorno, con i lead che Facebook
+// attribuisce alle ads (conversions). Tenuta 5 minuti: Facebook aggiorna questi numeri lentamente.
+let adsCache = {};
+async function readAds(env, from, to) {
+  const key = from + "|" + to, hit = adsCache[key];
+  if (hit && Date.now() - hit.at < 300000) return hit.data;
+  const d = await ghl(env, `/ad-publishing/facebook/reporting?locationId=${GHL_LOCATION}&groupBy=day&startDate=${from}&endDate=${to}&type=AD_MANAGER&fields=spend,conversions,clicks,impressions`);
+  const byDay = {};
+  for (const g of d.grouped || []) {
+    if (!DATE_RE.test(g.dateStart || "")) continue;
+    byDay[g.dateStart] = { spend: num(Number(g.spend)), leads: Number(g.conversions) || 0 };
+  }
+  if (Object.keys(adsCache).length > 24) adsCache = {};
+  adsCache[key] = { at: Date.now(), data: byDay };
+  return byDay;
+}
+
+async function monthPayload(store, ym, today, sheet = null, written = null, ads = null) {
   const nDays = daysInMonth(ym);
   const dates = Array.from({ length: nDays }, (_, i) => `${ym}-${pad2(i + 1)}`);
   const yesterday = addDays(today, -1);
@@ -406,10 +423,14 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
   const leadsOn = (d, rec) => (sheet ? sheet.leadsByDay[d] || 0 : rec ? rec.leads || 0 : 0);
 
   const cashed = round2(pastDates.reduce((s, d) => s + dayCashed(days[d]), 0));
-  // Spesa ads: il totale del mese scritto a mano; se manca, la somma dei vecchi valori giornalieri.
+  // Spesa ads: prima quella letta da Facebook (tramite GoHighLevel); se non c'è, il totale del mese
+  // scritto a mano; se manca anche quello, la somma dei vecchi valori giornalieri.
   const adsDaily = round2(pastDates.reduce((s, d) => s + (days[d] ? days[d].adsSpend : 0), 0));
   const adsSet = adsMonth !== null && adsMonth !== undefined;
-  const adsSpend = adsSet ? adsMonth : adsDaily;
+  const adsApi = ads ? round2(pastDates.reduce((s, d) => s + (ads[d] ? ads[d].spend : 0), 0)) : 0;
+  const adsLeads = ads ? pastDates.reduce((s, d) => s + (ads[d] ? ads[d].leads : 0), 0) : null;
+  const adsAuto = adsApi > 0;
+  const adsSpend = adsAuto ? adsApi : adsSet ? adsMonth : adsDaily;
   const leads = pastDates.reduce((s, d) => s + leadsOn(d, days[d]), 0);
   const clientsCount = pastDates.reduce((s, d) => s + (days[d] ? days[d].clients.length : 0), 0);
 
@@ -444,8 +465,9 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
     month: {
       ym, label: MONTH_LABEL.format(new Date(ym + "-01T12:00:00Z")),
       daysInMonth: nDays, elapsed: upTo,
-      cashed, adsSpend, adsSet, leads, clients: clientsCount,
-      cpl: leads > 0 && adsSpend > 0 ? round2(adsSpend / leads) : null,
+      cashed, adsSpend, adsSet, adsManual: adsSet ? adsMonth : null, adsAuto, adsLeads: adsAuto ? adsLeads : null, leads, clients: clientsCount,
+      // CPL sui lead che Facebook attribuisce alle ads quando la spesa è automatica, altrimenti su tutti i lead.
+      cpl: adsAuto && adsLeads > 0 ? round2(adsSpend / adsLeads) : leads > 0 && adsSpend > 0 ? round2(adsSpend / leads) : null,
       cac: clientsCount > 0 && adsSpend > 0 ? round2(adsSpend / clientsCount) : null,
       roas: adsSpend > 0 ? round2(cashed / adsSpend) : null,
       projection, projectionNote,
@@ -466,9 +488,15 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
 
 async function payload(store, ym, today, written = null, env = {}) {
   const fromDate = [`${ym}-01`, addDays(today, -1)].sort()[0];
-  let sheet = env.GHL_TOKEN ? await readGHL(env, fromDate).catch(() => null) : null;
+  const lastDay = `${ym}-${pad2(daysInMonth(ym))}`;
+  const adsTo = lastDay < today ? lastDay : today;
+  const [ghlData, ads] = await Promise.all([
+    env.GHL_TOKEN ? readGHL(env, fromDate).catch(() => null) : null,
+    env.GHL_TOKEN && `${ym}-01` <= today ? readAds(env, `${ym}-01`, adsTo).catch(() => null) : null,
+  ]);
+  let sheet = ghlData;
   if (!sheet) sheet = await readSheet().catch(() => null);
-  return monthPayload(store, ym, today, sheet, written);
+  return monthPayload(store, ym, today, sheet, written, ads);
 }
 
 function json(data, status = 200) {
@@ -750,6 +778,10 @@ ${GLASS_CSS}
   .form .row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; }
   .btn { width: 100%; padding: 14px; font: inherit; font-size: 1rem; font-weight: 600; border-radius: 999px; cursor: pointer; border: 0; background: var(--bone); color: #14181e; }
   .btn.ghost { background: rgba(255,255,255,0.10); color: var(--bone); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16); }
+  .form .auto-info { display: none; }
+  .form.auto .auto-info { display: block; }
+  .form.auto .manual { display: none; }
+  .auto-val { padding: 14px 16px; font-size: 1.05rem; font-weight: 600; margin-bottom: 14px; }
   .btn:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
   .msg { min-height: 1.3em; font-size: 0.9rem; margin: 0 0 10px; text-align: center; color: var(--bone-2); }
   .tv-link { display: block; text-align: center; color: var(--bone-2); font-size: 0.9rem; margin-top: 14px; }
@@ -862,13 +894,15 @@ ${tv ? "" : `  <section class="forms">
     </form>
     <form class="form glass" id="adsForm">
       <h2>Spesa ads del mese</h2>
-      <p class="note">Scrivi quanto hai speso in ads in tutto nel mese, fino a oggi. Domani correggi il numero con il nuovo totale: CPL, CAC e ritorno sulle ads si ricalcolano da soli.</p>
+      <p class="note manual">Scrivi quanto hai speso in ads in tutto nel mese, fino a oggi. Domani correggi il numero con il nuovo totale: CPL, CAC e ritorno sulle ads si ricalcolano da soli.</p>
+      <p class="note auto-info">Letta da sola da Facebook tramite GoHighLevel e aggiornata ogni pochi minuti: non serve scriverla.</p>
       <div class="row">
         <div><label for="fmonth">Mese</label><select class="well" id="fmonth"></select></div>
-        <div><label for="fads">Totale speso (€)</label><input class="well" id="fads" inputmode="decimal" placeholder="1200" autocomplete="off"></div>
+        <div class="manual"><label for="fads">Totale speso (€)</label><input class="well" id="fads" inputmode="decimal" placeholder="1200" autocomplete="off"></div>
+        <div class="auto-info"><label>Speso finora</label><div class="well auto-val num" id="adsAutoVal"></div></div>
       </div>
       <div class="msg" id="msg" role="status"></div>
-      <button type="submit" class="btn ghost">Salva totale del mese</button>
+      <button type="submit" class="btn ghost manual">Salva totale del mese</button>
       <a class="tv-link" href="${DASH_PATH}/tv" target="_blank">Apri la schermata della TV</a>
     </form>
   </section>`}
@@ -1094,7 +1128,7 @@ function render(d) {
   setText('kRoasLabel', 'Ritorno sulle ads a ' + monthName);
   setText('kRoas', mo.roas != null ? nf1.format(mo.roas).replace(',0', '') + 'x' : 'n.d.');
   setHTML('kRoasSub', mo.adsSpend > 0
-    ? '<span><b>' + money0(mo.adsSpend) + '</b> spesi</span>' + (mo.cpl != null ? '<span>CPL <b>' + money0(mo.cpl) + '</b></span>' : '') + (mo.cac != null ? '<span>CAC <b>' + money0(mo.cac) + '</b></span>' : '')
+    ? '<span><b>' + money0(mo.adsSpend) + '</b> spesi</span>' + (mo.adsLeads != null ? '<span><b>' + grp(mo.adsLeads) + '</b> lead dalle ads</span>' : '') + (mo.cpl != null ? '<span>CPL <b>' + money0(mo.cpl) + '</b></span>' : '') + (mo.cac != null ? '<span>CAC <b>' + money0(mo.cac) + '</b></span>' : '')
     : '<span>Scrivi la spesa ads per vedere CPL e CAC</span>');
 
   // Grafico
@@ -1143,6 +1177,7 @@ function render(d) {
     $('cnames').innerHTML = d.names.map((n) => '<option value="' + esc(n) + '">').join('');
   }
   if ($('fmonth') && !$('fmonth').options.length) fillMonths(d);
+  else if ($('fmonth') && $('fmonth').value === d.month.ym && d.month.adsAuto) showAds(d.month);
   placeNapo();
 }
 
@@ -1169,8 +1204,14 @@ function fillMonths(d) {
     sel.appendChild(o);
   }
   sel.value = now;
-  if (d.month.ym === now) $('fads').value = d.month.adsSet ? String(d.month.adsSpend).replace('.', ',') : '';
+  if (d.month.ym === now) showAds(d.month);
   else loadAdsFor(now);
+}
+// Spesa automatica da Facebook: si mostra; altrimenti la casella per il totale scritto a mano.
+function showAds(m) {
+  $('adsForm').classList.toggle('auto', !!m.adsAuto);
+  $('adsAutoVal').textContent = m.adsAuto ? money(m.adsSpend) + (m.adsLeads != null ? ', ' + grp(m.adsLeads) + ' lead' : '') : '';
+  if (document.activeElement !== $('fads')) $('fads').value = m.adsManual != null ? String(m.adsManual).replace('.', ',') : '';
 }
 async function loadAdsFor(ym) {
   $('fads').value = '';
@@ -1178,7 +1219,7 @@ async function loadAdsFor(ym) {
   try {
     const r = await fetch(API + '?month=' + ym, { cache: 'no-store' });
     const d = await r.json();
-    if ($('fmonth').value === ym) $('fads').value = d.month.adsSet ? String(d.month.adsSpend).replace('.', ',') : '';
+    if ($('fmonth').value === ym) showAds(d.month);
   } catch (e) {}
 }
 
