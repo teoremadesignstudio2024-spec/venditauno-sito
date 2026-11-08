@@ -3,7 +3,8 @@
 //         /dashboardvenditatop/tv = TV, solo visualizzazione (anche /tv)
 // Dati nel KV ACADEMY_PROGRESS, chiave "fatturato:AAAA-MM-GG" (giorno di Roma):
 //   clients  = nuovi clienti pagati (nome, importo): l'incassato del giorno è la loro somma
-//   adsSpend = spesa ads del giorno (a mano)
+//   adsSpend = spesa ads del giorno (vecchio modo, usato solo se manca il totale del mese)
+// Chiave "adsmese:AAAA-MM": spesa ads totale del mese finora, scritta a mano e corretta ogni giorno.
 // Lead arrivati e lead da chiamare arrivano dal foglio Google (vedi readSheet).
 
 export const DASH_PATH = "/dashboardvenditatop";
@@ -77,7 +78,6 @@ function applyOp(day, op) {
   const d = normDay(day) || { clients: [], adsSpend: 0, leads: 0, toCall: 0 };
   if (op.type === "addClient") return { ...d, clients: [...d.clients, op.client] };
   if (op.type === "delClient") return { ...d, clients: d.clients.filter((c) => c.id !== op.id) };
-  if (op.type === "setAds") return { ...d, adsSpend: op.adsSpend };
   return d;
 }
 
@@ -105,8 +105,31 @@ export class DashStore {
     return v;
   }
 
+  // Spesa ads totale del mese: un solo numero per mese, sovrascritto a ogni correzione.
+  async loadAds(ym) {
+    const key = `ads:${ym}`;
+    let v = await this.ctx.storage.get(key);
+    if (v !== undefined) return v;
+    const fromKv = await readAdsKV(this.env.ACADEMY_PROGRESS, ym);
+    v = await this.ctx.storage.get(key);
+    if (v !== undefined) return v;
+    v = fromKv === null ? "none" : fromKv;
+    await this.ctx.storage.put(key, v);
+    return v;
+  }
+
   async fetch(request) {
     const body = await request.json().catch(() => ({}));
+    if (body.action === "getAds" && YM_RE.test(body.ym || "")) {
+      const v = await this.loadAds(body.ym);
+      return Response.json({ value: v === "none" ? null : v });
+    }
+    if (body.action === "setAds" && YM_RE.test(body.ym || "") && isFinite(body.value)) {
+      const value = round2(Number(body.value));
+      await this.ctx.storage.put(`ads:${body.ym}`, value);
+      try { await this.env.ACADEMY_PROGRESS.put(`adsmese:${body.ym}`, JSON.stringify(value)); } catch (e) { /* copia di riserva */ }
+      return Response.json({ value });
+    }
     if (body.action === "get" && Array.isArray(body.dates)) {
       const out = {};
       for (const d of body.dates.slice(0, 40)) {
@@ -150,6 +173,8 @@ function dayStore(env) {
         return o;
       },
       mutate: async (date, op) => normDay(await call({ action: "mutate", date, op })),
+      getAds: async (ym) => (await call({ action: "getAds", ym })).value,
+      setAds: async (ym, value) => (await call({ action: "setAds", ym, value })).value,
     };
   }
   return {
@@ -162,7 +187,19 @@ function dayStore(env) {
       await kv.put(`fatturato:${date}`, JSON.stringify(next));
       return normDay(next);
     },
+    getAds: (ym) => readAdsKV(kv, ym),
+    setAds: async (ym, value) => {
+      await kv.put(`adsmese:${ym}`, JSON.stringify(value));
+      return value;
+    },
   };
+}
+
+async function readAdsKV(kv, ym) {
+  const raw = await kv.get(`adsmese:${ym}`);
+  if (raw === null) return null;
+  const v = Number(JSON.parse(raw));
+  return isFinite(v) ? round2(v) : null;
 }
 
 const dayCashed = (day) => round2((day ? day.clients || [] : []).reduce((s, c) => s + (c.amount || 0), 0));
@@ -268,8 +305,11 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
   const nDays = daysInMonth(ym);
   const dates = Array.from({ length: nDays }, (_, i) => `${ym}-${pad2(i + 1)}`);
   const yesterday = addDays(today, -1);
-  const got = await store.get([...new Set([...dates, today, yesterday])]);
-  if (written) got[written.date] = written.rec;
+  const [got, adsMonth] = await Promise.all([
+    store.get([...new Set([...dates, today, yesterday])]),
+    written && written.ads && written.ads.ym === ym ? written.ads.value : store.getAds(ym),
+  ]);
+  if (written && written.date) got[written.date] = written.rec;
   const days = {};
   dates.forEach((d) => { if (got[d]) days[d] = got[d]; });
 
@@ -280,7 +320,10 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
   const leadsOn = (d, rec) => (sheet ? sheet.leadsByDay[d] || 0 : rec ? rec.leads || 0 : 0);
 
   const cashed = round2(pastDates.reduce((s, d) => s + dayCashed(days[d]), 0));
-  const adsSpend = round2(pastDates.reduce((s, d) => s + (days[d] ? days[d].adsSpend : 0), 0));
+  // Spesa ads: il totale del mese scritto a mano; se manca, la somma dei vecchi valori giornalieri.
+  const adsDaily = round2(pastDates.reduce((s, d) => s + (days[d] ? days[d].adsSpend : 0), 0));
+  const adsSet = adsMonth !== null && adsMonth !== undefined;
+  const adsSpend = adsSet ? adsMonth : adsDaily;
   const leads = pastDates.reduce((s, d) => s + leadsOn(d, days[d]), 0);
   const clientsCount = pastDates.reduce((s, d) => s + (days[d] ? days[d].clients.length : 0), 0);
 
@@ -314,7 +357,7 @@ async function monthPayload(store, ym, today, sheet = null, written = null) {
     month: {
       ym, label: MONTH_LABEL.format(new Date(ym + "-01T12:00:00Z")),
       daysInMonth: nDays, elapsed: upTo,
-      cashed, adsSpend, leads, clients: clientsCount,
+      cashed, adsSpend, adsSet, leads, clients: clientsCount,
       cpl: leads > 0 && adsSpend > 0 ? round2(adsSpend / leads) : null,
       cac: clientsCount > 0 && adsSpend > 0 ? round2(adsSpend / clientsCount) : null,
       roas: adsSpend > 0 ? round2(cashed / adsSpend) : null,
@@ -604,8 +647,12 @@ ${GLASS_CSS}
   .form h2 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 600; }
   .form .note { color: var(--bone-3); font-size: 0.88rem; margin: 0 0 18px; max-width: 60ch; }
   .form label { display: block; font-size: 0.85rem; color: var(--bone-2); margin: 0 0 6px 4px; }
-  .form input { width: 100%; padding: 14px 16px; font: inherit; font-size: 1.05rem; color: var(--bone); border: 0; margin-bottom: 14px; outline: none; color-scheme: dark; }
-  .form input:focus-visible { box-shadow: inset 0 1px 1px rgba(0,0,0,0.25), 0 0 0 2px rgba(236,230,218,0.5); }
+  .form input, .form select { width: 100%; padding: 14px 16px; font: inherit; font-size: 1.05rem; color: var(--bone); border: 0; margin-bottom: 14px; outline: none; color-scheme: dark; }
+  .form select { appearance: none; -webkit-appearance: none; cursor: pointer; text-transform: capitalize;
+    background-image: linear-gradient(45deg, transparent 50%, var(--bone-2) 50%), linear-gradient(135deg, var(--bone-2) 50%, transparent 50%);
+    background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
+  .form select option { background: #24211c; color: var(--bone); }
+  .form input:focus-visible, .form select:focus-visible { box-shadow: inset 0 1px 1px rgba(0,0,0,0.25), 0 0 0 2px rgba(236,230,218,0.5); }
   .form .row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; }
   .btn { width: 100%; padding: 14px; font: inherit; font-size: 1rem; font-weight: 600; border-radius: 999px; cursor: pointer; border: 0; background: var(--bone); color: #14181e; }
   .btn.ghost { background: rgba(255,255,255,0.10); color: var(--bone); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16); }
@@ -720,14 +767,14 @@ ${tv ? "" : `  <section class="forms">
       <button type="submit" class="btn">Registra cliente</button>
     </form>
     <form class="form glass" id="adsForm">
-      <h2>Spesa ads</h2>
-      <p class="note">I lead arrivano da soli dal foglio Google. La spesa ads per ora si scrive qui, giorno per giorno.</p>
+      <h2>Spesa ads del mese</h2>
+      <p class="note">Scrivi quanto hai speso in ads in tutto nel mese, fino a oggi. Domani correggi il numero con il nuovo totale: CPL, CAC e ritorno sulle ads si ricalcolano da soli.</p>
       <div class="row">
-        <div><label for="fdate">Giorno</label><input class="well" type="date" id="fdate"></div>
-        <div><label for="fads">Spesa (€)</label><input class="well" id="fads" inputmode="decimal" placeholder="300" autocomplete="off"></div>
+        <div><label for="fmonth">Mese</label><select class="well" id="fmonth"></select></div>
+        <div><label for="fads">Totale speso (€)</label><input class="well" id="fads" inputmode="decimal" placeholder="1200" autocomplete="off"></div>
       </div>
       <div class="msg" id="msg" role="status"></div>
-      <button type="submit" class="btn ghost">Salva spesa</button>
+      <button type="submit" class="btn ghost">Salva totale del mese</button>
       <a class="tv-link" href="${DASH_PATH}/tv" target="_blank">Apri la schermata della TV</a>
     </form>
   </section>`}
@@ -996,10 +1043,7 @@ function render(d) {
     lastNames = d.names.join('|');
     $('cnames').innerHTML = d.names.map((n) => '<option value="' + esc(n) + '">').join('');
   }
-  if ($('fdate') && !$('fdate').value) {
-    $('fdate').value = d.today; $('fdate').max = d.today;
-    $('fads').value = t.adsSpend || '';
-  }
+  if ($('fmonth') && !$('fmonth').options.length) fillMonths(d);
   placeNapo();
 }
 
@@ -1014,6 +1058,31 @@ function apply(d, mySeq) {
   lastApplied = mySeq;
   render(d);
 }
+function monthName(ym) {
+  return new Date(ym + '-15T12:00:00').toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+}
+// Ultimi 12 mesi, il corrente per primo; si parte dal totale già salvato per quel mese.
+function fillMonths(d) {
+  const sel = $('fmonth'), now = d.today.slice(0, 7);
+  for (let i = 0; i < 12; i++) {
+    const ym = shift(now, -i);
+    const o = document.createElement('option'); o.value = ym; o.textContent = monthName(ym);
+    sel.appendChild(o);
+  }
+  sel.value = now;
+  if (d.month.ym === now) $('fads').value = d.month.adsSet ? String(d.month.adsSpend).replace('.', ',') : '';
+  else loadAdsFor(now);
+}
+async function loadAdsFor(ym) {
+  $('fads').value = '';
+  $('msg').textContent = '';
+  try {
+    const r = await fetch(API + '?month=' + ym, { cache: 'no-store' });
+    const d = await r.json();
+    if ($('fmonth').value === ym) $('fads').value = d.month.adsSet ? String(d.month.adsSpend).replace('.', ',') : '';
+  } catch (e) {}
+}
+
 async function refresh(ym) {
   const mySeq = ++seq, startedAt = Date.now();
   try {
@@ -1072,24 +1141,18 @@ if ($('clientForm')) {
     } catch (err) { $('cmsg').textContent = 'Non registrato: controlla la connessione e riprova'; }
   };
 
-  $('fdate').onchange = async () => {
-    const date = $('fdate').value;
-    try {
-      const r = await fetch(API + '?month=' + date.slice(0, 7), { cache: 'no-store' });
-      const d = await r.json();
-      $('fads').value = (d.days[date] && d.days[date].adsSpend) || '';
-    } catch (e) {}
-  };
+  $('fmonth').onchange = () => loadAdsFor($('fmonth').value);
 
   $('adsForm').onsubmit = async (e) => {
     e.preventDefault();
     const adsSpend = parseAmount($('fads').value);
-    if (!isFinite(adsSpend) || adsSpend < 0) { $('msg').textContent = 'Scrivi la spesa, ad esempio 300'; return; }
+    if (!isFinite(adsSpend) || adsSpend < 0) { $('msg').textContent = 'Scrivi il totale speso, ad esempio 1200'; return; }
+    const ym = $('fmonth').value;
     $('msg').textContent = 'Salvo…';
     try {
-      await change(() => post(API, { date: $('fdate').value, adsSpend }));
-      $('msg').textContent = 'Spesa salvata';
-    } catch (err) { $('msg').textContent = 'Non salvata: controlla la connessione e riprova'; }
+      await change(() => post(API, { month: ym, adsSpend }));
+      $('msg').textContent = 'Totale di ' + monthName(ym) + ' salvato: ' + money(adsSpend);
+    } catch (err) { $('msg').textContent = 'Non salvato: controlla la connessione e riprova'; }
   };
 
   // Primo clic: "Sicuro?", secondo clic: elimina
@@ -1117,6 +1180,7 @@ if ($('clientForm')) {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const YM_RE = /^\d{4}-\d{2}$/;
 
 export async function handleDashboard(request, env, url) {
   const kv = env.ACADEMY_PROGRESS;
@@ -1156,12 +1220,12 @@ export async function handleDashboard(request, env, url) {
 
     if (request.method === "POST") {
       const body = await request.json().catch(() => ({}));
-      const date = DATE_RE.test(body.date || "") ? body.date : today;
-      if (date > today) return json({ error: "data non valida" }, 400);
+      const ym = YM_RE.test(body.month || "") ? body.month : today.slice(0, 7);
+      if (ym > today.slice(0, 7)) return json({ error: "mese non valido" }, 400);
       const adsSpend = round2(Number(body.adsSpend) || 0);
       if (!isFinite(adsSpend) || adsSpend < 0 || adsSpend > 100000000) return json({ error: "valore non valido" }, 400);
-      const rec = await store.mutate(date, { type: "setAds", adsSpend });
-      return json(await payload(store, date.slice(0, 7), today, { date, rec }));
+      const value = await store.setAds(ym, adsSpend);
+      return json(await payload(store, ym, today, { ads: { ym, value } }));
     }
 
     return new Response("Method not allowed", { status: 405 });
