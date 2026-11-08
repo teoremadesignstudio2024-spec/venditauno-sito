@@ -274,6 +274,7 @@ function monthPayload(ym, today, g, ads) {
       ym, label: MONTH_LABEL.format(new Date(ym + "-01T12:00:00Z")),
       daysInMonth: nDays, elapsed: upTo,
       cashed, clients, leads, adsSpend, adsLeads, adsOk: !!ads,
+      won: pastDates.flatMap((d) => wonOn(d).map((w) => ({ ...w, day: d }))).sort((a, b) => b.ts - a.ts),
       cpl: adsLeads > 0 && adsSpend > 0 ? round2(adsSpend / adsLeads) : null,
       cac: clients > 0 && adsSpend > 0 ? round2(adsSpend / clients) : null,
       roas: adsSpend > 0 ? round2(cashed / adsSpend) : null,
@@ -542,6 +543,14 @@ ${GLASS_CSS}
 
   /* Clienti di oggi */
   .side { display: flex; flex-direction: column; }
+  .clickable { cursor: pointer; }
+  .clickable:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
+  .seg { display: flex; gap: 2px; padding: 3px; border-radius: 999px; flex: none; }
+  .seg button { border: 0; background: transparent; color: var(--bone-2); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+  .seg button.on { background: rgba(255,255,255,0.12); color: var(--bone); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+  .seg button:focus-visible { outline: 2px solid var(--bone); outline-offset: 1px; }
+  .cl .day { color: var(--bone-2); }
+  .chart .bar.picked { fill: #e3ad3a; }
   .clients { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; flex: 1; }
   .cl { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--r-lg); background: rgba(255,255,255,0.045); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); }
   .cl .av { width: 38px; height: 38px; flex: none; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #241a06;
@@ -612,7 +621,7 @@ ${GLASS_CSS}
       </div>
       <div class="side-stats" id="kTodaySub"></div>
     </div>
-    <div class="tile glass">
+    <div class="tile glass clickable" id="tileMonth" role="button" tabindex="0" title="Vedi chi avete chiuso nel mese">
       <h3 id="kMonthLabel">Incassato del mese</h3>
       <div class="big num" id="kMonth">€ 0</div>
       <div class="sub" id="kMonthSub"></div>
@@ -651,7 +660,8 @@ ${GLASS_CSS}
   </section>
 
   <section class="card glass side">
-    <div class="card-head"><div><h2>Chiusi oggi</h2><div class="meta" id="clMeta"></div></div></div>
+    <div class="card-head"><div><h2 id="clTitle">Chiusi oggi</h2><div class="meta" id="clMeta"></div></div>
+      <div class="seg well" role="group" aria-label="Quali chiusi vedere"><button type="button" id="vToday" class="on">Oggi</button><button type="button" id="vMonth">Mese</button></div></div>
     <div class="clients" id="clients"></div>
   </section>
 
@@ -788,7 +798,8 @@ function drawCash(box, series) {
       tipAt(box, b.x, b.y, '<span>' + esc(dayLabel(b.s.date)) + '</span><b>' + money(b.s.cashed) + '</b>');
     };
     hit.addEventListener('mouseenter', on);
-    hit.addEventListener('click', on);
+    hit.addEventListener('click', () => { on(); if (b.s.cashed > 0) setView({ mode: 'day', day: b.s.date }); });
+    if (b.bar && view.mode === 'day' && view.day === b.s.date) b.bar.classList.add('picked');
     hit.addEventListener('mouseleave', () => hideTip(box));
     svg.appendChild(hit);
   });
@@ -839,6 +850,49 @@ function whenLabel(x, today) {
   const yIso = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
   const d = x.date === today ? 'oggi' : x.date === yIso ? 'ieri' : new Date(x.date + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
   return d + (x.time ? ' ' + x.time : '');
+}
+
+// Scheda "Chiusi": oggi (predefinito), un giorno scelto dal grafico, o tutto il mese.
+// Se oggi non c'è ancora nessuno, si mostrano i chiusi del mese, così la scheda non resta vuota.
+let view = { mode: 'today', day: '' };
+function setView(v) {
+  view = v;
+  if (data) { renderClosed([]); drawChartIfNeeded(true); }
+}
+function closedRow(c, showDay, isNew) {
+  const time = new Date(c.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  return '<div class="cl' + (isNew ? ' new' : '') + '"><div class="av">' + esc((c.name.trim()[0] || '?').toUpperCase()) + '</div>' +
+    '<div class="who"><div class="name">' + esc(c.name) + '</div><div class="time">' + (showDay ? '<span class="day">' + esc(dayLabel(c.day)) + '</span> ' : '') + time +
+    (c.seller ? ' <span class="seller">' + esc(c.seller) + '</span>' : '') + '</div></div>' +
+    '<div class="amt num">' + money(c.amount) + '</div></div>';
+}
+function renderClosed(freshIds) {
+  const d = data, mo = d.month, monthName = mo.label.split(' ')[0];
+  if (view.mode === 'day' && !view.day.startsWith(mo.ym)) view = { mode: 'today', day: '' };
+  let mode = view.mode, list, title;
+  if (mode === 'today' && !d.todayData.clients.length && mo.isCurrent && mo.won.length) mode = 'month-fallback';
+  if (mode === 'day') {
+    list = mo.won.filter((c) => c.day === view.day);
+    title = 'Chiusi ' + dayLabel(view.day);
+  } else if (mode === 'month' || mode === 'month-fallback') {
+    list = mo.won;
+    title = 'Chiusi a ' + monthName;
+  } else {
+    list = d.todayData.clients.slice().reverse().map((c) => ({ ...c, day: d.today }));
+    title = 'Chiusi oggi';
+  }
+  const total = list.reduce((s, c) => s + c.amount, 0);
+  setText('clTitle', title);
+  setText('clMeta', mode === 'month-fallback' ? 'Ancora nessuno oggi: ecco il mese, ' + money0(total) + ' da ' + plural(list.length, 'chiuso', 'chiusi')
+    : list.length ? money0(total) + ' da ' + plural(list.length, 'chiuso', 'chiusi') : '');
+  $('vToday').classList.toggle('on', view.mode === 'today');
+  $('vMonth').classList.toggle('on', view.mode === 'month');
+  const key = mode + '|' + view.day + '|' + mo.ym + '|' + list.map((c) => c.id + ':' + c.amount).join(',');
+  if (key === lastClientsKey && !freshIds.length) return;
+  lastClientsKey = key;
+  const showDay = mode !== 'today';
+  $('clients').innerHTML = list.length ? list.map((c) => closedRow(c, showDay, tvMode && freshIds.indexOf(c.id) >= 0)).join('')
+    : '<div class="none">' + (mode === 'today' ? 'Quando una vinta della VENDITA PIPELINE arriva, compare qui.' : 'Nessun chiuso in questo periodo.') + '</div>';
 }
 
 function render(d) {
@@ -893,22 +947,12 @@ function render(d) {
     setHTML('demos', '<div class="none">GoHighLevel non risponde: le demo torneranno appena è raggiungibile.</div>');
   }
 
-  // Chiusi oggi (vinte della VENDITA PIPELINE)
-  const list = t.clients.slice().reverse();
-  const key = list.map((c) => c.id).join(',');
-  if (key !== lastClientsKey) {
-    lastClientsKey = key;
-    const fresh = seen ? list.filter((c) => !seen.has(c.id)) : [];
-    setText('clMeta', nC ? money0(t.cashed) + ' da ' + plural(nC, 'chiuso', 'chiusi') : '');
-    $('clients').innerHTML = list.length ? list.map((c) =>
-      '<div class="cl' + (tvMode && fresh.indexOf(c) >= 0 ? ' new' : '') + '"><div class="av">' + esc((c.name.trim()[0] || '?').toUpperCase()) + '</div>' +
-      '<div class="who"><div class="name">' + esc(c.name) + '</div><div class="time">' + new Date(c.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) +
-      (c.seller ? ' <span class="seller">' + esc(c.seller) + '</span>' : '') + '</div></div>' +
-      '<div class="amt num">' + money(c.amount) + '</div></div>'
-    ).join('') : '<div class="none">Quando una vinta della VENDITA PIPELINE arriva, compare qui.</div>';
-    if (tvMode && fresh.length && !firstLoad) announce(fresh[0]);
-    seen = new Set(list.map((c) => c.id));
-  }
+  // Annuncio sulla TV quando arriva una nuova vinta oggi
+  const todayIds = t.clients.map((c) => c.id);
+  const fresh = seen ? t.clients.filter((c) => !seen.has(c.id)) : [];
+  if (tvMode && fresh.length && !firstLoad) announce(fresh[fresh.length - 1]);
+  seen = new Set(todayIds);
+  renderClosed(fresh.map((c) => c.id));
 
   placeNapo();
 }
@@ -940,6 +984,10 @@ keepAwake(); document.addEventListener('visibilitychange', () => { if (!document
 $('screen').addEventListener('dblclick', () => document.documentElement.requestFullscreen?.());
 $('mPrev').onclick = () => refresh(shift(curMonth, -1));
 $('mNext').onclick = () => { if (!$('mNext').disabled) refresh(shift(curMonth, 1)); };
+$('vToday').onclick = () => setView({ mode: 'today', day: '' });
+$('vMonth').onclick = () => setView({ mode: 'month', day: '' });
+$('tileMonth').onclick = () => setView({ mode: 'month', day: '' });
+$('tileMonth').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView({ mode: 'month', day: '' }); } };
 
 </script>
 </body>
