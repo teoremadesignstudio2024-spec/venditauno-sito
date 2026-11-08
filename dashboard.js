@@ -84,6 +84,8 @@ const GHL_STAGES = [
   { id: "f529954b-d016-4d25-8269-0b96bfd84b77", name: "DEMO FISSATA", owner: "closing", rank: 5 },
 ];
 // Fasi dei chiusi: CHIUSO VINTO MESE e UP SELL contano nell'incassato anche se l'opportunità non è segnata won.
+// Scontrino medio: ogni lead ancora aperto in pipeline vale questo (i valori di GoHighLevel sono di default).
+const SCONTRINO_MEDIO = 2500;
 const GHL_WON_STAGE = "13142cf4-d73b-4088-917d-2be4a7364651";
 const GHL_UPSELL_STAGE = "5710267f-315b-44b8-9895-4674b933a515";
 const STAGE_RANK = Object.fromEntries(GHL_STAGES.map((st) => [st.id, st.rank]));
@@ -215,7 +217,7 @@ async function readGHL(env) {
     const inStage = opps.filter((o) => o.pipelineStageId === st.id && o.status === "open");
     const items = inStage.map((o) => {
       const since = Date.parse(o.lastStageChangeAt || o.updatedAt || o.createdAt) || now;
-      return { name: who(o), seller: (users[o.assignedTo] || "").slice(0, 30), value: num(Number(o.monetaryValue) || 0), days: Math.max(0, Math.floor((now - since) / 86400000)) };
+      return { name: who(o), seller: (users[o.assignedTo] || "").slice(0, 30), value: SCONTRINO_MEDIO, days: Math.max(0, Math.floor((now - since) / 86400000)) };
     }).sort((a, b) => a.days - b.days);
     return {
       id: st.id, name: stageNames[st.id] || st.name, recall: !!st.recall, toCall: !!st.toCall, owner: st.owner,
@@ -708,7 +710,7 @@ ${GLASS_CSS}
 
   <section class="card glass pipe-card">
     <div class="card-head">
-      <div><h2>Pipeline</h2><div class="meta">VENDITA PIPELINE, adesso</div></div>
+      <div><h2>Pipeline</h2><div class="meta">2.500 € a lead</div></div>
       <div class="money-chip" id="recallTotal"></div>
     </div>
     <div class="table">
