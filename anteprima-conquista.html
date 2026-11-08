@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07080c">
+<title>Vendita Uno - Conquista la tua zona</title>
+<link rel="icon" type="image/png" href="assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --night: #07080c;   /* notte */
+  --gold: #d4ad5a;    /* oro delle uniformi */
+  --gold-2: #f0d898;  /* oro chiaro */
+  --rust: #a2492c;    /* mantello */
+  --bone: #efe7d8;    /* tela */
+  --bone-2: rgba(239,231,216,0.74);
+  --bone-3: rgba(239,231,216,0.52);
+  --blue: #2f6bff;    /* solo per i pulsanti: il blu Vendita Uno */
+  --sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --wrap: 1240px;
+}
+html { background: var(--night); overflow-x: clip; scroll-behavior: smooth; }
+body { font-family: var(--sans); color: var(--bone); background: transparent; -webkit-font-smoothing: antialiased; line-height: 1.55; font-size: 17px; }
+img { display: block; max-width: 100%; }
+button { font: inherit; }
+
+/* Sfondo fermo: notte con un bagliore d'oro e uno di ruggine, come una tela a lume di candela */
+.bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; background:
+  radial-gradient(70vmax 60vmax at 85% -10%, rgba(212,173,90,0.20), transparent 70%),
+  radial-gradient(70vmax 60vmax at -10% 60%, rgba(162,73,44,0.20), transparent 70%),
+  radial-gradient(60vmax 50vmax at 60% 120%, rgba(47,107,255,0.12), transparent 70%), var(--night); }
+.bg::after { content: ""; position: absolute; inset: 0; opacity: 0.5;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.1'/></svg>"); }
+
+/* Vetro */
+.glass { position: relative; isolation: isolate;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%), rgba(14,13,12,0.46);
+  -webkit-backdrop-filter: blur(30px) saturate(1.5); backdrop-filter: blur(30px) saturate(1.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 30px 80px -40px rgba(0,0,0,0.8); }
+.glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 2;
+  background: linear-gradient(140deg, rgba(240,216,152,0.7), rgba(255,255,255,0.08) 22%, rgba(255,255,255,0.03) 60%, rgba(240,216,152,0.4));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+
+/* Testo */
+.display { font-family: var(--serif); font-weight: 400; font-size: clamp(3.2rem, 7.6vw, 7.4rem); line-height: 0.92; letter-spacing: -0.02em; }
+.h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(2.5rem, 5vw, 4.6rem); line-height: 0.98; letter-spacing: -0.015em; }
+.h1 i, .display i { color: var(--gold-2); }
+.lead { font-size: clamp(1.08rem, 1.5vw, 1.3rem); color: var(--bone-2); }
+.lead b, .copy b { color: var(--bone); font-weight: 600; }
+.copy { color: var(--bone-2); }
+.copy p + p { margin-top: 14px; }
+.label { font-family: var(--serif); font-style: italic; font-size: 1.15rem; color: var(--gold-2); }
+
+/* Pulsante */
+.cta { display: inline-flex; align-items: center; justify-content: center; padding: 18px 32px; border: 0; border-radius: 999px; cursor: pointer; color: #fff; font-weight: 600; font-size: 1.02rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0) 52%), linear-gradient(100deg, #2f6bff, #4a8dff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 12px 34px -10px rgba(47,107,255,0.8), 0 0 0 1px rgba(150,190,255,0.35); transition: transform .2s; }
+.cta:hover { transform: translateY(-1px); }
+.cta:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 4px; }
+.cta-sm { padding: 10px 20px; font-size: 0.92rem; }
+
+/* Barra */
+.nav { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 50; width: min(calc(100% - 28px), 1190px); border-radius: 999px; }
+.nav-row { display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 0 10px 0 22px; }
+.nav img { height: 27px; width: auto; }
+.nav-links { display: flex; gap: 30px; }
+.nav-links a { color: var(--bone-2); text-decoration: none; font-weight: 500; font-size: 0.93rem; }
+.nav-links a:hover { color: #fff; }
+
+/* Apertura: il quadro a destra che sfuma nella notte */
+.hero { position: relative; min-height: 100svh; display: grid; align-items: center; overflow: hidden; }
+.hero-art { position: absolute; top: 0; right: 0; height: 100%; width: 58%; background: url(assets/img/arte/napoleone-alpi.jpg) 50% 22% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 38%), linear-gradient(180deg, #000 70%, transparent 100%); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 38%), linear-gradient(180deg, #000 70%, transparent 100%); mask-composite: intersect; }
+.hero .wrap { position: relative; z-index: 1; width: 100%; }
+.hero-text { max-width: 640px; padding: 120px 0 80px; }
+.hero .lead { margin-top: 26px; max-width: 520px; }
+.hero .cta { margin-top: 36px; }
+.plaque { position: absolute; right: 28px; bottom: 28px; z-index: 1; border-radius: 16px; padding: 12px 16px; font-size: 0.82rem; color: var(--bone-2); max-width: 280px; }
+.plaque i { font-family: var(--serif); font-size: 1.05rem; color: var(--bone); }
+
+.wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 28px; }
+main > section { position: relative; }
+.slab { max-width: var(--wrap); width: calc(100% - 28px); margin: 0 auto 28px; border-radius: 40px; padding: clamp(40px, 6vw, 84px) clamp(22px, 5vw, 72px); overflow: hidden; }
+
+/* La mappa delle conquiste */
+.map-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(28px, 5vw, 70px); align-items: center; }
+.map-grid .copy { margin-top: 22px; max-width: 470px; }
+.tally { display: flex; gap: 28px; margin-top: 30px; }
+.tally div b { display: block; font-family: var(--serif); font-size: 3.6rem; line-height: 1; color: var(--gold-2); font-weight: 400; }
+.tally div span { color: var(--bone-3); font-size: 0.92rem; }
+.legend { display: flex; gap: 22px; margin-top: 26px; color: var(--bone-3); font-size: 0.88rem; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend .c { width: 11px; height: 11px; border-radius: 50%; background: var(--gold-2); box-shadow: 0 0 12px var(--gold); }
+.legend .f { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid rgba(160,195,255,0.9); }
+.map { position: relative; width: 100%; max-width: 520px; margin: 0 auto; aspect-ratio: 640 / 832; }
+.map img { width: 100%; height: 100%; filter: grayscale(1) sepia(0.5) brightness(0.62) contrast(1.1); opacity: 0.85; }
+.pin { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; }
+.pin.c { background: var(--gold-2); box-shadow: 0 0 0 4px rgba(240,216,152,0.18), 0 0 18px 4px rgba(212,173,90,0.65); }
+.pin.f { border: 1.5px solid rgba(160,195,255,0.95); background: rgba(47,107,255,0.25); }
+.pin.c::after { content: ""; position: absolute; inset: -10px; border-radius: 50%; border: 1px solid rgba(240,216,152,0.6); opacity: 0; }
+.map-note { text-align: center; color: var(--bone-3); font-size: 0.8rem; margin-top: 10px; }
+/* Il momento di movimento: le zone si accendono una dopo l'altra quando la mappa entra nello schermo */
+@media (prefers-reduced-motion: no-preference) {
+  .js .pin.c { opacity: 0; transform: scale(0.3); transition: opacity .5s, transform .6s cubic-bezier(.2,.9,.3,1.4); }
+  .js .map.on .pin.c { opacity: 1; transform: none; }
+  .js .map.on .pin.c::after { animation: ring 1.2s ease-out both; animation-delay: inherit; }
+}
+@keyframes ring { from { opacity: 0.9; transform: scale(0.4); } to { opacity: 0; transform: scale(1.6); } }
+
+/* Il campo di battaglia: quadro largo dietro il vetro */
+.battle { padding: 0; }
+.battle-art { height: clamp(220px, 34vw, 420px); background: url(assets/img/arte/austerlitz.jpg) 50% 40% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent); mask-image: linear-gradient(180deg, #000 55%, transparent); }
+.battle-body { padding: 0 clamp(22px, 5vw, 72px) clamp(40px, 6vw, 80px); margin-top: -90px; position: relative; }
+.battle-body .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 70px); margin-top: 34px; }
+.quote b { display: block; font-weight: 600; color: var(--bone); }
+.quote span { display: block; color: var(--bone-2); margin-top: 4px; }
+.quote + .quote { margin-top: 18px; }
+.quote strong { color: var(--gold-2); font-weight: 600; }
+.zero { border-radius: 24px; padding: 26px; }
+.zero .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--bone-2); }
+.zero .row b { color: var(--bone); font-weight: 600; }
+.zero .last { display: flex; justify-content: space-between; align-items: baseline; padding-top: 16px; }
+.zero .last b { font-family: var(--serif); font-size: 4rem; line-height: 1; color: #ff7a6a; font-weight: 400; }
+
+/* La campagna in quattro fasi */
+.phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 50px; }
+.phase { border-radius: 26px; padding: 28px 24px; }
+.phase .n { font-family: var(--serif); font-size: 3.4rem; line-height: 1; color: var(--gold-2); }
+.phase h3 { font-family: var(--serif); font-weight: 400; font-size: 1.9rem; margin-top: 14px; }
+.phase p { color: var(--bone-2); margin-top: 10px; font-size: 0.97rem; }
+.phase .what { display: block; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); color: var(--bone-3); font-size: 0.86rem; }
+
+/* Il patto */
+.pact { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 0; padding: 0; }
+.pact-art { min-height: 420px; background: url(assets/img/arte/cesare.jpg) 30% 50% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, #000 60%, transparent); mask-image: linear-gradient(90deg, #000 60%, transparent); }
+.pact-body { padding: clamp(36px, 5vw, 72px) clamp(22px, 5vw, 64px); align-self: center; }
+.pact-body .copy { margin-top: 22px; }
+.pact-body .fine { font-size: 0.86rem; color: var(--bone-3); }
+.pact-body .cta { margin-top: 30px; }
+
+/* Chiusura */
+.final { position: relative; text-align: center; padding: 0; }
+.final-art { position: absolute; inset: 0; background: url(assets/img/arte/arcole.jpg) 50% 25% / cover no-repeat; opacity: 0.38; }
+.final-art::after { content: ""; position: absolute; inset: 0; background: radial-gradient(80% 90% at 50% 50%, rgba(7,8,12,0.2), rgba(7,8,12,0.9)); }
+.final-body { position: relative; padding: clamp(70px, 10vw, 140px) clamp(22px, 5vw, 72px); }
+.final .lead { margin: 22px auto 0; max-width: 600px; }
+.final .cta { margin-top: 34px; }
+.credits { max-width: var(--wrap); margin: 0 auto; padding: 10px 28px 90px; color: var(--bone-3); font-size: 0.78rem; text-align: center; }
+
+@media (max-width: 960px) {
+  .nav-links { display: none; }
+  .map-grid, .battle-body .split, .pact { grid-template-columns: minmax(0, 1fr); }
+  .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-art { width: 100%; opacity: 0.7; }
+  .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,8,12,0.15) 0%, rgba(7,8,12,0.55) 35%, rgba(7,8,12,0.85) 75%, var(--night)); }
+  .pact-art { min-height: 260px; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent); }
+}
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .wrap { padding: 0 18px; }
+  .slab { width: calc(100% - 20px); border-radius: 30px; }
+  .phases { grid-template-columns: minmax(0, 1fr); }
+  .cta { width: 100%; }
+  .nav .cta { width: auto; }
+  .plaque { display: none; }
+  .hero-art { background-position: 62% 20%; }
+  .tally div b { font-size: 2.8rem; }
+}
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add('js');</script>
+<div class="bg" aria-hidden="true"></div>
+
+<header class="nav glass">
+  <div class="nav-row">
+    <a href="/"><img src="assets/img/logo.png" alt="Vendita Uno"></a>
+    <nav class="nav-links" aria-label="Sezioni"><a href="#mappa">La mappa</a><a href="#campagna">La campagna</a><a href="#patto">Il patto</a></nav>
+    <button type="button" class="cta cta-sm">Candidati</button>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="hero-art" role="img" aria-label="Napoleone valica le Alpi, di Jacques-Louis David"></div>
+  <div class="wrap">
+    <div class="hero-text">
+      <h1 class="display">Ogni zona ha<br>un solo <i>conquistatore.</i></h1>
+      <p class="lead">Vendita Uno lavora con <b>una sola agenzia per zona</b>. Quando prendi la tua, il tuo concorrente resta fuori. Per sempre, finché lavori con noi.</p>
+      <button type="button" class="cta">Verifica se la tua zona è libera</button>
+    </div>
+  </div>
+  <div class="plaque glass"><i>Napoleone valica le Alpi</i><br>Jacques-Louis David, 1801</div>
+</section>
+
+<section class="slab glass" id="mappa">
+  <div class="map-grid">
+    <div>
+      <p class="label">La mappa delle conquiste</p>
+      <h2 class="h1" style="margin-top:10px">Oltre 200 agenzie hanno già <i>preso la loro zona.</i></h2>
+      <div class="copy"><p>Ogni punto d'oro è una zona dove un'agenzia partner riceve i proprietari che vogliono vendere. Lì nessun altro può entrare.</p><p>Le zone libere sono sempre meno. <b>Appena un'agenzia firma, la sua zona si chiude per tutte le altre.</b></p></div>
+      <div class="tally"><div><b>200+</b><span>agenzie nel network</span></div><div><b>23 mln</b><span>di euro portati ai partner</span></div></div>
+      <div class="legend"><span><i class="c"></i>Zona conquistata</span><span><i class="f"></i>Zona ancora libera</span></div>
+    </div>
+    <div>
+      <div class="map" id="map">
+        <img src="assets/img/italy-map.png" alt="Mappa dell'Italia con le zone già prese dalle agenzie partner">
+        <!-- Zone di esempio: nella versione vera arrivano dall'elenco delle zone prese. -->
+        <span class="pin c" style="left:25.8%;top:19.8%;transition-delay:.05s"></span>
+        <span class="pin c" style="left:11.7%;top:25.8%;transition-delay:.15s"></span>
+        <span class="pin c" style="left:38.3%;top:17.4%;transition-delay:.25s"></span>
+        <span class="pin c" style="left:39.8%;top:25.2%;transition-delay:.35s"></span>
+        <span class="pin c" style="left:38.3%;top:31.9%;transition-delay:.45s"></span>
+        <span class="pin c" style="left:43%;top:42.7%;transition-delay:.55s"></span>
+        <span class="pin c" style="left:62.5%;top:56.5%;transition-delay:.65s"></span>
+        <span class="pin c" style="left:83.6%;top:52.9%;transition-delay:.75s"></span>
+        <span class="pin c" style="left:57.8%;top:79.9%;transition-delay:.85s"></span>
+        <span class="pin c" style="left:31.3%;top:16.8%;transition-delay:.95s"></span>
+        <span class="pin c" style="left:51.6%;top:28.8%;transition-delay:1.05s"></span>
+        <span class="pin f" style="left:21.9%;top:28.2%"></span>
+        <span class="pin f" style="left:59.4%;top:36%"></span>
+        <span class="pin f" style="left:20.3%;top:70.9%"></span>
+        <span class="pin f" style="left:70.3%;top:85.3%"></span>
+        <span class="pin f" style="left:47.7%;top:15.6%"></span>
+      </div>
+      <p class="map-note">Anteprima: zone d'esempio</p>
+    </div>
+  </div>
+</section>
+
+<section class="slab glass battle">
+  <div class="battle-art" role="img" aria-label="La battaglia di Austerlitz, di François Gérard"></div>
+  <div class="battle-body">
+    <p class="label">Il campo di battaglia</p>
+    <h2 class="h1" style="margin-top:10px">È finita l'epoca delle agenzie <i>che non hanno mai venduto una casa.</i></h2>
+    <div class="split">
+      <div>
+        <div class="quote"><b>"Ti portiamo 50 contatti entro fine mese!"...</b><span><strong>E poi?</strong> Una lista di curiosi che volevano solo una valutazione gratis.</span></div>
+        <div class="quote"><b>"Avrai un account dedicato"...</b><span><strong>E poi?</strong> Risponde dopo giorni, e di acquisizione mandati non sa niente.</span></div>
+        <div class="quote"><b>"Una campagna su misura per la tua zona"...</b><span><strong>E poi?</strong> La stessa pubblicità gira anche per il tuo concorrente.</span></div>
+      </div>
+      <div class="zero glass">
+        <div class="row"><span>Visualizzazioni</span><b>48.210</b></div>
+        <div class="row"><span>Click</span><b>1.312</b></div>
+        <div class="row"><span>"Contatti"</span><b>64</b></div>
+        <div class="last"><span>Incarichi firmati</span><b>0</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slab glass" id="campagna">
+  <p class="label">La campagna</p>
+  <h2 class="h1" style="margin-top:10px">Come conquistiamo <i>la tua zona,</i> in quattro fasi.</h2>
+  <div class="phases">
+    <div class="phase glass"><div class="n">I</div><h3>La mappa</h3><p>Studiamo il tuo territorio e i tuoi numeri: da dove arrivano i contatti, dove perdi l'incarico.</p><span class="what">Analisi</span></div>
+    <div class="phase glass"><div class="n">II</div><h3>L'addestramento</h3><p>I tuoi agenti imparano gli script e i processi delle grandi reti, adattati alla tua zona.</p><span class="what">Formazione</span></div>
+    <div class="phase glass"><div class="n">III</div><h3>L'avanzata</h3><p>Le campagne partono solo sul tuo territorio, sui proprietari che vogliono vendere davvero.</p><span class="what">Campagne</span></div>
+    <div class="phase glass"><div class="n">IV</div><h3>La conquista</h3><p>Trovi l'appuntamento già fissato in agenda. Tu ti presenti e firmi l'incarico.</p><span class="what">Incarico firmato</span></div>
+  </div>
+</section>
+
+<section class="slab glass pact" id="patto">
+  <div class="pact-art" role="img" aria-label="Vercingetorige depone le armi ai piedi di Giulio Cesare, di Lionel Royer"></div>
+  <div class="pact-body">
+    <p class="label">Il patto</p>
+    <h2 class="h1" style="margin-top:10px">Ci paghi solo se <i>la conquista riesce.</i></h2>
+    <div class="copy">
+      <p>Se entro <b>90 giorni</b> non recuperi quello che hai investito con gli incarichi firmati, lavoriamo altri <b>60 giorni senza costi</b>. E se non basta, <b>ti rimborsiamo la parte mancante.</b></p>
+      <p class="fine">Scritto nel contratto, che ti mostriamo per intero nella call conoscitiva.</p>
+    </div>
+    <button type="button" class="cta">Verifica se la tua zona è libera</button>
+  </div>
+</section>
+
+<section class="slab glass final">
+  <div class="final-art" aria-hidden="true"></div>
+  <div class="final-body">
+    <h2 class="display">Conquista la tua zona,<br><i>prima che lo faccia un altro.</i></h2>
+    <p class="lead">Una sola agenzia per zona. Candidati e verifichiamo subito se la tua è ancora libera.</p>
+    <button type="button" class="cta">Candida la tua agenzia</button>
+  </div>
+</section>
+</main>
+
+<p class="credits">Dipinti di pubblico dominio: J.-L. David, Napoleone valica le Alpi (1801), Malmaison · F. Gérard, La battaglia di Austerlitz (1810), Versailles · L. Royer, Vercingetorige depone le armi ai piedi di Giulio Cesare (1899), Le Puy-en-Velay · A.-J. Gros, Bonaparte al ponte di Arcole (1796), Versailles.</p>
+
+<script>
+(function () {
+  var map = document.getElementById('map');
+  if (!('IntersectionObserver' in window)) { map.classList.add('on'); return; }
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { map.classList.add('on'); io.disconnect(); } }); }, { threshold: 0.35 });
+  io.observe(map);
+})();
+</script>
+</body>
+</html>
