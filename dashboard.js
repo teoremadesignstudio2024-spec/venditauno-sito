@@ -1,12 +1,11 @@
-// Dashboard "Fatturato del giorno" per la TV dell'ufficio.
-// Pagine: /dashboardvenditatop    = PC, per inserire il fatturato
-//         /dashboardvenditatop/tv = TV, mostra il totale che arriva in tempo reale
+// Dashboard soldi/lead per l'ufficio (e per la TV).
+// Pagine: /dashboardvenditatop    = PC, per inserire i numeri del giorno
+//         /dashboardvenditatop/tv = TV, mostra i numeri in tempo reale
 // I dati stanno nel KV ACADEMY_PROGRESS con chiave "fatturato:AAAA-MM-GG" (giorno di Roma).
+// Ogni giorno ha: cashed (incassato), adsSpend (spesa ads), leads (lead arrivati), toCall (lead ancora da chiamare, istantaneo).
+// Lead e spesa ads sono inseriti a mano per ora: quando collegheremo GoHighLevel/Meta Ads questi numeri potranno arrivare in automatico senza cambiare il resto.
 
 export const DASH_PATH = "/dashboardvenditatop";
-
-// I sales in classifica. Per aggiungerne uno basta scrivere il nome qui.
-const SELLERS = ["Samuele", "Marco", "Tomas", "Elio"];
 
 // Password di accesso: salvata solo come hash PBKDF2. Per cambiarla chiedi a Claude un nuovo hash.
 const DASH_SALT = "dc9c1720bf64430ece096b2650befaac";
@@ -45,26 +44,84 @@ function romeDate() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
 }
 
-async function readDay(kv, date) {
-  const raw = await kv.get(`fatturato:${date}`);
-  return raw ? JSON.parse(raw) : { entries: [] };
+const pad2 = (n) => String(n).padStart(2, "0");
+
+function daysInMonth(ym) {
+  const [y, m] = ym.split("-").map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+function addDays(dateStr, delta) {
+  const d = new Date(dateStr + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+function shiftMonth(ym, delta) {
+  const [y, m] = ym.split("-").map(Number);
+  const total = y * 12 + (m - 1) + delta;
+  const ny = Math.floor(total / 12), nm = (total % 12) + 1;
+  return `${ny}-${pad2(nm)}`;
 }
 
 const round2 = (n) => Math.round(n * 100) / 100;
+const num = (n) => (isFinite(n) ? round2(n) : 0);
 
-function summary(date, day) {
-  const sum = (list, f) => round2(list.reduce((s, e) => s + (e[f] || 0), 0));
-  const ranking = SELLERS.map((name) => {
-    const mine = day.entries.filter((e) => e.seller === name);
-    return { name, total: sum(mine, "amount"), cashed: sum(mine, "cashed") };
-  }).sort((a, b) => b.total - a.total || b.cashed - a.cashed);
+async function readDay(kv, date) {
+  const raw = await kv.get(`fatturato:${date}`);
+  if (!raw) return null;
+  const d = JSON.parse(raw);
+  return { cashed: num(d.cashed), adsSpend: num(d.adsSpend), leads: num(d.leads), toCall: num(d.toCall) };
+}
+
+const EMPTY_DAY = { cashed: 0, adsSpend: 0, leads: 0, toCall: 0 };
+const MONTH_LABEL = new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" });
+
+async function monthPayload(kv, ym, today) {
+  const nDays = daysInMonth(ym);
+  const dates = Array.from({ length: nDays }, (_, i) => `${ym}-${pad2(i + 1)}`);
+  const records = await Promise.all(dates.map((d) => readDay(kv, d)));
+  const days = {};
+  dates.forEach((d, i) => { if (records[i]) days[d] = records[i]; });
+
+  const todayYm = today.slice(0, 7);
+  const upTo = ym === todayYm ? Number(today.slice(8, 10)) : nDays;
+  const loggedDates = dates.slice(0, upTo).filter((d) => days[d]);
+
+  const sum = (f) => round2(loggedDates.reduce((s, d) => s + (days[d][f] || 0), 0));
+  const cashed = sum("cashed"), adsSpend = sum("adsSpend"), leads = sum("leads");
+  const cpl = leads > 0 ? round2(adsSpend / leads) : null;
+
+  let projection = null, projectionNote = null;
+  if (ym === todayYm) {
+    if (loggedDates.length >= 3) {
+      projection = round2((cashed / loggedDates.length) * nDays);
+    } else {
+      projectionNote = `Servono almeno 3 giorni con dati inseriti in questo mese per una proiezione (ce ne sono ${loggedDates.length}).`;
+    }
+  }
+
+  // Settimana: ultimi 7 giorni (oggi compreso), anche se a cavallo tra due mesi.
+  const weekDates = Array.from({ length: 7 }, (_, i) => addDays(today, -i)).reverse();
+  const weekRecords = await Promise.all(weekDates.map((d) => (days[d] !== undefined ? days[d] : readDay(kv, d))));
+  const weekSum = (f) => round2(weekRecords.reduce((s, r) => s + (r ? r[f] || 0 : 0), 0));
+  const weekLeads = weekSum("leads"), weekAds = weekSum("adsSpend");
+
   return {
-    date,
-    total: sum(day.entries, "amount"),
-    cashed: sum(day.entries, "cashed"),
-    count: day.entries.filter((e) => e.amount).length,
-    ranking,
-    entries: day.entries.slice().reverse(),
+    today,
+    todayData: days[today] || EMPTY_DAY,
+    days,
+    week: {
+      from: weekDates[0], to: weekDates[6],
+      cashed: weekSum("cashed"), adsSpend: weekAds, leads: weekLeads,
+      cpl: weekLeads > 0 ? round2(weekAds / weekLeads) : null,
+    },
+    month: {
+      ym, label: MONTH_LABEL.format(new Date(ym + "-01T12:00:00Z")),
+      daysInMonth: nDays, loggedDays: loggedDates.length,
+      cashed, adsSpend, leads, cpl, projection, projectionNote,
+      isCurrent: ym === todayYm, isFuture: ym > todayYm,
+    },
   };
 }
 
@@ -92,7 +149,7 @@ function loginPage(error, tv = false) {
 <html lang="it">
 <head>
 ${BASE_HEAD}
-<title>Fatturato del giorno — Accedi</title>
+<title>Dashboard Vendita Uno · Accedi</title>
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #000; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; padding: 16px; }
@@ -105,7 +162,7 @@ ${BASE_HEAD}
 </head>
 <body>
 <form method="POST" action="${DASH_PATH}/login${tv ? "?tv=1" : ""}">
-  <h1>Fatturato del giorno</h1>
+  <h1>Dashboard Vendita Uno</h1>
   ${error ? `<p class="err">${error}</p>` : ""}
   <input type="password" name="password" placeholder="Password" required autofocus autocomplete="current-password">
   <button type="submit">Entra</button>
@@ -114,318 +171,275 @@ ${BASE_HEAD}
 </html>`;
 }
 
-// tv = true: solo visualizzazione (per la TV). tv = false: pagina del PC per inserire.
+// tv = true: solo visualizzazione (per la TV). tv = false: pagina del PC per inserire i numeri.
 function dashboardPage(tv) {
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
 ${BASE_HEAD}
-<title>Fatturato del giorno${tv ? " — TV" : ""}</title>
+<title>Dashboard Vendita Uno${tv ? " · TV" : ""}</title>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  html, body { margin: 0; min-height: 100%; background: #000; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   .num { font-variant-numeric: tabular-nums; }
+  body.tv, body.tv .screen { height: 100vh; overflow: hidden; }
 
-  /* ---- Schermata TV ---- */
-  .screen { height: 100vh; display: flex; flex-direction: column; padding: 3vh 4vw 0; gap: 2.5vh; }
-  .top { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(1rem, 2.2vw, 2.4rem); }
-  .top .date { opacity: 0.7; text-transform: capitalize; }
-  .top .clock { opacity: 0.7; }
-  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; }
-  .kpi { text-align: center; }
-  .kpi .label { white-space: nowrap; font-size: clamp(0.9rem, 2.1vw, 2.5rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
-  .kpi .value { font-size: clamp(2.2rem, 6.2vw, 8rem); font-weight: 900; line-height: 1.05; margin-top: 1vh; letter-spacing: -0.02em; }
-  .kpi .sub { font-size: clamp(0.8rem, 1.5vw, 1.8rem); opacity: 0.6; margin-top: 0.5vh; }
+  .screen { padding: 3vh 4vw 4vh; max-width: 1200px; margin: 0 auto; }
+  .top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .top .date { font-size: clamp(1rem, 1.8vw, 1.6rem); opacity: 0.8; text-transform: capitalize; }
+  .top .clock { font-size: clamp(1rem, 1.8vw, 1.6rem); opacity: 0.6; }
+
+  .napo { display: flex; align-items: center; gap: 10px; }
+  .napo img { height: clamp(46px, 7vh, 86px); border-radius: 8px; filter: saturate(1.05) contrast(1.05); }
+  .napo .say { font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; font-size: clamp(0.75rem, 1.3vw, 1.1rem); color: #ffd84a; transform: rotate(-2deg); line-height: 1.15; max-width: 12em; }
+
+  h2.section { margin: 3.5vh 0 1.4vh; font-size: clamp(0.85rem, 1.4vw, 1.3rem); font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.55; border-top: 1px solid #222; padding-top: 2.4vh; }
+  h2.section.first { border-top: 0; padding-top: 0; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.4vw; }
+  .kpi { background: #0a0a0a; border: 1px solid #262626; border-radius: 16px; padding: 2.4vh 1.2vw; text-align: center; }
+  .kpi .label { font-size: clamp(0.72rem, 1.1vw, 1rem); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6; }
+  .kpi .value { font-size: clamp(1.7rem, 4.6vw, 3.6rem); font-weight: 900; line-height: 1.1; margin-top: 0.6vh; letter-spacing: -0.02em; }
+  .kpi .value.money::before { content: "€ "; }
+  .kpi .sub { font-size: clamp(0.72rem, 1vw, 0.95rem); opacity: 0.5; margin-top: 0.4vh; }
   .bump { animation: bump 1.2s ease-out; }
-  @keyframes bump { 0% { transform: scale(1); } 15% { transform: scale(1.08); } 100% { transform: scale(1); } }
+  @keyframes bump { 0% { transform: scale(1); } 15% { transform: scale(1.07); } 100% { transform: scale(1); } }
 
-  /* Top sales: podio + fuori dal podio */
-  .rank { flex: 1; display: grid; grid-template-columns: 2.3fr 1fr; gap: 3vw; min-height: 0; border-top: 1px solid #333; padding-top: 2.5vh; }
-  .rank h2 { margin: 0 0 1vh; font-size: clamp(1rem, 2.4vw, 2.8rem); font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; text-align: center; }
-  .rank h3 { margin: 0 0 2vh; font-size: clamp(0.8rem, 1.5vw, 1.7rem); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
-  .podium-wrap { display: flex; flex-direction: column; min-height: 0; }
-  .podium { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 1.2vw; min-height: 0; }
-  .step { flex: 1; max-width: 22vw; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; text-align: center; }
-  .step .medal { font-size: clamp(1.6rem, 3.6vw, 4.4rem); line-height: 1; }
-  .step .name { font-size: clamp(1.1rem, 2.6vw, 3.2rem); font-weight: 900; margin-top: 0.6vh; }
-  .step .amt { font-size: clamp(1rem, 2.3vw, 2.8rem); font-weight: 800; }
-  .step .inc { font-size: clamp(0.7rem, 1.2vw, 1.4rem); opacity: 0.6; margin-bottom: 1.2vh; }
-  .step .block { width: 100%; border-radius: 1.2vw 1.2vw 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 1.5vh;
-    font-size: clamp(1.4rem, 3.2vw, 4rem); line-height: 1; font-weight: 900; color: rgba(0,0,0,0.75); transition: height 1s ease-out; }
-  .p1 .block { height: 19vh; background: linear-gradient(180deg, #ffe17a, #d4a017 55%, #8a6a0c); box-shadow: 0 0 4vw rgba(255, 205, 60, 0.35); }
-  .p2 .block { height: 14vh; background: linear-gradient(180deg, #f2f2f2, #b8b8b8 55%, #6d6d6d); }
-  .p3 .block { height: 10vh; background: linear-gradient(180deg, #f0b27a, #c7792f 55%, #6e3f14); }
-  .p1 .name { font-size: clamp(1.3rem, 3.2vw, 4rem); }
-  .p1 .amt { font-size: clamp(1.1rem, 2.8vw, 3.4rem); }
-  .step.pop .name, .step.pop .medal { animation: pop 1.2s ease-out; }
-  @keyframes pop { 0% { transform: scale(1); } 20% { transform: scale(1.25); } 100% { transform: scale(1); } }
-  .others { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid #222; padding-left: 2.5vw; }
-  .other { display: flex; align-items: baseline; gap: 1vw; padding: 1.4vh 0; border-bottom: 1px solid #1a1a1a; font-size: clamp(1rem, 2.2vw, 2.6rem); }
-  .other .pos { font-weight: 900; opacity: 0.5; width: 2em; }
-  .other .name { font-weight: 800; flex: 1; }
-  .other .amt { font-weight: 800; text-align: right; }
-  .other .amt small { display: block; font-size: 0.5em; font-weight: 500; opacity: 0.6; }
-  .others .empty { opacity: 0.4; font-size: clamp(0.9rem, 1.6vw, 1.8rem); }
+  .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vw; }
 
-  .flash { position: fixed; left: 50%; top: 40vh; transform: translateX(-50%); font-size: clamp(1.5rem, 5vw, 6rem); font-weight: 800; opacity: 0; pointer-events: none; background: #000; padding: 0.2em 0.6em; border: 2px solid #fff; border-radius: 0.4em; white-space: nowrap; }
-  .flash.show { animation: flash 3.5s ease-out; }
-  @keyframes flash { 0% { opacity: 0; transform: translate(-50%, 2vh); } 10% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -2vh); } }
+  .monthnav { display: flex; align-items: center; gap: 10px; }
+  .monthnav button { background: #111; border: 1px solid #333; color: #fff; width: 34px; height: 34px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+  .monthnav button:disabled { opacity: 0.3; cursor: default; }
+  .monthnav .lbl { font-weight: 800; text-transform: capitalize; min-width: 11em; text-align: center; }
+
+  .proj { margin-top: 1.4vh; background: #0a0a0a; border: 1px dashed #333; border-radius: 14px; padding: 1.8vh 2vw; font-size: clamp(0.85rem, 1.1vw, 1.05rem); }
+  .proj b { font-size: 1.3em; }
+  .proj.muted { opacity: 0.55; border-style: dashed; }
+
   .status { position: fixed; bottom: 1.5vh; left: 4vw; font-size: 0.9rem; opacity: 0; }
   .status.offline { opacity: 0.6; }
 
-  /* ---- Pagina del PC ---- */
-  body.pc { overflow: auto; height: auto; }
-  body.pc .screen { height: auto; padding: 4vh 16px 2vh; max-width: 900px; margin: 0 auto; }
-  body.pc .kpi .value { font-size: clamp(2rem, 7vw, 4.5rem); }
-  body.pc .kpi .label { font-size: 1rem; }
-  body.pc .rank { flex: none; height: 460px; }
-  body.pc .p1 .block { height: 150px; } body.pc .p2 .block { height: 105px; } body.pc .p3 .block { height: 70px; }
-  body.pc .step { max-width: 200px; }
-  body.pc .step .block { font-size: 2.6rem; }
-  body.pc .other { font-size: 1.1rem; }
-  body.pc .flash { display: none; }
-  .panel { display: flex; justify-content: center; padding: 8px 16px 48px; }
-  .card { width: 100%; max-width: 520px; background: #000; border: 1px solid #333; border-radius: 16px; padding: 28px; }
-  .card h2 { margin: 0 0 20px; font-size: 1.2rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  /* ---- Form inserimento (solo PC) ---- */
+  .panel { display: flex; justify-content: center; padding: 1vh 16px 60px; }
+  .card { width: 100%; max-width: 560px; background: #0a0a0a; border: 1px solid #262626; border-radius: 16px; padding: 26px; }
+  .card h2 { margin: 0 0 6px; font-size: 1.1rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .card .note { font-size: 0.82rem; opacity: 0.55; margin: 0 0 18px; }
   .card label { display: block; font-size: 0.85rem; opacity: 0.7; margin-bottom: 6px; }
-  .card input { width: 100%; padding: 14px; font-size: 1.2rem; background: #111; color: #fff; border: 1px solid #333; border-radius: 10px; margin-bottom: 14px; }
+  .card input { width: 100%; padding: 13px; font-size: 1.1rem; background: #111; color: #fff; border: 1px solid #333; border-radius: 10px; margin-bottom: 14px; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .sellers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
-  .sellers button { padding: 12px 4px; font-size: 1rem; font-weight: 700; background: #111; color: #fff; border: 1px solid #333; border-radius: 10px; cursor: pointer; }
-  .sellers button.on { background: #fff; color: #000; border-color: #fff; }
   .btn-main { width: 100%; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 10px; cursor: pointer; border: 0; background: #fff; color: #000; }
-  .hint { font-size: 0.8rem; opacity: 0.55; margin: -6px 0 14px; }
-  .msg { min-height: 1.3em; font-size: 0.9rem; margin: 4px 0 10px; }
-  .list { margin-top: 22px; border-top: 1px solid #222; padding-top: 14px; }
-  .list h3 { margin: 0 0 10px; font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
-  .item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 0.95rem; }
-  .item .who { font-weight: 700; width: 5.5em; flex: none; }
-  .item .vals { flex: 1; min-width: 0; }
-  .item .vals b { font-variant-numeric: tabular-nums; }
-  .item .vals span { display: block; opacity: 0.6; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .item .time { opacity: 0.5; font-size: 0.8rem; }
-  .item .del { background: none; border: 1px solid #7f1d1d; color: #f87171; cursor: pointer; font-size: 0.85rem; font-weight: 700; padding: 6px 12px; border-radius: 8px; flex: none; }
-  .item .del:hover { background: #2a0a0a; }
-  .item .del.sure { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .msg { min-height: 1.3em; font-size: 0.9rem; margin: 4px 0 10px; text-align: center; }
   .tv-link { display: block; text-align: center; color: #fff; opacity: 0.6; font-size: 0.9rem; margin-top: 18px; }
-  @media (max-width: 600px) {
-    .kpis { grid-template-columns: 1fr; gap: 3vh; }
-    .rank { grid-template-columns: 1fr; height: auto; }
-    .podium { flex: none; }
-    .step { max-width: none; }
-    .p1 .block { height: 110px; } .p2 .block { height: 75px; } .p3 .block { height: 50px; }
-    .others { border-left: 0; padding-left: 0; }
-    body.pc .rank { height: auto; }
+
+  @media (max-width: 760px) {
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .row3 { grid-template-columns: 1fr; }
+    .napo .say { max-width: 8em; }
   }
 </style>
 </head>
-<body${tv ? "" : ' class="pc"'}>
+<body class="${tv ? "tv" : "pc"}">
 <div class="screen" id="screen">
-  <div class="top"><span class="date" id="date"></span><span class="clock num" id="clock"></span></div>
+  <div class="top">
+    <div><span class="date" id="date"></span></div>
+    <div class="napo">
+      <span class="say">Conquistiamo <span id="clock" class="num"></span></span>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/9/9b/David_-_Napoleon_crossing_the_Alps_-_Malmaison2.jpg" alt="Napoleone che ci carica">
+    </div>
+  </div>
+
+  <h2 class="section first">Oggi</h2>
   <div class="kpis">
-    <div class="kpi"><div class="label">Fatturato del giorno</div><div class="value num" id="total">€ 0</div><div class="sub" id="count"></div></div>
-    <div class="kpi"><div class="label">Incassato del giorno</div><div class="value num" id="cashed">€ 0</div><div class="sub" id="cashedSub"></div></div>
+    <div class="kpi"><div class="label">Incassato</div><div class="value money num" id="t-cashed">0</div></div>
+    <div class="kpi"><div class="label">Spesa ads</div><div class="value money num" id="t-ads">0</div></div>
+    <div class="kpi"><div class="label">Lead arrivati</div><div class="value num" id="t-leads">0</div></div>
+    <div class="kpi"><div class="label">Lead da chiamare</div><div class="value num" id="t-tocall">0</div></div>
   </div>
-  <div class="rank">
-    <div class="podium-wrap">
-      <h2>🏆 Top sales</h2>
-      <div class="podium">
-        <div class="step p2" id="p2"><div class="medal">🥈</div><div class="name"></div><div class="amt num"></div><div class="inc num"></div><div class="block">2</div></div>
-        <div class="step p1" id="p1"><div class="medal">👑</div><div class="name"></div><div class="amt num"></div><div class="inc num"></div><div class="block">1</div></div>
-        <div class="step p3" id="p3"><div class="medal">🥉</div><div class="name"></div><div class="amt num"></div><div class="inc num"></div><div class="block">3</div></div>
-      </div>
-    </div>
-    <div class="others">
-      <h3>Fuori dal podio</h3>
-      <div id="others"></div>
-    </div>
+
+  <h2 class="section">Ultimi 7 giorni</h2>
+  <div class="row3">
+    <div class="kpi"><div class="label">Incassato</div><div class="value money num" id="w-cashed">0</div></div>
+    <div class="kpi"><div class="label">Spesa ads</div><div class="value money num" id="w-ads">0</div></div>
+    <div class="kpi"><div class="label">Lead arrivati</div><div class="value num" id="w-leads">0</div><div class="sub" id="w-cpl"></div></div>
   </div>
+
+  <h2 class="section">
+    <div class="monthnav">
+      <button type="button" id="mPrev">‹</button>
+      <span class="lbl" id="mLabel">...</span>
+      <button type="button" id="mNext">›</button>
+    </div>
+  </h2>
+  <div class="row3">
+    <div class="kpi"><div class="label">Incassato</div><div class="value money num" id="m-cashed">0</div></div>
+    <div class="kpi"><div class="label">Spesa ads</div><div class="value money num" id="m-ads">0</div></div>
+    <div class="kpi"><div class="label">Lead arrivati</div><div class="value num" id="m-leads">0</div><div class="sub" id="m-cpl"></div></div>
+  </div>
+  <div class="proj" id="proj"></div>
 </div>
-<div class="flash" id="flash"></div>
 <div class="status" id="status">Connessione persa, riprovo…</div>
 
 ${tv ? "" : `<div class="panel">
   <form class="card" id="addForm">
-    <h2>Aggiungi vendita</h2>
-    <label>Sales</label>
-    <div class="sellers" id="sellers">${SELLERS.map((s) => `<button type="button" data-s="${s}">${s}</button>`).join("")}</div>
+    <h2>Inserisci / correggi un giorno</h2>
+    <p class="note">Lead e spesa ads sono manuali per ora. In futuro potremo collegarli a GoHighLevel e a Meta/Google Ads senza cambiare questa pagina.</p>
+    <label for="fdate">Giorno</label>
+    <input type="date" id="fdate">
     <div class="two">
-      <div><label for="amount">Fatturato (€)</label><input id="amount" inputmode="decimal" placeholder="es. 1500" autocomplete="off"></div>
-      <div><label for="cashedIn">Incassato (€)</label><input id="cashedIn" inputmode="decimal" placeholder="es. 500" autocomplete="off"></div>
+      <div><label for="fcashed">Incassato (€)</label><input id="fcashed" inputmode="decimal" placeholder="es. 1500" autocomplete="off"></div>
+      <div><label for="fads">Spesa ads (€)</label><input id="fads" inputmode="decimal" placeholder="es. 300" autocomplete="off"></div>
     </div>
-    <p class="hint">Puoi compilare anche solo uno dei due (es. solo incassato per un acconto ricevuto oggi).</p>
-    <label for="note">Nota / cliente (facoltativa)</label>
-    <input id="note" maxlength="80" placeholder="es. Cliente Rossi" autocomplete="off">
+    <div class="two">
+      <div><label for="fleads">Lead arrivati</label><input id="fleads" inputmode="numeric" placeholder="es. 12" autocomplete="off"></div>
+      <div><label for="ftocall">Lead ancora da chiamare</label><input id="ftocall" inputmode="numeric" placeholder="es. 5" autocomplete="off"></div>
+    </div>
     <div class="msg" id="msg"></div>
-    <button type="submit" class="btn-main">Aggiungi</button>
-    <div class="list">
-      <h3>Inserimenti di oggi</h3>
-      <div id="items"></div>
-    </div>
+    <button type="submit" class="btn-main">Salva</button>
     <a class="tv-link" href="${DASH_PATH}/tv" target="_blank">Apri la schermata della TV ↗</a>
   </form>
 </div>`}
 
 <script>
 const API = '${DASH_PATH}/api';
-const eur = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
-const eur2 = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+const eur = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 });
+const eur2 = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const $ = (id) => document.getElementById(id);
-let last = null, lastListKey = null;
+let last = null, curMonth = null, todayStr = null;
 const anims = {};
 
-function fmt(n) { return Number.isInteger(n) ? eur.format(n) : eur2.format(n); }
-function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function fmtMoney(n) { return Number.isInteger(n) ? eur.format(n) : eur2.format(n); }
+function fmtInt(n) { return eur.format(Math.round(n)); }
 
-function animateTo(id, from, to) {
+function animateTo(id, from, to, money) {
   const el = $(id);
+  if (!el) return;
   cancelAnimationFrame(anims[id]);
-  const start = performance.now(), dur = 1500;
+  const start = performance.now(), dur = 1200;
   const step = (t) => {
     const p = Math.min(1, (t - start) / dur);
     const v = from + (to - from) * (1 - Math.pow(1 - p, 3));
-    el.textContent = p < 1 ? eur.format(Math.round(v)) : fmt(to);
+    el.textContent = p < 1 ? fmtInt(v) : (money ? fmtMoney(to) : fmtInt(to));
     if (p < 1) anims[id] = requestAnimationFrame(step);
   };
   anims[id] = requestAnimationFrame(step);
   if (to > from) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 }
 
-function flash(text) {
-  const f = $('flash');
-  f.textContent = text;
-  f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
+function setVal(id, to, money) {
+  const el = $(id);
+  if (!el) return;
+  const from = Number((el.textContent || '0').replace(/[^0-9,.\\-]/g, '').replace(',', '.')) || 0;
+  if (last === null) el.textContent = money ? fmtMoney(to) : fmtInt(to);
+  else if (from !== to) animateTo(id, from, to, money);
 }
 
 function render(d) {
-  $('date').textContent = new Date(d.date + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  $('count').textContent = d.count === 0 ? 'Nessuna vendita ancora' : d.count === 1 ? '1 vendita' : d.count + ' vendite';
-  $('cashedSub').textContent = d.total > 0 ? Math.round(d.cashed / d.total * 100) + '% del fatturato' : '';
+  todayStr = d.today;
+  $('date').textContent = new Date(d.today + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  $('clock').textContent = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 
-  if (last === null) { $('total').textContent = fmt(d.total); $('cashed').textContent = fmt(d.cashed); }
-  else {
-    if (d.total !== last.total) animateTo('total', last.total, d.total);
-    if (d.cashed !== last.cashed) animateTo('cashed', last.cashed, d.cashed);
-    // Annuncio sulla TV della nuova vendita
-    const newest = d.entries[0];
-    if (newest && !last.entries.some((e) => e.id === newest.id)) {
-      const parts = [];
-      if (newest.amount) parts.push('+ ' + fmt(newest.amount));
-      if (newest.cashed) parts.push('incassati ' + fmt(newest.cashed));
-      flash((newest.seller ? newest.seller + '  ' : '') + parts.join(' · '));
-    }
-  }
+  setVal('t-cashed', d.todayData.cashed, true);
+  setVal('t-ads', d.todayData.adsSpend, true);
+  setVal('t-leads', d.todayData.leads, false);
+  setVal('t-tocall', d.todayData.toCall, false);
 
-  // Top sales: primi 3 sul podio, gli altri fuori dal podio
-  d.ranking.slice(0, 3).forEach((r, i) => {
-    const step = $('p' + (i + 1));
-    const changed = last && last.ranking[i] && last.ranking[i].name !== r.name;
-    step.querySelector('.name').textContent = r.name;
-    step.querySelector('.amt').textContent = fmt(r.total);
-    step.querySelector('.inc').textContent = 'incassato ' + fmt(r.cashed);
-    if (changed) { step.classList.remove('pop'); void step.offsetWidth; step.classList.add('pop'); }
-  });
-  const rest = d.ranking.slice(3);
-  $('others').innerHTML = rest.length ? rest.map((r, i) =>
-    '<div class="other"><span class="pos num">' + (i + 4) + '°</span><span class="name">' + esc(r.name) +
-    '</span><span class="amt num">' + fmt(r.total) + '<small>incassato ' + fmt(r.cashed) + '</small></span></div>'
-  ).join('') : '<div class="empty">Nessuno</div>';
-  // Nuovo primo in classifica: annuncio dopo quello della vendita
-  if (last && d.ranking[0].total > 0 && last.ranking[0].name !== d.ranking[0].name) {
-    setTimeout(() => flash('👑 ' + d.ranking[0].name + ' è primo!'), 3600);
+  setVal('w-cashed', d.week.cashed, true);
+  setVal('w-ads', d.week.adsSpend, true);
+  setVal('w-leads', d.week.leads, false);
+  $('w-cpl').textContent = d.week.cpl != null ? 'CPL ' + fmtMoney(d.week.cpl) : '';
+
+  curMonth = d.month.ym;
+  $('mLabel').textContent = d.month.label;
+  $('mPrev').disabled = false;
+  $('mNext').disabled = d.month.isCurrent || d.month.isFuture;
+  setVal('m-cashed', d.month.cashed, true);
+  setVal('m-ads', d.month.adsSpend, true);
+  setVal('m-leads', d.month.leads, false);
+  $('m-cpl').textContent = d.month.cpl != null ? 'CPL ' + fmtMoney(d.month.cpl) : '';
+
+  const proj = $('proj');
+  if (d.month.projection != null) {
+    proj.className = 'proj';
+    proj.innerHTML = 'Proiezione incassato a fine mese: <b>' + fmtMoney(d.month.projection) + '</b> (basata su ' + d.month.loggedDays + ' giorni inseriti su ' + d.month.daysInMonth + ')';
+  } else if (d.month.projectionNote) {
+    proj.className = 'proj muted';
+    proj.textContent = d.month.projectionNote;
+  } else {
+    proj.className = 'proj muted';
+    proj.textContent = d.month.isFuture ? 'Mese futuro: nessun dato.' : 'Mese chiuso: questo è il totale reale, non una proiezione.';
   }
 
   last = d;
 
-  // Lista inserimenti (solo PC): ridisegna solo se cambiata, così il clic su "Elimina" non va perso
-  const key = d.entries.map((e) => e.id).join(',');
-  if (!$('items') || key === lastListKey) return;
-  lastListKey = key;
-  $('items').innerHTML = d.entries.length ? d.entries.map((e) =>
-    '<div class="item"><span class="who">' + esc(e.seller || '—') + '</span><span class="vals">' +
-    (e.amount ? '<b>' + eur2.format(e.amount) + '</b> fatt. ' : '') + (e.cashed ? '<b>' + eur2.format(e.cashed) + '</b> inc.' : '') +
-    (e.note ? '<span>' + esc(e.note) + '</span>' : '') +
-    '</span><span class="time">' + new Date(e.ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) +
-    '</span><button type="button" class="del" data-id="' + e.id + '">Elimina</button></div>'
-  ).join('') : '<div class="item"><span class="vals">Nessun inserimento</span></div>';
+  if ($('fdate') && !$('fdate').value) {
+    $('fdate').value = d.today;
+    $('fdate').max = d.today;
+    fillFormFor(d.todayData);
+  }
 }
 
-async function refresh() {
+function fillFormFor(day) {
+  $('fcashed').value = day.cashed || '';
+  $('fads').value = day.adsSpend || '';
+  $('fleads').value = day.leads || '';
+  $('ftocall').value = day.toCall || '';
+}
+
+async function refresh(ym) {
   try {
-    const r = await fetch(API, { cache: 'no-store' });
+    const r = await fetch(API + (ym ? '?month=' + ym : ''), { cache: 'no-store' });
     if (r.status === 401) { location.reload(); return; }
     render(await r.json());
     $('status').classList.remove('offline');
   } catch (e) { $('status').classList.add('offline'); }
 }
 
-function tick() { $('clock').textContent = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
-tick(); setInterval(tick, 1000);
-refresh(); setInterval(refresh, 4000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+refresh(); setInterval(() => refresh(curMonth), 5000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(curMonth); });
 
-// Evita che la TV vada in standby
 async function keepAwake() { try { await navigator.wakeLock?.request('screen'); } catch (e) {} }
 keepAwake(); document.addEventListener('visibilitychange', () => { if (!document.hidden) keepAwake(); });
-
-// Doppio clic = schermo intero (comodo sulla TV)
 $('screen').addEventListener('dblclick', () => document.documentElement.requestFullscreen?.());
 
-// Solo nella pagina del PC: modulo per inserire
+$('mPrev').onclick = () => { const [y, m] = curMonth.split('-').map(Number); const t = y * 12 + (m - 1) - 1; refresh(Math.floor(t / 12) + '-' + String((t % 12) + 1).padStart(2, '0')); };
+$('mNext').onclick = () => { if ($('mNext').disabled) return; const [y, m] = curMonth.split('-').map(Number); const t = y * 12 + (m - 1) + 1; refresh(Math.floor(t / 12) + '-' + String((t % 12) + 1).padStart(2, '0')); };
+
 if ($('addForm')) {
-let seller = null;
-$('sellers').onclick = (e) => {
-  const b = e.target.closest('button');
-  if (!b) return;
-  seller = b.dataset.s;
-  [...$('sellers').children].forEach((x) => x.classList.toggle('on', x === b));
-  $('amount').focus();
-};
-
-function parseAmount(s) {
-  s = s.replace(/[€\\s]/g, '');
-  if (!s) return 0;
-  if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');
-  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');
-  return Number(s);
-}
-
-$('addForm').onsubmit = async (e) => {
-  e.preventDefault();
-  if (!seller) { $('msg').textContent = 'Scegli il sales'; return; }
-  const amount = parseAmount($('amount').value), cashed = parseAmount($('cashedIn').value);
-  if (!isFinite(amount) || !isFinite(cashed)) { $('msg').textContent = 'Importo non valido'; return; }
-  if (!amount && !cashed) { $('msg').textContent = 'Scrivi il fatturato o l\\'incassato'; return; }
-  $('msg').textContent = 'Salvo…';
-  try {
-    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seller, amount, cashed, note: $('note').value }) });
-    if (!r.ok) throw new Error();
-    render(await r.json());
-    $('amount').value = ''; $('cashedIn').value = ''; $('note').value = '';
-    $('msg').textContent = '✓ Aggiunto per ' + seller;
-  } catch (err) { $('msg').textContent = 'Errore, riprova'; }
-};
-
-// Primo clic: "Sicuro?" — secondo clic: elimina
-$('items').onclick = async (e) => {
-  const btn = e.target.closest('.del');
-  if (!btn) return;
-  if (!btn.classList.contains('sure')) {
-    btn.classList.add('sure'); btn.textContent = 'Sicuro?';
-    setTimeout(() => { if (btn.isConnected && btn.textContent === 'Sicuro?') { btn.classList.remove('sure'); btn.textContent = 'Elimina'; } }, 4000);
-    return;
+  function parseAmount(s) {
+    s = (s || '').toString().replace(/[€\\s]/g, '');
+    if (!s) return 0;
+    if (s.includes(',')) s = s.replace(/\\./g, '').replace(',', '.');
+    else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');
+    return Number(s);
   }
-  btn.disabled = true; btn.textContent = 'Elimino…';
-  try {
-    const r = await fetch(API + '?id=' + encodeURIComponent(btn.dataset.id), { method: 'DELETE' });
-    if (!r.ok) throw new Error();
-    render(await r.json());
-    $('msg').textContent = '✓ Eliminato';
-  } catch (err) {
-    btn.disabled = false; btn.classList.remove('sure'); btn.textContent = 'Elimina';
-    $('msg').textContent = 'Errore, non eliminato: riprova';
-  }
-};
+
+  $('fdate').onchange = async () => {
+    const date = $('fdate').value;
+    try {
+      const r = await fetch(API + '?month=' + date.slice(0, 7), { cache: 'no-store' });
+      const d = await r.json();
+      fillFormFor((d.days && d.days[date]) || { cashed: 0, adsSpend: 0, leads: 0, toCall: 0 });
+    } catch (e) {}
+  };
+
+  $('addForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      date: $('fdate').value,
+      cashed: parseAmount($('fcashed').value),
+      adsSpend: parseAmount($('fads').value),
+      leads: parseAmount($('fleads').value),
+      toCall: parseAmount($('ftocall').value),
+    };
+    if (Object.values(payload).slice(1).some((n) => !isFinite(n) || n < 0)) { $('msg').textContent = 'Valori non validi'; return; }
+    $('msg').textContent = 'Salvo…';
+    try {
+      const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error();
+      render(await r.json());
+      $('msg').textContent = '✓ Salvato';
+    } catch (err) { $('msg').textContent = 'Errore, riprova'; }
+  };
 }
 </script>
 </body>
@@ -456,37 +470,25 @@ export async function handleDashboard(request, env, url) {
 
   if (path === `${DASH_PATH}/api`) {
     if (!loggedIn) return json({ error: "unauthorized" }, 401);
-    const date = romeDate();
-    const key = `fatturato:${date}`;
+    const today = romeDate();
 
-    if (request.method === "GET") return json(summary(date, await readDay(kv, date)));
+    if (request.method === "GET") {
+      const ym = /^\d{4}-\d{2}$/.test(url.searchParams.get("month") || "") ? url.searchParams.get("month") : today.slice(0, 7);
+      return json(await monthPayload(kv, ym, today));
+    }
 
     if (request.method === "POST") {
       const body = await request.json().catch(() => ({}));
-      const amount = round2(Number(body.amount) || 0);
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(body.date || "") ? body.date : today;
+      if (date > today) return json({ error: "data non valida" }, 400);
+      const valid = (n) => isFinite(n) && n >= 0 && n <= 100000000;
       const cashed = round2(Number(body.cashed) || 0);
-      const valid = (n) => isFinite(n) && Math.abs(n) <= 100000000;
-      if (!valid(amount) || !valid(cashed) || (!amount && !cashed)) return json({ error: "importo non valido" }, 400);
-      if (!SELLERS.includes(body.seller)) return json({ error: "sales non valido" }, 400);
-      const day = await readDay(kv, date);
-      day.entries.push({
-        id: toHex(crypto.getRandomValues(new Uint8Array(6))),
-        seller: body.seller,
-        amount,
-        cashed,
-        note: String(body.note || "").slice(0, 80),
-        ts: Date.now(),
-      });
-      await kv.put(key, JSON.stringify(day));
-      return json(summary(date, day));
-    }
-
-    if (request.method === "DELETE") {
-      const id = url.searchParams.get("id");
-      const day = await readDay(kv, date);
-      day.entries = day.entries.filter((e) => e.id !== id);
-      await kv.put(key, JSON.stringify(day));
-      return json(summary(date, day));
+      const adsSpend = round2(Number(body.adsSpend) || 0);
+      const leads = Math.round(Number(body.leads) || 0);
+      const toCall = Math.round(Number(body.toCall) || 0);
+      if (![cashed, adsSpend, leads, toCall].every(valid)) return json({ error: "valori non validi" }, 400);
+      await kv.put(`fatturato:${date}`, JSON.stringify({ cashed, adsSpend, leads, toCall }));
+      return json(await monthPayload(kv, date.slice(0, 7), today));
     }
 
     return new Response("Method not allowed", { status: 405 });
