@@ -1,0 +1,10 @@
+# File del server e di configurazione: non devono essere scaricabili dal sito.
+worker.js
+dashboard.js
+app-api.js
+wrangler.toml
+academy-users.json
+.git
+.gitignore
+.assetsignore
+*.md

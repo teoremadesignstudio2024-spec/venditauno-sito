@@ -8,8 +8,8 @@ export const DASH_PATH = "/dashboardvenditatop";
 export const TV_PATH = "/tv";
 
 // Password di accesso: salvata solo come hash PBKDF2. Per cambiarla chiedi a Claude un nuovo hash.
-const DASH_SALT = "dc9c1720bf64430ece096b2650befaac";
-const DASH_HASH = "ac7f198145ddd36f9805c116254d3ae88b0df25100e68c158b521ae2c62d4db8";
+const DASH_SALT = "9e9044f894432482c25c23ff5ec5dae1";
+const DASH_HASH = "36730c95a86d44cafacceef5adfa2c275a1e6660222d264c9d6bdec7f94c98f4";
 const DASH_COOKIE = "vu_dash_session";
 const DASH_SESSION_DAYS = 365;
 

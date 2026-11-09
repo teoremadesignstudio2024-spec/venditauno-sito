@@ -1478,8 +1478,7 @@ function viewPremium() {
       <div id="zerr"></div>
       <button class="btn pri block">${icon("pin", "sm")}Invia richiesta</button>
       <p class="small muted" style="margin-top:10px;text-align:center">Ti richiamiamo entro 24 ore per spiegarti il servizio.</p>
-    </form>
-    <a class="btn sec block" href="/provegestionale" target="_blank" style="margin-top:12px">${icon("search", "sm")}Guarda come funziona il gestionale</a>`;
+    </form>`;
   $("#zf").onsubmit = async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector("button");
