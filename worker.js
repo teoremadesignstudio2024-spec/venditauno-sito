@@ -31,6 +31,11 @@ export default {
       return Response.redirect(`${url.origin}/diotticonsulting`, 301);
     }
 
+    // Cristina Magni / Metodo 4P: l'indirizzo è /medicinaestetica; le altre grafie ci arrivano comunque.
+    if (/^\/medicina[-_]estetica\/?$/i.test(url.pathname) || /^\/medicinaestetica\/$/i.test(url.pathname) || (/^\/medicinaestetica$/i.test(url.pathname) && url.pathname !== "/medicinaestetica")) {
+      return Response.redirect(`${url.origin}/medicinaestetica`, 301);
+    }
+
     if (isRemoved(url.pathname)) {
       return Response.redirect(`${url.origin}/`, 301);
     }
