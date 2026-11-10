@@ -26,6 +26,11 @@ export default {
       return out;
     }
 
+    // Diotti Consulting: anche chi scrive l'indirizzo senza trattino arriva alla pagina giusta.
+    if (/^\/diotti_?consulting\/?$/i.test(url.pathname) || /^\/diotti-consulting\/$/i.test(url.pathname) || url.pathname === "/Diotti-Consulting") {
+      return Response.redirect(`${url.origin}/diotti-consulting`, 301);
+    }
+
     if (isRemoved(url.pathname)) {
       return Response.redirect(`${url.origin}/`, 301);
     }
