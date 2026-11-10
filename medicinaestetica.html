@@ -3,47 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cristina Magni · Metodo 4P anti-aging</title>
-<meta name="description" content="Cristina Magni, farmacista specializzata in medicina anti-aging. Il Metodo 4P: alimentazione, attività fisica, mindset e qualità del sonno, insieme.">
+<title>Cristina Magni · Metodo 4P – Bellezza e Salute Sistemica</title>
+<meta name="description" content="Cristina Magni, farmacista e Healthy Aging Coach. Il Metodo 4P – Parametri, Piano Nutrizionale Funzionale, Potenziamento, Presenza Mentale – mette insieme i pezzi della tua salute in un percorso su misura.">
 <!-- Bozza in revisione: fuori dai motori di ricerca finché non è approvata. -->
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#f7f1ec">
+<meta name="theme-color" content="#f6efe8">
 <meta property="og:title" content="Cristina Magni · Metodo 4P">
-<meta property="og:description" content="I quattro pilastri del benessere anti-aging, insieme: alimentazione, attività fisica, mindset, sonno.">
+<meta property="og:description" content="Bellezza e Salute Sistemica: la vera bellezza è l'espressione di un organismo in equilibrio.">
+<meta property="og:image" content="/assets/img/cristina-magni-ritratto.webp">
+<link rel="preload" as="image" href="/assets/img/cristina-magni-ritratto.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #f7f1ec;
-  --ink: #2a1f1d;
-  --muted: rgba(42, 31, 29, 0.66);
-  --faint: rgba(42, 31, 29, 0.42);
-  --line: rgba(42, 31, 29, 0.10);
-  --rose: #e8a6a1;
-  --blush: #f3cfc4;
-  --peach: #f6b98f;
-  --sage: #a9bfa6;
-  --plum: #8c4a5c;
-  --grad: linear-gradient(110deg, #c86f6a 0%, #d98a6d 35%, #b8737f 70%, #8c4a5c 100%);
+  --bg: #f6efe8;
+  --ink: #2b201c;
+  --muted: rgba(43, 32, 28, 0.68);
+  --faint: rgba(43, 32, 28, 0.42);
+  --line: rgba(43, 32, 28, 0.10);
+  --copper: #b56a45;
+  --rose: #c75f78;
+  --blush: #f1cfc4;
+  --sage: #a9b99f;
+  --grad: linear-gradient(110deg, #b86a44 0%, #c97c5f 38%, #c9677a 72%, #a24c66 100%);
   --radius: 30px;
   --serif: "Cormorant Garamond", Georgia, serif;
-  --lnum: "lnum" 1;
   --sans: "Manrope", system-ui, -apple-system, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-body { font-variant-numeric: lining-nums; font-family: var(--sans); background: var(--bg); color: var(--ink); line-height: 1.65; font-size: 17px; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--sans); background: var(--bg); color: var(--ink); line-height: 1.65; font-size: 17px; overflow-x: hidden; -webkit-font-smoothing: antialiased; font-variant-numeric: lining-nums; }
 a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
 .gt { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.serif { font-family: var(--serif); font-feature-settings: "lnum" 1; }
 
 /* Sfondo: nuvole di colore morbide che respirano */
-.bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: radial-gradient(120% 80% at 80% 0%, #fbe9e2 0%, var(--bg) 55%); }
+.bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: radial-gradient(120% 80% at 80% 0%, #fbe8de 0%, var(--bg) 55%); }
 .bg i { position: absolute; border-radius: 50%; filter: blur(80px); will-change: transform; }
-.bg i:nth-child(1) { width: 50vw; height: 50vw; right: -12vw; top: -14vw; background: radial-gradient(circle, var(--blush), transparent 70%); opacity: .95; animation: f1 22s ease-in-out infinite alternate; }
-.bg i:nth-child(2) { width: 46vw; height: 46vw; left: -16vw; top: 30vh; background: radial-gradient(circle, #dfe9d9, transparent 70%); opacity: .9; animation: f2 28s ease-in-out infinite alternate; }
-.bg i:nth-child(3) { width: 40vw; height: 40vw; right: 6vw; bottom: -20vw; background: radial-gradient(circle, #fbd6bd, transparent 70%); opacity: .85; animation: f3 25s ease-in-out infinite alternate; }
-.bg i:nth-child(4) { width: 30vw; height: 30vw; left: 30vw; top: 10vh; background: radial-gradient(circle, #ecd3e0, transparent 70%); opacity: .7; animation: f2 30s ease-in-out infinite alternate-reverse; }
+.bg i:nth-child(1) { width: 50vw; height: 50vw; right: -12vw; top: -14vw; background: radial-gradient(circle, #f3cdbd, transparent 70%); opacity: .95; animation: f1 22s ease-in-out infinite alternate; }
+.bg i:nth-child(2) { width: 46vw; height: 46vw; left: -16vw; top: 30vh; background: radial-gradient(circle, #e1e8d8, transparent 70%); opacity: .9; animation: f2 28s ease-in-out infinite alternate; }
+.bg i:nth-child(3) { width: 40vw; height: 40vw; right: 6vw; bottom: -20vw; background: radial-gradient(circle, #f6d2bc, transparent 70%); opacity: .85; animation: f3 25s ease-in-out infinite alternate; }
+.bg i:nth-child(4) { width: 30vw; height: 30vw; left: 30vw; top: 10vh; background: radial-gradient(circle, #efd0dc, transparent 70%); opacity: .65; animation: f2 30s ease-in-out infinite alternate-reverse; }
 @keyframes f1 { to { transform: translate3d(-8vw, 10vh, 0) scale(1.1); } }
 @keyframes f2 { to { transform: translate3d(10vw, -8vh, 0) scale(.92); } }
 @keyframes f3 { to { transform: translate3d(-6vw, -10vh, 0) scale(1.08); } }
@@ -51,12 +53,12 @@ a { color: inherit; text-decoration: none; }
 /* Vetro liquido chiaro */
 .glass {
   position: relative; border-radius: var(--radius);
-  background: linear-gradient(150deg, rgba(255,255,255,.72) 0%, rgba(255,255,255,.38) 55%, rgba(255,255,255,.55) 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 1px 2px rgba(120,60,50,.05), 0 30px 70px -36px rgba(140,74,92,.35);
+  background: linear-gradient(150deg, rgba(255,255,255,.74) 0%, rgba(255,255,255,.40) 55%, rgba(255,255,255,.56) 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 1px 2px rgba(120,60,40,.05), 0 30px 70px -36px rgba(150,80,70,.35);
   -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
 }
 .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
-  background: linear-gradient(140deg, rgba(255,255,255,1), rgba(255,255,255,.3) 40%, rgba(232,166,161,.35) 75%, rgba(140,74,92,.25));
+  background: linear-gradient(140deg, #fff, rgba(255,255,255,.3) 40%, rgba(201,124,95,.32) 75%, rgba(162,76,102,.25));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
 .glass > * { position: relative; }
 
@@ -73,89 +75,133 @@ a { color: inherit; text-decoration: none; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 15px; padding: 15px 26px; border-radius: 999px; transition: transform .2s, box-shadow .2s, background .2s; white-space: nowrap; }
 .btn svg { width: 16px; height: 16px; transition: transform .2s; }
 .btn:hover svg { transform: translateX(3px); }
-.btn-primary { color: #fff; background: linear-gradient(115deg, #d9827a 0%, #c46a72 50%, #8c4a5c 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 14px 34px -12px rgba(140,74,92,.7); }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 20px 44px -12px rgba(140,74,92,.85); }
-.btn-ghost { background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.9); box-shadow: 0 8px 24px -16px rgba(140,74,92,.4); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.btn-primary { color: #fff; background: linear-gradient(115deg, #c47a57 0%, #c4677a 55%, #a24c66 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 14px 34px -12px rgba(162,76,102,.7); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 20px 44px -12px rgba(162,76,102,.85); }
+.btn-ghost { background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.9); box-shadow: 0 8px 24px -16px rgba(150,80,70,.4); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 .btn-ghost:hover { background: rgba(255,255,255,.8); }
 .btn-sm { padding: 11px 20px; font-size: 14px; }
 
-/* Hero */
-.hero { min-height: 100svh; display: flex; align-items: center; padding: 120px 0 70px; overflow-x: clip; }
-.hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
-.eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--muted); padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.95); }
-.eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 0 4px rgba(232,166,161,.25); }
-h1 { font-feature-settings: "lnum" 1; font-family: var(--serif); font-weight: 400; font-size: clamp(56px, 8.6vw, 118px); line-height: .92; letter-spacing: -1.5px; margin: 24px 0 26px; }
-h1 em { font-style: italic; padding-right: .06em; }
+/* Titoli */
+section { padding: 100px 0; overflow-x: clip; }
+.kicker { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 2.2px; text-transform: uppercase; margin-bottom: 16px; }
+h1, h2, h3 { font-feature-settings: "lnum" 1; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(54px, 7.8vw, 108px); line-height: .94; letter-spacing: -1.5px; margin: 24px 0 26px; }
+h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 5.6vw, 70px); line-height: 1; letter-spacing: -.8px; margin-bottom: 20px; }
+h1 em, h2 em { font-style: italic; padding-right: .06em; }
 .lead { font-size: clamp(18px, 2vw, 20px); color: var(--muted); max-width: 540px; }
 .lead strong { color: var(--ink); font-weight: 600; }
-.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
-
-/* Il fiore delle 4P: quattro cerchi che si sovrappongono */
-.bloom { position: relative; aspect-ratio: 1; width: 100%; max-width: 500px; margin: 0 auto; }
-.bloom .petal { position: absolute; width: 56%; aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 14%;
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.85); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 24px 50px -30px rgba(140,74,92,.45); mix-blend-mode: multiply; animation: breathe 7s ease-in-out infinite; }
-.bloom .petal span { font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: rgba(42,31,29,.75); mix-blend-mode: normal; }
-.bloom .p1 { left: 0; top: 0; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), rgba(246,185,143,.55) 60%, rgba(246,185,143,.75)); }
-.bloom .p2 { right: 0; top: 0; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), rgba(169,191,166,.5) 60%, rgba(169,191,166,.72)); animation-delay: -1.7s; }
-.bloom .p3 { left: 0; bottom: 0; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), rgba(212,170,200,.5) 60%, rgba(212,170,200,.72)); animation-delay: -3.4s; }
-.bloom .p4 { right: 0; bottom: 0; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), rgba(232,166,161,.55) 60%, rgba(232,166,161,.75)); animation-delay: -5.1s; }
-.bloom .p1 span { transform: translate(-14%, -14%); } .bloom .p2 span { transform: translate(14%, -14%); }
-.bloom .p3 span { transform: translate(-14%, 14%); } .bloom .p4 span { transform: translate(14%, 14%); }
-.bloom .core { position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-items: center; text-align: center; z-index: 2;
-  background: rgba(255,255,255,.82); border: 1px solid #fff; box-shadow: 0 20px 50px -20px rgba(140,74,92,.55), inset 0 1px 0 #fff; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-.bloom .core b { font-feature-settings: "lnum" 1; font-family: var(--serif); font-weight: 500; font-size: clamp(34px, 5vw, 52px); line-height: .9; display: block; }
-.bloom .core small { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-@keyframes breathe { 50% { transform: scale(1.035); } }
-
-/* Sezioni */
-section { padding: 96px 0; overflow-x: clip; }
-.kicker { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 2.2px; text-transform: uppercase; margin-bottom: 16px; }
-h2 { font-feature-settings: "lnum" 1; font-family: var(--serif); font-weight: 400; font-size: clamp(42px, 6vw, 74px); line-height: .98; letter-spacing: -.8px; margin-bottom: 20px; }
-h2 em { font-style: italic; padding-right: .06em; }
-.section-intro { color: var(--muted); max-width: 620px; font-size: 18px; }
+.section-intro { color: var(--muted); max-width: 640px; font-size: 18px; }
 .center { text-align: center; }
 .center .section-intro { margin: 0 auto; }
 
-/* Il metodo in breve */
-.quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 52px; }
-.pill4 { padding: 30px 26px 30px; display: flex; flex-direction: column; gap: 12px; transition: transform .35s; }
-.pill4:hover { transform: translateY(-5px); }
-.pill4 .ico { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; border: 1px solid #fff; box-shadow: inset 0 1px 0 #fff, 0 10px 24px -14px rgba(140,74,92,.5); }
-.pill4 .ico svg { width: 26px; height: 26px; stroke: var(--ink); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.pill4:nth-child(1) .ico { background: linear-gradient(140deg, #fff3ea, #f6b98f); }
-.pill4:nth-child(2) .ico { background: linear-gradient(140deg, #f2f7ef, #a9bfa6); }
-.pill4:nth-child(3) .ico { background: linear-gradient(140deg, #f8eef4, #d4aac8); }
-.pill4:nth-child(4) .ico { background: linear-gradient(140deg, #fdf0ee, #e8a6a1); }
-.pill4 .n { font-feature-settings: "lnum" 1; font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--faint); }
-.pill4 h3 { font-family: var(--serif); font-weight: 500; font-size: 32px; line-height: 1; }
-.pill4 p { color: var(--muted); font-size: 15px; }
+/* Hero */
+.hero { min-height: 100svh; display: flex; align-items: center; padding: 120px 0 70px; }
+.hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; }
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--muted); padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.95); }
+.eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 0 4px rgba(199,95,120,.18); }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
 
-/* Insieme, non una alla volta */
-.together { margin-top: 20px; padding: 40px 44px; display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: center; }
-.together .eq { font-variant-numeric: lining-nums; font-feature-settings: "lnum" 1; font-family: var(--serif); font-size: clamp(30px, 4vw, 44px); line-height: 1.1; white-space: nowrap; }
-.together .eq em { font-style: italic; }
-.together p { color: var(--muted); font-size: 17px; }
-.together p strong { color: var(--ink); font-weight: 600; }
+/* Foto ad arco, con alone in gradiente dietro */
+.arch { position: relative; isolation: isolate; width: 100%; max-width: 440px; margin: 0 auto; }
+.arch::before { content: ""; position: absolute; z-index: -1; inset: -12% -16% 0; border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(246,196,170,.95) 0%, rgba(232,160,150,.6) 35%, rgba(201,103,122,.28) 58%, transparent 74%); filter: blur(30px); animation: halo 9s ease-in-out infinite alternate; }
+@keyframes halo { to { transform: scale(1.06) translateY(-2%); } }
+.arch .frame { position: relative; aspect-ratio: 4 / 5.4; border-radius: 999px 999px 34px 34px; overflow: hidden; border: 6px solid rgba(255,255,255,.7); box-shadow: 0 40px 80px -40px rgba(120,50,50,.55), inset 0 0 0 1px rgba(255,255,255,.9); }
+.arch img { width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
+.arch .tag { position: absolute; left: -26px; bottom: 34px; padding: 14px 20px; border-radius: 20px; }
+.arch .tag b { display: block; font-family: var(--serif); font-weight: 500; font-size: 24px; line-height: 1.05; }
+.arch .tag span { font-size: 12px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+.arch .badge { position: absolute; right: -14px; top: 20%; width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; text-align: center; }
+.arch .badge b { font-family: var(--serif); font-weight: 500; font-size: 40px; line-height: .9; display: block; }
+.arch .badge small { font-size: 9px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); }
 
-/* Cristina */
-.about { display: grid; grid-template-columns: .9fr 1.1fr; gap: 20px; align-items: stretch; }
-.portrait { min-height: 520px; overflow: hidden; display: flex; align-items: flex-end; padding: 30px;
-  background: radial-gradient(90% 70% at 50% 35%, rgba(255,255,255,.85), rgba(243,207,196,.75) 45%, rgba(212,170,200,.6) 75%, rgba(169,191,166,.55) 100%); }
-.portrait .mono { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--serif); font-style: italic; font-size: clamp(140px, 18vw, 220px); line-height: 1; color: rgba(140,74,92,.16); }
-.portrait .cap b { font-family: var(--serif); font-weight: 500; font-size: 36px; line-height: 1; display: block; }
-.portrait .cap span { font-size: 14px; color: var(--muted); }
-.bio { padding: 48px; display: flex; flex-direction: column; justify-content: center; }
-.bio p { color: var(--muted); margin-top: 14px; }
-.bio p strong { color: var(--ink); font-weight: 600; }
-.tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
-.tags span { padding: 8px 15px; border-radius: 999px; font-size: 14px; font-weight: 500; background: rgba(255,255,255,.7); border: 1px solid #fff; box-shadow: 0 6px 16px -12px rgba(140,74,92,.5); }
-.bio blockquote { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); font-family: var(--serif); font-style: italic; font-size: 32px; line-height: 1.15; }
+/* Frammenti */
+.frag { text-align: center; }
+.frag .lines { font-family: var(--serif); font-size: clamp(30px, 4.2vw, 50px); line-height: 1.15; color: var(--faint); }
+.frag .lines span { display: block; }
+.frag .lines span:nth-child(2) { color: rgba(43,32,28,.52); }
+.frag .lines span:nth-child(3) { color: rgba(43,32,28,.64); }
+.frag .lines span:nth-child(4) { color: rgba(43,32,28,.78); }
+.frag h2 { margin: 26px auto 22px; max-width: 880px; }
+
+/* Le 4P */
+.ps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 52px; position: relative; }
+.p { padding: 30px 26px 32px; display: flex; flex-direction: column; gap: 10px; transition: transform .35s; }
+.p:hover { transform: translateY(-5px); }
+.p .code { font-family: var(--serif); font-weight: 500; font-size: 64px; line-height: .9; font-feature-settings: "lnum" 1; }
+.p .step { font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--faint); }
+.p h3 { font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 1.05; margin-top: 4px; }
+.p p { color: var(--muted); font-size: 15px; }
+.p .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.p .chips span { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.75); border: 1px solid #fff; }
+.p:nth-child(1) { background: linear-gradient(160deg, rgba(255,255,255,.8), rgba(246,210,188,.45)); }
+.p:nth-child(2) { background: linear-gradient(160deg, rgba(255,255,255,.8), rgba(214,226,204,.5)); }
+.p:nth-child(3) { background: linear-gradient(160deg, rgba(255,255,255,.8), rgba(239,208,220,.5)); }
+.p:nth-child(4) { background: linear-gradient(160deg, rgba(255,255,255,.8), rgba(241,207,196,.55)); }
+.not-rigid { margin-top: 18px; text-align: center; font-family: var(--serif); font-style: italic; font-size: clamp(24px, 3vw, 32px); color: var(--muted); }
+
+/* Lo stile di vita: fiore a quattro petali */
+.life { display: grid; grid-template-columns: .95fr 1.05fr; gap: 56px; align-items: center; }
+.bloom { position: relative; aspect-ratio: 1; width: 100%; max-width: 470px; margin: 0 auto; }
+.bloom .petal { position: absolute; width: 56%; aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 14%;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.85); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 24px 50px -30px rgba(150,80,70,.45); mix-blend-mode: multiply; animation: breathe 7s ease-in-out infinite; }
+.bloom .petal span { font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: rgba(43,32,28,.75); }
+.bloom .p1 { left: 0; top: 0; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), rgba(240,180,140,.55) 60%, rgba(240,180,140,.75)); }
+.bloom .p2 { right: 0; top: 0; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), rgba(169,185,159,.5) 60%, rgba(169,185,159,.72)); animation-delay: -1.7s; }
+.bloom .p3 { left: 0; bottom: 0; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), rgba(210,168,196,.5) 60%, rgba(210,168,196,.72)); animation-delay: -3.4s; }
+.bloom .p4 { right: 0; bottom: 0; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), rgba(226,150,150,.55) 60%, rgba(226,150,150,.75)); animation-delay: -5.1s; }
+.bloom .p1 span { transform: translate(-14%, -14%); } .bloom .p2 span { transform: translate(14%, -14%); }
+.bloom .p3 span { transform: translate(-14%, 14%); } .bloom .p4 span { transform: translate(14%, 14%); }
+.bloom .core { position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-items: center; text-align: center; z-index: 2;
+  background: rgba(255,255,255,.85); border: 1px solid #fff; box-shadow: 0 20px 50px -20px rgba(150,80,70,.55), inset 0 1px 0 #fff; }
+.bloom .core b { font-family: var(--serif); font-weight: 500; font-size: clamp(32px, 4.6vw, 48px); line-height: .9; display: block; font-feature-settings: "lnum" 1; }
+.bloom .core small { font-size: 9px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted); }
+@keyframes breathe { 50% { transform: scale(1.035); } }
+.life p { color: var(--muted); margin-top: 12px; }
+.life p strong { color: var(--ink); font-weight: 600; }
+
+/* Mente e corpo */
+.mind { padding: 56px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,.7) 0%, rgba(241,207,196,.5) 50%, rgba(214,226,204,.45) 100%); }
+.mind h2 { margin-bottom: 0; }
+.mind p { color: var(--muted); }
+.mind p + p { margin-top: 12px; }
+.mind p strong { color: var(--ink); font-weight: 600; }
+
+/* Obiettivo */
+.goal { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.checks { list-style: none; display: grid; gap: 12px; }
+.checks li { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-radius: 20px; font-weight: 500; }
+.checks li i { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--grad); box-shadow: 0 8px 18px -8px rgba(162,76,102,.7); }
+.checks li i svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Chi sono */
+.about { display: grid; grid-template-columns: .85fr 1.15fr; gap: 56px; align-items: center; }
+.about .arch { max-width: 420px; }
+.about .arch .frame { aspect-ratio: 4 / 5.2; }
+.about .arch img { object-position: center 18%; }
+.story p { color: var(--muted); margin-top: 14px; }
+.story p strong { color: var(--ink); font-weight: 600; }
+.trio { font-family: var(--serif); font-style: italic; font-size: clamp(26px, 3vw, 32px); line-height: 1.2; margin-top: 18px; }
+.trio span { display: block; }
+.values { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.values span { padding: 9px 16px; border-radius: 999px; font-size: 14px; background: rgba(255,255,255,.7); border: 1px solid #fff; box-shadow: 0 6px 16px -12px rgba(150,80,70,.5); }
+.values span em { font-family: var(--serif); font-size: 18px; font-weight: 500; }
+
+/* Anche io mi alleno */
+.train { padding: 48px; display: grid; grid-template-columns: 260px 1fr; gap: 44px; align-items: center; }
+.train .pic { aspect-ratio: 1 / 1.25; border-radius: 26px; overflow: hidden; box-shadow: 0 30px 60px -30px rgba(120,50,50,.55); border: 5px solid rgba(255,255,255,.75); }
+.train .pic img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.train .list { font-family: var(--serif); font-size: clamp(24px, 2.6vw, 30px); line-height: 1.25; margin: 6px 0 14px; }
+.train p { color: var(--muted); }
+.train p + p { margin-top: 10px; }
+.train blockquote { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); font-family: var(--serif); font-style: italic; font-size: clamp(28px, 3.2vw, 36px); line-height: 1.15; }
 
 /* Chiamata finale */
 .final { text-align: center; padding: 84px 28px; overflow: hidden;
-  background: linear-gradient(135deg, rgba(246,185,143,.45) 0%, rgba(243,207,196,.55) 35%, rgba(212,170,200,.5) 70%, rgba(169,191,166,.45) 100%); }
+  background: linear-gradient(135deg, rgba(240,180,140,.45) 0%, rgba(241,207,196,.55) 35%, rgba(210,168,196,.5) 70%, rgba(169,185,159,.45) 100%); }
 .final h2 { max-width: 760px; margin-left: auto; margin-right: auto; }
-.final p { color: var(--muted); max-width: 540px; margin: 0 auto 32px; font-size: 18px; }
+.final p { color: var(--muted); max-width: 560px; margin: 0 auto 32px; font-size: 18px; }
 
 footer { padding: 36px 0 50px; color: var(--faint); font-size: 13px; }
 footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--line); padding-top: 26px; }
@@ -165,15 +211,14 @@ footer .brand { font-size: 22px; color: var(--ink); }
 .reveal { opacity: 0; transform: translateY(22px); transition: opacity .8s ease, transform .8s ease; }
 .reveal.in { opacity: 1; transform: none; }
 .d1 { transition-delay: .08s; } .d2 { transition-delay: .16s; } .d3 { transition-delay: .24s; }
-@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } .bg i, .bloom .petal { animation: none; } html { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } .bg i, .bloom .petal, .arch::before { animation: none; } html { scroll-behavior: auto; } }
 
 @media (max-width: 980px) {
   .nav-links { display: none; }
-  .hero-grid { grid-template-columns: 1fr; gap: 44px; }
-  .bloom { max-width: 420px; }
-  .quick { grid-template-columns: 1fr 1fr; }
-  .about { grid-template-columns: 1fr; }
-  .portrait { min-height: 380px; }
+  .hero-grid, .life, .goal, .about, .mind { grid-template-columns: 1fr; gap: 44px; }
+  .hero-grid .arch { max-width: 380px; }
+  .ps { grid-template-columns: 1fr 1fr; }
+  .train { grid-template-columns: 200px 1fr; gap: 30px; }
 }
 @media (max-width: 620px) {
   body { font-size: 16px; }
@@ -184,14 +229,17 @@ footer .brand { font-size: 22px; color: var(--ink); }
   .hero { padding: 104px 0 50px; }
   h1 { letter-spacing: -1px; margin: 20px 0 20px; }
   .hero-cta .btn { flex: 1 1 100%; }
+  .arch { max-width: 300px; }
+  .arch .tag { left: -8px; bottom: 22px; padding: 11px 15px; }
+  .arch .tag b { font-size: 21px; }
+  .arch .badge { right: -6px; width: 84px; height: 84px; }
+  .arch .badge b { font-size: 32px; }
+  section { padding: 66px 0; }
+  .ps { grid-template-columns: 1fr; margin-top: 36px; }
   .bloom .petal span { font-size: 10px; letter-spacing: 1.2px; }
-  section { padding: 64px 0; }
-  .quick { grid-template-columns: 1fr; margin-top: 36px; }
-  .together { grid-template-columns: 1fr; gap: 14px; padding: 30px 22px; }
-  .together .eq { white-space: normal; }
-  .bio { padding: 30px 22px; }
-  .portrait { min-height: 320px; padding: 24px; }
-  .bio blockquote { font-size: 26px; }
+  .mind { padding: 32px 22px; gap: 20px; }
+  .train { grid-template-columns: 1fr; padding: 28px 22px; gap: 24px; }
+  .train .pic { max-width: 240px; }
   .final { padding: 56px 20px; }
 }
 </style>
@@ -204,8 +252,9 @@ footer .brand { font-size: 22px; color: var(--ink); }
     <div class="bar glass">
       <a href="#top" class="brand">Cristina <em>Magni</em></a>
       <nav class="nav-links" aria-label="Sezioni">
-        <a href="#metodo">Metodo 4P</a>
-        <a href="#cristina">Chi sono</a>
+        <a href="#le-4p">Le 4P</a>
+        <a href="#mente-corpo">Mente e corpo</a>
+        <a href="#chi-sono">Chi sono</a>
       </nav>
       <a href="#contatti" class="btn btn-primary btn-sm">Prenota</a>
     </div>
@@ -219,88 +268,164 @@ footer .brand { font-size: 22px; color: var(--ink); }
   <div class="wrap">
     <div class="hero-grid">
       <div>
-        <span class="eyebrow reveal"><span class="dot"></span>Medicina anti-aging · Metodo 4P</span>
-        <h1 class="reveal d1">L'anti-aging<br><em class="gt">parte da come vivi.</em></h1>
-        <p class="lead reveal d2">Sono Cristina Magni, farmacista specializzata in medicina anti-aging. Con il <strong>Metodo 4P</strong> lavoriamo insieme sui quattro pilastri del benessere: <strong>tutti e quattro, non uno alla volta.</strong></p>
+        <span class="eyebrow reveal"><span class="dot"></span>Metodo 4P · Bellezza e Salute Sistemica</span>
+        <h1 class="reveal d1">La bellezza è un organismo <em class="gt">in equilibrio.</em></h1>
+        <p class="lead reveal d2">Sono Cristina Magni, <strong>farmacista e Healthy Aging Coach</strong>. Con il Metodo 4P metto insieme i pezzi della tua salute (alimentazione, movimento, sonno e mindset) in <strong>un percorso costruito su di te.</strong></p>
         <div class="hero-cta reveal d3">
           <a href="#contatti" class="btn btn-primary">Prenota una consulenza <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-          <a href="#metodo" class="btn btn-ghost">Scopri il metodo</a>
+          <a href="#le-4p" class="btn btn-ghost">Scopri le 4P</a>
         </div>
       </div>
-      <div class="bloom reveal d2" role="img" aria-label="I quattro pilastri del Metodo 4P: alimentazione, attività fisica, mindset e sonno">
-        <div class="petal p1"><span>Alimentazione</span></div>
-        <div class="petal p2"><span>Attività fisica</span></div>
-        <div class="petal p3"><span>Mindset</span></div>
-        <div class="petal p4"><span>Sonno</span></div>
-        <div class="core"><div><b class="gt">4P</b><small>Metodo</small></div></div>
-      </div>
+      <figure class="arch reveal d2">
+        <div class="frame"><img src="/assets/img/cristina-magni-ritratto.webp" alt="Cristina Magni, farmacista e Healthy Aging Coach" width="530" height="1100" fetchpriority="high"></div>
+        <figcaption class="tag glass"><b>Cristina Magni</b><span>Farmacista · Healthy Aging Coach</span></figcaption>
+        <div class="badge glass" aria-hidden="true"><div><b class="gt">4P</b><small>Metodo</small></div></div>
+      </figure>
     </div>
   </div>
 </section>
 
-<!-- Il metodo -->
-<section id="metodo">
+<!-- Frammenti -->
+<section class="frag">
+  <div class="wrap">
+    <div class="lines reveal">
+      <span>Si parla di dieta.</span>
+      <span>Si parla di sport.</span>
+      <span>Si parla di sonno.</span>
+      <span>Si parla di pelle.</span>
+    </div>
+    <h2 class="reveal">Ma raramente qualcuno <em class="gt">mette insieme tutti i pezzi.</em></h2>
+    <p class="section-intro reveal" style="margin: 0 auto;">La salute non è fatta di compartimenti separati: è un equilibrio tra sistemi che comunicano di continuo. Il Metodo 4P nasce per rimettere ordine, ascoltare il corpo e costruire un percorso che rispetti la tua storia e i tuoi ritmi.</p>
+  </div>
+</section>
+
+<!-- Le 4P -->
+<section id="le-4p">
   <div class="wrap">
     <div class="center">
-      <p class="kicker gt reveal">Il Metodo 4P in 30 secondi</p>
-      <h2 class="reveal">Quattro pilastri. <em class="gt">Un solo equilibrio.</em></h2>
-      <p class="section-intro reveal">Il modo in cui invecchi dipende da come vivi ogni giorno. Il Metodo 4P mette in ordine le quattro cose che contano di più.</p>
+      <p class="kicker gt reveal">Le 4P</p>
+      <h2 class="reveal">I pilastri <em class="gt">dell'equilibrio.</em></h2>
+      <p class="section-intro reveal">Quattro passi, uno dopo l'altro: prima capire, poi nutrire, sostenere e allenare la mente.</p>
     </div>
-
-    <div class="quick">
-      <article class="pill4 glass reveal">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 21c-4.5 0-7-3.4-7-7.2C5 9.6 8 7 12 7s7 2.6 7 6.8C19 17.6 16.5 21 12 21Z"/><path d="M12 7c0-2 1-3.6 3-4.2"/><path d="M12 7c-1.2-1.6-3-2-4.4-1.5"/></svg></span>
-        <span class="n">01</span>
-        <h3>Alimentazione</h3>
-        <p>Cosa mangi e come: il carburante che nutre pelle, energia e lucidità.</p>
+    <div class="ps">
+      <article class="p glass reveal">
+        <span class="code gt">P1</span>
+        <h3>Parametri</h3>
+        <p>Prima di cambiare qualcosa, capiamo dove ti trovi. Con esami mirati e questionari approfonditi leggiamo il tuo stato di salute, lo stress e i segnali che il corpo ti sta già dando.</p>
       </article>
-      <article class="pill4 glass reveal d1">
-        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="14" cy="4.5" r="1.8"/><path d="M8 21l3-6 3 2v4"/><path d="M6 11l3-3 4 1 3 3 3 1"/><path d="M11 15l2-6"/></svg></span>
-        <span class="n">02</span>
-        <h3>Attività fisica</h3>
-        <p>Movimento costante e su misura, per un corpo forte e tonico nel tempo.</p>
+      <article class="p glass reveal d1">
+        <span class="code gt">P2</span>
+        <h3>Piano Nutrizionale Funzionale</h3>
+        <p>Non esiste un'alimentazione valida per tutti. Esiste quella giusta per te, in questo momento della tua vita: qualità, quantità e preparazione fanno la differenza.</p>
       </article>
-      <article class="pill4 glass reveal d2">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3.5a6.5 6.5 0 0 0-3.8 11.8c.5.4.8 1 .8 1.6V18h6v-1.1c0-.6.3-1.2.8-1.6A6.5 6.5 0 0 0 12 3.5Z"/><path d="M10 21h4"/><path d="M12 8v3l2 1"/></svg></span>
-        <span class="n">03</span>
-        <h3>Mindset</h3>
-        <p>Gestire stress e abitudini: la testa giusta per restare costante.</p>
+      <article class="p glass reveal d2">
+        <span class="code gt">P3</span>
+        <h3>Potenziamento</h3>
+        <p>Sostegno personalizzato, non soluzioni standard.</p>
+        <div class="chips"><span>Microbiota</span><span>Integrazione mirata</span><span>Barriera cutanea</span><span>Energia</span><span>Sonno</span></div>
       </article>
-      <article class="pill4 glass reveal d3">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/><path d="M16 4h3l-3 3h3"/></svg></span>
-        <span class="n">04</span>
-        <h3>Qualità del sonno</h3>
-        <p>Dormire bene è il momento in cui il corpo si ripara e si rigenera.</p>
+      <article class="p glass reveal d3">
+        <span class="code gt">P4</span>
+        <h3>Presenza Mentale</h3>
+        <p>Se lo stress è costante, il corpo resta in allerta e alimenta infiammazione e squilibri. Imparare a regolare il carico mentale è parte della prevenzione.</p>
       </article>
     </div>
+    <p class="not-rigid reveal">Non è un protocollo rigido. È un percorso di consapevolezza e personalizzazione.</p>
+  </div>
+</section>
 
-    <div class="together glass reveal">
-      <div class="eq">1 + 1 + 1 + 1 = <em class="gt">4P</em></div>
-      <p>Lavorare su un pilastro solo non basta: se dormi male, la dieta non regge; se la testa non c'è, l'allenamento si ferma. <strong>Il Metodo 4P ti dà tutti e quattro insieme</strong>, con un percorso costruito su di te.</p>
+<!-- Stile di vita -->
+<section>
+  <div class="wrap">
+    <div class="life">
+      <div class="bloom reveal" role="img" aria-label="I quattro pilastri dello stile di vita: alimentazione, movimento, sonno e mindset">
+        <div class="petal p1"><span>Alimentazione</span></div>
+        <div class="petal p2"><span>Movimento</span></div>
+        <div class="petal p3"><span>Mindset</span></div>
+        <div class="petal p4"><span>Sonno</span></div>
+        <div class="core"><div><b class="gt">4P</b><small>Equilibrio</small></div></div>
+      </div>
+      <div class="reveal d1">
+        <p class="kicker gt">Perché è importante</p>
+        <h2>Quattro aree che cambiano <em class="gt">come invecchiamo.</em></h2>
+        <p>Nasciamo con una predisposizione genetica, ma <strong>il modo in cui quei geni si esprimono dipende dalle scelte di ogni giorno.</strong></p>
+        <p>Alimentazione, movimento, sonno e gestione dello stress influenzano l'invecchiamento biologico, l'equilibrio ormonale e la qualità della pelle. Quando sono in equilibrio, il corpo cambia. Il viso cambia. L'energia cambia.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- Cristina -->
-<section id="cristina">
+<!-- Mente e corpo -->
+<section id="mente-corpo">
+  <div class="wrap">
+    <div class="mind glass reveal">
+      <div>
+        <p class="kicker gt">Mente e corpo</p>
+        <h2>Non è filosofia astratta. <em class="gt">È fisiologia.</em></h2>
+      </div>
+      <div>
+        <p>La neuroplasticità ci insegna che il cervello può creare nuove connessioni per tutta la vita: <strong>non siamo condannati a vivere in “pilota automatico”.</strong></p>
+        <p>Stress, ipercontrollo e autocritica tengono il corpo in allerta cronica, che alimenta infiammazione, squilibri ormonali, sonno disturbato e invecchiamento accelerato.</p>
+        <p>Per questo nel Metodo 4P il mindset non è un'aggiunta: <strong>cambiare stile di vita senza cambiare schema mentale significa tornare sempre al punto di partenza.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Obiettivo -->
+<section>
+  <div class="wrap">
+    <div class="goal">
+      <div class="reveal">
+        <p class="kicker gt">L'obiettivo</p>
+        <h2>La vera bellezza nasce <em class="gt">da dentro.</em></h2>
+        <p class="section-intro">La bellezza non è solo un risultato estetico: è l'espressione visibile di un equilibrio interno. Il corpo non va zittito, va ascoltato.</p>
+      </div>
+      <ul class="checks">
+        <li class="glass reveal"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i>Capire davvero cosa succede nel tuo corpo</li>
+        <li class="glass reveal d1"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i>Ridurre l'infiammazione</li>
+        <li class="glass reveal d1"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i>Ritrovare energia</li>
+        <li class="glass reveal d2"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i>Migliorare la qualità della pelle</li>
+        <li class="glass reveal d3"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i>Costruire un piano sostenibile nel tempo</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Chi sono -->
+<section id="chi-sono">
   <div class="wrap">
     <div class="about">
-      <div class="portrait glass reveal">
-        <!-- Al posto delle iniziali andrà la foto di Cristina -->
-        <span class="mono" aria-hidden="true">CM</span>
-        <div class="cap"><b>Cristina Magni</b><span>Farmacista · Medicina anti-aging</span></div>
-      </div>
-      <div class="bio glass reveal d1">
-        <p class="kicker gt">Chi sono</p>
-        <h2>Cristina <em class="gt">Magni.</em></h2>
-        <p>Sono <strong>farmacista, specializzata in medicina anti-aging</strong>. Ogni giorno vedo persone che cercano la soluzione rapida, la crema o l'integratore giusto. Ma il vero anti-aging comincia prima: da come mangi, ti muovi, pensi e dormi.</p>
-        <p>Per questo ho scelto il <strong>Metodo 4P</strong>: un percorso semplice e concreto che mette in equilibrio i quattro pilastri del benessere, per stare bene e vederlo anche allo specchio.</p>
-        <div class="tags">
-          <span>Farmacista</span>
-          <span>Medicina anti-aging</span>
-          <span>Metodo 4P</span>
+      <figure class="arch reveal">
+        <div class="frame"><img src="/assets/img/cristina-magni-farmacista.webp" alt="Cristina Magni" width="567" height="1100" loading="lazy"></div>
+      </figure>
+      <div class="story reveal d1">
+        <p class="kicker gt">Perché ho creato il Metodo 4P</p>
+        <h2>Vedevo il disegno completo, <em class="gt">ma potevo mostrarne solo un pezzo.</em></h2>
+        <p>Amo essere farmacista: ogni giorno ascolto, consiglio e accompagno le persone nel loro percorso di salute. Ma a un certo punto sentivo che non mi bastava più. Sapevo che la salute non era solo un prodotto, un esame del sangue, una crema o un integratore.</p>
+        <div class="trio"><span>Era connessione.</span><span>Era personalizzazione.</span><span class="gt">Era ascolto vero.</span></div>
+        <p>Ho studiato ancora: microbiota, infiammazione, epigenetica, stress, sonno, medicina funzionale, mindfulness. E tutto riportava sempre agli stessi pilastri. <strong>Il Metodo 4P è nato così: non da un'idea commerciale, ma da un'esigenza interiore.</strong> Per accompagnare donne, uomini e sportivi in un percorso più profondo e consapevole.</p>
+        <div class="values">
+          <span>Credo nella <em class="gt">prevenzione</em></span>
+          <span>Credo nella <em class="gt">personalizzazione</em></span>
+          <span>Credo nel <em class="gt">valore della relazione</em></span>
         </div>
-        <blockquote>“Stare bene fuori comincia <span class="gt">da come vivi dentro.</span>”</blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Anche io mi alleno -->
+<section>
+  <div class="wrap">
+    <div class="train glass reveal">
+      <div class="pic"><img src="/assets/img/cristina-magni-sorriso.webp" alt="Cristina Magni sorridente" width="330" height="648" loading="lazy"></div>
+      <div>
+        <p class="kicker gt">Anche io mi alleno</p>
+        <div class="list">Due lavori. Due figli. Una casa da gestire.</div>
+        <p>Per anni ho vissuto in “pilota automatico”: sempre efficiente, sempre presente, sempre responsabile. Ma il corpo non dimentica.</p>
+        <p>Con la mindfulness ho imparato ad allenare la mente ogni giorno: meditazioni quando riesco, respiri consapevoli tra un impegno e l'altro. Piano piano sto costruendo nuove connessioni.</p>
+        <blockquote>Perché non credo in ciò <span class="gt">che non vivo.</span></blockquote>
       </div>
     </div>
   </div>
@@ -311,8 +436,8 @@ footer .brand { font-size: 22px; color: var(--ink); }
   <div class="wrap">
     <div class="final glass reveal">
       <p class="kicker gt">Inizia da qui</p>
-      <h2>Il tuo percorso <em class="gt">4P</em> comincia con una chiacchierata.</h2>
-      <p>Prenota una consulenza con Cristina: capiamo insieme da quale pilastro partire e come costruire il tuo equilibrio.</p>
+      <h2>Ascolta il tuo corpo. <em class="gt">Partiamo dal P1.</em></h2>
+      <p>Prenota una consulenza con Cristina: partiamo dai tuoi parametri per costruire insieme un percorso su misura per te.</p>
       <!-- Collegare qui il modulo / numero di telefono definitivo -->
       <a href="#contatti" class="btn btn-primary">Prenota una consulenza <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </div>
@@ -324,7 +449,7 @@ footer .brand { font-size: 22px; color: var(--ink); }
 <footer>
   <div class="wrap">
     <span class="brand">Cristina <em>Magni</em></span>
-    <span>© <span id="y">2026</span> · Farmacista · Medicina anti-aging · Metodo 4P</span>
+    <span>© <span id="y">2026</span> · Farmacista · Healthy Aging Coach · Metodo 4P – Bellezza e Salute Sistemica</span>
   </div>
 </footer>
 
