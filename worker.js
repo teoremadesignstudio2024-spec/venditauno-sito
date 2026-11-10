@@ -26,9 +26,9 @@ export default {
       return out;
     }
 
-    // Diotti Consulting: anche chi scrive l'indirizzo senza trattino arriva alla pagina giusta.
-    if (/^\/diotti_?consulting\/?$/i.test(url.pathname) || /^\/diotti-consulting\/$/i.test(url.pathname) || url.pathname === "/Diotti-Consulting") {
-      return Response.redirect(`${url.origin}/diotti-consulting`, 301);
+    // Diotti Consulting: l'indirizzo è /diotticonsulting; le altre grafie ci arrivano comunque.
+    if (/^\/diotti[-_]consulting\/?$/i.test(url.pathname) || /^\/diotticonsulting\/$/i.test(url.pathname) || (/^\/diotticonsulting$/i.test(url.pathname) && url.pathname !== "/diotticonsulting")) {
+      return Response.redirect(`${url.origin}/diotticonsulting`, 301);
     }
 
     if (isRemoved(url.pathname)) {
