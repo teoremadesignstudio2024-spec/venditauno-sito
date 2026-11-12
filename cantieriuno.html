@@ -142,7 +142,19 @@ em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spa
   .map-legend { position: static; margin: 14px auto 0; width: max-content; }
 }
 
-/* Manifesto */
+/* Manifesto: sfondo con foto di cantiere, scurita e in bianco e nero.
+   Più foto in fila: se la prima non si carica si vede la seconda, poi la terza. */
+.manifesto { isolation: isolate; padding: clamp(110px, 14vw, 190px) 0; }
+.photo-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.photo-bg::before { content: ""; position: absolute; inset: -10% 0; transform: translate3d(0, var(--py, 0px), 0); will-change: transform;
+  background: url("https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=2200&q=70") center 35% / cover no-repeat,
+              url("https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=2200&q=70") center / cover no-repeat,
+              url("https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=2200&q=70") center / cover no-repeat, #141110;
+  filter: grayscale(1) contrast(1.15) brightness(.5); }
+.photo-bg::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, var(--ink) 0%, rgba(8,8,10,.45) 20%, rgba(8,8,10,.55) 75%, var(--ink) 100%),
+              linear-gradient(90deg, rgba(8,8,10,.85) 0%, rgba(8,8,10,.35) 60%, rgba(8,8,10,.55) 100%),
+              radial-gradient(55% 60% at 78% 45%, rgba(255,110,30,.28), transparent 70%); }
 .manifesto .grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 60px; align-items: start; }
 .big-quote { font-size: clamp(34px, 4.2vw, 60px); font-weight: 700; letter-spacing: -.045em; line-height: 1.04; }
 .big-quote .dim { color: var(--frost-3); }
@@ -370,6 +382,7 @@ footer small { color: var(--frost-3); font-size: 13px; }
 
 <!-- Manifesto -->
 <section class="manifesto">
+  <div class="photo-bg" aria-hidden="true"></div>
   <div class="wrap grid">
     <div>
       <span class="eyebrow rv">Chi siamo</span>
@@ -616,6 +629,15 @@ footer small { color: var(--frost-3); font-size: 13px; }
       (lv ? "\nLavori: " + lv : "") + (v("f-msg") ? "\n\n" + v("f-msg") : "");
     window.open("https://wa.me/393381911231?text=" + encodeURIComponent(t), "_blank", "noopener");
   });
+
+  // Leggero effetto profondità sulla foto del cantiere
+  var mf = document.querySelector(".manifesto"), pb = document.querySelector(".photo-bg");
+  if (mf && pb && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    var tick = false;
+    addEventListener("scroll", function () { if (tick) return; tick = true; requestAnimationFrame(function () {
+      var r = mf.getBoundingClientRect(); var c = (r.top + r.height / 2 - innerHeight / 2) * -0.12;
+      pb.style.setProperty("--py", Math.max(-80, Math.min(80, c)) + "px"); tick = false; }); }, { passive: true });
+  }
 
   document.getElementById("y").textContent = new Date().getFullYear();
 })();
