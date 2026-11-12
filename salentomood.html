@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salento Mood · Luxury Living a Gallipoli</title>
+<meta name="description" content="Salento Mood – Luxury Living: agenzia immobiliare di lusso a Gallipoli. Ville, dimore storiche e appartamenti vista mare nel cuore del Salento.">
+<!-- Bozza in revisione: fuori dai motori di ricerca finché non è approvata. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f6f1e9">
+<meta property="og:title" content="Salento Mood · Luxury Living a Gallipoli">
+<meta property="og:description" content="Ville, dimore storiche e appartamenti vista mare nel cuore del Salento.">
+<meta property="og:image" content="/assets/img/salento-mood-logo.png">
+<link rel="icon" href="/assets/img/salento-mood-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ivory: #f6f1e9;
+  --sand: #ece3d4;
+  --stone: #d9ccb6;
+  --ink: #10292d;
+  --ink-2: #33494c;
+  --muted: #6d7b7c;
+  --line: rgba(16, 41, 45, 0.12);
+  --red: #e30b3e;
+  --yellow: #f6b90a;
+  --green: #7cb52b;
+  --teal: #0e6673;
+  --gold: #b8955a;
+  --brand: linear-gradient(90deg, var(--red) 0%, var(--yellow) 33%, var(--green) 66%, var(--teal) 100%);
+  --serif: "Cormorant Garamond", "Times New Roman", serif;
+  --sans: "Jost", system-ui, -apple-system, sans-serif;
+  --r: 30px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; overflow-x: clip; }
+body { font-family: var(--sans); font-weight: 300; background: var(--ivory); color: var(--ink); line-height: 1.65; font-size: 17px; overflow-x: clip; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+button, input, select, textarea { font: inherit; color: inherit; }
+::selection { background: var(--teal); color: #fff; }
+
+/* Sfondo: luce mediterranea che si muove piano dietro al vetro */
+.bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; background: radial-gradient(120% 80% at 50% 0%, #fbf8f3 0%, var(--ivory) 55%, #efe6d8 100%); }
+.bg i { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .35; will-change: transform; }
+.bg i:nth-child(1) { width: 46vw; height: 46vw; left: -14vw; top: 20vh; background: #9fd3d8; animation: d1 26s ease-in-out infinite alternate; }
+.bg i:nth-child(2) { width: 40vw; height: 40vw; right: -12vw; top: 60vh; background: #f3d79a; animation: d2 30s ease-in-out infinite alternate; }
+.bg i:nth-child(3) { width: 34vw; height: 34vw; left: 40vw; bottom: -14vw; background: #cfe3b0; opacity: .28; animation: d1 34s ease-in-out infinite alternate-reverse; }
+@keyframes d1 { to { transform: translate3d(10vw, -8vh, 0) scale(1.1); } }
+@keyframes d2 { to { transform: translate3d(-10vw, -12vh, 0) scale(.92); } }
+
+/* Vetro liquido */
+.glass {
+  position: relative; isolation: isolate;
+  background: linear-gradient(150deg, rgba(255,255,255,.62) 0%, rgba(255,255,255,.28) 48%, rgba(255,255,255,.44) 100%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-radius: var(--r);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.95), inset 0 -1px 1px rgba(255,255,255,.35), 0 1px 2px rgba(16,41,45,.06), 0 24px 60px -24px rgba(16,41,45,.28);
+}
+.glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: -1;
+  background: linear-gradient(135deg, rgba(255,255,255,.95), rgba(255,255,255,.15) 40%, rgba(255,255,255,.05) 60%, rgba(255,255,255,.75));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background: radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,.55), transparent 55%); opacity: .7; }
+.glass.dark { background: linear-gradient(150deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.06) 50%, rgba(255,255,255,.12) 100%); color: #fff;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.45), inset 0 -1px 1px rgba(255,255,255,.12), 0 30px 70px -30px rgba(0,0,0,.55); }
+.glass.dark::before { background: linear-gradient(135deg, rgba(255,255,255,.7), rgba(255,255,255,.08) 40%, rgba(255,255,255,.02) 60%, rgba(255,255,255,.45)); }
+.glass.dark::after { background: radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,.22), transparent 55%); }
+
+.wrap { width: min(1240px, 100% - 40px); margin-inline: auto; }
+section { position: relative; }
+.eyebrow { font-family: var(--sans); font-size: 12px; letter-spacing: .32em; text-transform: uppercase; font-weight: 500; color: var(--teal); display: inline-flex; align-items: center; gap: 14px; }
+.eyebrow::before { content: ""; width: 34px; height: 2px; background: var(--brand); border-radius: 2px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 300; letter-spacing: -.01em; line-height: 1.04; }
+h2 { font-size: clamp(40px, 5.6vw, 76px); margin: 18px 0 22px; }
+h2 em, h1 em { font-style: italic; color: var(--teal); }
+.lead { font-size: clamp(17px, 1.5vw, 19px); color: var(--ink-2); max-width: 600px; }
+
+.btn { display: inline-flex; align-items: center; gap: 12px; padding: 16px 28px; border-radius: 999px; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500; cursor: pointer; border: 0; transition: transform .4s var(--ease), box-shadow .4s var(--ease), background .3s; white-space: nowrap; }
+.btn svg { width: 16px; height: 16px; transition: transform .4s var(--ease); }
+.btn:hover svg { transform: translateX(4px); }
+.btn-ink { background: var(--ink); color: #fff; box-shadow: 0 14px 30px -12px rgba(16,41,45,.55); }
+.btn-ink:hover { transform: translateY(-2px); background: var(--teal); }
+.btn-glass { color: #fff; }
+.btn-glass:hover { transform: translateY(-2px); }
+
+/* Navigazione */
+.nav { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 50; width: min(1240px, 100% - 24px); display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 10px 10px 10px 22px; border-radius: 999px; transition: background .5s, box-shadow .5s, color .5s; }
+.nav .logo { display: flex; align-items: center; gap: 12px; }
+.nav .logo img { height: 46px; width: auto; transition: filter .5s; }
+.nav.on-hero .logo img { filter: brightness(0) invert(1); }
+.nav ul { display: flex; gap: 6px; list-style: none; }
+.nav ul a { display: block; padding: 10px 16px; border-radius: 999px; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; font-weight: 400; transition: background .3s; }
+.nav ul a:hover { background: rgba(255,255,255,.35); }
+.nav .btn { padding: 13px 22px; font-size: 12px; }
+.nav.on-hero { color: #fff; }
+.nav.on-hero .btn-ink { background: #fff; color: var(--ink); }
+.burger { display: none; width: 46px; height: 46px; border-radius: 50%; border: 0; background: rgba(255,255,255,.3); cursor: pointer; place-items: center; }
+.burger span { display: block; width: 18px; height: 1.5px; background: currentColor; margin: 4px auto; transition: transform .3s; }
+.mobile-menu { position: fixed; inset: 82px 12px auto; z-index: 49; padding: 18px; display: none; flex-direction: column; gap: 4px; }
+.mobile-menu a { padding: 14px 16px; font-family: var(--serif); font-size: 28px; border-radius: 16px; }
+.mobile-menu.open { display: flex; }
+
+/* Hero */
+.hero { min-height: 100svh; display: flex; align-items: flex-end; color: #fff; overflow: hidden; padding: 140px 0 48px; background: #0d2a30; }
+.hero-media { position: absolute; inset: 0; }
+.hero-media img { width: 100%; height: 100%; object-fit: cover; animation: kb 22s ease-out both; }
+@keyframes kb { from { transform: scale(1.14); } to { transform: scale(1.02); } }
+.hero-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,28,32,.55) 0%, rgba(8,28,32,.08) 34%, rgba(8,28,32,.25) 60%, rgba(8,28,32,.82) 100%); }
+.hero .wrap { position: relative; z-index: 2; }
+.hero-top { display: grid; grid-template-columns: 1.25fr .75fr; gap: 40px; align-items: end; }
+.hero .eyebrow { color: #fff; }
+.hero h1 { font-size: clamp(54px, 9vw, 138px); margin: 22px 0 26px; text-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.hero h1 em { color: #fff; font-weight: 300; }
+.hero p.lead { color: rgba(255,255,255,.88); }
+.hero-card { padding: 26px; }
+.hero-card .k { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; opacity: .8; }
+.hero-card .v { font-family: var(--serif); font-size: 64px; line-height: 1; margin: 6px 0 4px; }
+.hero-card .v small { font-size: 26px; }
+.hero-card p { font-size: 15px; opacity: .85; }
+.hero-card hr { border: 0; height: 1px; background: rgba(255,255,255,.22); margin: 18px 0; }
+.hero-card .row { display: flex; gap: 22px; }
+.hero-card .row div { flex: 1; }
+.hero-card .row .v { font-size: 40px; }
+
+/* Ricerca */
+.search { margin-top: 44px; padding: 10px; border-radius: 999px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; }
+.search label { display: flex; flex-direction: column; padding: 10px 26px; border-radius: 999px; transition: background .3s; cursor: pointer; }
+.search label:hover { background: rgba(255,255,255,.1); }
+.search label + label { border-left: 1px solid rgba(255,255,255,.18); }
+.search span { font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .75; }
+.search select { background: transparent; border: 0; outline: 0; font-size: 18px; font-family: var(--serif); color: #fff; appearance: none; -webkit-appearance: none; cursor: pointer; padding-top: 2px; }
+.search select option { color: var(--ink); }
+.search .btn { background: #fff; color: var(--ink); padding: 0 34px; }
+.scroll-cue { position: absolute; right: 28px; bottom: 30px; z-index: 2; writing-mode: vertical-rl; font-size: 11px; letter-spacing: .4em; text-transform: uppercase; color: rgba(255,255,255,.7); display: flex; align-items: center; gap: 14px; }
+.scroll-cue::after { content: ""; width: 1px; height: 60px; background: linear-gradient(rgba(255,255,255,.8), transparent); animation: cue 2.4s ease-in-out infinite; }
+@keyframes cue { 0%,100% { transform: scaleY(.4); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } }
+
+/* Nastro località */
+.ribbon { padding: 26px 0; border-bottom: 1px solid var(--line); overflow: hidden; background: rgba(255,255,255,.35); }
+.ribbon .track { display: flex; gap: 56px; width: max-content; animation: marquee 48s linear infinite; }
+.ribbon span { font-family: var(--serif); font-size: 30px; font-style: italic; color: var(--ink-2); white-space: nowrap; display: flex; align-items: center; gap: 56px; }
+.ribbon span::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--teal)); }
+.ribbon span:nth-child(4n+1) { --c: var(--red); } .ribbon span:nth-child(4n+2) { --c: var(--yellow); } .ribbon span:nth-child(4n+3) { --c: var(--green); }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* Intro manifesto */
+.manifesto { padding: clamp(90px, 12vw, 160px) 0; }
+.manifesto .grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 70px; align-items: center; }
+.manifesto blockquote { font-family: var(--serif); font-size: clamp(30px, 3.5vw, 48px); line-height: 1.18; font-weight: 300; }
+.manifesto blockquote em { color: var(--teal); }
+.manifesto .img-stack { position: relative; height: 620px; }
+.manifesto .img-stack figure { position: absolute; overflow: hidden; border-radius: var(--r); background: var(--sand); box-shadow: 0 30px 70px -30px rgba(16,41,45,.4); }
+.manifesto .img-stack figure img { width: 100%; height: 100%; object-fit: cover; }
+.manifesto .f1 { inset: 0 22% 14% 0; }
+.manifesto .f2 { width: 48%; height: 46%; right: 0; bottom: 0; border: 8px solid var(--ivory); }
+.manifesto .badge { position: absolute; left: 6%; bottom: 4%; padding: 20px 24px; max-width: 250px; z-index: 2; }
+.manifesto .badge b { font-family: var(--serif); font-weight: 400; font-size: 46px; line-height: 1; display: block; }
+.manifesto .badge span { font-size: 13px; color: var(--ink-2); }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 44px; }
+.facts div { padding: 22px; }
+.facts b { font-family: var(--serif); font-weight: 400; font-size: 42px; line-height: 1; display: block; }
+.facts span { font-size: 13px; color: var(--muted); letter-spacing: .04em; }
+
+/* Collezione */
+.collection { padding: 40px 0 clamp(90px, 12vw, 150px); }
+.head { display: flex; justify-content: space-between; align-items: end; gap: 30px; flex-wrap: wrap; margin-bottom: 40px; }
+.filters { display: flex; gap: 6px; padding: 6px; border-radius: 999px; flex-wrap: wrap; }
+.filters button { border: 0; background: transparent; padding: 11px 20px; border-radius: 999px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; cursor: pointer; transition: background .3s, color .3s; }
+.filters button.on { background: var(--ink); color: #fff; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+.card { border-radius: var(--r); overflow: hidden; background: #fff; box-shadow: 0 2px 4px rgba(16,41,45,.04), 0 30px 60px -36px rgba(16,41,45,.4); transition: transform .6s var(--ease), box-shadow .6s var(--ease), opacity .4s; cursor: pointer; }
+.card:hover { transform: translateY(-8px); box-shadow: 0 2px 4px rgba(16,41,45,.04), 0 44px 80px -40px rgba(16,41,45,.5); }
+.card.hide { display: none; }
+.card .ph { position: relative; aspect-ratio: 4/3.2; overflow: hidden; background: linear-gradient(135deg, #cfdcd8, #e9dcc6); }
+.card .ph img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
+.card:hover .ph img { transform: scale(1.07); }
+.card .tag { position: absolute; top: 16px; left: 16px; padding: 8px 14px; border-radius: 999px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; font-weight: 500; }
+.card .fav { position: absolute; top: 14px; right: 14px; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; }
+.card .fav svg { width: 18px; height: 18px; }
+.card .loc { position: absolute; left: 16px; bottom: 16px; right: 16px; padding: 12px 16px; border-radius: 18px; display: flex; justify-content: space-between; font-size: 13px; letter-spacing: .06em; }
+.card .body { padding: 24px 26px 26px; }
+.card h3 { font-size: 30px; line-height: 1.1; margin-bottom: 10px; }
+.card p { font-size: 15px; color: var(--muted); margin-bottom: 18px; }
+.card .meta { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 16px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+.card .meta b { font-weight: 500; color: var(--teal); }
+.card .feat { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.card .feat i { font-style: normal; font-size: 12px; padding: 6px 12px; border-radius: 999px; background: var(--ivory); color: var(--ink-2); }
+.more { text-align: center; margin-top: 50px; }
+
+/* Progetto firmato */
+.signature { padding: 0 0 clamp(90px, 12vw, 150px); }
+.sig { position: relative; border-radius: 40px; overflow: hidden; min-height: 640px; display: flex; align-items: flex-end; color: #fff; background: #20383a; }
+.sig > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sig::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,28,32,.78) 0%, rgba(8,28,32,.35) 55%, rgba(8,28,32,.1) 100%); }
+.sig .inner { position: relative; z-index: 2; padding: clamp(28px, 5vw, 64px); display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: end; width: 100%; }
+.sig .eyebrow { color: #fff; }
+.sig h2 { color: #fff; max-width: 680px; }
+.sig h2 em { color: #fff; }
+.sig p { max-width: 520px; color: rgba(255,255,255,.85); }
+.sold { padding: 26px 30px; text-align: center; min-width: 230px; }
+.sold b { display: block; font-family: var(--serif); font-weight: 300; font-size: 64px; line-height: 1; }
+.sold span { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; }
+.sold .pill { display: inline-block; margin-top: 14px; padding: 8px 16px; border-radius: 999px; background: #fff; color: var(--red); font-weight: 600; font-size: 11px; letter-spacing: .26em; }
+
+/* Servizi */
+.services { padding: clamp(90px, 12vw, 150px) 0; background: linear-gradient(180deg, transparent, rgba(236,227,212,.6) 30%, rgba(236,227,212,.6) 70%, transparent); }
+.svc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 56px; }
+.svc { padding: 34px 32px 36px; transition: transform .5s var(--ease); }
+.svc:hover { transform: translateY(-6px); }
+.svc .n { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--muted); }
+.svc .ic { width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; margin: 22px 0 22px; background: #fff; box-shadow: 0 10px 24px -12px rgba(16,41,45,.3); }
+.svc .ic svg { width: 26px; height: 26px; stroke: var(--c); }
+.svc h3 { font-size: 32px; margin-bottom: 12px; }
+.svc p { color: var(--ink-2); font-size: 16px; }
+
+/* Internazionale */
+.world { padding: clamp(80px, 10vw, 130px) 0; }
+.world .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
+.markets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.market { padding: 24px 24px; display: flex; align-items: center; justify-content: space-between; }
+.market b { font-family: var(--serif); font-size: 30px; font-weight: 400; }
+.market span { font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--muted); }
+.market.home { grid-column: span 2; background: var(--ink); color: #fff; }
+.market.home span { color: rgba(255,255,255,.7); }
+.market.home::before, .market.home::after { display: none; }
+
+/* Metodo */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 60px; border-top: 1px solid var(--line); }
+.step { padding: 34px 28px 10px 0; position: relative; }
+.step::before { content: ""; position: absolute; top: -5px; left: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.step b { font-family: var(--serif); font-weight: 300; font-size: 54px; line-height: 1; color: var(--c); }
+.step h3 { font-size: 28px; margin: 14px 0 10px; }
+.step p { font-size: 15px; color: var(--ink-2); }
+
+/* Gallipoli */
+.place { padding: clamp(90px, 12vw, 150px) 0; }
+.place .grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: 120px; gap: 18px; margin-top: 50px; }
+.place figure { position: relative; border-radius: var(--r); overflow: hidden; background: var(--sand); }
+.place figure img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.4s var(--ease); }
+.place figure:hover img { transform: scale(1.05); }
+.place figcaption { position: absolute; left: 14px; bottom: 14px; padding: 10px 16px; border-radius: 999px; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #fff; }
+.place .g1 { grid-column: 1 / 8; grid-row: span 4; }
+.place .g2 { grid-column: 8 / 13; grid-row: span 2; }
+.place .g3 { grid-column: 8 / 13; grid-row: span 2; }
+.place .txt { grid-column: 1 / 6; grid-row: span 2; padding: 30px; display: flex; flex-direction: column; justify-content: center; }
+.place .txt p { font-family: var(--serif); font-size: 26px; line-height: 1.3; }
+.place .g4 { grid-column: 6 / 13; grid-row: span 2; }
+
+/* Contatti */
+.contact { padding: 0 0 120px; }
+.contact-box { border-radius: 44px; overflow: hidden; position: relative; padding: clamp(28px, 5vw, 70px); color: #fff; background: #0d2a30; }
+.contact-box > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
+.contact-box::after { content: ""; position: absolute; inset: 0; background: linear-gradient(120deg, rgba(8,28,32,.9), rgba(8,28,32,.45)); }
+.contact-box .grid { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+.contact-box .eyebrow { color: #fff; }
+.contact-box h2 em { color: #fff; }
+.contact-box .lead { color: rgba(255,255,255,.82); }
+.info { margin-top: 38px; display: grid; gap: 14px; }
+.info a, .info div { display: flex; gap: 16px; align-items: center; padding: 16px 20px; border-radius: 20px; }
+.info svg { width: 22px; height: 22px; flex: none; stroke: #fff; }
+.info small { display: block; font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .7; }
+form.glass { padding: 34px; border-radius: 32px; }
+form h3 { font-size: 34px; margin-bottom: 6px; }
+form .sub { font-size: 15px; opacity: .8; margin-bottom: 24px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 5px; border-radius: 999px; background: rgba(255,255,255,.1); margin-bottom: 18px; }
+.seg input { display: none; }
+.seg label { text-align: center; padding: 10px 6px; border-radius: 999px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; transition: background .3s, color .3s; }
+.seg input:checked + label { background: #fff; color: var(--ink); }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fields .full { grid-column: span 2; }
+.fields input, .fields textarea, .fields select { width: 100%; padding: 16px 18px; border-radius: 16px; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff; outline: 0; transition: border .3s, background .3s; font-size: 15px; }
+.fields select option { color: var(--ink); }
+.fields input::placeholder, .fields textarea::placeholder { color: rgba(255,255,255,.6); }
+.fields input:focus, .fields textarea:focus, .fields select:focus { border-color: rgba(255,255,255,.7); background: rgba(255,255,255,.14); }
+.fields textarea { resize: vertical; min-height: 96px; }
+form .btn { width: 100%; justify-content: center; margin-top: 16px; background: #fff; color: var(--ink); }
+form .priv { font-size: 12px; opacity: .65; margin-top: 12px; text-align: center; }
+.thanks { display: none; text-align: center; padding: 40px 10px; }
+.thanks b { font-family: var(--serif); font-weight: 300; font-size: 44px; display: block; }
+form.sent .thanks { display: block; }
+form.sent .form-in { display: none; }
+
+/* Footer */
+footer { padding: 70px 0 40px; border-top: 1px solid var(--line); }
+footer .grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px; }
+footer img { height: 92px; width: auto; margin-bottom: 18px; }
+footer h4 { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; font-weight: 500; color: var(--muted); margin-bottom: 16px; }
+footer li { list-style: none; margin-bottom: 8px; font-size: 15px; }
+footer li a:hover { color: var(--teal); }
+footer .bar { margin-top: 50px; padding-top: 24px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); flex-wrap: wrap; gap: 10px; }
+footer .stripe { height: 3px; width: 120px; background: var(--brand); border-radius: 3px; margin-top: 10px; }
+
+/* Rivelazioni allo scroll */
+.rv { opacity: 0; transform: translateY(34px); transition: opacity 1.1s var(--ease), transform 1.1s var(--ease); }
+.rv.in { opacity: 1; transform: none; }
+.rv.d1 { transition-delay: .1s; } .rv.d2 { transition-delay: .2s; } .rv.d3 { transition-delay: .3s; }
+img.err { opacity: 0; }
+
+@media (max-width: 1080px) {
+  .nav ul { display: none; }
+  .burger { display: grid; }
+  .nav .btn { display: none; }
+  .hero-top, .manifesto .grid, .world .grid, .contact-box .grid { grid-template-columns: 1fr; }
+  .cards, .svc-grid { grid-template-columns: repeat(2, 1fr); }
+  .steps { grid-template-columns: repeat(2, 1fr); }
+  footer .grid { grid-template-columns: 1fr 1fr; }
+  .manifesto .img-stack { height: 520px; }
+}
+@media (max-width: 720px) {
+  body { font-size: 16px; }
+  .wrap { width: calc(100% - 32px); }
+  .nav { padding-left: 16px; top: 10px; }
+  .nav .logo img { height: 38px; }
+  .hero { padding-top: 120px; }
+  .hero-card .v { font-size: 52px; }
+  .search { grid-template-columns: 1fr; border-radius: 28px; }
+  .search label + label { border-left: 0; border-top: 1px solid rgba(255,255,255,.18); }
+  .search .btn { padding: 16px; justify-content: center; }
+  .scroll-cue { display: none; }
+  .cards, .svc-grid, .markets, .steps, .facts { grid-template-columns: 1fr; }
+  .market.home { grid-column: auto; }
+  .sig .inner { grid-template-columns: 1fr; }
+  .sig { min-height: 560px; }
+  .place .grid { grid-template-columns: 1fr; grid-auto-rows: 230px; }
+  .place .g1, .place .g2, .place .g3, .place .g4, .place .txt { grid-column: auto; grid-row: auto; }
+  .place .txt { grid-row: auto; }
+  .fields { grid-template-columns: 1fr; }
+  .fields .full { grid-column: auto; }
+  footer .grid { grid-template-columns: 1fr; }
+  .manifesto .img-stack { height: 440px; }
+  .ribbon span { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .rv { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<!-- Navigazione -->
+<nav class="nav glass on-hero" id="nav">
+  <a href="#top" class="logo" aria-label="Salento Mood – Luxury Living"><img src="/assets/img/salento-mood-logo.png" alt="Salento Mood – Luxury Living"></a>
+  <ul>
+    <li><a href="#collezione">Immobili</a></li>
+    <li><a href="#chi-siamo">Chi siamo</a></li>
+    <li><a href="#servizi">Servizi</a></li>
+    <li><a href="#gallipoli">Gallipoli</a></li>
+    <li><a href="#contatti">Contatti</a></li>
+  </ul>
+  <a href="#contatti" class="btn btn-ink">Valuta il tuo immobile</a>
+  <button class="burger" id="burger" aria-label="Apri il menu"><span></span><span></span></button>
+</nav>
+<div class="mobile-menu glass" id="mm">
+  <a href="#collezione">Immobili</a>
+  <a href="#chi-siamo">Chi siamo</a>
+  <a href="#servizi">Servizi</a>
+  <a href="#gallipoli">Gallipoli</a>
+  <a href="#contatti">Contatti</a>
+</div>
+
+<!-- Hero -->
+<header class="hero" id="top">
+  <div class="hero-media"><img src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=2400&q=80" alt="Villa di lusso con piscina nel Salento" fetchpriority="high"></div>
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <span class="eyebrow rv">Luxury Real Estate · Gallipoli</span>
+        <h1 class="rv d1">Il Salento,<br><em>nella sua forma</em><br>più esclusiva.</h1>
+        <p class="lead rv d2">Ville con piscina, dimore nel centro storico e residenze vista mare tra Gallipoli e la costa ionica. Selezioniamo pochi immobili, e li seguiamo come fossero nostri.</p>
+      </div>
+      <aside class="hero-card glass dark rv d3">
+        <div class="k">Tempo medio di vendita</div>
+        <div class="v">≤ 6 <small>mesi</small></div>
+        <p>Strategia, prezzo giusto e acquirenti selezionati in Italia e all'estero.</p>
+        <hr>
+        <div class="row">
+          <div><div class="k">Immobili</div><div class="v">50+</div></div>
+          <div><div class="k">Mercati</div><div class="v">6</div></div>
+        </div>
+      </aside>
+    </div>
+
+    <form class="search glass dark rv d3" id="search">
+      <label><span>Tipologia</span>
+        <select id="s-type"><option value="all">Tutte le proprietà</option><option value="villa">Ville</option><option value="apt">Appartamenti</option><option value="mare">Vista mare</option></select>
+      </label>
+      <label><span>Zona</span>
+        <select><option>Gallipoli</option><option>Centro storico</option><option>Baia Verde</option><option>Alezio</option><option>Tuglie</option><option>Costa ionica</option></select>
+      </label>
+      <label><span>Budget</span>
+        <select><option>Qualsiasi</option><option>Fino a € 500.000</option><option>€ 500.000 – 1.000.000</option><option>Oltre € 1.000.000</option></select>
+      </label>
+      <button class="btn" type="submit">Cerca <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </form>
+  </div>
+  <div class="scroll-cue">Scopri</div>
+</header>
+
+<!-- Località -->
+<div class="ribbon" aria-hidden="true">
+  <div class="track">
+    <span>Gallipoli</span><span>Centro storico</span><span>Baia Verde</span><span>Lido San Giovanni</span><span>Alezio</span><span>Tuglie</span><span>Punta della Suina</span><span>Costa ionica</span>
+    <span>Gallipoli</span><span>Centro storico</span><span>Baia Verde</span><span>Lido San Giovanni</span><span>Alezio</span><span>Tuglie</span><span>Punta della Suina</span><span>Costa ionica</span>
+  </div>
+</div>
+
+<!-- Chi siamo -->
+<section class="manifesto" id="chi-siamo">
+  <div class="wrap grid">
+    <div class="img-stack rv">
+      <figure class="f1"><img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1400&q=80" alt="Villa contemporanea" loading="lazy"></figure>
+      <figure class="f2"><img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=80" alt="Interno luminoso" loading="lazy"></figure>
+      <div class="badge glass"><b>Luxury</b><span>Living, non solo immobili: uno stile di vita da scegliere.</span></div>
+    </div>
+    <div>
+      <span class="eyebrow rv">Chi siamo</span>
+      <blockquote class="rv d1">Il mood del Salento è luce, pietra e mare. Noi lo trasformiamo <em>in una casa</em> da vivere, o in un investimento che dura.</blockquote>
+      <p class="lead rv d2" style="margin-top:26px">Salento Mood – Luxury Living è l'agenzia immobiliare di Gallipoli dedicata alle proprietà di pregio. Portiamo nel Salento anni di esperienza maturata in Italia e sui mercati internazionali: Dubai, Panama, Miami, Egitto e Marocco. Con un metodo che punta a chiudere ogni vendita in tempi certi.</p>
+      <div class="facts">
+        <div class="glass rv"><b>≤ 6</b><span>mesi, tempo medio di vendita</span></div>
+        <div class="glass rv d1"><b>50+</b><span>immobili in portafoglio</span></div>
+        <div class="glass rv d2"><b>5</b><span>mercati esteri seguiti</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Collezione -->
+<section class="collection" id="collezione">
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <span class="eyebrow rv">La collezione</span>
+        <h2 class="rv d1">Proprietà <em>selezionate</em></h2>
+      </div>
+      <div class="filters glass rv d2" id="filters">
+        <button class="on" data-f="all">Tutte</button>
+        <button data-f="villa">Ville</button>
+        <button data-f="apt">Appartamenti</button>
+        <button data-f="mare">Vista mare</button>
+      </div>
+    </div>
+
+    <div class="cards" id="cards">
+      <article class="card rv" data-k="villa mare">
+        <div class="ph"><img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80" alt="Villa con piscina" loading="lazy">
+          <span class="tag glass">Esclusiva</span>
+          <span class="fav glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-9.2-9A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5c-2.2 4.6-9.2 9-9.2 9z"/></svg></span>
+          <div class="loc glass"><span>Gallipoli · Costa ionica</span><span>Villa</span></div></div>
+        <div class="body">
+          <h3>Villa sul mare con piscina a sfioro</h3>
+          <p>Architettura mediterranea, terrazze panoramiche e giardino di ulivi a pochi passi dalla spiaggia.</p>
+          <div class="feat"><i>Piscina</i><i>Vista mare</i><i>Giardino</i></div>
+          <div class="meta"><span>Trattativa riservata</span><b>Scopri →</b></div>
+        </div>
+      </article>
+
+      <article class="card rv d1" data-k="apt">
+        <div class="ph"><img src="https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=80" alt="Appartamento elegante" loading="lazy">
+          <span class="tag glass">Centro</span>
+          <span class="fav glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-9.2-9A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5c-2.2 4.6-9.2 9-9.2 9z"/></svg></span>
+          <div class="loc glass"><span>Gallipoli · Corso Roma</span><span>Appartamento</span></div></div>
+        <div class="body">
+          <h3>Residenza sul Corso, nel cuore della città</h3>
+          <p>Spazi luminosi e finiture curate sull'asse più elegante di Gallipoli, tra boutique e lungomare.</p>
+          <div class="feat"><i>Centrale</i><i>Ristrutturato</i><i>Balconi</i></div>
+          <div class="meta"><span>Prezzo su richiesta</span><b>Scopri →</b></div>
+        </div>
+      </article>
+
+      <article class="card rv d2" data-k="apt mare">
+        <div class="ph"><img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80" alt="Camera vista mare" loading="lazy">
+          <span class="tag glass">Vista mare</span>
+          <span class="fav glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-9.2-9A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5c-2.2 4.6-9.2 9-9.2 9z"/></svg></span>
+          <div class="loc glass"><span>Gallipoli · Via Trento</span><span>Appartamento</span></div></div>
+        <div class="body">
+          <h3>Appartamento affacciato sullo Ionio</h3>
+          <p>Il mare dalla finestra, ogni giorno. Ideale come casa per l'estate o come investimento a reddito.</p>
+          <div class="feat"><i>Vista mare</i><i>Terrazzo</i><i>Affitti brevi</i></div>
+          <div class="meta"><span>Prezzo su richiesta</span><b>Scopri →</b></div>
+        </div>
+      </article>
+
+      <article class="card rv" data-k="villa">
+        <div class="ph"><img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80" alt="Villa contemporanea" loading="lazy">
+          <span class="tag glass">Nuova costruzione</span>
+          <span class="fav glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-9.2-9A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5c-2.2 4.6-9.2 9-9.2 9z"/></svg></span>
+          <div class="loc glass"><span>Alezio</span><span>Villa</span></div></div>
+        <div class="body">
+          <h3>Villa contemporanea immersa nel verde</h3>
+          <p>Linee pulite, grandi vetrate e piscina privata, a dieci minuti dal mare di Gallipoli.</p>
+          <div class="feat"><i>Piscina</i><i>Domotica</i><i>Classe A</i></div>
+          <div class="meta"><span>Trattativa riservata</span><b>Scopri →</b></div>
+        </div>
+      </article>
+
+      <article class="card rv d1" data-k="villa">
+        <div class="ph"><img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80" alt="Villa con giardino" loading="lazy">
+          <span class="tag glass">Campagna</span>
+          <span class="fav glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-9.2-9A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5c-2.2 4.6-9.2 9-9.2 9z"/></svg></span>
+          <div class="loc glass"><span>Tuglie</span><span>Villa</span></div></div>
+        <div class="body">
+          <h3>Dimora tra gli ulivi del Salento</h3>
+          <p>Privacy assoluta, ampio parco e spazi esterni pensati per vivere l'estate dall'alba al tramonto.</p>
+          <div class="feat"><i>Parco</i><i>Privacy</i><i>Pietra leccese</i></div>
+          <div class="meta"><span>Prezzo su richiesta</span><b>Scopri →</b></div>
+        </div>
+      </article>
+
+      <article class="card rv d2" data-k="villa mare">
+        <div class="ph"><img src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80" alt="Villa di lusso" loading="lazy">
+          <span class="tag glass">Off-market</span>
+          <span class="fav glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-9.2-9A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5c-2.2 4.6-9.2 9-9.2 9z"/></svg></span>
+          <div class="loc glass"><span>Baia Verde</span><span>Villa</span></div></div>
+        <div class="body">
+          <h3>Villa di design a due passi dalla Baia</h3>
+          <p>Proposta riservata a clienti selezionati: dettagli e visita solo su appuntamento.</p>
+          <div class="feat"><i>Off-market</i><i>Vista mare</i><i>Dependance</i></div>
+          <div class="meta"><span>Trattativa riservata</span><b>Scopri →</b></div>
+        </div>
+      </article>
+    </div>
+    <div class="more rv"><a href="#contatti" class="btn btn-ink">Richiedi il portfolio completo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+  </div>
+</section>
+
+<!-- Borgo Rosso Terra -->
+<section class="signature">
+  <div class="wrap">
+    <div class="sig rv">
+      <img src="https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=2200&q=80" alt="Villa al tramonto" loading="lazy">
+      <div class="inner">
+        <div>
+          <span class="eyebrow">Progetto firmato</span>
+          <h2>Borgo <em>Rosso Terra</em></h2>
+          <p>Ville di nuova costruzione nella terra rossa del Salento: pietra, ulivi e piscina privata. Un progetto che ha trovato i suoi proprietari ancora in fase di cantiere, e che racconta il nostro modo di lavorare.</p>
+        </div>
+        <div class="sold glass dark">
+          <span>Ville vendute</span>
+          <b>100%</b>
+          <span>in costruzione</span><br>
+          <span class="pill">Sold out</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Servizi -->
+<section class="services" id="servizi">
+  <div class="wrap">
+    <span class="eyebrow rv">Servizi</span>
+    <h2 class="rv d1">Un solo interlocutore,<br><em>dall'idea al rogito.</em></h2>
+    <p class="lead rv d2">Che tu voglia vendere, comprare o investire, ti accompagniamo in ogni passaggio con discrezione e precisione.</p>
+    <div class="svc-grid">
+      <div class="svc glass rv" style="--c:var(--red)"><span class="n">01</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div><h3>Vendita</h3><p>Valutazione realistica, marketing di pregio e acquirenti qualificati. Obiettivo: vendere bene, entro sei mesi.</p></div>
+      <div class="svc glass rv d1" style="--c:var(--yellow)"><span class="n">02</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div><h3>Ricerca su misura</h3><p>Ascoltiamo cosa desideri e ti mostriamo solo ciò che fa per te, anche proprietà off-market.</p></div>
+      <div class="svc glass rv d2" style="--c:var(--green)"><span class="n">03</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-6"/></svg></div><h3>Investimenti</h3><p>Immobili a reddito e affitti brevi in una delle mete più richieste d'Italia, con analisi di rendimento.</p></div>
+      <div class="svc glass rv" style="--c:var(--teal)"><span class="n">04</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div><h3>Clienti internazionali</h3><p>Assistenza a chi compra dall'estero: visite in video, codice fiscale, conto, traduzioni e notaio.</p></div>
+      <div class="svc glass rv d1" style="--c:var(--red)"><span class="n">05</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg></div><h3>Marketing di pregio</h3><p>Fotografia professionale, video, drone e home staging per presentare ogni immobile al suo meglio.</p></div>
+      <div class="svc glass rv d2" style="--c:var(--yellow)"><span class="n">06</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Assistenza completa</h3><p>Verifiche tecniche e urbanistiche, trattativa, rogito e servizi dopo l'acquisto. Tutto in un unico posto.</p></div>
+    </div>
+
+    <div class="steps">
+      <div class="step rv" style="--c:var(--red)"><b>01</b><h3>Ascolto</h3><p>Conosciamo te, l'immobile e i tuoi obiettivi.</p></div>
+      <div class="step rv d1" style="--c:var(--yellow)"><b>02</b><h3>Strategia</h3><p>Prezzo giusto, posizionamento e piano di comunicazione.</p></div>
+      <div class="step rv d2" style="--c:var(--green)"><b>03</b><h3>Selezione</h3><p>Solo acquirenti qualificati, in Italia e all'estero.</p></div>
+      <div class="step rv d3" style="--c:var(--teal)"><b>04</b><h3>Rogito</h3><p>Seguiamo ogni dettaglio fino alla consegna delle chiavi.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Internazionale -->
+<section class="world">
+  <div class="wrap grid">
+    <div>
+      <span class="eyebrow rv">Visione internazionale</span>
+      <h2 class="rv d1">Il Salento,<br><em>visto dal mondo.</em></h2>
+      <p class="lead rv d2">La nostra esperienza nasce anche lontano da qui. Conosciamo cosa cerca chi acquista dall'estero e sappiamo come presentargli il meglio di Gallipoli. Per chi vende, significa un pubblico più ampio. Per chi compra, un partner che parla la sua lingua.</p>
+    </div>
+    <div class="markets">
+      <div class="market home glass rv"><b>Gallipoli, Salento</b><span>La nostra casa</span></div>
+      <div class="market glass rv d1"><b>Dubai</b><span>UAE</span></div>
+      <div class="market glass rv d2"><b>Miami</b><span>USA</span></div>
+      <div class="market glass rv d1"><b>Panama</b><span>Centro America</span></div>
+      <div class="market glass rv d2"><b>Egitto</b><span>Mar Rosso</span></div>
+      <div class="market glass rv d3" style="grid-column: span 1"><b>Marocco</b><span>Nord Africa</span></div>
+      <div class="market glass rv d3"><b>Italia</b><span>Tutto il Paese</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Gallipoli -->
+<section class="place" id="gallipoli">
+  <div class="wrap">
+    <span class="eyebrow rv">Vivere Gallipoli</span>
+    <h2 class="rv d1">La perla <em>dello Ionio.</em></h2>
+    <p class="lead rv d2">Un centro storico su un'isola di pietra, tramonti sul mare, spiagge bianche e acqua cristallina. Gallipoli è una delle destinazioni più desiderate del Mediterraneo: un luogo dove vivere, e dove investire.</p>
+    <div class="grid">
+      <figure class="g1 rv"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80" alt="Mare cristallino" loading="lazy"><figcaption class="glass dark">Il mare</figcaption></figure>
+      <figure class="g2 rv d1"><img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=80" alt="Interni mediterranei" loading="lazy"><figcaption class="glass dark">Gli interni</figcaption></figure>
+      <figure class="g3 rv d2"><img src="https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1000&q=80" alt="Terrazza" loading="lazy"><figcaption class="glass dark">Le terrazze</figcaption></figure>
+      <div class="txt glass rv"><p>“Al tramonto, dalla Riviera, il mare diventa oro. È lì che capisci perché chi arriva a Gallipoli non va più via.”</p></div>
+      <figure class="g4 rv d1"><img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80" alt="Villa con piscina" loading="lazy"><figcaption class="glass dark">Le ville</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- Contatti -->
+<section class="contact" id="contatti">
+  <div class="wrap">
+    <div class="contact-box rv">
+      <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=70" alt="" loading="lazy">
+      <div class="grid">
+        <div>
+          <span class="eyebrow">Parliamone</span>
+          <h2>Il tuo prossimo<br><em>indirizzo</em> inizia qui.</h2>
+          <p class="lead">Vuoi vendere, comprare o sapere quanto vale il tuo immobile? Scrivici: ti ricontattiamo entro 24 ore, con discrezione.</p>
+          <div class="info">
+            <a class="glass dark" href="https://www.google.com/maps/search/?api=1&query=Via+Cavalieri+di+Rodi+15+Gallipoli" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg><span><small>La nostra sede</small>Via Cavalieri di Rodi 15, 73014 Gallipoli (LE)</span></a>
+            <a class="glass dark" href="https://www.facebook.com/salentomoodluxury/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M15 8h-1.5A2.5 2.5 0 0 0 11 10.5V21M8.5 13H15"/></svg><span><small>Seguici</small>facebook.com/salentomoodluxury</span></a>
+            <a class="glass dark" href="https://salentomood.com" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span><small>Online</small>salentomood.com</span></a>
+          </div>
+        </div>
+        <form class="glass dark" id="lead" novalidate>
+          <div class="form-in">
+            <h3>Richiedi una consulenza</h3>
+            <p class="sub">Gratuita e senza impegno.</p>
+            <div class="seg">
+              <input type="radio" name="t" id="t1" checked><label for="t1">Vendo</label>
+              <input type="radio" name="t" id="t2"><label for="t2">Compro</label>
+              <input type="radio" name="t" id="t3"><label for="t3">Valuto</label>
+            </div>
+            <div class="fields">
+              <input type="text" placeholder="Nome e cognome" required>
+              <input type="tel" placeholder="Telefono" required>
+              <input class="full" type="email" placeholder="Email">
+              <select class="full"><option>Zona di interesse: Gallipoli</option><option>Centro storico</option><option>Baia Verde</option><option>Alezio</option><option>Tuglie</option><option>Altra zona del Salento</option></select>
+              <textarea class="full" placeholder="Raccontaci cosa cerchi o cosa vuoi vendere"></textarea>
+            </div>
+            <button class="btn" type="submit">Invia la richiesta <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            <p class="priv">Inviando accetti il trattamento dei dati secondo la privacy policy.</p>
+          </div>
+          <div class="thanks"><b>Grazie.</b><p>Abbiamo ricevuto la tua richiesta. Ti ricontatteremo a breve.</p></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="grid">
+      <div>
+        <img src="/assets/img/salento-mood-logo.png" alt="Salento Mood – Luxury Living">
+        <p style="color:var(--ink-2);max-width:320px;font-size:15px">Agenzia immobiliare di lusso a Gallipoli. Ville, dimore e residenze vista mare nel cuore del Salento.</p>
+        <div class="stripe"></div>
+      </div>
+      <div><h4>Esplora</h4><ul><li><a href="#collezione">Immobili</a></li><li><a href="#chi-siamo">Chi siamo</a></li><li><a href="#servizi">Servizi</a></li><li><a href="#gallipoli">Gallipoli</a></li></ul></div>
+      <div><h4>Zone</h4><ul><li>Gallipoli</li><li>Baia Verde</li><li>Alezio</li><li>Tuglie</li></ul></div>
+      <div><h4>Contatti</h4><ul><li>Via Cavalieri di Rodi 15</li><li>73014 Gallipoli (LE)</li><li><a href="https://www.facebook.com/salentomoodluxury/" target="_blank" rel="noopener">Facebook</a></li><li><a href="#contatti">Scrivici</a></li></ul></div>
+    </div>
+    <div class="bar"><span>© <span id="y">2026</span> Salento Mood – Luxury Living · Gallipoli</span><span>Privacy · Cookie</span></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Immagini che non si caricano: resta il fondo colorato invece dell'icona rotta.
+  document.querySelectorAll("img").forEach(function (i) { i.addEventListener("error", function () { i.classList.add("err"); }); });
+
+  // Rivelazioni allo scroll
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }); }, { threshold: .12, rootMargin: "0px 0px -40px 0px" });
+  document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); });
+
+  // Barra: bianca sopra le foto scure, scura sul fondo chiaro
+  var nav = document.getElementById("nav");
+  var darks = Array.prototype.slice.call(document.querySelectorAll(".hero, .sig, .contact-box"));
+  function onScroll() {
+    var y = 44;
+    var over = darks.some(function (d) { var r = d.getBoundingClientRect(); return r.top <= y && r.bottom >= y; });
+    nav.classList.toggle("on-hero", over);
+    nav.classList.toggle("dark", over);
+  }
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+  // Menu mobile
+  var mm = document.getElementById("mm");
+  document.getElementById("burger").addEventListener("click", function () { mm.classList.toggle("open"); });
+  mm.querySelectorAll("a").forEach(function (a) { a.addEventListener("click", function () { mm.classList.remove("open"); }); });
+
+  // Filtri collezione
+  var btns = document.querySelectorAll("#filters button");
+  function filter(f) {
+    btns.forEach(function (b) { b.classList.toggle("on", b.dataset.f === f); });
+    document.querySelectorAll("#cards .card").forEach(function (c) { c.classList.toggle("hide", f !== "all" && c.dataset.k.split(" ").indexOf(f) < 0); c.classList.add("in"); });
+  }
+  btns.forEach(function (b) { b.addEventListener("click", function () { filter(b.dataset.f); }); });
+  document.getElementById("search").addEventListener("submit", function (e) {
+    e.preventDefault(); filter(document.getElementById("s-type").value);
+    document.getElementById("collezione").scrollIntoView({ behavior: "smooth" });
+  });
+  document.querySelectorAll("#cards .card").forEach(function (c) { c.addEventListener("click", function () { document.getElementById("contatti").scrollIntoView({ behavior: "smooth" }); }); });
+
+  // Modulo contatti (anteprima: conferma a schermo)
+  document.getElementById("lead").addEventListener("submit", function (e) { e.preventDefault(); e.target.classList.add("sent"); });
+
+  document.getElementById("y").textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>
