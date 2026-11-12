@@ -26,9 +26,9 @@ export default {
       return out;
     }
 
-    // Diotti Consulting: l'indirizzo è /diotticonsulting; le altre grafie ci arrivano comunque.
-    if (/^\/diotti[-_]consulting\/?$/i.test(url.pathname) || /^\/diotticonsulting\/$/i.test(url.pathname) || (/^\/diotticonsulting$/i.test(url.pathname) && url.pathname !== "/diotticonsulting")) {
-      return Response.redirect(`${url.origin}/diotticonsulting`, 301);
+    // Cantieri Uno: l'indirizzo è /cantieriuno. Le vecchie pagine Diotti Consulting e le altre grafie ci arrivano comunque.
+    if (/^\/(diotti[-_]?consulting|cantieri[-_]uno|cantieri[-_]?1)\/?$/i.test(url.pathname) || /^\/cantieriuno\/$/i.test(url.pathname) || (/^\/cantieriuno$/i.test(url.pathname) && url.pathname !== "/cantieriuno")) {
+      return Response.redirect(`${url.origin}/cantieriuno`, 301);
     }
 
     // Cristina Magni / Metodo 4P: l'indirizzo è /medicinaestetica; le altre grafie ci arrivano comunque.
