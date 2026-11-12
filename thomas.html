@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thomas il Piccione · Vendita Uno</title>
+<meta name="description" content="Thomas, il setter che in fase di setting piccia l'offerta. Una pagina con affetto dal team Vendita Uno.">
+<!-- Pagina interna per ridere tra colleghi: fuori dai motori di ricerca. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0e1016">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
+<link rel="preload" as="image" href="/assets/img/thomas.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0e1016;
+  --slate: #1a1d27;
+  --frost: #f3f1f7;
+  --frost-2: rgba(243,241,247,.7);
+  --frost-3: rgba(243,241,247,.45);
+  --line: rgba(255,255,255,.1);
+  /* i colori del collo di un piccione */
+  --g1: #2ee6a8;
+  --g2: #3fb6ff;
+  --g3: #8a5cff;
+  --g4: #ff5fb2;
+  --coral: #ff8a5c;
+  --grad: linear-gradient(100deg, var(--g1) 0%, var(--g2) 32%, var(--g3) 64%, var(--g4) 100%);
+  --sans: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
+  --serif: "Instrument Serif", Georgia, serif;
+  --r: 28px;
+  --ease: cubic-bezier(.2,.8,.2,1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; background: var(--ink); overflow-x: clip; -webkit-text-size-adjust: 100%; }
+body { font-family: var(--sans); color: var(--frost); line-height: 1.55; font-size: 17px; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+::selection { background: var(--g3); color: #fff; }
+
+/* Sfondo: piume iridescenti che si muovono piano */
+.bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; background: radial-gradient(120% 80% at 50% -10%, #1d2130 0%, var(--ink) 60%); }
+.bg i { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .55; will-change: transform; }
+.bg i:nth-child(1) { width: 55vmax; height: 55vmax; left: -20vmax; top: -18vmax; background: radial-gradient(closest-side, var(--g1), transparent); opacity: .35; animation: f1 26s ease-in-out infinite alternate; }
+.bg i:nth-child(2) { width: 50vmax; height: 50vmax; right: -18vmax; top: 10vh; background: radial-gradient(closest-side, var(--g3), transparent); opacity: .45; animation: f2 30s ease-in-out infinite alternate; }
+.bg i:nth-child(3) { width: 46vmax; height: 46vmax; left: 20vw; bottom: -26vmax; background: radial-gradient(closest-side, var(--g4), transparent); opacity: .3; animation: f1 34s ease-in-out infinite alternate-reverse; }
+.bg::after { content: ""; position: absolute; inset: 0; opacity: .5; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.08'/></svg>"); }
+@keyframes f1 { to { transform: translate3d(12vw, 10vh, 0) scale(1.1); } }
+@keyframes f2 { to { transform: translate3d(-10vw, 14vh, 0) scale(.9); } }
+
+.glass { position: relative; isolation: isolate; border-radius: var(--r);
+  background: linear-gradient(180deg, rgba(255,255,255,.09) 0%, rgba(255,255,255,.03) 45%, rgba(255,255,255,.02) 100%), rgba(20,22,32,.45);
+  -webkit-backdrop-filter: blur(28px) saturate(1.7); backdrop-filter: blur(28px) saturate(1.7);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 14px 30px -16px rgba(0,0,0,.5), 0 50px 90px -50px rgba(0,0,0,.8); }
+.glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 2;
+  background: linear-gradient(140deg, rgba(255,255,255,.55), rgba(255,255,255,.08) 25%, rgba(255,255,255,.03) 55%, rgba(138,92,255,.3) 85%, rgba(46,230,168,.45));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+
+.wrap { width: min(1180px, 100% - 40px); margin-inline: auto; }
+section { position: relative; padding: clamp(80px, 10vw, 130px) 0; }
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--g1); }
+h1, h2, h3 { font-weight: 800; letter-spacing: -.04em; line-height: .98; }
+h2 { font-size: clamp(40px, 5.6vw, 74px); margin: 16px 0 18px; }
+em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .1em; }
+.lead { font-size: clamp(17px, 1.5vw, 20px); color: var(--frost-2); max-width: 620px; }
+.lead b { color: var(--frost); }
+.gt { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 17px 28px; border-radius: 999px; font-weight: 700; font-size: 16px; white-space: nowrap; transition: transform .3s var(--ease), box-shadow .3s var(--ease); }
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: scale(.97); }
+.btn-i { color: #0b0c12; background: var(--grad); background-size: 160% 100%; box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 16px 40px -12px rgba(138,92,255,.8); animation: shimmer 6s ease-in-out infinite alternate; }
+@keyframes shimmer { to { background-position: 100% 0; } }
+
+/* Piccione disegnato */
+.pg .body { fill: #8f97a8; }
+.pg .belly { fill: #b7bdca; }
+.pg .wing { fill: #6c7386; }
+.pg .bar { fill: #3d4252; }
+.pg .tail { fill: #4b5162; }
+.pg .head { fill: #9aa2b3; }
+.pg .beak { fill: #e9d9c8; }
+.pg .eye { fill: #ff8a3d; }
+.pg .pupil { fill: #111; }
+.pg .leg { stroke: #ff7d8f; stroke-width: 3; stroke-linecap: round; fill: none; }
+
+/* Navigazione */
+.nav { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 50; width: min(1180px, 100% - 24px); display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 8px 8px 8px 20px; border-radius: 999px; }
+.brand { display: inline-flex; align-items: stretch; font-weight: 800; letter-spacing: -.04em; font-size: 21px; line-height: 1; }
+.brand .w { padding: 8px 6px 8px 0; }
+.brand .u { position: relative; padding: 8px 14px 8px 18px; color: #0b0c12; z-index: 0; }
+.brand .u::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--grad); border-radius: 0 999px 999px 0; clip-path: polygon(13px 0, 100% 0, 100% 100%, 0 100%); }
+.nav ul { display: flex; gap: 2px; list-style: none; }
+.nav ul a { display: block; padding: 10px 14px; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--frost-2); transition: color .2s, background .2s; }
+.nav ul a:hover { color: var(--frost); background: rgba(255,255,255,.06); }
+.nav .btn { padding: 12px 20px; font-size: 14px; }
+
+/* Apertura */
+.hero { min-height: 100svh; display: flex; align-items: center; padding: 120px 0 70px; overflow: hidden; }
+.hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 50px; align-items: center; }
+.hero h1 { font-size: clamp(60px, 9.5vw, 142px); margin: 18px 0 24px; }
+.hero h1 em { display: block; font-size: 1.04em; line-height: .9; }
+.hero .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+.badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 30px; }
+.badge-row span { padding: 9px 15px; border-radius: 999px; font-size: 14px; color: var(--frost-2); border: 1px solid var(--line); background: rgba(255,255,255,.04); }
+.badge-row b { color: var(--frost); }
+
+.photo { position: relative; isolation: isolate; justify-self: center; width: min(440px, 100%); }
+.photo::before { content: ""; position: absolute; inset: -30px; border-radius: 60px; background: var(--grad); filter: blur(50px); opacity: .55; z-index: -1; }
+.photo .ring { position: absolute; inset: -8px; border-radius: 42px; overflow: hidden; }
+.photo .ring::before { content: ""; position: absolute; left: 50%; top: 50%; width: 160%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(0deg); background: conic-gradient(from 0deg, var(--g1), var(--g2), var(--g3), var(--g4), var(--g1)); animation: ringspin 6s linear infinite; }
+@keyframes ringspin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.photo .frame { position: relative; border-radius: 36px; overflow: hidden; aspect-ratio: 900/1061; background: #222; box-shadow: 0 40px 80px -30px rgba(0,0,0,.8); }
+.photo .frame img { width: 100%; height: 100%; object-fit: cover; }
+.bubble { position: absolute; left: -48px; top: 18%; z-index: 3; padding: 16px 20px; border-radius: 22px 22px 22px 6px; font-weight: 700; font-size: 17px; max-width: 250px; line-height: 1.25; animation: bob 3.4s ease-in-out infinite; }
+.bubble small { display: block; font-weight: 500; font-size: 13px; color: var(--frost-3); margin-top: 4px; }
+@keyframes bob { 50% { transform: translateY(-8px) rotate(-1deg); } }
+.seal { position: absolute; right: -36px; bottom: 9%; z-index: 3; width: 150px; height: 150px; border-radius: 50%; display: grid; place-items: center; text-align: center; background: var(--grad); color: #0b0c12; box-shadow: 0 20px 50px -14px rgba(138,92,255,.9), inset 0 2px 0 rgba(255,255,255,.55); transform: rotate(-12deg); }
+.seal svg.txt { position: absolute; inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); animation: spin 18s linear infinite; }
+.seal svg.txt text { font: 800 11.5px var(--sans); letter-spacing: .24em; fill: #0b0c12; }
+.seal .pg { width: 66px; }
+.hero-pg { position: absolute; left: 6%; bottom: -14px; width: 120px; z-index: 3; animation: peck 1.6s ease-in-out infinite; transform-origin: 60% 90%; }
+@keyframes peck { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(14deg); } 80% { transform: rotate(0); } 88% { transform: rotate(12deg); } }
+
+/* Piccioni in volo */
+.flyer { position: fixed; z-index: 60; width: 70px; pointer-events: none; animation: fly var(--d, 7s) linear forwards; }
+.flyer .wingup { transform-origin: 55px 45px; animation: flap .22s ease-in-out infinite alternate; }
+@keyframes flap { to { transform: scaleY(-.6); } }
+@keyframes fly { from { transform: translate3d(-120px, 0, 0); } to { transform: translate3d(calc(100vw + 120px), var(--dy, -120px), 0); } }
+
+/* Nastro */
+.ticker { position: relative; z-index: 3; transform: rotate(-2deg); margin: -10px -5vw 0; background: var(--grad); color: #0b0c12; overflow: hidden; box-shadow: 0 20px 50px -20px rgba(138,92,255,.8); }
+.ticker .track { display: flex; width: max-content; animation: mq 32s linear infinite; }
+.ticker .grp { display: flex; flex: none; }
+.ticker span { display: flex; align-items: center; gap: 22px; padding: 16px 22px 16px 0; font-weight: 800; font-size: clamp(18px, 2vw, 26px); text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap; }
+.ticker span::after { content: "🐦"; font-size: .9em; }
+@keyframes mq { to { transform: translate3d(-50%, 0, 0); } }
+
+/* Setting spiegato */
+.roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 46px; }
+.role { padding: 32px 28px; }
+.role .ic { font-size: 40px; line-height: 1; }
+.role .k { display: block; margin-top: 20px; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; color: var(--frost-3); }
+.role h3 { font-size: 30px; margin: 8px 0 10px; }
+.role p { color: var(--frost-2); }
+.role.thomas { background: linear-gradient(150deg, rgba(255,95,178,.22), rgba(138,92,255,.1) 60%), rgba(20,22,32,.45); }
+.role.thomas .k { color: var(--g4); }
+.stamp { position: absolute; top: 18px; right: 18px; padding: 6px 12px; border: 2px solid var(--g4); color: var(--g4); border-radius: 8px; font-weight: 800; font-size: 12px; letter-spacing: .14em; transform: rotate(8deg); }
+
+/* Confronto */
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 46px; }
+.col { padding: 30px; }
+.col h3 { font-size: 26px; display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.col ul { list-style: none; display: grid; gap: 12px; }
+.col li { padding: 14px 16px; border-radius: 16px; background: rgba(0,0,0,.22); font-size: 16px; display: grid; grid-template-columns: 26px 1fr; gap: 10px; }
+.col.bad h3 { color: var(--g4); }
+.col.good h3 { color: var(--g1); }
+
+/* Simulatore */
+.sim { display: grid; grid-template-columns: .9fr 1.1fr; gap: 40px; align-items: center; }
+.phone { padding: 18px; border-radius: 40px; max-width: 420px; margin-inline: auto; width: 100%; }
+.phone .top { display: flex; align-items: center; gap: 12px; padding: 6px 8px 14px; border-bottom: 1px solid var(--line); }
+.phone .av { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: #333; flex: none; }
+.phone .av img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.phone .top b { display: block; font-size: 16px; }
+.phone .top small { font-size: 12px; color: var(--g1); }
+.chat { height: 380px; overflow-y: auto; padding: 14px 4px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+.msg { max-width: 82%; padding: 11px 15px; border-radius: 18px; font-size: 15px; line-height: 1.35; animation: pop .35s var(--ease); }
+.msg.c { align-self: flex-start; background: rgba(255,255,255,.08); border-bottom-left-radius: 6px; }
+.msg.t { align-self: flex-end; background: var(--grad); color: #0b0c12; font-weight: 600; border-bottom-right-radius: 6px; }
+.msg.sys { align-self: center; background: none; color: var(--frost-3); font-size: 13px; text-align: center; }
+.msg.sys.bad { color: var(--g4); font-weight: 700; font-size: 15px; }
+.msg.sys.good { color: var(--g1); font-weight: 700; font-size: 15px; }
+.typing { align-self: flex-end; display: flex; gap: 4px; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.08); }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--frost-2); animation: dot 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes dot { 50% { opacity: .2; transform: translateY(-3px); } }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+.sim-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
+.btn-ghost { color: var(--frost); }
+.score { display: flex; gap: 14px; margin-top: 26px; }
+.score div { padding: 16px 20px; border-radius: 20px; flex: 1; }
+.score b { display: block; font-size: 38px; letter-spacing: -.05em; line-height: 1; font-variant-numeric: tabular-nums; }
+.score span { font-size: 13px; color: var(--frost-2); }
+
+/* Anatomia */
+.anat { position: relative; margin-top: 40px; display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 20px; align-items: center; }
+.anat .big { width: 100%; max-width: 440px; margin-inline: auto; filter: drop-shadow(0 30px 50px rgba(0,0,0,.5)); }
+.anat .big .neck { fill: url(#neckGrad); }
+.anat .notes { display: grid; gap: 14px; }
+.note { padding: 18px 20px; }
+.note b { display: block; font-size: 18px; margin-bottom: 4px; }
+.note span { font-size: 15px; color: var(--frost-2); }
+.note b::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--grad); margin-right: 10px; vertical-align: middle; }
+
+/* Piccio-metro */
+.meter { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+.gauge { position: relative; width: min(460px, 100%); margin-inline: auto; padding: 30px 30px 26px; border-radius: 36px; text-align: center; }
+.gauge svg { width: 100%; overflow: visible; }
+.gauge .needle { transform-origin: 150px 150px; transition: transform 2.2s cubic-bezier(.3,1.6,.5,1); transform: rotate(-90deg); }
+.gauge.on .needle { transform: rotate(var(--a, 80deg)); }
+.gauge .val { font-size: 64px; font-weight: 800; letter-spacing: -.05em; line-height: 1; margin-top: -6px; }
+.gauge .lbl { font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--frost-3); }
+
+/* Regole */
+.rules { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 46px; }
+.rule { padding: 26px 22px; min-height: 230px; display: flex; flex-direction: column; }
+.rule .n { font-size: 54px; font-weight: 800; letter-spacing: -.06em; line-height: .9; margin-bottom: auto; }
+.rule p { margin-top: 24px; font-size: 16px; font-weight: 600; line-height: 1.3; }
+
+/* Briciole */
+.feed { text-align: center; }
+.feed .box { padding: clamp(36px, 6vw, 70px) 24px; border-radius: 44px; overflow: hidden; }
+.feed h2 { margin-inline: auto; }
+.feed .lead { margin: 0 auto; }
+.feed .count { margin-top: 26px; font-size: 15px; color: var(--frost-2); }
+.feed .count b { font-size: 34px; color: var(--frost); letter-spacing: -.04em; font-variant-numeric: tabular-nums; margin: 0 6px; }
+.crumb { position: fixed; z-index: 61; width: 9px; height: 7px; border-radius: 40%; background: #e9c48a; pointer-events: none; animation: fall var(--t, 1.6s) cubic-bezier(.4,.1,.7,1) forwards; }
+@keyframes fall { to { transform: translate3d(var(--x, 0), var(--y, 60vh), 0) rotate(var(--r, 200deg)); opacity: .2; } }
+
+footer { padding: 46px 0 40px; border-top: 1px solid var(--line); }
+footer .row { display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--frost-2); }
+footer .vu { display: inline-flex; font-weight: 800; letter-spacing: -.04em; font-size: 16px; color: var(--frost); }
+footer .vu .u { padding: 4px 10px 4px 12px; color: #fff; background: #2f6bff; border-radius: 0 99px 99px 0; clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%); }
+footer .vu .w { padding: 4px 4px 4px 0; }
+
+.rv { opacity: 0; transform: translateY(28px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
+.rv.in { opacity: 1; transform: none; }
+.d1 { transition-delay: .1s; } .d2 { transition-delay: .2s; } .d3 { transition-delay: .3s; } .d4 { transition-delay: .4s; }
+
+@media (max-width: 1000px) {
+  .nav ul { display: none; }
+  .hero-grid, .sim, .meter { grid-template-columns: 1fr; }
+  .photo { margin-top: 20px; }
+  .roles, .vs { grid-template-columns: 1fr; }
+  .rules { grid-template-columns: 1fr 1fr; }
+  .anat { grid-template-columns: 1fr; }
+  .anat .big { order: -1; max-width: 340px; }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .wrap { width: calc(100% - 32px); }
+  .nav { padding-left: 16px; }
+  .brand { font-size: 18px; }
+  .nav .btn { padding: 11px 16px; font-size: 13px; }
+  .nav .btn .long { display: none; }
+  .photo { margin-top: 80px; }
+  .bubble { left: -6px; top: -64px; max-width: 240px; font-size: 15px; }
+  .seal { right: -6px; width: 120px; height: 120px; }
+  .seal .pg { width: 52px; }
+  .seal svg.txt text { font-size: 10.5px; }
+  .hero-pg { width: 90px; left: -6px; }
+  .rules { grid-template-columns: 1fr; }
+  .rule { min-height: 0; }
+  .rule .n { font-size: 40px; }
+  .chat { height: 340px; }
+  .score b { font-size: 30px; }
+  .photo .ring { inset: -6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .rv { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<!-- Il piccione, disegnato una volta e riusato ovunque -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="neckGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2ee6a8"/><stop offset=".45" stop-color="#3fb6ff"/><stop offset=".75" stop-color="#8a5cff"/><stop offset="1" stop-color="#ff5fb2"/>
+    </linearGradient>
+    <symbol id="pigeon" viewBox="0 0 120 100">
+      <path fill="#4b5162" d="M14 52 L2 44 L4 58 Z"/>
+      <ellipse fill="#8f97a8" cx="52" cy="56" rx="38" ry="24"/>
+      <ellipse fill="#b7bdca" cx="62" cy="64" rx="24" ry="14"/>
+      <path fill="url(#neckGrad)" d="M70 38 C78 30 90 30 94 40 C96 48 92 58 80 60 C72 60 66 52 70 38 Z"/>
+      <path fill="#6c7386" d="M24 50 C34 36 58 38 70 50 C60 64 38 66 24 50 Z"/>
+      <path fill="#3d4252" d="M36 52 C44 48 54 48 60 52 L58 55 C52 52 44 52 38 55 Z"/>
+      <path fill="#3d4252" d="M32 57 C40 53 50 53 56 57 L54 60 C48 57 40 57 34 60 Z"/>
+      <circle fill="#9aa2b3" cx="94" cy="32" r="13"/>
+      <path fill="#e9d9c8" d="M106 31 L117 34 L106 37 Z"/>
+      <circle cx="104" cy="31" r="2.6" fill="#f2f2f2"/>
+      <circle fill="#ff8a3d" cx="97" cy="29" r="3.6"/>
+      <circle fill="#111" cx="97.6" cy="29" r="1.7"/>
+      <path stroke="#ff7d8f" stroke-width="3" stroke-linecap="round" fill="none" d="M50 78 L48 92 M48 92 L42 95 M48 92 L53 96"/>
+      <path stroke="#ff7d8f" stroke-width="3" stroke-linecap="round" fill="none" d="M62 78 L62 92 M62 92 L56 95 M62 92 L67 96"/>
+    </symbol>
+    <symbol id="flyer" viewBox="0 0 120 100">
+      <path d="M14 52 L2 46 L4 58 Z" fill="#4b5162"/>
+      <ellipse cx="54" cy="56" rx="38" ry="18" fill="#8f97a8"/>
+      <path d="M72 46 C80 40 90 40 94 48 C94 56 86 60 78 60 Z" fill="url(#neckGrad)"/>
+      <circle cx="96" cy="44" r="11" fill="#9aa2b3"/>
+      <path d="M106 43 L116 46 L106 49 Z" fill="#e9d9c8"/>
+      <circle cx="99" cy="42" r="3" fill="#ff8a3d"/><circle cx="99.5" cy="42" r="1.4" fill="#111"/>
+      <g class="wingup"><path d="M36 50 C40 20 60 8 72 12 C66 28 62 42 60 52 Z" fill="#6c7386"/></g>
+    </symbol>
+  </defs>
+</svg>
+
+<nav class="nav glass">
+  <a href="#top" class="brand" aria-label="Thomas il Piccione"><span class="w">Thomas</span><span class="u">PICCIONE</span></a>
+  <ul>
+    <li><a href="#setting">Il setting</a></li>
+    <li><a href="#simulatore">Simulatore</a></li>
+    <li><a href="#anatomia">Anatomia</a></li>
+    <li><a href="#regole">Le regole</a></li>
+  </ul>
+  <button class="btn btn-i" data-feed><span class="long">Dai una briciola</span> 🍞</button>
+</nav>
+
+<!-- Apertura -->
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow rv">🐦 Specie rara · avvistata in ufficio</span>
+      <h1 class="rv d1">Thomas,<em>il Piccione.</em></h1>
+      <p class="lead rv d2">Il setter che, in fase di setting, invece di fissare l'appuntamento… <b>piccia l'offerta.</b> Il cliente chiede “chi parla?” e lui ha già detto il prezzo.</p>
+      <div class="cta rv d3">
+        <a href="#simulatore" class="btn btn-i">Guardalo picciare dal vivo →</a>
+        <button class="btn btn-ghost glass" data-feed>Dai una briciola a Thomas 🍞</button>
+      </div>
+      <div class="badge-row rv d4">
+        <span>Offerte picciate: <b id="hc">∞</b></span>
+        <span>Appuntamenti fissati: <b>in attesa</b></span>
+        <span>Verso preferito: <b>“Grrr-uuu”</b></span>
+      </div>
+    </div>
+    <div class="photo rv d2">
+      <div class="ring" aria-hidden="true"></div>
+      <div class="frame"><img src="/assets/img/thomas.webp" alt="Thomas, sorridente, con il telefono in mano pronto a picciare"></div>
+      <div class="bubble glass">“Buongiorno! Comunque l'offerta è…”<small>— Thomas, secondo 3 della chiamata</small></div>
+      <div class="seal" aria-hidden="true">
+        <svg class="txt" viewBox="0 0 100 100"><defs><path id="circ" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0"/></defs><text><textPath href="#circ">PICCIONE DOC · CERTIFICATO ·</textPath></text></svg>
+        <svg class="pg" viewBox="0 0 120 100"><use href="#pigeon"/></svg>
+      </div>
+      <svg class="pg hero-pg" viewBox="0 0 120 100" aria-hidden="true"><use href="#pigeon"/></svg>
+    </div>
+  </div>
+</header>
+
+<div class="ticker" aria-hidden="true"><div class="track">
+  <div class="grp"><span>Ha picciato di nuovo</span><span>Il setting non è la chiusura</span><span>Prima l'appuntamento, poi l'offerta</span><span>Grrr-uuu</span><span>Thomas posa il telefono</span></div>
+  <div class="grp"><span>Ha picciato di nuovo</span><span>Il setting non è la chiusura</span><span>Prima l'appuntamento, poi l'offerta</span><span>Grrr-uuu</span><span>Thomas posa il telefono</span></div>
+</div></div>
+
+<!-- Il setting spiegato -->
+<section id="setting">
+  <div class="wrap">
+    <span class="eyebrow rv">Il setting, spiegato a un piccione</span>
+    <h2 class="rv d1">Ognuno ha il suo lavoro.<br><em>Thomas li fa tutti.</em></h2>
+    <p class="lead rv d2">In una vendita fatta bene ci sono due fasi. Il setter apre la porta, il closer presenta l'offerta. Poi c'è Thomas, che la porta la sfonda.</p>
+    <div class="roles">
+      <div class="role glass rv"><div class="ic">📞</div><span class="k">Il setter</span><h3>Fissa l'appuntamento</h3><p>Ascolta, fa domande, capisce se il cliente è giusto e gli trova un posto in agenda. Fine.</p></div>
+      <div class="role glass rv d1"><div class="ic">🤝</div><span class="k">Il closer</span><h3>Presenta l'offerta</h3><p>All'appuntamento, con calma, quando il cliente è pronto ad ascoltarla. Non prima.</p></div>
+      <div class="role glass thomas rv d2"><span class="stamp">PICCIATA</span><div class="ic">🐦</div><span class="k">Thomas</span><h3>Piccia tutto subito</h3><p>Saluto, offerta e prezzo nello stesso respiro. Il cliente non sa ancora come si chiama, ma sa già quanto costa.</p></div>
+    </div>
+
+    <div class="vs">
+      <div class="col good glass rv"><h3>✅ Un setter normale</h3><ul>
+        <li><span>💬</span>“Mi racconta com'è la situazione oggi?”</li>
+        <li><span>👂</span>Ascolta più di quanto parla.</li>
+        <li><span>📅</span>“Ci vediamo giovedì alle 15 con il mio collega?”</li>
+        <li><span>🎯</span>Chiude la chiamata con un appuntamento.</li>
+      </ul></div>
+      <div class="col bad glass rv d1"><h3>🐦 Thomas il Piccione</h3><ul>
+        <li><span>💬</span>“Pronto? Ok, allora l'offerta è questa…”</li>
+        <li><span>📣</span>Parla, parla, parla. Tuba.</li>
+        <li><span>💸</span>“Il prezzo glielo dico subito, così risparmiamo tempo.”</li>
+        <li><span>📵</span>Chiude la chiamata con il cliente che ha riattaccato.</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- Simulatore -->
+<section id="simulatore" style="padding-top:0">
+  <div class="wrap sim">
+    <div>
+      <span class="eyebrow rv">Simulatore di chiamata</span>
+      <h2 class="rv d1">Fai una chiamata<br><em>come Thomas.</em></h2>
+      <p class="lead rv d2">Premi il pulsante e guarda cosa succede quando l'offerta viene picciata in fase di setting. Poi prova la versione giusta, per confronto.</p>
+      <div class="sim-btns rv d3">
+        <button class="btn btn-i" id="callT">🐦 Chiama come Thomas</button>
+        <button class="btn btn-ghost glass" id="callS">📅 Chiama come un setter</button>
+      </div>
+      <div class="score rv d3">
+        <div class="glass"><b class="gt" id="sP">0</b><span>offerte picciate</span></div>
+        <div class="glass"><b id="sA">0</b><span>appuntamenti fissati</span></div>
+      </div>
+    </div>
+    <div class="phone glass rv d1">
+      <div class="top"><div class="av"><img src="/assets/img/thomas.webp" alt=""></div><div><b>Thomas · Setting</b><small id="status">● pronto a picciare</small></div></div>
+      <div class="chat" id="chat"><div class="msg sys">Premi un pulsante per iniziare la chiamata</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Anatomia -->
+<section id="anatomia" style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow rv">Studio scientifico</span>
+    <h2 class="rv d1">Anatomia di un<br><em>Thomas il Piccione.</em></h2>
+    <div class="anat">
+      <div class="notes">
+        <div class="note glass rv"><b>L'occhio</b><span>Vede un'offerta da presentare dietro ogni “pronto?”.</span></div>
+        <div class="note glass rv d1"><b>Il becco</b><span>Piccia il prezzo al primo squillo. Preciso, rapido, devastante.</span></div>
+      </div>
+      <svg class="pg big rv d1" viewBox="0 0 120 100" role="img" aria-label="Disegno di un piccione"><use href="#pigeon"/></svg>
+      <div class="notes">
+        <div class="note glass rv d2"><b>Il collo iridescente</b><span>Brilla di entusiasmo. Anche troppo, per una chiamata di 40 secondi.</span></div>
+        <div class="note glass rv d3"><b>Le zampe</b><span>Saltano la qualifica e atterrano dritte sulla chiusura.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Piccio-metro -->
+<section style="padding-top:0">
+  <div class="wrap meter">
+    <div>
+      <span class="eyebrow rv">Il Piccio-metro</span>
+      <h2 class="rv d1">Livello di<br><em>picciatura oggi.</em></h2>
+      <p class="lead rv d2">Misurazione ufficiale, effettuata ascoltando le chiamate di Thomas dalla scrivania accanto. Margine di errore: zero.</p>
+    </div>
+    <div class="gauge glass rv d1" id="gauge">
+      <svg viewBox="0 0 300 170" aria-hidden="true">
+        <defs><linearGradient id="arc" x1="0" x2="1"><stop offset="0" stop-color="#2ee6a8"/><stop offset=".5" stop-color="#8a5cff"/><stop offset="1" stop-color="#ff5fb2"/></linearGradient></defs>
+        <path d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="22" stroke-linecap="round"/>
+        <path d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="url(#arc)" stroke-width="22" stroke-linecap="round"/>
+        <text x="30" y="168" fill="rgba(243,241,247,.45)" font-size="11" text-anchor="middle" font-family="sans-serif">setter</text>
+        <text x="270" y="168" fill="rgba(243,241,247,.45)" font-size="11" text-anchor="middle" font-family="sans-serif">piccione</text>
+        <g class="needle"><path d="M150 150 L150 44" stroke="#f3f1f7" stroke-width="5" stroke-linecap="round"/><circle cx="150" cy="150" r="13" fill="#f3f1f7"/></g>
+      </svg>
+      <div class="val gt" id="gval">0%</div>
+      <div class="lbl">piccione al</div>
+    </div>
+  </div>
+</section>
+
+<!-- Regole -->
+<section id="regole" style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow rv">Da stampare e attaccare sulla scrivania di Thomas</span>
+    <h2 class="rv d1">Le 5 regole<br><em>anti-piccione.</em></h2>
+    <div class="rules">
+      <div class="rule glass rv"><span class="n gt">01</span><p>In setting l'offerta non si piccia. Mai.</p></div>
+      <div class="rule glass rv d1"><span class="n gt">02</span><p>Prima si fanno le domande, poi si ascoltano le risposte.</p></div>
+      <div class="rule glass rv d2"><span class="n gt">03</span><p>Se il cliente chiede il prezzo, si fissa l'appuntamento.</p></div>
+      <div class="rule glass rv d3"><span class="n gt">04</span><p>L'obiettivo della chiamata è uno: la data in agenda.</p></div>
+      <div class="rule glass rv d4"><span class="n gt">05</span><p>Quando senti il bisogno di picciare… respira. Grrr-uuu.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Briciole -->
+<section class="feed" style="padding-top:0">
+  <div class="wrap">
+    <div class="box glass rv">
+      <span class="eyebrow">Supporta Thomas</span>
+      <h2>Ogni briciola è un<br><em>appuntamento in più.</em></h2>
+      <p class="lead">Un piccione ben nutrito non ha bisogno di picciare l'offerta. Fai la tua parte.</p>
+      <div style="margin-top:30px"><button class="btn btn-i" data-feed style="font-size:18px;padding:20px 34px">🍞 Dai una briciola a Thomas</button></div>
+      <p class="count">Briciole date a Thomas: <b id="crumbs">0</b> 🐦</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap row">
+    <a href="#top" class="brand"><span class="w">Thomas</span><span class="u">PICCIONE</span></a>
+    <span>Con affetto, dal team <a href="/" class="vu"><span class="w">Vendita</span><span class="u">UNO</span></a> 💙</span>
+    <span>Nessun piccione è stato maltrattato per questa pagina.</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Rivelazioni allo scroll
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }); }, { threshold: .12 });
+  document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); });
+
+  // Piccioni che attraversano lo schermo
+  function flyPigeon(y) {
+    if (reduce) return;
+    var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 120 100"); s.setAttribute("class", "flyer"); s.setAttribute("aria-hidden", "true");
+    s.innerHTML = '<use href="#flyer"/>';
+    s.style.top = (y != null ? y : 80 + Math.random() * (innerHeight * .6)) + "px";
+    s.style.setProperty("--d", (5 + Math.random() * 4) + "s");
+    s.style.setProperty("--dy", (-60 - Math.random() * 160) + "px");
+    s.style.width = (50 + Math.random() * 40) + "px";
+    document.body.appendChild(s);
+    s.addEventListener("animationend", function () { s.remove(); });
+  }
+  setTimeout(function () { flyPigeon(innerHeight * .3); }, 1200);
+  setInterval(function () { if (!document.hidden) flyPigeon(); }, 9000);
+
+  // Briciole
+  var crumbs = 0;
+  try { crumbs = +localStorage.getItem("thomas-briciole") || 0; } catch (e) {}
+  var cEl = document.getElementById("crumbs"); cEl.textContent = crumbs;
+  document.querySelectorAll("[data-feed]").forEach(function (b) {
+    b.addEventListener("click", function (ev) {
+      crumbs++; cEl.textContent = crumbs;
+      try { localStorage.setItem("thomas-briciole", crumbs); } catch (e) {}
+      if (!reduce) {
+        var r = b.getBoundingClientRect();
+        for (var i = 0; i < 14; i++) {
+          var c = document.createElement("span"); c.className = "crumb";
+          c.style.left = (r.left + r.width / 2 + (Math.random() - .5) * 40) + "px"; c.style.top = (r.top + r.height / 2) + "px";
+          c.style.setProperty("--x", ((Math.random() - .5) * 260) + "px"); c.style.setProperty("--y", (180 + Math.random() * 320) + "px");
+          c.style.setProperty("--r", (Math.random() * 720) + "deg"); c.style.setProperty("--t", (1.1 + Math.random() * .9) + "s");
+          document.body.appendChild(c); c.addEventListener("animationend", function () { this.remove(); });
+        }
+      }
+      flyPigeon(Math.max(70, (b.getBoundingClientRect().top) - 60));
+    });
+  });
+
+  // Simulatore di chiamata
+  var chat = document.getElementById("chat"), status = document.getElementById("status"), busy = false;
+  var sP = 0, sA = 0;
+  var thomasCalls = [
+    [["c", "Pronto?"], ["t", "Buongiorno! Sono Thomas. Le dico subito l'offerta, così risparmiamo tempo…"], ["c", "Scusi, chi parla?"], ["t", "…e il prezzo è super conveniente, guardi, firmiamo?"], ["c", "Ma io non ho chiesto niente."], ["sys bad", "📵 Il cliente ha riattaccato. Offerta picciata."]],
+    [["c", "Sì, pronto?"], ["t", "Salve! Allora, abbiamo questo pacchetto completo che…"], ["c", "Guardi, adesso sto guidando."], ["t", "Perfetto, allora le dico anche il prezzo mentre guida!"], ["sys bad", "📵 Linea caduta. Il piccione ha colpito ancora."]],
+    [["c", "Buongiorno, mi avevate scritto?"], ["t", "Sì! Ecco l'offerta, ecco il prezzo, ecco lo sconto, ecco la garanzia…"], ["c", "Ah. Ci penso io e vi richiamo."], ["sys bad", "🐦 “Ci penso io” = non richiamerà mai. Offerta picciata."]]
+  ];
+  var setterCall = [["c", "Pronto?"], ["t", "Buongiorno, sono Thomas di Vendita Uno. Ha due minuti? Volevo capire meglio la sua situazione."], ["c", "Sì, mi dica."], ["t", "Oggi come sta andando? Cosa vorrebbe migliorare?"], ["c", "Eh, vorrei più clienti, ma non so da dove partire."], ["t", "Chiaro. Ne parliamo con calma con il mio collega: giovedì alle 15 le va bene?"], ["c", "Perfetto, giovedì alle 15."], ["sys good", "✅ Appuntamento fissato. Thomas è guarito!"]];
+  var turn = 0;
+  function add(type, text) {
+    var d = document.createElement("div"); d.className = "msg " + type; d.textContent = text;
+    chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+  }
+  function typing(on) {
+    var t = chat.querySelector(".typing");
+    if (on && !t) { t = document.createElement("div"); t.className = "typing"; t.innerHTML = "<i></i><i></i><i></i>"; chat.appendChild(t); chat.scrollTop = chat.scrollHeight; }
+    if (!on && t) t.remove();
+  }
+  function play(script, good) {
+    if (busy) return; busy = true; chat.innerHTML = "";
+    status.textContent = good ? "● in chiamata (modalità setter)" : "● in chiamata (modalità piccione)";
+    var i = 0;
+    (function next() {
+      if (i >= script.length) {
+        busy = false; status.textContent = good ? "● appuntamento in agenda" : "● ha picciato di nuovo";
+        if (good) { sA++; document.getElementById("sA").textContent = sA; }
+        else { sP++; document.getElementById("sP").textContent = sP; flyPigeon(); }
+        return;
+      }
+      var m = script[i++];
+      if (m[0] === "t") { typing(true); setTimeout(function () { typing(false); add("t", m[1]); setTimeout(next, 650); }, 900); }
+      else { add(m[0].replace("sys", "sys"), m[1]); setTimeout(next, 900); }
+    })();
+  }
+  document.getElementById("callT").addEventListener("click", function () { play(thomasCalls[turn++ % thomasCalls.length], false); });
+  document.getElementById("callS").addEventListener("click", function () { play(setterCall, true); });
+
+  // Piccio-metro
+  var g = document.getElementById("gauge"), gv = document.getElementById("gval"), done = false;
+  new IntersectionObserver(function (es, o) {
+    if (!es[0].isIntersecting || done) return; done = true; o.disconnect();
+    var target = 98; g.style.setProperty("--a", (-90 + 180 * target / 100) + "deg"); g.classList.add("on");
+    var t0 = performance.now();
+    (function step(t) { var p = Math.min(1, (t - t0) / 2000); gv.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))) + "%"; if (p < 1) requestAnimationFrame(step); })(t0);
+  }, { threshold: .4 }).observe(g);
+})();
+</script>
+</body>
+</html>

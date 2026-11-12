@@ -31,6 +31,11 @@ export default {
       return Response.redirect(`${url.origin}/cantieriuno`, 301);
     }
 
+    // Thomas il Piccione: l'indirizzo è /thomas; /Thomas, /THOMAS e la barra finale ci arrivano comunque.
+    if (/^\/thomas\/?$/i.test(url.pathname) && url.pathname !== "/thomas") {
+      return Response.redirect(`${url.origin}/thomas`, 301);
+    }
+
     // Cristina Magni / Metodo 4P: l'indirizzo è /medicinaestetica; le altre grafie ci arrivano comunque.
     if (/^\/medicina[-_]estetica\/?$/i.test(url.pathname) || /^\/medicinaestetica\/$/i.test(url.pathname) || (/^\/medicinaestetica$/i.test(url.pathname) && url.pathname !== "/medicinaestetica")) {
       return Response.redirect(`${url.origin}/medicinaestetica`, 301);
