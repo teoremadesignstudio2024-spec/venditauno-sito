@@ -299,6 +299,9 @@ const ROUTES = {
   sblocca: { fn: viewShop, title: "Sblocca", nav: "" },
   grazie: { fn: viewThanks, title: "Grazie", nav: "" },
   admin: { fn: viewAdmin, title: "Admin", nav: "admin", admin: true, noRail: true },
+  allenati: { fn: viewGym, title: "Allenati", nav: "allenati" },
+  sim: { fn: viewSim, title: "Telefonata", nav: "allenati", noRail: true, incall: true },
+  verifica: { fn: viewVerify, auth: false },
 };
 
 function parseHash() {
@@ -310,6 +313,7 @@ function parseHash() {
 
 async function router() {
   closeRadial();
+  if (window.speechSynthesis) speechSynthesis.cancel();
   closeSheet();
   const { name, args, q } = parseHash();
   const r = ROUTES[name] || ROUTES.home;
@@ -320,6 +324,7 @@ async function router() {
   if (r.admin && S.user.role !== "admin") { location.hash = "#/home"; return; }
   if (S.user && Date.now() - (S.notifAt || 0) > 20000) { S.notifAt = Date.now(); refreshNotifs(); }
   if (name === "accedi" && S.user) { location.hash = "#/home"; return; }
+  if (name === "verifica") { render(r, args, q); return; }
   render(r, args, q);
 }
 
@@ -333,6 +338,7 @@ function render(r = ROUTES.accedi, args = [], q = new URLSearchParams()) {
   shell.classList.toggle("anon", !logged);
   shell.classList.toggle("noRail", !!r.noRail);
   view.className = logged ? "view" : "view noNav";
+  document.body.classList.toggle("incall", !!r.incall);
   if (logged) {
     $("#sideMe").innerHTML = userFace(S.user);
     $("#sideAdmin").hidden = S.user.role !== "admin";
@@ -348,7 +354,7 @@ function render(r = ROUTES.accedi, args = [], q = new URLSearchParams()) {
 async function loadMe() {
   try {
     const d = await api("/me");
-    Object.assign(S, { user: d.user, content: d.content, progress: d.progress || {}, reminders: d.reminders || [] });
+    Object.assign(S, { user: d.user, content: d.content, progress: d.progress || {}, reminders: d.reminders || [], gym: d.gym });
     return true;
   } catch { return false; }
 }
@@ -772,6 +778,7 @@ function viewHome() {
       ${banners.length ? `<div class="banners" id="bnr"><div class="track">${banners.map((bn) => `<a class="bn ${!bn.title && !bn.text && safeUrl(bn.cover) ? "plain" : ""}" href="${esc(bn.link && /^(#\/|\/|https:\/\/)/.test(bn.link) ? bn.link : "#/home")}">${coverBg(bn.cover, "#2f6bff", "spark")}<h3>${esc(bn.title)}</h3><p>${esc(bn.text)}</p></a>`).join("")}</div>
         ${banners.length > 1 ? `<div class="ctl"><button data-b="-1" aria-label="Precedente">${icon("back")}</button><span class="dots">${banners.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</span><button data-b="1" aria-label="Successivo">${icon("chev")}</button></div>` : ""}</div>` : ""}
     </div>
+    ${gymCard()}
     ${now ? `<h2 class="sec">In diretta ora</h2>${lvItem(now)}` : ""}
     ${secHd("Scegli come guadagnare", null, carouselArrows("hAcc"))}
     <div class="acards" id="hAcc">${S.content.academies.map(academyCard).join("")}</div>
@@ -783,11 +790,13 @@ function viewHome() {
       ${secHd("Prossime live", null, `<a href="#/live">Calendario</a>`)}
       ${next.length ? `<div class="lv-list">${next.slice(0, 3).map(lvItem).join("")}</div>` : `<div class="card empty">${icon("cal")}Nessuna live in programma per ora.</div>`}
     </div>
+    <div id="homeWins"></div>
     <a class="card teaser" href="#/notizie" style="margin-top:20px"><span class="lk">${icon("lock")}</span><div class="grow"><h4>Notizie esclusive nella tua zona</h4><p>${S.user.city ? `Verifica se ${esc(S.user.city)} è ancora libera` : "Scopri il servizio per avere le notizie"}</p></div>${icon("chev")}</a>`;
   bindCourses(view);
   bindScroll(view);
   view.querySelectorAll("[data-stories]").forEach(paintStories);
   loadStories();
+  paintHomeWins();
   $("#onbBtn").onclick = () => {
     const box = $("#onbVid");
     box.innerHTML = box.innerHTML ? "" : vid ? `<div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>` : `<p class="small muted" style="padding:0 16px 16px">Il video di benvenuto arriva presto.</p>`;
@@ -858,12 +867,15 @@ function viewCourse([id]) {
     ${m.desc ? `<p class="lead-tx" style="line-height:1.55;margin-top:16px">${esc(m.desc)}</p>` : ""}
     <div class="card pad" style="margin-top:16px"><div class="row"><div class="grow"><b style="font-family:var(--display);font-size:15px">${st.done} di ${st.all} lezioni</b><div class="prog" style="margin-top:8px"><i style="width:${st.pct}%"></i></div></div><span style="font-family:var(--display);font-weight:800;font-size:22px">${st.pct}%</span></div>
     <div class="btns">${!canCourse(m) ? `<button class="btn pri" data-unlock>${icon("lock", "sm")}Sblocca il corso</button>` : next ? `<a class="btn pri" href="#/lezione/${esc(next.id)}">${icon("play", "sm")}${st.done ? "Continua" : "Inizia"}</a>` : `<span></span>`}<button class="btn sec ${saved ? "on" : ""}" data-save="${esc(m.id)}">${icon(saved ? "check" : "plus", "sm")}${saved ? "Salvato" : "Salva"}</button></div></div>
+    ${canCourse(m) && st.all && st.done === st.all ? certBox(m) : ""}
     <h2 class="sec">Lezioni</h2>
     <div class="card">${m.lessons.map((l, i) => `<a class="les" href="#/lezione/${esc(l.id)}"><span class="st ${S.progress[l.id] ? "done" : ""}">${!canCourse(m) ? icon("lock", "sm") : S.progress[l.id] ? icon("check", "sm") : i + 1}</span><div class="grow"><h4>${esc(l.title)}</h4><p>${l.minutes ? l.minutes + " min" : "Video"}${l.pdf ? " · PDF" : ""}</p></div>${icon("chev", "sm")}</a>`).join("") || `<div class="empty">Le lezioni arrivano presto.</div>`}</div>
     </div>`;
   const ub = view.querySelector("[data-unlock]");
   if (ub) ub.onclick = () => openUnlock(`course:${m.id}`, m.title);
   if (!canCourse(m)) view.querySelectorAll(".les").forEach((a) => (a.onclick = (ev) => { ev.preventDefault(); openUnlock(`course:${m.id}`, m.title); }));
+  const cd = $("#certDl");
+  if (cd) cd.onclick = async () => { const had = (S.user.certs || {})[m.id]; if ((await downloadCert(m, cd)) && !had) viewCourse([id]); };
   const sb = view.querySelector("[data-save]");
   sb.onclick = async () => {
     try { S.user = (await api("/save", { courseId: m.id, on: !saved })).user; viewCourse([id]); toast(saved ? "Tolto dai tuoi corsi" : "Salvato nei tuoi corsi"); } catch (err) { toast(err.message); }
@@ -888,16 +900,21 @@ function viewLesson([id]) {
       <h1 class="h1" style="font-size:22px;margin-top:4px">${esc(l.title)}</h1>
       ${l.desc ? `<p class="lead-tx" style="line-height:1.55;white-space:pre-wrap">${esc(l.desc)}</p>` : ""}
       ${safeUrl(l.pdf) ? `<a class="card teaser" href="${esc(safeUrl(l.pdf))}" target="_blank" rel="noopener"><span class="lk">${icon("doc")}</span><div class="grow"><h4>Materiale della lezione</h4><p>Scarica il PDF</p></div>${icon("chev")}</a>` : ""}
+      ${(l.quiz || []).length ? quizHtml(l) : ""}
       <button class="btn ${done ? "on sec" : "pri"} block" id="done" style="margin-top:16px">${icon("check", "sm")}${done ? "Completata" : "Segna come completata"}</button>
       <div class="les-nav">
         ${prev ? `<a class="btn sec" href="#/lezione/${esc(prev.id)}">${icon("back", "sm")}Precedente</a>` : "<span></span>"}
         ${next ? `<a class="btn sec" href="#/lezione/${esc(next.id)}">Successiva${icon("chev", "sm")}</a>` : "<span></span>"}
       </div></div>`;
+    const qg = $("#quizGo");
+    if (qg) qg.onclick = () => runQuiz(l, () => { if (next) location.hash = `#/lezione/${next.id}`; else draw(); });
     $("#done").onclick = async () => {
       try {
         const d = await api("/progress", { lessonId: l.id, done: !done });
         S.progress = d.progress;
-        if (!done && next) { toast("Lezione completata"); location.hash = `#/lezione/${next.id}`; }
+        gain({ ...d, gained: 0 });
+        if (d.gained) toast(`Lezione completata · +${d.gained} punti`);
+        if (!done && next) { if (!d.gained) toast("Lezione completata"); location.hash = `#/lezione/${next.id}`; }
         else { if (!done) toast("Hai finito l'accademia!"); draw(); }
       } catch (e) { toast(e.message); }
     };
@@ -1503,6 +1520,7 @@ function viewProfile() {
     </div>
     <div class="card menu" style="margin-top:20px">
       ${u.role === "educator" || (u.role === "admin" && myEducator()) ? `<a href="#/mie-live">${icon("live")}Le mie live${icon("chev", "chev")}</a>` : ""}
+      <a href="#/allenati">${icon("phone")}Allenati, risultati e classifica${icon("chev", "chev")}</a>
       <a href="#/guadagni">${icon("wallet")}Guadagni e inviti${icon("chev", "chev")}</a>
       ${fullAccess() ? "" : `<a href="#/sblocca">${icon("key")}Sblocca i contenuti${icon("chev", "chev")}</a>`}
       <a href="#/educatori?tab=seguiti">${icon("users")}Educatori che segui${icon("chev", "chev")}</a>
@@ -1812,10 +1830,14 @@ function admModules() {
       field("Durata (minuti)", "minutes", l.minutes, "number", 'min="0"') +
       field("Descrizione", "desc", l.desc, "textarea") +
       field("Link PDF (facoltativo)", "pdf", l.pdf, "text", 'placeholder="/assets/pdf/… oppure https://"') +
+      field("Quiz (facoltativo): una domanda per riga, la prima risposta è quella giusta", "quiz", (l.quiz || []).map((q) => [q.q, ...q.opts].join(" | ")).join("\n"), "textarea", 'rows="4" placeholder="Qual è il primo obiettivo della chiamata? | Fissare un appuntamento | Dire il prezzo | Parlare della provvigione"') +
       (j > 0 ? `<button type="button" class="btn sec block" id="lup" style="margin-bottom:8px">${icon("up", "sm")}Sposta su</button>` : ""),
       async (f) => {
         if (f.video && !videoSrc(f.video)) throw new Error("Link video non riconosciuto: usa un link Loom, YouTube, Vimeo o Google Drive");
-        const ls = m.lessons.slice(), item = { ...l, ...f, video: f.video.trim(), youtubeId: ytId(f.video), minutes: Number(f.minutes) || 0 };
+        const quiz = f.quiz.split("\n").map((r) => r.split("|").map((x) => x.trim()).filter(Boolean)).filter((r) => r.length);
+        const badQ = quiz.findIndex((r) => r.length < 3);
+        if (badQ >= 0) throw new Error(`Quiz, riga ${badQ + 1}: servono la domanda e almeno due risposte, separate da |`);
+        const ls = m.lessons.slice(), item = { ...l, ...f, quiz: quiz.map(([q, ...opts]) => ({ q, opts })), video: f.video.trim(), youtubeId: ytId(f.video), minutes: Number(f.minutes) || 0 };
         if (j >= 0) ls[j] = item; else ls.push(item);
         await saveSection("modules", withLessons(ls));
       },
@@ -2136,6 +2158,555 @@ async function admZones() {
     const { zones } = await api("/admin/zones");
     $("#adm").innerHTML = `<div class="card">${zones.map((z) => `<div class="adm-item"><div class="grow"><h4>${esc(z.comune)} · ${esc(z.name)}</h4><p>${esc(z.phone)} · ${esc(z.email)} · ${ago(z.at)}</p>${z.note ? `<p>${esc(z.note)}</p>` : ""}</div><a class="btn sec" href="tel:${esc(z.phone.replace(/[^\d+]/g, ""))}" style="padding:8px">${icon("phone", "sm")}</a></div>`).join("") || `<div class="empty">${icon("pin")}Nessuna richiesta ancora.</div>`}</div>`;
   } catch (e) { $("#adm").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+// =====================================================================
+// ALLENATI: livelli, giorni di fila, simulatore di chiamate, risultati,
+// classifica, muro dei successi, quiz e certificati.
+// =====================================================================
+const LEVELS = [
+  [0, "Recluta"], [100, "Apprendista"], [300, "Agente"], [600, "Agente Pro"], [1000, "Negoziatore"],
+  [1600, "Acquisitore"], [2500, "Top Agent"], [4000, "Fuoriclasse"], [6000, "Leggenda"], [9000, "Milionario"],
+];
+function levelOf(xp = 0) {
+  let i = 0;
+  while (i < LEVELS.length - 1 && xp >= LEVELS[i + 1][0]) i++;
+  const min = LEVELS[i][0], next = LEVELS[i + 1] ? LEVELS[i + 1][0] : null;
+  return { n: i + 1, name: LEVELS[i][1], min, next, pct: next ? Math.round(((xp - min) / (next - min)) * 100) : 100, nextName: LEVELS[i + 1] ? LEVELS[i + 1][1] : "" };
+}
+const gymNow = () => S.gym || { xp: 0, streak: 0, best: 0, today: false, days: [], quiz: {} };
+// Badge del livello: un esagono con il numero, colore che si scalda salendo.
+function lvlBadge(lv, size = 56) {
+  const hue = [218, 218, 210, 200, 190, 160, 45, 35, 280, 50][lv.n - 1];
+  return `<span class="lvb" style="--s:${size}px;--h:${hue}"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 90 27v46L50 96 10 73V27z"/></svg><b>${lv.n}</b></span>`;
+}
+// Dopo ogni azione: aggiorna i punti, mostra quanti ne hai presi e festeggia il nuovo livello.
+function gain(d) {
+  if (!d || !d.gym) return;
+  const before = levelOf(gymNow().xp).n;
+  S.gym = d.gym;
+  const lv = levelOf(S.gym.xp);
+  if (lv.n > before) levelUp(lv);
+  else if (d.gained) toast(`+${d.gained} punti${S.gym.streak > 1 ? ` · ${S.gym.streak} giorni di fila` : ""}`);
+}
+function levelUp(lv) {
+  const el = document.createElement("div");
+  el.className = "lvup";
+  el.innerHTML = `<div class="lvup-in">${lvlBadge(lv, 120)}<p>Sei salito di livello</p><h2>${esc(lv.name)}</h2>${lv.next ? `<small>Prossimo: ${esc(lv.nextName)} a ${lv.next} punti</small>` : "<small>Hai raggiunto il livello più alto</small>"}<button class="btn white">Continua</button></div>`;
+  document.body.appendChild(el);
+  const close = () => { el.classList.add("out"); setTimeout(() => el.remove(), 300); };
+  el.querySelector("button").onclick = close;
+  el.onclick = (e) => { if (e.target === el) close(); };
+}
+function flame(on) {
+  return `<svg class="fl ${on ? "on" : ""}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.4 0 7-2.9 7-6.6 0-3.7-2.6-5.9-4.3-8.9-.4 1.9-1.3 3-2.4 3.6C12.6 7 11.5 4 8.6 2c.3 3.3-1.6 5.3-2.9 7.3C4.6 11 4 12.6 4 15.4 4 19.1 7.6 22 12 22z"/></svg>`;
+}
+
+// Card "il tuo allenamento" in home
+function gymCard() {
+  const g = gymNow(), lv = levelOf(g.xp);
+  return `<section class="gymcard">
+    <a class="gc-top" href="#/allenati/classifica">
+      ${lvlBadge(lv, 58)}
+      <div class="grow"><h3>${esc(lv.name)}</h3>
+        <div class="prog"><i style="width:${lv.pct}%"></i></div>
+        <p>${lv.next ? `${g.xp} punti · ancora ${lv.next - g.xp} per ${esc(lv.nextName)}` : `${g.xp} punti`}</p></div>
+      <div class="gc-streak ${g.today ? "on" : ""}">${flame(g.streak > 0)}<b>${g.streak}</b><small>${g.streak === 1 ? "giorno" : "giorni"}</small></div>
+    </a>
+    <a class="gc-call" href="#/allenati">
+      <span class="ring">${icon("phone")}</span>
+      <div class="grow"><h4>Allenati al telefono</h4><p>Un cliente vero ti risponde. Alla fine ricevi il voto.</p></div>${icon("chev")}
+    </a>
+    ${g.today ? "" : `<p class="gc-hint">${g.streak ? `Fai una lezione o una telefonata oggi per non perdere i tuoi ${g.streak} giorni di fila.` : "Fai una lezione o una telefonata oggi per iniziare la tua serie."}</p>`}
+  </section>`;
+}
+
+// ---------- muro dei successi ----------
+const WIN_LABEL = { incarico: "Incarico preso", vendita: "Vendita chiusa", appuntamento: "Appuntamento fissato", affitto: "Affitto chiuso", altro: "Successo" };
+const WIN_ICON = { incarico: "key", vendita: "home2", appuntamento: "cal", affitto: "doc", altro: "spark" };
+function winCard(w) {
+  return `<article class="win" data-win="${esc(w.key)}">
+    <div class="win-hd"><span class="win-ic">${icon(WIN_ICON[w.kind] || "spark")}</span><b>${esc(WIN_LABEL[w.kind] || "Successo")}</b><span class="muted small">${ago(w.at)}</span></div>
+    <p>${esc(w.text)}</p>
+    <div class="win-ft">${face(w.author, imgUrl(w.avatar))}<span class="grow ell">${esc(w.author)}${w.city ? `<small>${esc(w.city)}</small>` : ""}</span>
+      <button class="clap ${w.clapped ? "on" : ""}" data-clap aria-label="Applaudi">👏 <span>${w.claps || ""}</span></button>
+      ${w.mine || S.user.role === "admin" ? `<button class="wdel" data-wdel aria-label="Elimina">${icon("trash", "sm")}</button>` : ""}</div>
+  </article>`;
+}
+function bindWins(root, onChange) {
+  root.querySelectorAll("[data-win]").forEach((el) => {
+    const key = el.dataset.win;
+    const c = el.querySelector("[data-clap]");
+    if (c) c.onclick = async () => {
+      try { const { win } = await api(`/wins/${key}/clap`, {}); c.classList.toggle("on", win.clapped); c.querySelector("span").textContent = win.claps || ""; } catch (e) { toast(e.message); }
+    };
+    const d = el.querySelector("[data-wdel]");
+    if (d) d.onclick = async () => {
+      if (!confirm("Eliminare questo successo?")) return;
+      try { await api(`/wins/${key}/delete`, {}); el.remove(); if (onChange) onChange(); } catch (e) { toast(e.message); }
+    };
+  });
+}
+async function paintHomeWins() {
+  const box = $("#homeWins");
+  if (!box) return;
+  try {
+    const { wins } = await api("/wins");
+    if (!document.body.contains(box)) return;
+    box.innerHTML = wins.length ? `${secHd("Muro dei successi", null, `<a href="#/allenati/successi">Tutti</a>`)}<div class="wins-row">${wins.slice(0, 8).map(winCard).join("")}</div>` : "";
+    bindWins(box);
+  } catch {}
+}
+function shareWin(onDone) {
+  let kind = "incarico";
+  openSheet("Condividi un successo", `
+    <div class="kinds">${Object.keys(WIN_LABEL).map((k) => `<button type="button" data-k="${k}" class="${k === kind ? "on" : ""}">${icon(WIN_ICON[k], "sm")}${WIN_LABEL[k]}</button>`).join("")}</div>
+    <form id="wf">${field("Cosa hai ottenuto?", "text", "", "textarea", 'maxlength="280" required placeholder="Es. Primo incarico in esclusiva dopo 3 settimane di chiamate. Il metodo funziona!"')}
+    <div id="werr"></div><button class="btn pri block">${icon("spark", "sm")}Pubblica sul muro</button></form>
+    <p class="small muted" style="text-align:center;margin-top:10px">Lo vedono tutti gli iscritti. +${25} punti una volta al giorno.</p>`, (root) => {
+    root.querySelectorAll("[data-k]").forEach((b) => (b.onclick = () => { kind = b.dataset.k; root.querySelectorAll("[data-k]").forEach((x) => x.classList.toggle("on", x === b)); }));
+    root.querySelector("#wf").onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector("button"); btn.disabled = true;
+      try { const d = await api("/wins", { kind, text: e.target.text.value }); closeSheet(); gain(d); if (onDone) onDone(); }
+      catch (err) { $("#werr").innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; }
+    };
+  });
+}
+
+// ---------- pagina Allenati ----------
+let gymData = null;
+async function loadGym() {
+  const d = await api("/gym");
+  gymData = d; S.gym = d.gym;
+  return d;
+}
+const GYM_TABS = [["", "Telefonate"], ["risultati", "Risultati"], ["classifica", "Classifica"], ["successi", "Successi"]];
+async function viewGym([tab = ""]) {
+  const g = gymNow(), lv = levelOf(g.xp);
+  view.innerHTML = `
+    <header class="gym-hd">
+      ${lvlBadge(lv, 64)}
+      <div class="grow"><p class="muted small">Livello ${lv.n}</p><h1>${esc(lv.name)}</h1>
+        <div class="prog"><i style="width:${lv.pct}%"></i></div>
+        <p class="small muted" style="margin-top:6px">${g.xp} punti${lv.next ? ` · ${lv.next - g.xp} al livello ${esc(lv.nextName)}` : ""}</p></div>
+      <div class="gc-streak ${g.today ? "on" : ""}">${flame(g.streak > 0)}<b>${g.streak}</b><small>di fila</small></div>
+    </header>
+    <div class="utabs">${GYM_TABS.map(([k, n]) => `<a href="#/allenati${k ? "/" + k : ""}" class="${tab === k ? "on" : ""}">${n}</a>`).join("")}</div>
+    <div id="gymBody"><div class="loading"><div class="spin"></div></div></div>`;
+  try { if (!gymData || tab === "" || tab === "risultati") await loadGym(); } catch (e) { $("#gymBody").innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  const body = $("#gymBody");
+  if (!body) return;
+  if (tab === "risultati") return gymResults(body);
+  if (tab === "classifica") return gymBoard(body);
+  if (tab === "successi") return gymWins(body);
+  gymCalls(body);
+}
+
+let simFilter = "";
+function gymCalls(body) {
+  const d = gymData, best = {};
+  for (const s of d.sims || []) best[s.id] = Math.max(best[s.id] || 0, s.voto);
+  const accs = [...new Set(d.scenarios.map((s) => s.academy))].map(academyById).filter(Boolean);
+  const list = d.scenarios.filter((s) => !simFilter || s.academy === simFilter);
+  const lvlName = ["", "Facile", "Media", "Difficile"];
+  body.innerHTML = `
+    <p class="gym-intro">Scegli un cliente e chiamalo. Ti risponde come una persona vera: diffidente, di fretta, pieno di obiezioni. Parla col microfono o scrivi. Quando chiudi, il coach ti dà il voto e ti dice cosa migliorare.</p>
+    ${d.simReady ? "" : `<div class="card pad warnbox">${icon("lock")}<div><b>Il simulatore si sta accendendo</b><p class="small muted">${S.user.role === "admin" ? "Per attivarlo aggiungi la chiave ANTHROPIC_API_KEY nelle variabili segrete del Worker su Cloudflare." : "Sarà disponibile a breve. Intanto puoi segnare i tuoi risultati e scalare la classifica."}</p></div></div>`}
+    <div class="fchips"><button data-sf="" class="${!simFilter ? "on" : ""}">Tutti</button>${accs.map((a) => `<button data-sf="${esc(a.id)}" class="${simFilter === a.id ? "on" : ""}" style="--c:${accColor(a)}"><i></i>${esc(a.name)}</button>`).join("")}</div>
+    <div class="scen-list">${list.map((s) => {
+      const a = academyById(s.academy);
+      return `<a class="scen" href="#/sim/${esc(s.id)}" style="--c:${accColor(a)}">
+        <span class="scen-av">${initials(s.who)}</span>
+        <div class="grow"><h3>${esc(s.title)}</h3><p>${esc(s.who)}, ${esc(s.role.charAt(0).toLowerCase() + s.role.slice(1))}</p>
+          <div class="scen-goal">${icon("check", "sm")}${esc(s.goal)}</div></div>
+        <div class="scen-side"><span class="diff d${s.level}" title="${lvlName[s.level]}"><i></i><i></i><i></i></span>${best[s.id] != null ? `<span class="best">${best[s.id]}</span>` : `<span class="callbtn">${icon("phone", "sm")}</span>`}</div>
+      </a>`;
+    }).join("")}</div>`;
+  body.querySelectorAll("[data-sf]").forEach((b) => (b.onclick = () => { simFilter = b.dataset.sf; gymCalls(body); }));
+}
+
+// Risultati: cosa hai fatto sul campo, settimana per settimana.
+const RES_F = [["c", "Chiamate", "phone"], ["a", "Appuntamenti", "cal"], ["m", "Incarichi", "key"], ["s", "Vendite", "home2"]];
+function addDays(key, n) { const d = new Date(`${key}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+const todayKey = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
+function mondayOf(key) { const d = new Date(`${key}T12:00:00Z`); return addDays(key, -((d.getUTCDay() + 6) % 7)); }
+function sumRange(res, from, days) {
+  const t = { c: 0, a: 0, m: 0, s: 0 };
+  for (let i = 0; i < days; i++) { const r = res[addDays(from, i)]; if (r) for (const k in t) t[k] += r[k] || 0; }
+  return t;
+}
+function gymResults(body) {
+  const res = gymData.results || {}, today = todayKey(), mon = mondayOf(today);
+  const wk = sumRange(res, mon, 7), prev = sumRange(res, addDays(mon, -7), 7);
+  const weeks = [...Array(8)].map((_, i) => { const from = addDays(mon, -7 * (7 - i)); return { from, t: sumRange(res, from, 7) }; });
+  const maxC = Math.max(1, ...weeks.map((w) => w.t.c));
+  const all = sumRange(res, addDays(today, -89), 90);
+  const rate = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+  let day = today;
+  const cur = () => res[day] || { c: 0, a: 0, m: 0, s: 0 };
+  const certs = Object.entries(gymData.certs || {}).map(([mid, code]) => ({ m: courseById(mid), code })).filter((x) => x.m);
+  body.innerHTML = `
+    <section class="card pad logday">
+      <div class="row" style="justify-content:space-between"><h2 class="h2s">Segna la giornata</h2>
+        <div class="seg mini"><button data-day="${today}" class="on">Oggi</button><button data-day="${addDays(today, -1)}">Ieri</button></div></div>
+      <div class="steps" id="steps"></div>
+      <button class="btn pri block" id="saveRes">${icon("check", "sm")}Salva la giornata</button>
+      <p class="small muted" style="text-align:center;margin-top:8px">+10 punti al giorno. I numeri li vedi solo tu.</p>
+    </section>
+    <h2 class="sec">Questa settimana</h2>
+    <div class="kpis">${RES_F.map(([k, n, ic]) => { const diff = wk[k] - prev[k]; return `<div class="kpi">${icon(ic, "sm")}<b>${wk[k]}</b><span>${n}</span><small class="${diff > 0 ? "up" : diff < 0 ? "dn" : ""}">${diff > 0 ? "+" + diff : diff < 0 ? diff : "="} rispetto alla scorsa</small></div>`; }).join("")}</div>
+    <h2 class="sec">Chiamate nelle ultime 8 settimane</h2>
+    <div class="card pad bars" role="img" aria-label="Chiamate per settimana">${weeks.map((w, i) => `<div class="bar ${i === 7 ? "now" : ""}"><span class="v">${w.t.c || ""}</span><i style="height:${Math.round((w.t.c / maxC) * 100)}%"></i><small>${new Date(`${w.from}T12:00:00Z`).getUTCDate()}/${new Date(`${w.from}T12:00:00Z`).getUTCMonth() + 1}</small></div>`).join("")}</div>
+    <h2 class="sec">Il tuo imbuto · ultimi 90 giorni</h2>
+    <div class="card pad funnel">
+      ${[["Chiamate", all.c, 100], ["Appuntamenti", all.a, rate(all.a, all.c)], ["Incarichi", all.m, rate(all.m, all.a)], ["Vendite", all.s, rate(all.s, all.m)]].map(([n, v, r], i) => `<div class="fn" style="--w:${Math.max(18, 100 - i * 22)}%"><div class="fn-bar"><b>${v}</b><span>${n}</span></div>${i ? `<small>${r}% del passo prima</small>` : ""}</div>`).join("")}
+      ${all.c ? `<p class="small muted" style="margin-top:12px">${all.a ? `Ogni ${Math.round(all.c / all.a)} chiamate fissi un appuntamento.` : "Ancora nessun appuntamento: allenati al telefono per sbloccarlo."}${all.m ? ` Ogni ${Math.round(all.c / all.m)} chiamate prendi un incarico.` : ""}</p>` : `<p class="small muted" style="margin-top:12px">Segna le tue giornate: qui vedrai quante chiamate ti servono per un incarico.</p>`}
+    </div>
+    <h2 class="sec">Giorni attivi</h2>
+    <div class="card pad heat">${[...Array(42)].map((_, i) => { const k = addDays(today, i - 41); return `<i class="${gymNow().days.includes(k) ? "on" : ""} ${k === today ? "td" : ""}" title="${k}"></i>`; }).join("")}</div>
+    <p class="small muted" style="margin-top:8px">Record: ${gymNow().best} giorni di fila.</p>
+    ${certs.length ? `<h2 class="sec">I tuoi certificati</h2><div class="card">${certs.map((c) => `<a class="les" href="#/corso/${esc(c.m.id)}"><span class="st done">${icon("doc", "sm")}</span><div class="grow"><h4>${esc(c.m.title)}</h4><p>Codice ${esc(c.code)}</p></div>${icon("chev", "sm")}</a>`).join("")}</div>` : ""}`;
+  const paint = () => {
+    const r = cur();
+    $("#steps").innerHTML = RES_F.map(([k, n, ic]) => `<div class="step"><span class="st-ic">${icon(ic, "sm")}</span><span class="grow">${n}</span><button type="button" data-d="-1" data-f="${k}" aria-label="Meno ${n}">−</button><input inputmode="numeric" data-f="${k}" value="${r[k] || 0}" aria-label="${n}"><button type="button" data-d="1" data-f="${k}" aria-label="Più ${n}">+</button></div>`).join("");
+    $("#steps").querySelectorAll("button[data-d]").forEach((b) => (b.onclick = () => { const inp = $(`#steps input[data-f=${b.dataset.f}]`); inp.value = Math.max(0, (Number(inp.value) || 0) + Number(b.dataset.d)); }));
+  };
+  paint();
+  body.querySelectorAll("[data-day]").forEach((b) => (b.onclick = () => { day = b.dataset.day; body.querySelectorAll("[data-day]").forEach((x) => x.classList.toggle("on", x === b)); paint(); }));
+  $("#saveRes").onclick = async (e) => {
+    const data = { date: day };
+    $("#steps").querySelectorAll("input").forEach((i) => (data[i.dataset.f] = Number(i.value) || 0));
+    e.target.disabled = true;
+    try { const d = await api("/results", data); gymData.results = d.results; gain(d); if (!d.gained) toast("Giornata salvata"); gymResults(body); }
+    catch (err) { toast(err.message); e.target.disabled = false; }
+  };
+}
+
+let boardWeek = "", boardCity = false;
+async function gymBoard(body) {
+  body.innerHTML = `<div class="loading"><div class="spin"></div></div>`;
+  let d;
+  try { d = await api(`/gym/board${boardWeek ? "?week=prev" : ""}`); } catch (e) { body.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  const city = (S.user.city || "").trim().toLowerCase();
+  const list = boardCity && city ? d.list.filter((x) => (x.city || "").trim().toLowerCase() === city) : d.list;
+  const pod = list.slice(0, 3), rest = list.slice(3);
+  const row = (x, i) => `<div class="lb-row ${x.me ? "me" : ""}"><span class="pos">${i + 1}</span>${face(x.name, imgUrl(x.avatar))}<div class="grow"><b>${esc(x.name)}${x.me ? " (tu)" : ""}</b><small>${esc(x.city || "")}</small></div><span class="pts">${x.xp}</span></div>`;
+  body.innerHTML = `
+    <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div class="seg mini"><button data-w="" class="${!boardWeek ? "on" : ""}">Questa settimana</button><button data-w="prev" class="${boardWeek ? "on" : ""}">Scorsa</button></div>
+      ${city ? `<div class="seg mini"><button data-c="0" class="${!boardCity ? "on" : ""}">Italia</button><button data-c="1" class="${boardCity ? "on" : ""}">${esc(S.user.city)}</button></div>` : ""}
+    </div>
+    ${!boardWeek && d.rank ? `<p class="lb-me">Sei <b>${d.rank}°</b> su ${d.total} questa settimana.</p>` : !boardWeek ? `<p class="lb-me">Non sei ancora in classifica: completa una lezione o fai una telefonata.</p>` : ""}
+    ${pod.length ? `<div class="podium">${[1, 0, 2].filter((i) => pod[i]).map((i) => `<div class="pd p${i + 1} ${pod[i].me ? "me" : ""}">${face(pod[i].name, imgUrl(pod[i].avatar))}<b>${esc(pod[i].name.split(" ")[0])}</b><span>${pod[i].xp} pt</span><div class="blk">${i + 1}</div></div>`).join("")}</div>` : `<div class="card empty">${icon("trend")}Nessuno in classifica${boardCity ? " nella tua città" : ""}, per ora. Il primo posto è libero.</div>`}
+    ${rest.length ? `<div class="card lb">${rest.map((x, i) => row(x, i + 3)).join("")}</div>` : ""}
+    <p class="small muted" style="margin-top:14px;text-align:center">La classifica riparte ogni lunedì. Punti: lezione 20 · quiz superato 30 · telefonata fino a 40 · giornata segnata 10 · successo 25.</p>`;
+  body.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { boardWeek = b.dataset.w; gymBoard(body); }));
+  body.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => { boardCity = b.dataset.c === "1"; gymBoard(body); }));
+}
+
+async function gymWins(body) {
+  body.innerHTML = `<button class="btn pri block" id="shareWin">${icon("spark", "sm")}Condividi un successo</button><div id="winList" class="wins-col"><div class="loading"><div class="spin"></div></div></div>`;
+  $("#shareWin").onclick = () => shareWin(() => gymWins(body));
+  try {
+    const { wins } = await api("/wins");
+    const box = $("#winList");
+    box.innerHTML = wins.map(winCard).join("") || `<div class="card empty">${icon("spark")}Il muro è vuoto. Il tuo primo incarico, il primo appuntamento, la prima vendita: scrivilo qui.</div>`;
+    bindWins(box);
+  } catch (e) { $("#winList").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+// ---------- telefonata simulata ----------
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let simVoice = (() => { try { return localStorage.getItem("vu_simvoice") !== "0"; } catch { return true; } })();
+function speak(text) {
+  if (!simVoice || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "it-IT"; u.rate = 1.04;
+  const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.startsWith("it"));
+  if (v) u.voice = v;
+  const av = $("#callAv");
+  u.onstart = () => av && av.classList.add("talk");
+  u.onend = () => av && av.classList.remove("talk");
+  speechSynthesis.speak(u);
+}
+async function viewSim([id]) {
+  if (!gymData) { try { await loadGym(); } catch (e) { toast(e.message); location.hash = "#/allenati"; return; } }
+  const s = gymData.scenarios.find((x) => x.id === id);
+  if (!s) { location.hash = "#/allenati"; return; }
+  const a = academyById(s.academy);
+  const msgs = []; // { role: "user" | "assistant", text }
+  let busy = false, ended = false, t0 = Date.now(), timer, rec = null, recOn = false;
+  view.innerHTML = `
+    <div class="call" style="--c:${accColor(a)}">
+      <div class="call-top"><a href="#/allenati" class="call-x" aria-label="Esci">${icon("back")}</a><span id="callTime">00:00</span><button id="voiceBtn" class="call-x ${simVoice ? "on" : ""}" aria-label="Voce del cliente">${icon("mega")}</button></div>
+      <div class="call-who">
+        <div class="call-av" id="callAv"><span>${initials(s.who)}</span></div>
+        <h1>${esc(s.who)}</h1><p>${esc(s.role)}</p>
+        <div class="call-goal">${icon("check", "sm")}<span>Obiettivo: ${esc(s.goal)}</span></div>
+      </div>
+      <div class="call-log" id="log" aria-live="polite"></div>
+      <div class="call-bar">
+        <form id="sayF" class="say"><input id="say" class="inp" placeholder="${SpeechRec ? "Parla o scrivi…" : "Scrivi cosa dici…"}" autocomplete="off" maxlength="700"><button class="send" aria-label="Invia">${icon("chev")}</button></form>
+        <div class="call-btns">
+          ${SpeechRec ? `<button id="micBtn" class="cb mic" aria-label="Microfono">${micSvg()}</button>` : ""}
+          <button id="endBtn" class="cb end" aria-label="Chiudi la chiamata">${icon("phone")}</button>
+        </div>
+        <p class="call-tip" id="tip">${SpeechRec ? "Tocca il microfono, parla, poi toccalo di nuovo per inviare." : "Scrivi come parleresti al telefono."}</p>
+      </div>
+    </div>`;
+  document.body.classList.add("incall");
+  const log = $("#log");
+  const add = (role, text, extra = "") => {
+    const el = document.createElement("div");
+    el.className = `bub ${role === "user" ? "me" : "them"} ${extra}`;
+    el.textContent = text;
+    log.appendChild(el); log.scrollTop = log.scrollHeight;
+    return el;
+  };
+  add("assistant", s.opener);
+  speak(s.opener);
+  timer = setInterval(() => {
+    if (!document.body.contains(log)) { clearInterval(timer); return; }
+    const sec = Math.floor((Date.now() - t0) / 1000);
+    $("#callTime").textContent = `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+  }, 1000);
+  $("#voiceBtn").onclick = (e) => {
+    simVoice = !simVoice; try { localStorage.setItem("vu_simvoice", simVoice ? "1" : "0"); } catch {}
+    e.currentTarget.classList.toggle("on", simVoice);
+    if (!simVoice && window.speechSynthesis) speechSynthesis.cancel();
+    toast(simVoice ? "Voce del cliente attiva" : "Voce del cliente spenta");
+  };
+  const send = async (text) => {
+    text = text.trim();
+    if (!text || busy || ended) return;
+    busy = true;
+    msgs.push({ role: "user", text });
+    add("user", text);
+    $("#say").value = "";
+    const typing = add("assistant", "", "typing");
+    typing.innerHTML = "<i></i><i></i><i></i>";
+    try {
+      const d = await api("/sim/turn", { scenario: s.id, history: msgs });
+      typing.remove();
+      msgs.push({ role: "assistant", text: d.text });
+      add("assistant", d.text);
+      speak(d.text);
+      if (d.goal || d.hangup) {
+        ended = true;
+        add("system", d.goal ? "Obiettivo raggiunto. Chiudi per vedere il voto." : "Il cliente ha riattaccato.", d.goal ? "sys ok" : "sys");
+        $("#endBtn").classList.add("pulse-end");
+      }
+    } catch (e) {
+      typing.remove(); msgs.pop(); log.lastChild && log.lastChild.classList.add("fail");
+      toast(e.message);
+    }
+    busy = false;
+  };
+  $("#sayF").onsubmit = (e) => { e.preventDefault(); send($("#say").value); };
+  if (SpeechRec) {
+    $("#micBtn").onclick = () => {
+      if (recOn) { rec.stop(); return; }
+      if (window.speechSynthesis) speechSynthesis.cancel();
+      rec = new SpeechRec(); rec.lang = "it-IT"; rec.interimResults = true; rec.continuous = true;
+      let final = "";
+      rec.onresult = (ev) => {
+        let interim = "";
+        for (let i = ev.resultIndex; i < ev.results.length; i++) { const t = ev.results[i][0].transcript; if (ev.results[i].isFinal) final += t + " "; else interim += t; }
+        $("#say").value = (final + interim).trim();
+      };
+      rec.onerror = (ev) => { if (ev.error === "not-allowed") toast("Consenti il microfono nelle impostazioni del browser"); };
+      rec.onend = () => { recOn = false; $("#micBtn").classList.remove("on"); $("#tip").textContent = "Tocca il microfono, parla, poi toccalo di nuovo per inviare."; send($("#say").value); };
+      rec.start(); recOn = true;
+      $("#micBtn").classList.add("on"); $("#tip").textContent = "Ti ascolto… tocca di nuovo per inviare.";
+    };
+  }
+  $("#endBtn").onclick = async () => {
+    if (recOn) { rec.onend = null; rec.stop(); recOn = false; }
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    clearInterval(timer);
+    const said = msgs.filter((m) => m.role === "user").length;
+    if (said < 2) { toast("Chiamata chiusa. Per il voto servono almeno due frasi."); location.hash = "#/allenati"; return; }
+    view.querySelector(".call").innerHTML = `<div class="scoring"><div class="call-av talk"><span>${icon("brain")}</span></div><h2>Il coach riascolta la chiamata</h2><p>Ci vogliono pochi secondi.</p></div>`;
+    try {
+      const d = await api("/sim/score", { scenario: s.id, history: msgs });
+      gymData.sims = [...(gymData.sims || []), { id: s.id, voto: d.score.voto, ok: d.score.obiettivo, at: Date.now() }];
+      simReport(s, d.score, d.gained, Math.floor((Date.now() - t0) / 1000));
+      gain(d);
+    } catch (e) {
+      view.querySelector(".call").innerHTML = `<div class="scoring"><h2>Valutazione non arrivata</h2><p>${esc(e.message)}</p><a class="btn white" href="#/allenati">Torna alle telefonate</a></div>`;
+    }
+  };
+  $("#say").focus({ preventScroll: true });
+}
+function micSvg() { return `<svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>`; }
+function simReport(s, r, gained, secs) {
+  const col = r.voto >= 80 ? "#22c55e" : r.voto >= 60 ? "#5b8cff" : r.voto >= 40 ? "#f5b041" : "#ff5a5a";
+  const C = 2 * Math.PI * 54;
+  const verdict = r.voto >= 85 ? "Telefonata da manuale" : r.voto >= 70 ? "Buona telefonata" : r.voto >= 50 ? "Ci sei quasi" : "Da rifare";
+  view.querySelector(".call").innerHTML = `
+    <div class="report">
+      <div class="call-top"><a href="#/allenati" class="call-x" aria-label="Esci">${icon("back")}</a><span>${esc(s.title)}</span><span class="call-x"></span></div>
+      <div class="score" style="--col:${col}">
+        <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" class="trk"/><circle cx="60" cy="60" r="54" class="val" style="stroke-dasharray:${C};stroke-dashoffset:${C}" data-off="${C * (1 - r.voto / 100)}"/></svg>
+        <div class="num"><b id="scoreNum">0</b><small>su 100</small></div>
+      </div>
+      <h1 class="verdict">${verdict}</h1>
+      <div class="rep-chips"><span class="chip ${r.obiettivo ? "ok" : "warn"}">${r.obiettivo ? "Obiettivo raggiunto" : "Obiettivo mancato"}</span><span class="chip ghost">${Math.floor(secs / 60)} min ${secs % 60} s</span>${gained ? `<span class="chip blue">+${gained} punti</span>` : ""}</div>
+      <p class="rep-sum">${esc(r.sintesi)}</p>
+      <section class="rep-sec good"><h3>${icon("check", "sm")}Cosa hai fatto bene</h3><ul>${r.puntiForti.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></section>
+      <section class="rep-sec bad"><h3>${icon("x", "sm")}Cosa ti è costato</h3><ul>${r.errori.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></section>
+      ${r.fraseMigliore ? `<figure class="quote best"><figcaption>La tua frase migliore</figcaption><blockquote>«${esc(r.fraseMigliore)}»</blockquote></figure>` : ""}
+      ${r.fraseDaRifare ? `<figure class="quote redo"><figcaption>Hai detto</figcaption><blockquote>«${esc(r.fraseDaRifare)}»</blockquote><figcaption class="try">Prova a dire</figcaption><blockquote>«${esc(r.comeDirla)}»</blockquote></figure>` : ""}
+      <div class="rep-tip"><span>${icon("spark")}</span><p><b>Per la prossima telefonata</b>${esc(r.consiglio)}</p></div>
+      <div class="btns"><a class="btn white" href="#/sim/${esc(s.id)}" id="again">${icon("phone", "sm")}Richiama</a><a class="btn sec" href="#/allenati">Altri clienti</a></div>
+    </div>`;
+  const val = view.querySelector(".score .val"), num = $("#scoreNum");
+  requestAnimationFrame(() => requestAnimationFrame(() => { val.style.strokeDashoffset = val.dataset.off; }));
+  const t1 = performance.now(), dur = matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : 1100;
+  const tick = (t) => { const k = Math.min(1, (t - t1) / dur); num.textContent = Math.round(r.voto * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+  // Stesso indirizzo: "Richiama" deve ricaricare la telefonata.
+  $("#again").onclick = (e) => { e.preventDefault(); viewSim([s.id]); };
+}
+
+// ---------- quiz nella lezione ----------
+function quizHtml(l) {
+  const best = gymNow().quiz[l.id];
+  return `<section class="quiz" id="quiz">
+    <div class="quiz-hd"><span class="qi">${icon("brain")}</span><div class="grow"><h3>Quiz della lezione</h3><p>${l.quiz.length} ${l.quiz.length === 1 ? "domanda" : "domande"} · superalo con il 70% e prendi 30 punti</p></div>${best != null ? `<span class="chip ${best >= 70 ? "ok" : "warn"}">${best}%</span>` : ""}</div>
+    <button class="btn sec block" id="quizGo">${best != null ? "Rifai il quiz" : "Inizia il quiz"}</button>
+  </section>`;
+}
+function runQuiz(l, onPassed) {
+  const qs = l.quiz.map((q) => ({ q: q.q, opts: [...q.opts].sort(() => Math.random() - 0.5) }));
+  const picked = [];
+  let i = 0;
+  const box = $("#quiz");
+  const draw = () => {
+    const q = qs[i];
+    box.innerHTML = `<div class="quiz-run">
+      <div class="qprog">${qs.map((_, k) => `<i class="${k < i ? "done" : k === i ? "on" : ""}"></i>`).join("")}</div>
+      <p class="small muted">Domanda ${i + 1} di ${qs.length}</p>
+      <h3>${esc(q.q)}</h3>
+      <div class="qopts">${q.opts.map((o, k) => `<button data-o="${k}">${esc(o)}</button>`).join("")}</div></div>`;
+    box.querySelectorAll("[data-o]").forEach((b) => (b.onclick = async () => {
+      picked[i] = q.opts[Number(b.dataset.o)];
+      b.classList.add("sel");
+      box.querySelectorAll("[data-o]").forEach((x) => (x.disabled = true));
+      await new Promise((ok) => setTimeout(ok, 220));
+      if (++i < qs.length) return draw();
+      try {
+        const d = await api("/quiz", { lessonId: l.id, answers: picked });
+        if (d.progress) S.progress = d.progress;
+        gain(d);
+        box.innerHTML = `<div class="quiz-end ${d.passed ? "ok" : ""}">
+          <b class="qpct">${d.pct}%</b><h3>${d.passed ? (d.pct === 100 ? "Perfetto, tutte giuste" : "Quiz superato") : "Non ancora"}</h3>
+          <p>${d.right.filter(Boolean).length} risposte giuste su ${qs.length}.${d.passed ? " La lezione è segnata come completata." : " Riguarda il video e riprova: serve il 70%."}</p>
+          ${d.solutions ? `<ol class="qsol">${qs.map((q, k) => `<li class="${d.right[k] ? "ok" : "ko"}"><span>${esc(q.q)}</span><b>${esc(d.solutions[k])}</b></li>`).join("")}</ol>` : ""}
+          <button class="btn ${d.passed ? "pri" : "sec"} block" id="quizNext">${d.passed ? "Continua" : "Riprova"}</button></div>`;
+        $("#quizNext").onclick = () => (d.passed ? onPassed() : runQuiz(l, onPassed));
+      } catch (e) { toast(e.message); box.outerHTML = quizHtml(l); }
+    }));
+  };
+  draw();
+}
+
+// ---------- certificato ----------
+function certBox(m) {
+  const code = (S.user.certs || {})[m.id];
+  return `<section class="certbox">
+    <div class="cb-seal">${icon("check")}</div>
+    <div class="grow"><h3>${code ? "Hai il certificato" : "Corso completato"}</h3><p>${code ? `Codice ${esc(code)}. Chiunque può verificarlo inquadrando il QR.` : "Scarica il certificato con il tuo nome e un QR per verificarlo."}</p></div>
+    <div class="cb-acts"><button class="btn white" id="certDl">${icon("doc", "sm")}Scarica PDF</button>${code ? `<a class="btn sec" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certUrl(code))}">Condividi su LinkedIn</a>` : ""}</div>
+  </section>`;
+}
+const certUrl = (code) => `${location.origin}/app/#/verifica/${code}`;
+async function downloadCert(m, btn) {
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = "Preparo il PDF…";
+  try {
+    const d = await api("/cert", { courseId: m.id });
+    S.user = d.user;
+    const bytes = await buildCert(d.cert);
+    const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `certificato-${m.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.pdf`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return true;
+  } catch (e) { toast(e.message); return false; }
+  finally { btn.disabled = false; btn.innerHTML = label; }
+}
+async function buildCert(c) {
+  await Promise.all([loadScript("/app/vendor/pdf-lib.min.js"), loadScript("/app/vendor/qrcode.js")]);
+  const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+  const doc = await PDFDocument.create();
+  const reg = await doc.embedFont(StandardFonts.Helvetica), bold = await doc.embedFont(StandardFonts.HelveticaBold), it = await doc.embedFont(StandardFonts.TimesRomanItalic);
+  const W = 842, H = 595, BLUE = rgb(0.18, 0.42, 1), INK = rgb(0.04, 0.05, 0.08), GREY = rgb(0.45, 0.49, 0.56), LINE = rgb(0.86, 0.88, 0.92), WHITE = rgb(1, 1, 1);
+  const p = doc.addPage([W, H]);
+  // Fascia nera a sinistra con il marchio
+  p.drawRectangle({ x: 0, y: 0, width: 210, height: H, color: INK });
+  p.drawRectangle({ x: 210, y: 0, width: 6, height: H, color: BLUE });
+  p.drawText("Vendita", { x: 36, y: H - 70, size: 26, font: bold, color: WHITE });
+  const uw = bold.widthOfTextAtSize("UNO", 26);
+  p.drawRectangle({ x: 34, y: H - 108, width: uw + 16, height: 30, color: BLUE });
+  p.drawText("UNO", { x: 42, y: H - 100, size: 26, font: bold, color: WHITE });
+  p.drawText("Academy", { x: 36, y: H - 134, size: 12, font: reg, color: rgb(0.62, 0.66, 0.74) });
+  // QR di verifica
+  const qr = window.qrcode(0, "M"); qr.addData(certUrl(c.code)); qr.make();
+  const n = qr.getModuleCount(), size = 130, cell = size / (n + 4), qx = 40, qy = 70;
+  p.drawRectangle({ x: qx, y: qy, width: size, height: size, color: WHITE });
+  for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (qr.isDark(r, k)) p.drawRectangle({ x: qx + (k + 2) * cell, y: qy + size - (r + 3) * cell, width: cell, height: cell, color: INK });
+  p.drawText("Verifica il certificato", { x: 40, y: 50, size: 9, font: reg, color: rgb(0.62, 0.66, 0.74) });
+  p.drawText(c.code, { x: 40, y: 36, size: 11, font: bold, color: WHITE });
+  // Testo
+  const X = 270, maxW = W - X - 60;
+  const fit = (t, font, size, min) => { let s = size; while (s > min && font.widthOfTextAtSize(t, s) > maxW) s -= 1; return s; };
+  p.drawText("Certificato di completamento", { x: X, y: H - 96, size: 13, font: bold, color: BLUE });
+  p.drawText("Si attesta che", { x: X, y: H - 150, size: 14, font: it, color: GREY });
+  const name = pdfText(c.name), ns = fit(name, bold, 46, 24);
+  p.drawText(name, { x: X, y: H - 210, size: ns, font: bold, color: INK });
+  p.drawLine({ start: { x: X, y: H - 228 }, end: { x: W - 60, y: H - 228 }, thickness: 1, color: LINE });
+  p.drawText("ha completato con successo il corso", { x: X, y: H - 262, size: 14, font: it, color: GREY });
+  const course = pdfText(c.course), cs = fit(course, bold, 28, 16);
+  p.drawText(course, { x: X, y: H - 302, size: cs, font: bold, color: INK });
+  if (c.academy) p.drawText(pdfText(`Accademia ${c.academy}  -  ${c.lessons} ${c.lessons === 1 ? "lezione" : "lezioni"}`), { x: X, y: H - 330, size: 12, font: reg, color: GREY });
+  // Firma e data
+  const date = new Date(c.at).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+  const col = (x, label, value) => {
+    p.drawLine({ start: { x, y: 120 }, end: { x: x + 200, y: 120 }, thickness: 1, color: LINE });
+    p.drawText(pdfText(value), { x, y: 128, size: 13, font: bold, color: INK });
+    p.drawText(label, { x, y: 104, size: 10, font: reg, color: GREY });
+  };
+  col(X, "Data", date);
+  col(X + 240, c.educator ? "Educatore" : "Rilasciato da", c.educator || "Vendita Uno Academy");
+  p.drawText(pdfText(`Verifica online: ${certUrl(c.code)}`), { x: X, y: 50, size: 9, font: reg, color: GREY });
+  return doc.save();
+}
+
+// Pagina pubblica: chi inquadra il QR vede se il certificato è vero.
+async function viewVerify([code = ""]) {
+  view.innerHTML = `<div class="verify"><div class="loading"><div class="spin"></div></div></div>`;
+  let c = null;
+  try {
+    const res = await fetch(`/api/app/cert/${encodeURIComponent(code.toUpperCase())}`);
+    if (res.ok) c = (await res.json()).cert;
+  } catch {}
+  $(".verify").innerHTML = c ? `
+    <div class="wm" style="font-size:20px;justify-content:center"><span class="v">Vendita</span><span class="u">UNO</span></div>
+    <div class="vf-card">
+      <div class="vf-ok">${icon("check")}</div>
+      <p class="muted">Certificato valido</p>
+      <h1>${esc(c.name)}</h1>
+      <p>ha completato il corso</p>
+      <h2>${esc(c.course)}</h2>
+      <dl><div><dt>Accademia</dt><dd>${esc(c.academy || "Vendita Uno")}</dd></div><div><dt>Data</dt><dd>${new Date(c.at).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</dd></div><div><dt>Codice</dt><dd>${esc(c.code)}</dd></div>${c.educator ? `<div><dt>Educatore</dt><dd>${esc(c.educator)}</dd></div>` : ""}</dl>
+    </div>
+    <a class="btn pri block" href="#/accedi">Scopri Vendita Uno</a>` : `
+    <div class="vf-card"><div class="vf-ok ko">${icon("x")}</div><h1>Certificato non trovato</h1><p class="muted">Controlla il codice${code ? ` ${esc(code)}` : ""}: deve essere quello stampato sotto il QR.</p></div>
+    <a class="btn sec block" href="#/accedi">Vai a Vendita Uno</a>`;
 }
 
 // ---------- avvio ----------
