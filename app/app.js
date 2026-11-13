@@ -1,5 +1,5 @@
 "use strict";
-// App Vendita Uno: accademia, live, educatori, community, inviti e pannello admin.
+// App Vendita Uno: accademia Agenti immobiliari, allenamento al telefono con l'AI, progressi, community e pannello admin.
 // Tutte le schermate sono disegnate qui; i dati arrivano da /api/app (vedi app-api.js).
 
 const S = { user: null, content: null, progress: {}, reminders: [], week: 0, selLive: null, postsCache: null };
@@ -145,13 +145,6 @@ $("#sheet").addEventListener("click", (e) => { if (e.target.id === "sheet") clos
 const allLessons = () => S.content.modules.flatMap((m, mi) => m.lessons.map((l) => ({ ...l, module: m, mi })));
 const eduById = (id) => S.content.educators.find((e) => e.id === id);
 const academyById = (id) => S.content.academies.find((a) => a.id === id);
-function liveState(l) {
-  const s = new Date(l.start).getTime(), e = s + l.minutes * 60000, n = Date.now();
-  return n < s ? "up" : n < e ? "now" : "past";
-}
-const sortedLives = () => [...S.content.lives].sort((a, b) => a.start.localeCompare(b.start));
-const liveNow = () => sortedLives().find((l) => liveState(l) === "now");
-const nextLives = (n = 6) => sortedLives().filter((l) => liveState(l) === "up").slice(0, n);
 function nextLesson() {
   const ls = allLessons();
   return ls.find((l) => !S.progress[l.id]) || ls[0];
@@ -197,7 +190,7 @@ const fullAccess = () => !S.user || S.user.role === "admin" || S.user.role === "
 const can = (what) => fullAccess() || S.user.access.includes(what);
 const canCourse = (m) => fullAccess() || S.user.access.includes(`course:${m.id}`) || S.user.access.includes(`acad:${m.academyId}`);
 const money = (cents, cur = "eur") => ((Number(cents) || 0) / 100).toLocaleString("it-IT", { style: "currency", currency: (cur || "eur").toUpperCase() });
-const NEED_LABEL = { live: "le live", community: "la community", educators: "la sezione educatori" };
+const NEED_LABEL = { community: "la community" };
 // Un prodotto sblocca "need" se lo comprende (o comprende tutto / l'accademia del corso)
 function productCovers(p, need) {
   if (!need || p.grants.includes("all") || p.grants.includes(need)) return true;
@@ -218,7 +211,7 @@ function openUnlock(need, title) {
   openSheet(title || "Contenuto bloccato", `
     <div class="lockhero"><span>${icon("lock")}</span><p>${need && NEED_LABEL[need] ? `Per accedere a ${NEED_LABEL[need]} sblocca uno di questi prodotti.` : "Sblocca il contenuto con uno di questi prodotti."}</p></div>
     ${list.length ? `<div class="prods">${productsHtml(list)}</div><p class="small muted" style="margin-top:10px;text-align:center">Paghi in modo sicuro con Stripe. L'accesso si attiva da solo dopo il pagamento.</p>`
-      : `<div class="empty">Al momento non ci sono prodotti da acquistare.<br>Contatta chi ti ha invitato o l'amministratore.</div>`}`);
+      : `<div class="empty">Al momento non ci sono prodotti da acquistare.<br>Contatta l'amministratore.</div>`}`);
 }
 function lockedView(need, title, text) {
   view.innerHTML = `<div class="locked-page">
@@ -269,22 +262,6 @@ function bindScroll(root) {
     el.scrollBy({ left: Number(b.dataset.d) * el.clientWidth * 0.8, behavior: "smooth" });
   }));
 }
-function lvItem(l) {
-  const e = eduById(l.educatorId) || { name: "Vendita Uno" }, a = academyById(e.academyId);
-  const st = liveState(l), d = new Date(l.start), end = new Date(d.getTime() + l.minutes * 60000);
-  const day = sameDay(d, new Date()) ? "" : `${DOW[d.getDay()]} ${d.getDate()} · `;
-  return `<a class="lv ${st}" href="#/live/${esc(l.id)}" style="--c:${st === "now" ? "#ff3b3b" : accColor(a)}">${face(e.name, e.photo)}<div class="grow"><h4>${esc(l.title)}</h4>
-    <div class="t"><span>${st === "now" ? '<span class="pulse"></span> In diretta' : day + fmtTime(d) + " – " + fmtTime(end)}</span><span class="go">${st === "now" ? "Entra ora" : "Partecipa"}</span></div></div></a>`;
-}
-
-function gcalUrl(l) {
-  const e = eduById(l.educatorId);
-  const f = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  const s = new Date(l.start), end = new Date(s.getTime() + l.minutes * 60000);
-  const q = new URLSearchParams({ action: "TEMPLATE", text: `Live Vendita Uno · ${l.title}`, details: `${e ? "Con " + e.name + ". " : ""}Entra dall'app: ${location.origin}/app/#/live`, dates: `${f(s)}/${f(end)}` });
-  return `https://calendar.google.com/calendar/render?${q}`;
-}
-
 // ---------- router ----------
 const ROUTES = {
   accedi: { fn: viewAuth, auth: false },
@@ -296,9 +273,9 @@ const ROUTES = {
   live: { fn: () => { location.hash = "#/home"; }, title: "" },
   educatori: { fn: () => { location.hash = "#/home"; }, title: "" },
   percorso: { fn: () => { location.hash = "#/accademia"; }, title: "" },
-  educatore: { fn: viewEducator, title: "Educatore", nav: "" },
+  educatore: { fn: () => { location.hash = "#/accademia"; }, title: "" },
   community: { fn: viewCommunity, title: "Community", nav: "community" },
-  guadagni: { fn: viewEarn, title: "Guadagni", nav: "guadagni" },
+  guadagni: { fn: () => { location.hash = "#/home"; }, title: "" },
   notizie: { fn: () => { location.hash = "#/home"; }, title: "" },
   profilo: { fn: viewProfile, title: "Profilo", nav: "" },
   "mie-live": { fn: () => { location.hash = "#/home"; }, title: "" },
@@ -368,274 +345,11 @@ async function loadMe() {
   } catch { return false; }
 }
 
-// Pannello a destra (solo computer): live delle prossime 24 ore e onboarding.
-function renderRail() {
-  const rail = $("#rail");
-  if (rail.hidden) return;
-  const n = Date.now();
-  const soon = sortedLives().filter((l) => liveState(l) === "now" || (liveState(l) === "up" && new Date(l.start).getTime() - n < 86400000));
-  const list = soon.length ? soon : nextLives(4);
-  rail.innerHTML = `${secHd("Educatori in diretta", soon.length || null)}
-    <p class="sub">${soon.length ? "Andranno in diretta entro 24 ore" : "Le prossime live in programma"}</p>
-    <div class="lv-list">${list.map(lvItem).join("") || `<div class="card empty">${icon("cal")}Nessuna live in programma.</div>`}</div>
-    <a class="btn sec block all" href="#/live">Vedi tutte</a>
-    <a class="card teaser mini-onb" href="#/notizie"><span class="lk">${icon("lock")}</span><div class="grow"><h4>Notizie esclusive</h4><p>Le persone da chiamare nella tua zona</p></div>${icon("chev")}</a>`;
-}
 $("#sideOut").onclick = async () => {
   try { await api("/logout", {}); } catch {}
   S.user = null;
   location.hash = "#/accedi";
 };
-
-// ---------- storie (come Instagram, durano 24 ore) ----------
-S.stories = [];
-const seenStories = () => { try { return new Set(JSON.parse(localStorage.getItem("vu_seen") || "[]")); } catch { return new Set(); } };
-function markSeen(key) {
-  const set = seenStories(); set.add(key);
-  try { localStorage.setItem("vu_seen", JSON.stringify([...set].slice(-300))); } catch {}
-}
-const canPostStory = () => S.user && (S.user.role === "admin" || !!myEducator());
-// Raggruppa le storie per autore (educatore o admin); prima chi ha storie non ancora viste.
-function storyGroups() {
-  const seen = seenStories(), map = new Map();
-  for (const st of S.stories) {
-    const k = st.eduId || st.uid;
-    if (!map.has(k)) map.set(k, { key: k, author: st.author, photo: st.eduId && eduById(st.eduId) ? eduById(st.eduId).photo : st.photo, items: [] });
-    map.get(k).items.push(st);
-  }
-  const groups = [...map.values()].map((g) => ({ ...g, unseen: g.items.some((x) => !seen.has(x.key)) }));
-  return groups.sort((a, b) => (b.unseen - a.unseen) || (b.items[b.items.length - 1].at - a.items[a.items.length - 1].at));
-}
-async function loadStories() {
-  try { S.stories = (await api("/stories")).stories; } catch {}
-  document.querySelectorAll("[data-stories]").forEach(paintStories);
-}
-const storiesBar = () => `<div class="stories" data-stories></div>`;
-function paintStories(el) {
-  const groups = storyGroups();
-  const mine = canPostStory();
-  if (!groups.length && !mine) { el.hidden = true; return; }
-  el.hidden = false;
-  el.innerHTML = (mine ? `<button class="sty add" data-newstory><span class="ring">${userFace(S.user)}<i>${icon("plus")}</i></span><b>La tua storia</b></button>` : "") +
-    groups.map((g, i) => `<button class="sty ${g.unseen ? "" : "seen"}" data-sg="${i}"><span class="ring">${face(g.author, g.photo)}</span><b>${esc(g.author.split(" ")[0])}</b></button>`).join("");
-  el.querySelectorAll("[data-sg]").forEach((b) => (b.onclick = () => openStories(groups, Number(b.dataset.sg))));
-  const nb = el.querySelector("[data-newstory]");
-  if (nb) nb.onclick = recordStory;
-}
-
-function openStories(groups, gi, si = 0) {
-  let timer = null, startAt = 0, elapsed = 0, paused = false, dur = 6000;
-  const ov = document.createElement("div");
-  ov.className = "story-ov";
-  document.body.appendChild(ov);
-  document.body.style.overflow = "hidden";
-  const close = () => { clearTimeout(timer); ov.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", onKey); document.querySelectorAll("[data-stories]").forEach(paintStories); };
-  const onKey = (e) => { if (e.key === "Escape") close(); if (e.key === "ArrowRight") next(); if (e.key === "ArrowLeft") prev(); };
-  document.addEventListener("keydown", onKey);
-  const next = () => { const g = groups[gi]; if (si < g.items.length - 1) { si++; show(); } else if (gi < groups.length - 1) { gi++; si = 0; show(); } else close(); };
-  const prev = () => { if (si > 0) { si--; show(); } else if (gi > 0) { gi--; si = groups[gi].items.length - 1; show(); } else { elapsed = 0; show(); } };
-  const tick = () => {
-    clearTimeout(timer);
-    if (paused) return;
-    startAt = Date.now();
-    timer = setTimeout(next, Math.max(0, dur - elapsed));
-    const bar = ov.querySelector(".sbar.cur i");
-    if (bar) { bar.style.transition = "none"; bar.style.width = (elapsed / dur) * 100 + "%"; requestAnimationFrame(() => { bar.style.transition = `width ${Math.max(0, dur - elapsed)}ms linear`; bar.style.width = "100%"; }); }
-  };
-  const pause = () => { if (paused) return; paused = true; elapsed += Date.now() - startAt; clearTimeout(timer); const bar = ov.querySelector(".sbar.cur i"); if (bar) { bar.style.width = getComputedStyle(bar).width; bar.style.transition = "none"; } const v = ov.querySelector("video"); if (v) v.pause(); };
-  const resume = () => { if (!paused) return; paused = false; const v = ov.querySelector("video"); if (v) v.play().catch(() => {}); tick(); };
-  function show() {
-    clearTimeout(timer); elapsed = 0; paused = false; dur = 6000;
-    const g = groups[gi], st = g.items[si];
-    markSeen(st.key);
-    const media = st.video ? `<video src="/api/app/file/${esc(st.video)}" playsinline autoplay preload="auto" class="${st.mirror ? "mirror" : ""}"></video>`
-      : st.image ? `<img src="${imgUrl(st.image)}" alt="">` : "";
-    ov.innerHTML = `<div class="story">
-      <div class="sbars">${g.items.map((_, k) => `<span class="sbar ${k < si ? "done" : k === si ? "cur" : ""}"><i></i></span>`).join("")}</div>
-      <div class="shead">${face(g.author, g.photo)}<div class="grow"><b>${esc(g.author)}</b><small>${ago(st.at)}</small></div>
-        ${st.mine || S.user.role === "admin" ? `<button data-sdel aria-label="Elimina storia">${icon("trash")}</button>` : ""}<button data-sclose aria-label="Chiudi">${icon("x")}</button></div>
-      <div class="sbody ${media ? "" : "textonly"}" style="--bg:${esc(st.bg || "#2f6bff")}">${media}${st.text ? `<p class="stext">${esc(st.text)}</p>` : ""}</div>
-      <button class="szone l" aria-label="Precedente"></button><button class="szone r" aria-label="Successiva"></button>
-    </div>`;
-    ov.querySelector("[data-sclose]").onclick = close;
-    const del = ov.querySelector("[data-sdel]");
-    if (del) del.onclick = async () => {
-      pause();
-      if (!confirm("Eliminare questa storia?")) { resume(); return; }
-      try { await api(`/stories/${st.key}/delete`, {}); S.stories = S.stories.filter((x) => x.key !== st.key); toast("Storia eliminata"); close(); loadStories(); } catch (e) { toast(e.message); }
-    };
-    // Tocco breve a sinistra/destra = indietro/avanti; tenere premuto = pausa
-    ov.querySelectorAll(".szone").forEach((z) => {
-      let down = 0;
-      z.onpointerdown = () => { down = Date.now(); setTimeout(() => { if (down) pause(); }, 180); };
-      z.onpointerup = () => { const held = Date.now() - down > 180; down = 0; if (held) resume(); else (z.classList.contains("l") ? prev : next)(); };
-      z.onpointerleave = () => { if (down) { down = 0; resume(); } };
-    });
-    let y0 = null;
-    ov.ontouchstart = (e) => { y0 = e.touches[0].clientY; };
-    ov.ontouchend = (e) => { if (y0 !== null && e.changedTouches[0].clientY - y0 > 90) close(); y0 = null; };
-    const v = ov.querySelector("video");
-    if (v) {
-      let started = false;
-      const go = (ms) => { if (started) return; started = true; dur = ms; tick(); };
-      v.onloadedmetadata = () => go(Math.min(60000, (isFinite(v.duration) && v.duration ? v.duration : 6) * 1000));
-      v.onerror = () => go(6000);
-      // Se il video non parte (connessione lenta o formato non supportato) si va avanti lo stesso
-      setTimeout(() => go(15000), 4000);
-      v.onended = next;
-      v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
-    } else tick();
-  }
-  show();
-}
-
-// Fotocamera dentro l'app: registra la storia (fino a 60 secondi), come su Instagram.
-async function recordStory() {
-  const MAX = 60;
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) { newStory(); return; }
-  let facing = "user", stream = null, rec = null, chunks = [], t0 = 0, raf = 0, blob = null;
-  const ov = document.createElement("div");
-  ov.className = "story-ov rec-ov";
-  ov.innerHTML = `<div class="story rec">
-    <video class="rec-cam" playsinline muted autoplay></video>
-    <video class="rec-prev" playsinline loop hidden></video>
-    <div class="rec-top"><button data-x aria-label="Chiudi">${icon("x")}</button><span class="rec-time" hidden>0:00</span><button data-flip aria-label="Gira fotocamera">${icon("camera")}</button></div>
-    <div class="rec-msg" hidden></div>
-    <div class="rec-bot">
-      <label class="rec-side" aria-label="Galleria">${icon("image")}<input type="file" accept="video/*,image/*" hidden data-gal><small>Galleria</small></label>
-      <button class="rec-btn" data-rec aria-label="Registra"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" class="trk"/><circle cx="50" cy="50" r="46" class="prg" pathLength="100"/></svg><i></i></button>
-      <button class="rec-side" data-text aria-label="Storia di testo"><b>Aa</b><small>Testo</small></button>
-    </div>
-    <div class="rec-after" hidden><button class="btn sec" data-redo>${icon("back", "sm")}Rifai</button><button class="btn pri" data-use>Avanti${icon("chev", "sm")}</button></div>
-  </div>`;
-  document.body.appendChild(ov);
-  document.body.style.overflow = "hidden";
-  const $o = (q) => ov.querySelector(q);
-  const cam = $o(".rec-cam"), prev = $o(".rec-prev"), btn = $o("[data-rec]"), time = $o(".rec-time"), msg = $o(".rec-msg");
-  const stopStream = () => { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; };
-  const close = () => { cancelAnimationFrame(raf); if (rec && rec.state !== "inactive") rec.stop(); stopStream(); ov.remove(); document.body.style.overflow = ""; };
-  async function start() {
-    stopStream();
-    msg.hidden = true;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 1280 } }, audio: true });
-      cam.srcObject = stream;
-      cam.classList.toggle("mirror", facing === "user");
-    } catch (e) {
-      msg.hidden = false;
-      msg.innerHTML = `Per registrare serve il permesso di usare <b>fotocamera e microfono</b>.<br>Puoi anche scegliere un video dalla <b>Galleria</b>.`;
-    }
-  }
-  const fmt = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
-  function loop() {
-    const sec = (Date.now() - t0) / 1000;
-    time.textContent = fmt(sec);
-    $o(".prg").style.strokeDashoffset = String(100 - Math.min(100, (sec / MAX) * 100));
-    if (sec >= MAX) stopRec(); else raf = requestAnimationFrame(loop);
-  }
-  function startRec() {
-    if (!stream) return;
-    chunks = [];
-    const types = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
-    const mimeType = types.find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
-    rec = new MediaRecorder(stream, { ...(mimeType ? { mimeType } : {}), videoBitsPerSecond: 1500000, audioBitsPerSecond: 96000 });
-    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-    rec.onstop = () => {
-      blob = new Blob(chunks, { type: rec.mimeType || mimeType || "video/webm" });
-      stopStream();
-      prev.src = URL.createObjectURL(blob);
-      prev.hidden = false; cam.hidden = true;
-      prev.classList.toggle("mirror", facing === "user");
-      prev.play().catch(() => {});
-      $o(".rec-bot").hidden = true; $o(".rec-after").hidden = false; $o("[data-flip]").hidden = true;
-    };
-    rec.start(250);
-    t0 = Date.now();
-    ov.classList.add("recording");
-    time.hidden = false;
-    loop();
-  }
-  function stopRec() {
-    cancelAnimationFrame(raf);
-    ov.classList.remove("recording");
-    if (rec && rec.state !== "inactive") rec.stop();
-  }
-  btn.onclick = () => (rec && rec.state === "recording" ? stopRec() : startRec());
-  $o("[data-x]").onclick = close;
-  $o("[data-flip]").onclick = () => { if (rec && rec.state === "recording") return; facing = facing === "user" ? "environment" : "user"; start(); };
-  $o("[data-text]").onclick = () => { close(); newStory(); };
-  $o("[data-gal]").onchange = (e) => { const f = e.target.files[0]; close(); if (f) newStory(f); };
-  $o("[data-redo]").onclick = () => {
-    blob = null; prev.pause(); prev.hidden = true; cam.hidden = false; time.hidden = true;
-    $o(".prg").style.strokeDashoffset = "100";
-    $o(".rec-bot").hidden = false; $o(".rec-after").hidden = true; $o("[data-flip]").hidden = false;
-    start();
-  };
-  $o("[data-use]").onclick = () => {
-    if (!blob) return;
-    if (blob.size > 24 * 1024 * 1024) { toast("Il video è troppo lungo: registrane uno più breve"); return; }
-    const file = blob; close(); newStory(file, prev.classList.contains("mirror"));
-  };
-  start();
-}
-
-// Finestra di pubblicazione: foto/video (registrato o dalla galleria) oppure solo testo.
-function newStory(preset, mirrored = false) {
-  let media = null; // { kind: "image" | "video", data, url }
-  const COLORS_S = ["#2f6bff", "#7c5cff", "#ef4444", "#22c55e", "#eab308", "#0b0d12"];
-  openSheet("Nuova storia", `
-    <div class="btns" style="margin:0 0 12px"><button type="button" class="btn pri" id="srec">${icon("camera", "sm")}Registra video</button><label class="btn sec" style="cursor:pointer">${icon("image", "sm")}Galleria<input type="file" accept="image/*,video/*" id="smedia" hidden></label></div>
-    <div class="spv" id="spv" style="--bg:${COLORS_S[0]}"><p id="spvt">Scrivi qualcosa…</p></div>
-    <label class="field" style="margin-top:12px"><span>Testo (facoltativo con foto o video)</span><textarea class="inp" id="stext" rows="2" maxlength="300" placeholder="Es. Stasera alle 21 live sulle obiezioni!"></textarea></label>
-    <div class="scolors" id="scolors">${COLORS_S.map((c, i) => `<button type="button" data-c="${c}" class="${i ? "" : "on"}" style="background:${c}"></button>`).join("")}</div>
-    <div id="serr2"></div>
-    <button class="btn pri block" id="spub" style="margin-top:12px">${icon("plus", "sm")}Pubblica la storia</button>
-    <p class="small muted" style="margin-top:8px;text-align:center">Pubblichi come <b style="color:var(--text)">${esc(myEducator() ? myEducator().name : "Vendita Uno")}</b> · sparisce dopo 24 ore.</p>`, (root) => {
-    let bg = COLORS_S[0];
-    const pv = root.querySelector("#spv"), pt = root.querySelector("#spvt"), tx = root.querySelector("#stext");
-    const paint = () => {
-      pv.style.setProperty("--bg", bg);
-      pv.classList.toggle("textonly", !media);
-      pv.querySelectorAll("img,video").forEach((x) => x.remove());
-      if (media) pv.insertAdjacentHTML("afterbegin", media.kind === "video" ? `<video src="${media.url}" muted autoplay loop playsinline class="${mirrored ? "mirror" : ""}"></video>` : `<img src="${media.url}" alt="">`);
-      pt.textContent = tx.value || (media ? "" : "Scrivi qualcosa…");
-      pt.hidden = !pt.textContent;
-      root.querySelector("#scolors").hidden = !!media;
-    };
-    tx.oninput = paint;
-    root.querySelector("#srec").onclick = () => { closeSheet(); recordStory(); };
-    root.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => { bg = b.dataset.c; root.querySelectorAll("[data-c]").forEach((x) => x.classList.toggle("on", x === b)); paint(); }));
-    const useFile = async (f) => {
-      try {
-        if (f.type.startsWith("video/") || /\.(mp4|mov|webm|m4v)$/i.test(f.name || "")) {
-          if (f.size > 24 * 1024 * 1024) throw new Error("Il video è troppo grande (massimo 24 MB, circa 1 minuto): registrane uno più breve");
-          const t = /webm/.test(f.type) ? "video/webm" : /quicktime|\.mov$/i.test(f.type + (f.name || "")) ? "video/quicktime" : "video/mp4";
-          media = { kind: "video", blob: f, type: t, url: URL.createObjectURL(f) };
-        } else {
-          const data = await resizeImage(f, 1600, 0.82);
-          media = { kind: "image", blob: await (await fetch(data)).blob(), type: "image/jpeg", url: data };
-        }
-        paint();
-      } catch (err) { root.querySelector("#serr2").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
-    };
-    root.querySelector("#smedia").onchange = (e) => { if (e.target.files[0]) useFile(e.target.files[0]); };
-    if (preset) useFile(preset);
-    root.querySelector("#spub").onclick = async (e) => {
-      const btn = e.currentTarget;
-      btn.disabled = true; btn.textContent = media && media.kind === "video" ? "Carico il video…" : "Pubblico…";
-      try {
-        const body = { text: tx.value.trim(), bg, mirror: !!(media && media.kind === "video" && mirrored) };
-        if (media) body[media.kind + "Id"] = await uploadBlob(media.blob, media.type, (pc) => { btn.textContent = `${media.kind === "video" ? "Carico il video" : "Carico la foto"}… ${pc}%`; });
-        btn.textContent = "Pubblico…";
-        const d = await api("/stories", body);
-        S.stories.push(d.story);
-        closeSheet(); toast("Storia pubblicata");
-        document.querySelectorAll("[data-stories]").forEach(paintStories);
-      } catch (err) { root.querySelector("#serr2").innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; btn.innerHTML = `${icon("plus", "sm")}Pubblica la storia`; }
-    };
-    paint();
-  });
-}
 
 // ---------- notifiche ----------
 S.notifs = []; S.unread = 0;
@@ -671,7 +385,7 @@ async function viewNotifications() {
   const perm = "Notification" in window ? Notification.permission : "unsupported";
   view.innerHTML = `
     <h1 class="h1">Notifiche</h1>
-    ${perm === "default" ? `<div class="card pad" style="margin-top:14px"><div class="row"><span class="ini" style="width:40px;height:40px;border-radius:12px">${icon("bell")}</span><div class="grow"><b>Avvisi sul telefono</b><p class="small muted">Ricevi un avviso quando parte una live o esce un corso.</p></div></div><button class="btn pri block" id="perm" style="margin-top:12px">Attiva gli avvisi</button></div>` : ""}
+    ${perm === "default" ? `<div class="card pad" style="margin-top:14px"><div class="row"><span class="ini" style="width:40px;height:40px;border-radius:12px">${icon("bell")}</span><div class="grow"><b>Avvisi sul telefono</b><p class="small muted">Ricevi un avviso quando esce un nuovo corso o qualcuno applaude un tuo successo.</p></div></div><button class="btn pri block" id="perm" style="margin-top:12px">Attiva gli avvisi</button></div>` : ""}
     <div class="card" style="margin-top:14px">${S.notifs.map((n) => `<a class="nrow ${n.unread ? "unread" : ""}" href="${esc(/^#\//.test(n.link) ? n.link : "#/notifiche")}"><span class="nic">${icon(n.icon || "bell")}</span><div class="grow"><h4>${esc(n.title)}</h4>${n.text ? `<p>${esc(n.text)}</p>` : ""}<small>${ago(n.at)}</small></div>${n.unread ? '<i class="ndot"></i>' : ""}</a>`).join("") || `<div class="empty">${icon("bell")}Nessuna notifica per ora.</div>`}</div>`;
   const pb = $("#perm");
   if (pb) pb.onclick = async () => { const r = await Notification.requestPermission(); toast(r === "granted" ? "Avvisi attivati" : "Avvisi non attivati"); viewNotifications(); };
@@ -685,8 +399,7 @@ function closeRadial() {}
 // ACCESSO
 // =====================================================================
 function viewAuth() {
-  const ref = (localStorage.getItem("vu_ref") || "").toUpperCase();
-  let mode = ref ? "reg" : "login";
+  let mode = "login";
   const draw = () => {
     view.innerHTML = `<section class="splash">
         <picture><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture>
@@ -701,7 +414,6 @@ function viewAuth() {
         <div>${icon("trend")} Punti, classifica e certificati per ogni corso</div>
       </div>
       <div class="seg"><button data-m="reg" class="${mode === "reg" ? "on" : ""}">Registrati</button><button data-m="login" class="${mode === "login" ? "on" : ""}">Accedi</button></div>
-      ${mode === "reg" && ref ? `<div class="refnote">${icon("handshake", "sm")} Ti ha invitato un collega (codice ${esc(ref)})</div>` : ""}
       <div id="authErr"></div>
       <form id="authForm" novalidate>
         ${mode === "reg" ? `
@@ -725,11 +437,9 @@ function viewAuth() {
       e.preventDefault();
       const btn = e.target.querySelector("button[type=submit]");
       const data = Object.fromEntries(new FormData(e.target));
-      if (mode === "reg") data.ref = ref;
       btn.disabled = true;
       try {
         await api(mode === "reg" ? "/register" : "/login", data);
-        localStorage.removeItem("vu_ref");
         await loadMe();
         refreshNotifs();
         location.hash = "#/home";
@@ -825,7 +535,7 @@ function viewCourse([id]) {
       <div class="info">
         <div class="row" style="gap:8px;flex-wrap:wrap">${a ? `<a class="chip" href="#/accademia?sez=${esc(m.subId || "")}" style="background:${c};color:#fff;text-decoration:none">${esc(subOf(m) ? subOf(m).name : a.name)}</a>` : ""}<span class="lvl ${m.level === "premium" ? "premium" : "base"}">${m.level === "premium" ? "Premium" : "Base"}</span></div>
         <h1>${esc(m.title)}</h1>
-        ${e ? `<a class="row" href="#/educatore/${esc(e.id)}" style="gap:8px;margin-top:10px;text-decoration:none;font-size:13px;color:#d3dcef">${face(e.name, e.photo)}${esc(e.name)}</a>` : ""}
+        ${e ? `<div class="row" style="gap:8px;margin-top:10px;font-size:13px;color:#e3e8f3">${face(e.name, e.photo)}${esc(e.name)}</div>` : ""}
       </div>
     </div>
     <div class="narrow">
@@ -885,251 +595,6 @@ function viewLesson([id]) {
     };
   };
   draw();
-}
-
-// =====================================================================
-// LIVE
-// =====================================================================
-function weekStart(offset) {
-  const d = new Date(); d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + offset * 7);
-  return d;
-}
-
-function viewLive([liveId]) {
-  if (liveId) {
-    const l = S.content.lives.find((x) => x.id === liveId);
-    if (l) {
-      S.selLive = l.id;
-      const ws = weekStart(0), diff = Math.floor((new Date(l.start) - ws) / (7 * 86400000));
-      S.week = diff;
-    }
-  }
-  drawLive();
-}
-
-function drawLive() {
-  const ws = weekStart(S.week), we = new Date(ws.getTime() + 7 * 86400000);
-  const days = [...Array(7)].map((_, i) => new Date(ws.getFullYear(), ws.getMonth(), ws.getDate() + i));
-  // Filtro per accademia: si vedono solo i suoi educatori e le loro live.
-  const acad = S.liveAcad && academyById(S.liveAcad) ? S.liveAcad : "";
-  const eds = S.content.educators.filter((e) => !acad || e.academyId === acad);
-  const edIds = new Set(eds.map((e) => e.id));
-  const lives = sortedLives().filter((l) => { const d = new Date(l.start); return d >= ws && d < we && edIds.has(l.educatorId); });
-  const today = new Date();
-  // Righe: educatori raggruppati per accademia; in ogni gruppo prima chi ha live in questa settimana.
-  const hasLive = (e) => lives.some((l) => l.educatorId === e.id);
-  const groups = [...S.content.academies, { id: "", name: "Altri educatori" }]
-    .map((a) => ({ a, list: eds.filter((e) => (a.id ? e.academyId === a.id : !academyById(e.academyId))) }))
-    .filter((g) => g.list.length || (g.a.id && (!acad || g.a.id === acad)))
-    .map((g) => ({ ...g, list: [...g.list.filter(hasLive), ...g.list.filter((e) => !hasLive(e))] }));
-  const usedAcads = S.content.academies;
-  if (!lives.some((l) => l.id === S.selLive)) S.selLive = (lives.find((l) => liveState(l) === "now") || lives.find((l) => liveState(l) === "up") || lives[0] || {}).id;
-  const end = new Date(we.getTime() - 1);
-  const range = ws.getMonth() === end.getMonth() ? `${ws.getDate()} – ${end.getDate()} ${end.toLocaleDateString("it-IT", { month: "long" })}` : `${ws.getDate()} ${ws.toLocaleDateString("it-IT", { month: "short" })} – ${end.getDate()} ${end.toLocaleDateString("it-IT", { month: "short" })}`;
-
-  const slot = (l) => {
-    const st = liveState(l), d = new Date(l.start);
-    return `<button class="slot ${st} ${l.id === S.selLive ? "sel" : ""} ${S.reminders.includes(l.id) ? "rem" : ""}" data-live="${esc(l.id)}">${st === "now" ? "LIVE" : fmtTime(d)}<small>${st === "past" ? (l.replayUrl ? "replay" : "fatta") : st === "now" ? fmtTime(d) : l.minutes + "′"}</small></button>`;
-  };
-
-  view.innerHTML = `
-    <div class="wk">
-      <div><h3>${S.week === 0 ? "Live della settimana" : S.week === 1 ? "Settimana prossima" : S.week === -1 ? "Settimana scorsa" : "Live"}</h3><p>${range} · tocca una live</p></div>
-      <div class="arr"><button data-w="-1" aria-label="Settimana precedente">${icon("back")}</button><button data-w="1" aria-label="Settimana successiva">${icon("chev")}</button></div>
-    </div>
-    ${usedAcads.length ? `<div class="fchips"><button data-la="" class="${!acad ? "on" : ""}">Tutte</button>${usedAcads.map((a) => `<button data-la="${esc(a.id)}" class="${acad === a.id ? "on" : ""}" style="--c:${accColor(a)}"><i></i>${esc(a.name)}</button>`).join("")}</div>` : ""}
-    <div class="card cal">
-      <div class="r hd"><span></span>${days.map((d) => `<div class="d ${sameDay(d, today) ? "today" : ""}">${DOW[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}</div>
-      ${groups.map((g) => `<div class="cal-grp" style="--c:${g.a.id ? accColor(g.a) : "#64748b"}"><i></i>${esc(g.a.name)}</div>${g.list.length ? "" : `<div class="cal-none">Nessun educatore ancora</div>`}${g.list.map((e) => `<div class="r rw"><a class="ed" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}${esc(e.name.split(" ")[0])}</a>${days.map((d) => {
-        const ll = lives.filter((l) => l.educatorId === e.id && sameDay(new Date(l.start), d));
-        return `<div class="cell ${sameDay(d, today) ? "today" : ""}">${ll.slice(0, 2).map(slot).join("")}</div>`;
-      }).join("")}</div>`).join("")}`).join("") || `<div class="empty">${acad ? "Nessun educatore in questa accademia." : "Aggiungi gli educatori dal pannello admin."}</div>`}
-    </div>
-    <div class="legend"><span><i style="background:var(--red)"></i>In diretta</span><span><i style="background:rgba(47,107,255,.5)"></i>In programma</span><span><i style="background:var(--line-2)"></i>Passata</span><span><i style="background:var(--sky);border-radius:50%"></i>Promemoria</span></div>
-    <div id="det"></div>
-    ${lives.length ? `<h2 class="sec">Tutte le live della settimana</h2><div class="card" style="padding:0 14px">${lives.map((l) => {
-      const d = new Date(l.start), e = eduById(l.educatorId) || { name: "" }, st = liveState(l);
-      const ea = academyById(e.academyId);
-      return `<button class="lrow" data-live="${esc(l.id)}"><div class="dt"><span>${DOW[d.getDay()]}</span><b>${d.getDate()}</b></div><div class="grow"><h4>${esc(l.title)}</h4><p>${fmtTime(d)} · ${esc(e.name)}${ea && !acad ? ` · <span style="color:${accColor(ea)}">${esc(ea.name)}</span>` : ""}${st === "now" ? ' · <span style="color:#dc2626">in diretta</span>' : st === "past" ? " · passata" : ""}</p></div>${icon("chev", "sm")}</button>`;
-    }).join("")}</div>` : ""}`;
-
-  view.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { S.week += Number(b.dataset.w); S.selLive = null; drawLive(); }));
-  view.querySelectorAll("[data-la]").forEach((b) => (b.onclick = () => { S.liveAcad = b.dataset.la; S.selLive = null; drawLive(); }));
-  view.querySelectorAll("[data-live]").forEach((b) => (b.onclick = () => {
-    S.selLive = b.dataset.live;
-    drawLive();
-    $("#det").scrollIntoView({ behavior: "smooth", block: "center" });
-  }));
-  drawDetail();
-}
-
-function drawDetail() {
-  const box = $("#det");
-  const l = S.content.lives.find((x) => x.id === S.selLive);
-  if (!l) { box.innerHTML = `<div class="card det empty">${icon("cal")}Nessuna live in questa settimana.</div>`; return; }
-  const e = eduById(l.educatorId) || { name: "Vendita Uno", role: "" };
-  const st = liveState(l), d = new Date(l.start), on = S.reminders.includes(l.id);
-  const enterUrl = safeUrl(l.url), replay = safeUrl(l.replayUrl);
-  const when = st === "now" ? `<span class="pulse"></span><span style="color:#dc2626">In diretta ora</span>` : `${esc(fmtDay(d))} · ${fmtTime(d)}`;
-  let btns;
-  if (!can("live")) btns = `<button class="btn pri" data-unlive>${icon("lock", "sm")}Sblocca le live</button>`;
-  else if (st === "now") btns = enterUrl ? `<button class="btn live" data-enter>${icon("live", "sm")}Entra in live</button>` : `<button class="btn live" disabled>${icon("live", "sm")}Link in arrivo</button>`;
-  else if (st === "past") btns = replay ? `<button class="btn pri" data-replay>${icon("play", "sm")}Guarda replay</button>` : `<button class="btn sec" disabled>Replay in arrivo</button>`;
-  else btns = `<button class="btn sec ${on ? "on" : ""}" data-remind>${icon(on ? "check" : "bell", "sm")}${on ? "Ti avviso io" : "Ricordamelo"}</button>`;
-  const second = st === "up" ? `<a class="btn sec" href="${esc(gcalUrl(l))}" target="_blank" rel="noopener">${icon("cal", "sm")}Calendario</a>` : `<a class="btn sec" href="#/educatore/${esc(e.id || "")}">${icon("user", "sm")}Educatore</a>`;
-  box.innerHTML = `<div class="card det">
-    <div class="top">${face(e.name, e.photo)}<div class="grow"><div class="when">${when}</div><h3>${esc(l.title)}</h3></div></div>
-    ${l.desc ? `<p>${esc(l.desc)}</p>` : ""}
-    <div class="info"><span><b>${esc(e.name)}</b></span>${e.role ? `<span>${esc(e.role)}</span>` : ""}<span>${l.minutes} min</span></div>
-    <div class="btns">${btns}${second}</div></div>`;
-  const ul = box.querySelector("[data-unlive]");
-  if (ul) ul.onclick = () => openUnlock("live", "Live bloccate");
-  const r = box.querySelector("[data-remind]");
-  if (r) r.onclick = async () => {
-    try {
-      const d = await api("/remind", { liveId: l.id, on: !on });
-      S.reminders = d.reminders;
-      drawLive();
-      if (!on) { toast("Ti ricordiamo la live 15 minuti prima"); notifySoon(l); }
-    } catch (err) { toast(err.message); }
-  };
-  const open = (u, title) => {
-    if (videoSrc(u)) openSheet(title, `${playerHtml(u, l.title, true)}<p class="small muted" style="margin-top:10px">${esc(l.title)}</p><a class="btn sec block" href="${esc(u)}" target="_blank" rel="noopener" style="margin-top:10px">${icon("link", "sm")}Apri a schermo intero</a>`);
-    else window.open(u, "_blank", "noopener");
-  };
-  const en = box.querySelector("[data-enter]");
-  if (en) en.onclick = () => open(enterUrl, "In diretta");
-  const rp = box.querySelector("[data-replay]");
-  if (rp) rp.onclick = () => open(replay, "Replay");
-}
-
-// Promemoria nel browser: notifica 15 minuti prima se l'app è aperta (le email arriveranno in seguito).
-const timers = {};
-async function notifySoon(l) {
-  if (!("Notification" in window)) return;
-  if (Notification.permission === "default") { try { await Notification.requestPermission(); } catch {} }
-  scheduleReminders();
-}
-function scheduleReminders() {
-  if (!S.content || !("Notification" in window) || Notification.permission !== "granted") return;
-  for (const id of S.reminders) {
-    const l = S.content.lives.find((x) => x.id === id);
-    if (!l || timers[id]) continue;
-    const ms = new Date(l.start).getTime() - 15 * 60000 - Date.now();
-    if (ms > 0 && ms < 2 ** 31 - 1) timers[id] = setTimeout(() => new Notification("Tra 15 minuti: live Vendita Uno", { body: l.title, icon: "/app/icon-192.png" }), ms);
-  }
-}
-
-// =====================================================================
-// EDUCATORI
-// =====================================================================
-function eduRow(e) {
-  const a = academyById(e.academyId);
-  const up = S.content.lives.filter((l) => l.educatorId === e.id && liveState(l) !== "past").length;
-  return `<a class="card edu-row" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}<div class="grow"><h4>${esc(e.name)}</h4><p>${esc(e.role || (a ? a.name : ""))}${up ? ` · ${up} live in programma` : ""}</p></div>${icon(can("educators") ? "chev" : "lock")}</a>`;
-}
-
-function viewEducators(_, q) {
-  let tab = q.get("tab") === "seguiti" ? "seguiti" : "scopri";
-  const draw = (term = "") => {
-    const t = term.trim().toLowerCase();
-    let body;
-    if (t) {
-      const found = S.content.educators.filter((e) => [e.name, e.role, (academyById(e.academyId) || {}).name].join(" ").toLowerCase().includes(t));
-      body = `<h2 class="sec">Risultati</h2>${found.map(eduRow).join("") || `<div class="card empty">Nessun educatore trovato.</div>`}`;
-    } else if (tab === "seguiti") {
-      const f = S.content.educators.filter((e) => (S.user.following || []).includes(e.id));
-      body = `<h2 class="sec">Educatori che segui</h2>${f.map(eduRow).join("") || `<div class="card empty">${icon("users")}Non segui ancora nessun educatore.</div>`}`;
-    } else {
-      body = `<div class="path"><h3>Scegli il tuo percorso</h3><p>Educatori raggruppati per accademia</p></div>
-        <div class="grid">${S.content.academies.map((a) => {
-          const n = S.content.educators.filter((e) => e.academyId === a.id).length;
-          return `<a class="acad" href="#/percorso/${esc(a.id)}" style="--c:${accColor(a)}"><span class="ic">${icon(a.icon || "cap")}</span><h4>${esc(a.name)}</h4><div class="ct">${n} ${n === 1 ? "educatore" : "educatori"} ${icon("chev")}</div></a>`;
-        }).join("")}</div>
-        <h2 class="sec">Tutti gli educatori</h2>${S.content.educators.map(eduRow).join("")}`;
-    }
-    $("#eduBody").innerHTML = body;
-  };
-  view.innerHTML = `
-    <label class="search">${icon("search")}<input id="eduQ" placeholder="Cerca educatori, percorsi…" autocomplete="off"></label>
-    <div class="seg" style="margin-top:12px"><button data-t="scopri" class="${tab === "scopri" ? "on" : ""}">Scopri</button><button data-t="seguiti" class="${tab === "seguiti" ? "on" : ""}">Seguiti</button></div>
-    <div id="eduBody"></div>`;
-  $("#eduQ").oninput = (e) => draw(e.target.value);
-  view.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => {
-    tab = b.dataset.t;
-    view.querySelectorAll("[data-t]").forEach((x) => x.classList.toggle("on", x === b));
-    $("#eduQ").value = "";
-    draw();
-  }));
-  draw();
-}
-
-let pTab = "corsi", pSub = "";
-function viewAcademyEdu([id]) {
-  const a = academyById(id);
-  if (!a) { location.hash = "#/accademia"; return; }
-  if (S.pAcad !== id) { S.pAcad = id; pSub = ""; }
-  const c = accColor(a), subs = a.subs || [];
-  const eds = S.content.educators.filter((e) => e.academyId === id);
-  const mods = S.content.modules.filter((m) => m.academyId === id);
-  const lives = sortedLives().filter((l) => liveState(l) !== "past" && eds.some((e) => e.id === l.educatorId));
-  const tabs = [["corsi", `Corsi · ${mods.length}`], ["educatori", `Educatori · ${eds.length}`], ["live", `Live · ${lives.length}`]];
-  let body;
-  if (pTab === "corsi") {
-    const groups = [...subs.map((sb) => ({ sb, list: mods.filter((m) => m.subId === sb.id) })), { sb: null, list: mods.filter((m) => !subs.some((x) => x.id === m.subId)) }].filter((g) => g.list.length && (!pSub || (g.sb && g.sb.id === pSub)));
-    body = `${subs.length ? `<div class="subs">${subs.map((sb) => { const n = mods.filter((m) => m.subId === sb.id).length; return `<button class="subt ${pSub === sb.id ? "on" : ""}" data-sub="${esc(sb.id)}" style="--c:${c}"><span class="ic">${icon(sb.icon || "cap")}</span><span class="grow"><b>${esc(sb.name)}</b><small>${n} ${n === 1 ? "corso" : "corsi"}</small></span></button>`; }).join("")}</div>` : ""}
-      ${groups.map((g) => `${secHd(g.sb ? g.sb.name : "Altri corsi", g.list.length)}<div class="courses">${g.list.map(courseCard).join("")}</div>`).join("") || `<div class="card empty">${icon("cap")}I corsi di questa sezione arrivano presto.</div>`}`;
-  } else if (pTab === "educatori") body = eds.map(eduRow).join("") || `<div class="card empty">${icon("users")}Presto nuovi educatori in questa accademia.</div>`;
-  else body = `<div class="lv-list">${lives.map(lvItem).join("") || `<div class="card empty">${icon("cal")}Nessuna live in programma.</div>`}</div>`;
-  view.innerHTML = `
-    <div class="ahero">${coverBg(a.hero || a.cover, c, a.icon)}
-      <a class="back" href="#/accademia" style="position:absolute;top:24px;left:16px;margin:0">${icon("back", "sm")} Accademie</a>
-      <span class="tile" style="--c:${c}">${icon(a.icon || "cap")}</span>
-      <h1>${esc(a.name)}</h1><p>${subs.length ? `${subs.length} sezioni · ` : ""}${mods.length} ${mods.length === 1 ? "corso" : "corsi"} · ${eds.length} ${eds.length === 1 ? "educatore" : "educatori"}</p>
-    </div>
-    <div class="utabs">${tabs.map(([k, n]) => `<button data-t="${k}" class="${pTab === k ? "on" : ""}">${n}</button>`).join("")}</div>
-    ${body}`;
-  view.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => { pTab = b.dataset.t; viewAcademyEdu([id]); }));
-  view.querySelectorAll("[data-sub]").forEach((b) => (b.onclick = () => { pSub = pSub === b.dataset.sub ? "" : b.dataset.sub; viewAcademyEdu([id]); }));
-  bindCourses(view);
-}
-
-async function viewEducator([id]) {
-  const e = eduById(id);
-  if (!e) { location.hash = "#/educatori"; return; }
-  const a = academyById(e.academyId);
-  const lives = sortedLives().filter((l) => l.educatorId === id);
-  const up = lives.filter((l) => liveState(l) !== "past"), past = lives.filter((l) => liveState(l) === "past");
-  const following = (S.user.following || []).includes(id);
-  view.innerHTML = `
-    <a class="back" href="#/accademia">${icon("back", "sm")} Accademia</a>
-    <div class="card prof">
-      ${face(e.name, e.photo)}
-      <h3>${esc(e.name)}</h3>
-      <div class="role">${esc([a && a.name, e.role].filter(Boolean).join(" · "))}</div>
-      ${e.bio ? `<p class="bio">${esc(e.bio)}</p>` : ""}
-      <div class="nums"><div><b>${S.content.modules.filter((m) => m.educatorId === id).length}</b><span>Corsi</span></div><div><b>${S.content.modules.filter((m) => m.educatorId === id).reduce((n, m) => n + m.lessons.length, 0)}</b><span>Lezioni</span></div></div>
-      <button class="follow ${following ? "on" : ""}" id="follow">${following ? "Seguito" : "Segui"}</button>
-    </div>
-    ${S.content.modules.some((m) => m.educatorId === id) ? `<h2 class="sec">Corsi</h2><div class="hcourses">${S.content.modules.filter((m) => m.educatorId === id).map(courseCard).join("")}</div>` : ""}
-    <h2 class="sec">Post</h2><div id="eduPosts"><div class="loading" style="min-height:80px"><div class="spin"></div></div></div>`;
-  bindCourses(view);
-  $("#follow").onclick = async () => {
-    try {
-      const d = await api("/follow", { educatorId: id, on: !following });
-      S.user = d.user;
-      viewEducator([id]);
-      if (!following) toast(`Segui ${e.name}`);
-    } catch (err) { toast(err.message); }
-  };
-  try {
-    const d = await api(`/posts?educator=${encodeURIComponent(id)}`);
-    const box = $("#eduPosts");
-    if (!box) return;
-    box.innerHTML = d.posts.map(postHtml).join("") || `<div class="card empty">Nessun post ancora.</div>`;
-    bindPosts(box, d.posts);
-  } catch {}
 }
 
 // =====================================================================
@@ -1272,101 +737,6 @@ function loadScript(src) {
 // Il font standard del PDF non ha alcuni simboli: li sostituisce con equivalenti semplici.
 const pdfText = (t) => String(t || "").replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[–—]/g, "-").replace(/›/g, ">").replace(/[^\x20-\x7E -ÿ€]/g, "");
 
-async function buildPresentation(link, who) {
-  await Promise.all([loadScript("/app/vendor/pdf-lib.min.js"), loadScript("/app/vendor/qrcode.js")]);
-  const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
-  const BLUE = rgb(0.18, 0.42, 1), BLACK = rgb(0.02, 0.03, 0.05), WHITE = rgb(1, 1, 1), GREY = rgb(0.62, 0.66, 0.74);
-  const set = S.content.settings || {};
-  let doc;
-  if (safeUrl(set.presentationPdf)) {
-    const buf = await (await fetch(set.presentationPdf)).arrayBuffer();
-    doc = await PDFDocument.load(buf);
-  } else doc = await PDFDocument.create();
-  const reg = await doc.embedFont(StandardFonts.Helvetica), bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const wrap = (text, font, size, width) => {
-    const out = []; let line = "";
-    for (const w of pdfText(text).split(/\s+/)) { const t = line ? line + " " + w : w; if (font.widthOfTextAtSize(t, size) > width && line) { out.push(line); line = w; } else line = t; }
-    if (line) out.push(line);
-    return out;
-  };
-  const W = 595, H = 842;
-  const wordmark = (pg, x, y, size) => {
-    pg.drawText("Vendita", { x, y, size, font: bold, color: WHITE });
-    const w = bold.widthOfTextAtSize("Vendita ", size), uw = bold.widthOfTextAtSize("UNO", size);
-    pg.drawRectangle({ x: x + w - 4, y: y - size * 0.25, width: uw + 14, height: size * 1.15, color: BLUE });
-    pg.drawText("UNO", { x: x + w + 3, y, size, font: bold, color: WHITE });
-  };
-
-  if (!safeUrl(set.presentationPdf)) {
-    // Presentazione base, usata finché l'admin non carica la sua
-    const p = doc.addPage([W, H]);
-    p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: BLACK });
-    p.drawRectangle({ x: 0, y: H - 6, width: W, height: 6, color: BLUE });
-    wordmark(p, 48, H - 90, 30);
-    p.drawText("TUTTO IN UNO.", { x: 48, y: H - 190, size: 44, font: bold, color: WHITE });
-    p.drawText("TUTTO PER TE.", { x: 48, y: H - 240, size: 44, font: bold, color: BLUE });
-    let y = H - 290;
-    for (const l of wrap("Formazione, strumenti e una community di professionisti per aiutarti a crescere nel settore immobiliare.", reg, 14, W - 96)) { p.drawText(l, { x: 48, y, size: 14, font: reg, color: GREY }); y -= 20; }
-    y -= 26;
-    p.drawText("SCEGLI COME GUADAGNARE", { x: 48, y, size: 12, font: bold, color: BLUE }); y -= 26;
-    for (const a of S.content.academies.slice(0, 7)) {
-      p.drawRectangle({ x: 48, y: y - 4, width: 8, height: 8, color: BLUE });
-      p.drawText(pdfText(a.name), { x: 66, y: y - 4, size: 15, font: bold, color: WHITE });
-      const subs = (a.subs || []).map((x) => x.name).join(" · ");
-      if (subs) { y -= 18; for (const l of wrap(subs, reg, 10.5, W - 114).slice(0, 2)) { p.drawText(l, { x: 66, y: y - 4, size: 10.5, font: reg, color: GREY }); y -= 14; } }
-      y -= 16;
-    }
-    y -= 6;
-    p.drawText("E IN PIU'", { x: 48, y, size: 12, font: bold, color: BLUE }); y -= 24;
-    for (const t of ["Live ogni settimana con gli educatori", "Community di agenti e professionisti in tutta Italia", "Notizie esclusive nella tua zona"]) { p.drawText("-  " + t, { x: 48, y, size: 13, font: reg, color: WHITE }); y -= 20; }
-  }
-
-  // Ultima pagina: invito personale con QR code
-  const [pw, ph] = doc.getPageCount() ? (() => { const s0 = doc.getPage(0).getSize(); return [s0.width, s0.height]; })() : [W, H];
-  const last = doc.addPage([pw, ph]);
-  last.drawRectangle({ x: 0, y: 0, width: pw, height: ph, color: BLACK });
-  last.drawRectangle({ x: 0, y: ph - 6, width: pw, height: 6, color: BLUE });
-  const cx = pw / 2, sc = Math.min(pw / W, ph / H);
-  const center = (t, y, size, font, color) => last.drawText(t, { x: cx - font.widthOfTextAtSize(t, size) / 2, y, size, font, color });
-  center(pdfText(who).toUpperCase() + " TI INVITA", ph - 120 * sc, 16 * sc, bold, BLUE);
-  center("Entra in Vendita Uno", ph - 165 * sc, 34 * sc, bold, WHITE);
-  center("Registrati gratis con il link qui sotto o inquadra il QR code", ph - 200 * sc, 13 * sc, reg, GREY);
-  const qr = window.qrcode(0, "M"); qr.addData(link); qr.make();
-  const n = qr.getModuleCount(), size = 300 * sc, cell = size / (n + 8), qx = cx - size / 2, qy = ph / 2 - size / 2 - 30 * sc;
-  last.drawRectangle({ x: qx, y: qy, width: size, height: size, color: WHITE });
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) last.drawRectangle({ x: qx + (c + 4) * cell, y: qy + size - (r + 5) * cell, width: cell, height: cell, color: BLACK });
-  const linkSize = Math.min(15 * sc, (pw - 80) / Math.max(1, reg.widthOfTextAtSize(link, 1)));
-  center(link, qy - 40 * sc, linkSize, bold, WHITE);
-  // Su ogni pagina della presentazione: il link di chi la condivide
-  const foot = pdfText(`Iscriviti con l'invito di ${who}: ${link}`);
-  doc.getPages().slice(0, -1).forEach((pg) => {
-    const { width } = pg.getSize(), fs = Math.min(9, (width - 40) / Math.max(1, reg.widthOfTextAtSize(foot, 1)));
-    pg.drawRectangle({ x: 0, y: 0, width, height: 22, color: BLUE });
-    pg.drawText(foot, { x: 20, y: 7, size: fs, font: reg, color: WHITE });
-  });
-  return doc.save();
-}
-
-async function downloadPresentation(link, who, btn) {
-  const label = btn.innerHTML;
-  btn.disabled = true; btn.textContent = "Preparo il PDF…";
-  try {
-    const bytes = await buildPresentation(link, who);
-    const name = `Vendita-Uno-${who.replace(/[^\w]+/g, "-")}.pdf`;
-    const file = new File([bytes], name, { type: "application/pdf" });
-    if (navigator.canShare && navigator.canShare({ files: [file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-      await navigator.share({ files: [file], title: "Vendita Uno" }).catch(() => {});
-    } else {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(file); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    }
-    toast("PDF pronto");
-  } catch (e) { toast(e.message || "Non sono riuscito a creare il PDF"); }
-  btn.disabled = false; btn.innerHTML = label;
-}
-
 function viewShop() {
   const list = S.content.products || [];
   view.innerHTML = `<h1 class="h1">Sblocca i contenuti</h1><p class="lead-tx">Scegli cosa vuoi sbloccare. Paghi in modo sicuro con Stripe e l'accesso si attiva da solo.</p>
@@ -1383,95 +753,6 @@ async function viewThanks() {
   const t = $("#thx"); if (t) t.textContent = "Il pagamento è registrato: l'accesso si attiva entro pochi minuti. Se non succede, scrivici.";
 }
 
-async function viewEarn() {
-  view.innerHTML = `<div class="loading"><div class="spin"></div></div>`;
-  let d;
-  try { d = await api("/network"); } catch (e) { view.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
-  const link = `${location.origin}/app/?ref=${d.refCode}`;
-  const eur = (n) => "€ " + (Number(n) || 0).toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-  const person = (p) => `<div class="ln">${face(p.name, imgUrl(p.avatar))}<div class="grow"><h4>${esc(p.name)}</h4><p>${esc(p.city || "—")} · dal ${new Date(p.at).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}</p></div></div>`;
-  view.innerHTML = `
-    <div class="wallet">
-      <small>Vendite generate dal tuo link</small>
-      <div class="big">${money(d.sales.direct)}</div>
-      <div class="rw"><div><b>${d.sales.directCount}</b>Vendite dirette</div><div><b>${money(d.sales.level2)}</b>Secondo livello</div><div><b>${d.level1.length + d.level2.length}</b>Nella tua rete</div></div>
-    </div>
-    ${d.sales.items.length ? `<h2 class="sec">Ultime vendite</h2><div class="card split">${d.sales.items.map((x) => `<div class="ln"><span class="ic">${icon("euro")}</span><div class="grow"><h4>${esc(x.product || "Acquisto")}</h4><p>${esc(x.buyer || "Cliente")} · ${new Date(x.at).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</p></div><b>${money(x.amount, x.currency)}</b></div>`).join("")}</div>` : ""}
-    <div class="card invite pad" style="margin-top:12px">
-      <h2 class="sec" style="margin:0">Il tuo link invito</h2>
-      <p class="small muted" style="margin-top:4px">Chi si registra con il tuo link entra nella tua rete. Guadagni una parte su quello che acquista.</p>
-      <div class="link">${icon("link", "sm")}<span>${esc(link.replace(/^https?:\/\//, ""))}</span><button id="copy">Copia</button></div>
-      <button class="small" id="myref" style="color:var(--blue-2);font-weight:700;margin-top:8px">Personalizza il link</button>
-      ${navigator.share ? `<button class="btn sec block" id="share" style="margin-top:8px">${icon("share", "sm")}Condividi su WhatsApp e altre app</button>` : ""}
-    </div>
-    <div class="card pad" style="margin-top:12px">
-      <div class="row"><span class="ini" style="width:42px;height:42px;border-radius:12px">${icon("doc")}</span><div class="grow"><h2 class="sec" style="margin:0">Presentazione da condividere</h2><p class="small muted" style="margin-top:2px">Un PDF su Vendita Uno con il tuo link e il tuo QR code: chi si iscrive entra nella tua rete.</p></div></div>
-      <button class="btn pri block" id="pdf" style="margin-top:12px">${icon("doc", "sm")}Scarica il PDF con il mio link</button>
-    </div>
-    <h2 class="sec">Come guadagni</h2>
-    <div class="card split">
-      <div class="ln"><span class="ic">${icon("handshake")}</span><div class="grow"><h4>Persone che porti tu</h4><p>Una percentuale su abbonamenti e servizi che acquistano</p></div></div>
-      <div class="ln"><span class="ic">${icon("users")}</span><div class="grow"><h4>Secondo livello</h4><p>Una parte più piccola su chi portano le persone della tua rete</p></div></div>
-      <div class="ln"><span class="ic">${icon("cap")}</span><div class="grow"><h4>Educatori</h4><p>Una quota sulle vendite che arrivano dal tuo pubblico</p></div></div>
-    </div>
-    <h2 class="sec">La tua rete <span class="small muted">${d.level1.length} dirette</span></h2>
-    <div class="card split">${d.level1.map(person).join("") || `<div class="empty">${icon("users")}Ancora nessuno. Condividi il tuo link!</div>`}</div>
-    ${d.level2.length ? `<h2 class="sec">Secondo livello <span class="small muted">${d.level2.length}</span></h2><div class="card split">${d.level2.map(person).join("")}</div>` : ""}`;
-  $("#copy").onclick = async () => {
-    try { await navigator.clipboard.writeText(link); toast("Link copiato"); } catch { prompt("Copia il link:", link); }
-  };
-  const sh = $("#share");
-  if (sh) sh.onclick = () => navigator.share({ title: "Vendita Uno", text: "Entra nell'accademia Vendita Uno per agenti immobiliari:", url: link }).catch(() => {});
-  $("#pdf").onclick = (e) => downloadPresentation(link, fullName(S.user), e.currentTarget);
-  $("#myref").onclick = () => {
-    formSheet("Personalizza il tuo link",
-      `<p class="small muted" style="margin-bottom:10px">Scegli la parte finale del link, per esempio il tuo nome. Il link vecchio continua a funzionare.</p>` +
-      field("Link", "code", d.refCode, "text", 'required autocapitalize="characters" autocomplete="off" maxlength="20"') +
-      `<p class="small" style="margin:-4px 0 12px;color:var(--blue-3)" id="refPrev"></p>`,
-      async (f) => { S.user = (await api("/refcode", { code: f.code })).user; closeSheet(); toast("Link aggiornato"); viewEarn(); });
-    const inp = $("#sf [name=code]"), pv = $("#refPrev");
-    const show = () => (pv.textContent = `${location.host}/app/?ref=${inp.value.toUpperCase().replace(/\s+/g, "")}`);
-    inp.oninput = show; show();
-  };
-}
-
-// =====================================================================
-// SERVIZIO NOTIZIE ESCLUSIVE
-// =====================================================================
-function viewPremium() {
-  const u = S.user;
-  view.innerHTML = `
-    <div class="prem">
-      <span class="lk">${icon("lock")}</span>
-      <h3>Notizie esclusive nella tua zona</h3>
-      <p>In accademia impari il metodo. Con il servizio lo applichi: ti diamo noi le persone da chiamare, solo a te, nella tua zona.</p>
-      <ul>
-        <li>${icon("check")}<span><b>Zona esclusiva</b>: nessun'altra agenzia della tua zona riceve le stesse notizie</span></li>
-        <li>${icon("check")}<span>Privati che vendono, successioni, trasferimenti, immobili sfitti</span></li>
-        <li>${icon("check")}<span>Gestionale per segnare chiamate, appuntamenti e incarichi</span></li>
-        <li>${icon("check")}<span>Affiancamento 1-a-1 con un educatore nei primi 30 giorni</span></li>
-      </ul>
-    </div>
-    <h2 class="sec">Verifica se la tua zona è libera</h2>
-    <form class="card pad" id="zf">
-      <label class="field"><span>Comune o quartiere</span><input class="inp" name="comune" value="${esc(u.city || "")}" required></label>
-      <label class="field"><span>Telefono</span><input class="inp" name="phone" type="tel" value="${esc(u.phone || "")}" required></label>
-      <label class="field"><span>Note (facoltativo)</span><textarea class="inp" name="note" rows="2" placeholder="Es. lavoro anche nei comuni vicini"></textarea></label>
-      <div id="zerr"></div>
-      <button class="btn pri block">${icon("pin", "sm")}Invia richiesta</button>
-      <p class="small muted" style="margin-top:10px;text-align:center">Ti richiamiamo entro 24 ore per spiegarti il servizio.</p>
-    </form>`;
-  $("#zf").onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = e.target.querySelector("button");
-    btn.disabled = true;
-    try {
-      await api("/zone", Object.fromEntries(new FormData(e.target)));
-      e.target.innerHTML = `<div class="empty" style="color:var(--text)">${icon("check")}<b>Richiesta inviata.</b><br><span class="muted">Ti chiamiamo entro 24 ore.</span></div>`;
-    } catch (err) { $("#zerr").innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; }
-  };
-}
-
 // =====================================================================
 // PROFILO
 // =====================================================================
@@ -1485,7 +766,6 @@ function viewProfile() {
     </div>
     <div class="card menu" style="margin-top:20px">
       <a href="#/allenati">${icon("phone")}Allenati, risultati e classifica${icon("chev", "chev")}</a>
-      <a href="#/guadagni">${icon("wallet")}Guadagni e inviti${icon("chev", "chev")}</a>
       ${fullAccess() ? "" : `<a href="#/sblocca">${icon("key")}Sblocca i contenuti${icon("chev", "chev")}</a>`}
       ${u.role === "admin" ? `<a href="#/admin">${icon("shield")}Pannello admin${icon("chev", "chev")}</a>` : `<button id="claim">${icon("key")}Ho un codice amministratore${icon("chev", "chev")}</button>`}
     </div>
@@ -1534,15 +814,15 @@ function viewProfile() {
 // =====================================================================
 // ADMIN
 // =====================================================================
-const ICONS = ["key", "handshake", "phone", "mega", "brain", "euro", "doc", "spark", "trend", "tool", "home2", "cap", "camera", "users", "live"];
+const ICONS = ["key", "handshake", "phone", "mega", "brain", "euro", "doc", "spark", "trend", "tool", "home2", "cap", "camera", "users"];
 let adminTab = "overview";
 
 function viewAdmin() {
-  const tabs = [["overview", "Panoramica"], ["vendite", "Vendite"], ["prodotti", "Prodotti"], ["utenti", "Utenti"], ["live", "Live"], ["home", "Home"], ["accademia", "Corsi"], ["educatori", "Educatori"], ["percorsi", "Accademie"], ["zone", "Richieste zona"]];
-  view.innerHTML = `<h1 class="h1">Pannello admin</h1><p class="lead-tx" style="margin-bottom:14px">Qui gestisci contenuti, live e utenti dell'app.</p>
+  const tabs = [["overview", "Panoramica"], ["accademia", "Corsi"], ["utenti", "Utenti"], ["vendite", "Vendite"], ["prodotti", "Prodotti"], ["educatori", "Educatori"], ["percorsi", "Sezioni"]];
+  view.innerHTML = `<h1 class="h1">Pannello admin</h1><p class="lead-tx" style="margin-bottom:14px">Qui gestisci corsi, quiz, utenti e vendite dell'app.</p>
     <div class="tabs">${tabs.map(([k, n]) => `<button data-a="${k}" class="${adminTab === k ? "on" : ""}">${n}</button>`).join("")}</div><div id="adm"></div>`;
   view.querySelectorAll("[data-a]").forEach((b) => (b.onclick = async () => { adminTab = b.dataset.a; await loadMe(); viewAdmin(); }));
-  ({ overview: admOverview, vendite: admSales, prodotti: admProducts, live: admLives, home: admHome, accademia: admModules, educatori: admEducators, percorsi: admAcademies, utenti: admUsers, zone: admZones })[adminTab]();
+  ({ overview: admOverview, vendite: admSales, prodotti: admProducts, accademia: admModules, educatori: admEducators, percorsi: admAcademies, utenti: admUsers })[adminTab]();
 }
 
 async function saveSection(section, data, msg = "Salvato") {
@@ -1612,151 +892,15 @@ function bindList(root, list, section, edit) {
   root.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(Number(b.dataset.edit))));
   root.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => {
     const item = list[Number(b.dataset.del)];
-    const n = section === "educators" ? S.content.lives.filter((l) => l.educatorId === item.id).length : 0;
-    if (!confirm(n ? `Insieme a ${item.name} verranno eliminate anche le sue ${n} live. Continuare?` : "Sicuro di voler eliminare?")) return;
+    if (!confirm(`Sicuro di voler eliminare ${item.name || item.title || "questo elemento"}?`)) return;
     const copy = list.slice(); copy.splice(Number(b.dataset.del), 1);
-    saveSection(section, copy, n ? `Eliminato insieme a ${n} live` : "Eliminato").catch((e) => toast(e.message));
+    saveSection(section, copy, "Eliminato").catch((e) => toast(e.message));
   }));
   root.querySelectorAll("[data-up]").forEach((b) => (b.onclick = () => {
     const i = Number(b.dataset.up), copy = list.slice();
     [copy[i - 1], copy[i]] = [copy[i], copy[i - 1]];
     saveSection(section, copy, "Ordine aggiornato").catch((e) => toast(e.message));
   }));
-}
-
-// Converte la data della live nel formato del campo "datetime-local" (ora locale).
-const toLocalInput = (iso) => { const d = new Date(iso); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
-
-// Gestione live: la usa l'admin (tutte le live) e l'educatore (solo le sue).
-// opts.eduId = educatore fisso (pagina "Le mie live"); opts.save(list) salva l'elenco gestito.
-function livesManager(root, opts) {
-  const lives = sortedLives().filter((l) => !opts.eduId || l.educatorId === opts.eduId);
-  const upcoming = lives.filter((l) => liveState(l) !== "past"), past = lives.filter((l) => liveState(l) === "past").reverse();
-  const row = (l) => { const i = lives.indexOf(l), d = new Date(l.start), e = eduById(l.educatorId); return `<div class="adm-item"><div class="grow"><h4>${esc(l.title)}</h4><p>${DOW[d.getDay()]} ${d.toLocaleDateString("it-IT")} ${fmtTime(d)}${opts.eduId ? "" : " · " + esc(e ? e.name : "—")}${l.url ? "" : ' · <span style="color:var(--warn)">manca link</span>'}</p></div>${itemActs(i, lives.length, false)}</div>`; };
-  const nowL = lives.find((l) => liveState(l) === "now");
-  const eduSel = (val) => (opts.eduId ? "" : select("Educatore", "educatorId", S.content.educators.map((e) => [e.id, e.name]), val));
-  root.innerHTML = `<div class="btns" style="margin-top:0"><button class="btn live" id="goNow">${icon("live", "sm")}Vai in diretta ora</button><button class="btn pri" id="add">${icon("plus", "sm")}Programma live</button></div>
-    ${nowL ? `<div class="card pad" style="margin-top:12px;border-color:rgba(255,59,59,.5)"><div class="row"><span class="pulse"></span><div class="grow"><b>In diretta:</b> ${esc(nowL.title)}</div><button class="btn danger" id="endNow" style="padding:8px 12px">Termina</button></div></div>` : ""}
-    <h2 class="sec">In programma</h2><div class="card">${upcoming.map(row).join("") || `<div class="empty">Nessuna live in programma</div>`}</div>
-    ${past.length ? `<h2 class="sec">Passate</h2><div class="card">${past.slice(0, 30).map(row).join("")}</div>` : ""}`;
-  const done = async (list, msg) => { await opts.save(list); toast(msg); closeSheet(); opts.redraw(); };
-  const edit = (i) => {
-    const l = i >= 0 ? lives[i] : { title: "", desc: "", educatorId: opts.eduId || (S.content.educators[0] || {}).id, start: new Date(Date.now() + 86400000).toISOString(), minutes: 60, url: "", replayUrl: "" };
-    formSheet(i >= 0 ? "Modifica live" : "Nuova live",
-      field("Titolo", "title", l.title, "text", "required") + eduSel(l.educatorId) +
-      `<div class="two">${field("Data e ora", "start", toLocalInput(l.start), "datetime-local", "required")}${field("Durata (minuti)", "minutes", l.minutes, "number", 'min="1" max="600"')}</div>` +
-      field("Descrizione", "desc", l.desc, "textarea") +
-      field("Link della diretta (YouTube, Zoom…)", "url", l.url, "text", 'placeholder="https://" inputmode="url" autocapitalize="off"') +
-      field("Link del replay (Loom, YouTube, Vimeo…)", "replayUrl", l.replayUrl, "text", 'placeholder="https://" inputmode="url" autocapitalize="off"') +
-      `<p class="small muted" style="margin-bottom:12px">Le dirette YouTube si vedono dentro l'app. Gli altri link (Zoom, Meet) si aprono a parte.</p>`,
-      async (f) => {
-        const item = { ...l, ...f, start: new Date(f.start).toISOString(), minutes: Number(f.minutes) };
-        const copy = lives.slice();
-        if (i >= 0) copy[i] = item; else copy.push(item);
-        await done(copy, "Salvato");
-      },
-      i >= 0 ? async () => { const copy = lives.slice(); copy.splice(i, 1); await done(copy, "Live eliminata"); } : null);
-  };
-  root.querySelector("#add").onclick = () => edit(-1);
-  root.querySelector("#goNow").onclick = () => formSheet("Vai in diretta ora",
-    `<p class="small muted" style="margin-bottom:10px">Avvia la diretta su YouTube, Zoom, Google Meet o StreamYard e incolla qui il link. Le dirette YouTube si vedono dentro l'app, gli altri link si aprono a parte.</p>` +
-    field("Titolo della live", "title", "", "text", "required") + eduSel((S.content.educators[0] || {}).id) +
-    field("Link della diretta", "url", "", "text", 'required placeholder="https://" inputmode="url" autocapitalize="off"') +
-    field("Durata prevista (minuti)", "minutes", 60, "number", 'min="1" max="600"') +
-    field("Descrizione (facoltativa)", "desc", "", "textarea"),
-    async (f) => {
-      const live = { educatorId: opts.eduId, ...f, minutes: Number(f.minutes) || 60, start: new Date(Date.now() - 60000).toISOString(), replayUrl: "" };
-      await done([...lives, live], "Sei in diretta: la live è visibile a tutti");
-    });
-  const en = root.querySelector("#endNow");
-  if (en) en.onclick = () => {
-    // Termina adesso: la durata finisce in questo momento, poi si può aggiungere il link del replay.
-    const copy = lives.map((l) => (l.id === nowL.id ? { ...l, minutes: Math.max(1, Math.floor((Date.now() - new Date(l.start).getTime()) / 60000)) } : l));
-    done(copy, "Diretta terminata: aggiungi il link del replay modificando la live").catch((e) => toast(e.message));
-  };
-  root.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => edit(Number(b.dataset.edit))));
-  root.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => {
-    if (!confirm("Eliminare questa live?")) return;
-    const copy = lives.slice(); copy.splice(Number(b.dataset.del), 1);
-    done(copy, "Live eliminata").catch((e) => toast(e.message));
-  }));
-}
-
-function admLives() {
-  livesManager($("#adm"), {
-    save: async (list) => { S.content = (await api("/admin/content", { section: "lives", data: list })).content; },
-    redraw: () => viewAdmin(),
-  });
-}
-
-// Pagina "Le mie live" per l'educatore collegato al suo account.
-const myEducator = () => S.content.educators.find((e) => e.email && e.email === S.user.email);
-function viewMyLives() {
-  const e = myEducator();
-  if (!e) {
-    view.innerHTML = `<h1 class="h1">Le mie live</h1><div class="card empty" style="margin-top:16px">${icon("users")}Il tuo account non è ancora collegato a un profilo educatore.<br>Chiedi all'amministratore di impostarti come <b>Educatore</b>.</div>`;
-    return;
-  }
-  view.innerHTML = `<div class="row" style="margin-bottom:16px">${face(e.name, e.photo)}<div class="grow"><h1 class="h1" style="font-size:24px">Le mie live</h1><p class="muted small">${esc(e.name)} · <a href="#/educatore/${esc(e.id)}" style="color:var(--blue-2)">vedi il tuo profilo</a></p></div></div><div id="myl"></div>`;
-  view.querySelector(".row .av, .row .ini").style.cssText = "width:52px;height:52px;font-size:16px";
-  livesManager($("#myl"), {
-    eduId: e.id,
-    save: async (list) => { S.content = (await api("/edu/lives", { data: list })).content; },
-    redraw: () => viewMyLives(),
-  });
-}
-
-function admHome() {
-  const st = S.content.settings || {}, bns = S.content.banners || [];
-  $("#adm").innerHTML = `<h2 class="sec" style="margin-top:0">Benvenuto e video "Inizia da qui"</h2>
-    <form class="card pad" id="setf">
-      <div class="two">${field("Titolo grande", "welcomeTitle", st.welcomeTitle)}${field("Sottotitolo", "welcomeSub", st.welcomeSub)}</div>
-      ${field("Titolo del video", "onboardingTitle", st.onboardingTitle)}
-      ${field("Testo sotto il titolo", "onboardingText", st.onboardingText)}
-      ${field("Video (link Loom, YouTube, Vimeo o Google Drive)", "onboardingVideo", st.onboardingVideo, "text", 'placeholder="https://www.loom.com/share/…"')}
-      <button class="btn pri block">Salva</button>
-    </form>
-    <h2 class="sec">PDF di presentazione</h2>
-    <div class="card pad">
-      <p class="small muted" style="margin-bottom:12px">Gli utenti lo scaricano da "Guadagni e inviti" per darlo ad altre persone. L'app aggiunge da sola, su ogni pagina, il link invito di chi lo scarica e una pagina finale con il suo QR code. Se non carichi niente, usa una presentazione base.</p>
-      <p style="margin-bottom:12px"><b>${safeUrl(st.presentationPdf) ? `<a href="${esc(st.presentationPdf)}" target="_blank" rel="noopener" style="color:var(--blue-2)">PDF caricato ›</a>` : "Ora: presentazione base"}</b></p>
-      <div class="btns" style="margin-top:0"><label class="btn pri" style="cursor:pointer">${icon("doc", "sm")}Carica PDF<input type="file" accept="application/pdf" id="pdfUp" hidden></label>${safeUrl(st.presentationPdf) ? `<button class="btn danger" id="pdfDel">${icon("trash", "sm")}Usa la base</button>` : `<button class="btn sec" id="pdfTry">${icon("search", "sm")}Prova</button>`}</div>
-    </div>
-    <h2 class="sec">Banner a scorrimento <button id="addB">+ Nuovo</button></h2>
-    <div class="card">${bns.map((b, i) => `<div class="adm-item"><span style="width:64px;height:40px;border-radius:8px;flex:none;background:var(--panel-2) center/cover;${safeUrl(b.cover) ? `background-image:url('${esc(safeUrl(b.cover))}')` : ""}"></span><div class="grow"><h4>${esc(b.title)}</h4><p class="ell">${esc(b.text)}</p></div>${itemActs(i, bns.length)}</div>`).join("") || `<div class="empty">Nessun banner</div>`}</div>`;
-  const savePdf = async (url, msg) => { S.content = (await api("/admin/settings", { presentationPdf: url })).content; toast(msg); viewAdmin(); };
-  $("#pdfUp").onchange = async (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    if (f.size > 20 * 1024 * 1024) { toast("Il PDF è troppo grande (massimo 20 MB)"); return; }
-    toast("Carico il PDF…");
-    try {
-      const id = await uploadBlob(f, "application/pdf");
-      await savePdf(`/api/app/file/${id}`, "PDF di presentazione caricato");
-    } catch (err) { toast(err.message); }
-  };
-  const pd = $("#pdfDel");
-  if (pd) pd.onclick = () => savePdf("", "Torna la presentazione base").catch((err) => toast(err.message));
-  const pt = $("#pdfTry");
-  if (pt) pt.onclick = (e) => downloadPresentation(`${location.origin}/app/?ref=${S.user.refCode}`, fullName(S.user), e.currentTarget);
-  $("#setf").onsubmit = async (e) => {
-    e.preventDefault();
-    const f = Object.fromEntries(new FormData(e.target));
-    if (f.onboardingVideo && !videoSrc(f.onboardingVideo)) { toast("Link video non riconosciuto"); return; }
-    try { S.content = (await api("/admin/settings", f)).content; toast("Salvato"); } catch (err) { toast(err.message); }
-  };
-  const edit = (i) => {
-    const b = i >= 0 ? bns[i] : { title: "", text: "", cover: "", link: "#/accademia" };
-    formSheet(i >= 0 ? "Modifica banner" : "Nuovo banner",
-      imgField("Immagine (1200 × 900 px)", "cover", b.cover, true) +
-      `<p class="small muted" style="margin:-4px 0 12px">Se il testo è già nell'immagine, lascia vuoti Titolo e Testo.</p>` +
-      field("Titolo (facoltativo)", "title", b.title) + field("Testo (facoltativo)", "text", b.text, "textarea") +
-      select("Quando lo toccano, apre", "link", [["#/accademia", "Accademia"], ["#/live", "Calendario live"], ["#/educatori", "Educatori"], ["#/community", "Community"], ["#/notizie", "Servizio Notizie"], ["#/guadagni", "Guadagni e inviti"]], b.link),
-      async (f) => { const copy = bns.slice(); if (i >= 0) copy[i] = { ...b, ...f }; else copy.push({ ...b, ...f }); await saveSection("banners", copy); },
-      i >= 0 ? async () => { const copy = bns.slice(); copy.splice(i, 1); await saveSection("banners", copy, "Eliminato"); } : null);
-  };
-  $("#addB").onclick = () => edit(-1);
-  bindList($("#adm"), bns, "banners", edit);
 }
 
 function admModules() {
@@ -1817,8 +961,8 @@ function accessPicker(selected) {
   const sel = new Set(selected || []);
   const box = (v, label, cls = "") => `<label class="acc-opt ${cls}"><input type="checkbox" name="acc" value="${esc(v)}" ${sel.has(v) ? "checked" : ""}><span>${label}</span></label>`;
   return `<div class="acc-pick">
-    ${box("all", "<b>Tutto</b> (ogni accademia, live, community, educatori)", "all")}
-    <div class="acc-grp">Sezioni</div>${box("live", "Live")}${box("community", "Community")}${box("educators", "Educatori")}
+    ${box("all", "<b>Tutto</b> (tutti i corsi e la community)", "all")}
+    <div class="acc-grp">Sezioni</div>${box("community", "Community")}
     <div class="acc-grp">Accademie intere</div>${S.content.academies.map((a) => box(`acad:${a.id}`, esc(a.name))).join("")}
     <details><summary>Corsi singoli</summary>${S.content.academies.map((a) => { const ms = S.content.modules.filter((m) => m.academyId === a.id); return ms.length ? `<div class="acc-grp">${esc(a.name)}</div>${ms.map((m) => box(`course:${m.id}`, esc(m.title))).join("")}` : ""; }).join("")}</details>
   </div>`;
@@ -1829,12 +973,12 @@ function accessSummary(acc) {
   if (acc.includes("all")) return "Accesso completo";
   if (!acc.length) return "Tutto bloccato";
   const n = (pre) => acc.filter((x) => x.startsWith(pre)).length;
-  return [n("acad:") && `${n("acad:")} accademie`, n("course:") && `${n("course:")} corsi`, acc.includes("live") && "live", acc.includes("community") && "community", acc.includes("educators") && "educatori"].filter(Boolean).join(" · ");
+  return [n("acad:") && `${n("acad:")} accademie`, n("course:") && `${n("course:")} corsi`, acc.includes("community") && "community"].filter(Boolean).join(" · ");
 }
 
 function admProducts() {
   const ps = S.content.products || [];
-  $("#adm").innerHTML = `<div class="card pad" style="margin-bottom:12px"><b>Come funziona</b><p class="small muted" style="margin-top:6px;line-height:1.5">1. Su Stripe crei un <b>Payment Link</b> per ogni prodotto e incolli qui il link.<br>2. Scegli cosa sblocca.<br>3. Chi paga viene sbloccato da solo e la vendita viene attribuita a chi l'ha invitato (vedi Vendite).</p></div>
+  $("#adm").innerHTML = `<div class="card pad" style="margin-bottom:12px"><b>Come funziona</b><p class="small muted" style="margin-top:6px;line-height:1.5">1. Su Stripe crei un <b>Payment Link</b> per ogni prodotto e incolli qui il link.<br>2. Scegli cosa sblocca.<br>3. Chi paga viene sbloccato da solo e la vendita compare in Vendite.</p></div>
     <button class="btn pri block" id="add">${icon("plus", "sm")}Nuovo prodotto</button>
     <div class="card" style="margin-top:14px">${ps.map((p, i) => `<div class="adm-item"><span class="ini" style="width:36px;height:36px;border-radius:10px">${icon("euro", "sm")}</span><div class="grow"><h4>${esc(p.name)} ${p.price ? `· ${esc(p.price)}` : ""}</h4><p>${esc(accessSummary(p.grants))}${p.link ? "" : ' · <span style="color:var(--warn)">manca link Stripe</span>'}</p></div>${itemActs(i, ps.length)}</div>`).join("") || `<div class="empty">Nessun prodotto: creane uno.</div>`}</div>`;
   const edit = (i) => {
@@ -1864,26 +1008,15 @@ async function admSales() {
   try { [sales, users] = await Promise.all([api("/admin/sales").then((d) => d.sales), api("/admin/users").then((d) => d.users)]); } catch (e) { $("#adm").innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   sales.sort((a, b) => b.at - a.at);
   const tot = sales.reduce((n, x) => n + x.amount, 0);
-  // Totali per chi ha portato la vendita (primo livello) e per il secondo livello
-  const by = new Map();
-  for (const x of sales) {
-    if (x.referrerId) { const r = by.get(x.referrerId) || { name: x.referrerName, code: x.referrerCode, direct: 0, n: 0, l2: 0 }; r.direct += x.amount; r.n++; by.set(x.referrerId, r); }
-    if (x.referrer2Id) { const r = by.get(x.referrer2Id) || { name: x.referrer2Name, code: "", direct: 0, n: 0, l2: 0 }; r.l2 += x.amount; by.set(x.referrer2Id, r); }
-  }
-  const rows = [...by.values()].sort((a, b) => b.direct - a.direct);
-  const noRef = sales.filter((x) => !x.referrerId).reduce((n, x) => n + x.amount, 0);
   $("#adm").innerHTML = `
     <div class="qs" style="grid-template-columns:1fr 1fr"><div class="card q"><b>${money(tot)}</b><span>Totale venduto</span></div><div class="card q"><b>${sales.length}</b><span>Vendite</span></div></div>
     <div class="btns"><button class="btn pri" id="addSale">${icon("plus", "sm")}Vendita manuale</button><button class="btn sec" id="csv">${icon("doc", "sm")}Scarica Excel (CSV)</button></div>
-    <h2 class="sec">Venduto per link</h2>
-    <div class="card">${rows.map((r) => `<div class="adm-item"><div class="grow"><h4>${esc(r.name || "—")}</h4><p>${r.code ? `?ref=${esc(r.code)} · ` : ""}${r.n} vendite dirette${r.l2 ? ` · secondo livello ${money(r.l2)}` : ""}</p></div><b style="font-family:var(--display)">${money(r.direct)}</b></div>`).join("")}
-      ${noRef ? `<div class="adm-item"><div class="grow"><h4>Senza invito</h4><p>Clienti arrivati da soli</p></div><b style="font-family:var(--display)">${money(noRef)}</b></div>` : ""}
-      ${!sales.length ? `<div class="empty">${icon("euro")}Nessuna vendita ancora.</div>` : ""}</div>
+    ${!sales.length ? `<div class="card empty">${icon("euro")}Nessuna vendita ancora.</div>` : ""}
     ${sales.length ? `<h2 class="sec">Tutte le vendite</h2><div class="card">${sales.map((x) => `<div class="adm-item"><div class="grow"><h4>${esc(x.productName || "Acquisto")} · ${money(x.amount, x.currency)}</h4><p>${esc(x.buyerName || x.buyerEmail || "Cliente")} · ${new Date(x.at).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · ${x.source === "stripe" ? "Stripe" : "manuale"}${x.referrerName ? ` · link di ${esc(x.referrerName)}` : ""}</p></div><div class="acts"><button data-sdel="${esc(x.key)}" aria-label="Elimina">${icon("trash")}</button></div></div>`).join("")}</div>` : ""}`;
   $("#csv").onclick = () => {
     const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const lines = [["Data", "Prodotto", "Importo", "Valuta", "Cliente", "Email cliente", "Invitato da (1° livello)", "Codice link", "2° livello", "Fonte"].map(q).join(";"),
-      ...sales.map((x) => [new Date(x.at).toLocaleString("it-IT"), x.productName, (x.amount / 100).toFixed(2).replace(".", ","), x.currency.toUpperCase(), x.buyerName, x.buyerEmail, x.referrerName, x.referrerCode, x.referrer2Name, x.source].map(q).join(";"))];
+    const lines = [["Data", "Prodotto", "Importo", "Valuta", "Cliente", "Email cliente", "Fonte"].map(q).join(";"),
+      ...sales.map((x) => [new Date(x.at).toLocaleString("it-IT"), x.productName, (x.amount / 100).toFixed(2).replace(".", ","), x.currency.toUpperCase(), x.buyerName, x.buyerEmail, x.source].map(q).join(";"))];
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }));
     a.download = `vendite-vendita-uno-${new Date().toISOString().slice(0, 10)}.csv`;
@@ -1893,7 +1026,7 @@ async function admSales() {
     const ps = S.content.products || [];
     if (!ps.length) { toast("Prima crea un prodotto nella scheda Prodotti"); return; }
     formSheet("Vendita manuale",
-      `<p class="small muted" style="margin-bottom:10px">Per bonifici o pagamenti fuori da Stripe: la persona viene sbloccata e la vendita attribuita a chi l'ha invitata.</p>` +
+      `<p class="small muted" style="margin-bottom:10px">Per bonifici o pagamenti fuori da Stripe: la persona viene sbloccata e la vendita finisce nel registro.</p>` +
       select("Chi ha acquistato", "buyerId", users.map((u) => [u.id, `${u.name} · ${u.email}`]), "") +
       select("Prodotto", "productId", ps.map((p) => [p.id, `${p.name}${p.price ? " · " + p.price : ""}`]), ps[0].id) +
       field("Importo pagato (€)", "amount", "", "text", 'required inputmode="decimal" placeholder="997"'),
@@ -1928,47 +1061,33 @@ function bulkLessons(i) {
     });
 }
 
-// Dalla panoramica: apre la scheda Live e il modulo "Vai in diretta ora".
-function goLiveNow() {
-  adminTab = "live";
-  viewAdmin();
-  $("#goNow").click();
-}
-
 function admOverview() {
   const c = S.content, lessons = c.modules.reduce((n, m) => n + m.lessons.length, 0);
   const noVideo = c.modules.reduce((n, m) => n + m.lessons.filter((l) => !lessonVideo(l)).length, 0);
-  const up = c.lives.filter((l) => liveState(l) !== "past").length, now = liveNow();
+  const quiz = c.modules.reduce((n, m) => n + m.lessons.filter((l) => (l.quiz || []).length).length, 0);
   $("#adm").innerHTML = `
-    ${now ? `<div class="card pad" style="border-color:rgba(255,59,59,.5);margin-bottom:12px"><div class="row"><span class="pulse"></span><div class="grow"><b>Sei in diretta:</b> ${esc(now.title)}</div><a class="btn sec" href="#/live/${esc(now.id)}" style="padding:8px 12px">Apri</a></div></div>` : ""}
     <div class="qs" style="grid-template-columns:repeat(2,1fr)">
       <div class="card q"><b>${c.modules.length}</b><span>Corsi</span></div>
       <div class="card q"><b>${lessons}</b><span>Lezioni${noVideo ? ` · ${noVideo} senza video` : ""}</span></div>
-      <div class="card q"><b>${up}</b><span>Live in programma</span></div>
+      <div class="card q"><b>${quiz}</b><span>Lezioni con quiz</span></div>
       <div class="card q" id="ucount"><b>…</b><span>Utenti</span></div>
     </div>
     <h2 class="sec">Azioni rapide</h2>
     <div class="grid" style="margin-top:0">
-      <button class="acad" data-q="live" style="--c:#ff3b3b"><span class="ic">${icon("live")}</span><h4>Vai in diretta ora</h4><div class="ct">Live che parte adesso</div></button>
-      <button class="acad" data-q="plan" style="--c:#2f6bff"><span class="ic">${icon("cal")}</span><h4>Programma una live</h4><div class="ct">Data, ora e link</div></button>
-      <button class="acad" data-q="course" style="--c:#22c55e"><span class="ic">${icon("cap")}</span><h4>Nuovo corso</h4><div class="ct">Poi aggiungi le lezioni</div></button>
-      <button class="acad" data-q="lessons" style="--c:#7c5cff"><span class="ic">${icon("play")}</span><h4>Carica lezioni</h4><div class="ct">Link Loom, YouTube…</div></button>
-      <button class="acad" data-q="banner" style="--c:#eab308"><span class="ic">${icon("image")}</span><h4>Banner e Home</h4><div class="ct">Immagini e video di benvenuto</div></button>
-      <button class="acad" data-q="zone" style="--c:#0ea5e9"><span class="ic">${icon("pin")}</span><h4>Richieste zona</h4><div class="ct">Chi vuole le notizie</div></button>
-      <button class="acad" data-q="notify" style="--c:#ec4899"><span class="ic">${icon("bell")}</span><h4>Avviso a tutti</h4><div class="ct">Notifica a ogni utente</div></button>
+      <button class="acad" data-q="course" style="--c:#2f6bff"><span class="ic">${icon("cap")}</span><h4>Nuovo corso</h4><div class="ct">Poi aggiungi le lezioni</div></button>
+      <button class="acad" data-q="lessons" style="--c:#7c3aed"><span class="ic">${icon("play")}</span><h4>Carica lezioni e quiz</h4><div class="ct">Link Loom, YouTube…</div></button>
+      <button class="acad" data-q="users" style="--c:#0f9d58"><span class="ic">${icon("users")}</span><h4>Utenti e accessi</h4><div class="ct">Chi vede cosa</div></button>
+      <button class="acad" data-q="notify" style="--c:#ea580c"><span class="ic">${icon("bell")}</span><h4>Avviso a tutti</h4><div class="ct">Notifica a ogni utente</div></button>
     </div>`;
   const go = (tab, after) => { adminTab = tab; viewAdmin(); if (after) after(); };
   $("#adm").querySelectorAll("[data-q]").forEach((b) => (b.onclick = () => ({
-    live: goLiveNow,
-    plan: () => go("live", () => $("#add").click()),
     course: () => go("accademia", () => $("#add").click()),
-    lessons: () => go("accademia", () => toast("Scegli il corso e premi \"Aggiungi più lezioni\"")),
-    banner: () => go("home"),
-    zone: () => go("zone"),
+    lessons: () => go("accademia", () => toast("Scegli il corso e premi \"Aggiungi più lezioni\"; il quiz si scrive dentro ogni lezione")),
+    users: () => go("utenti"),
     notify: () => formSheet("Avviso a tutti",
       `<p class="small muted" style="margin-bottom:10px">Arriva nelle notifiche di ogni utente (campanella in alto).</p>` +
       field("Titolo", "title", "", "text", 'required maxlength="120"') + field("Testo", "text", "", "textarea", 'maxlength="300"') +
-      select("Quando lo toccano, apre", "link", [["#/home", "Home"], ["#/accademia", "Accademia"], ["#/live", "Calendario live"], ["#/community", "Community"], ["#/notizie", "Servizio Notizie"], ["#/guadagni", "Guadagni e inviti"]], "#/home"),
+      select("Quando lo toccano, apre", "link", [["#/home", "Home"], ["#/accademia", "Accademia"], ["#/allenati", "Allenati"], ["#/progressi", "Progressi"], ["#/community", "Community"]], "#/home"),
       async (f) => { await api("/admin/notify", f); closeSheet(); toast("Avviso inviato a tutti"); refreshNotifs(); }),
   })[b.dataset.q]()));
   api("/admin/users").then((d) => { const el = $("#ucount b"); if (el) el.textContent = d.users.length; }).catch(() => {});
@@ -1989,7 +1108,7 @@ function admEducators() {
     if (e.email && !opts.some((o) => o[0] === e.email)) opts.push([e.email, e.email]);
     formSheet(i >= 0 ? "Modifica educatore" : "Nuovo educatore",
       select("Chi è? (scegli tra gli iscritti)", "email", opts, e.email) +
-      `<p class="small muted" style="margin:-4px 0 12px">Diventa Educatore e trova "Le mie live" nel suo profilo. Se non è ancora iscritto all'app, fallo registrare e poi torna qui.</p>` +
+      `<p class="small muted" style="margin:-4px 0 12px">L'educatore compare sui corsi che tiene. Se non è ancora iscritto all'app, fallo registrare e poi torna qui.</p>` +
       field("Nome e cognome", "name", e.name, "text", "required") +
       select("Accademia", "academyId", S.content.academies.map((a) => [a.id, a.name]), e.academyId) +
       field("Specialità", "role", e.role, "text", 'placeholder="Es. Acquisizione in esclusiva"') +
@@ -1997,9 +1116,7 @@ function admEducators() {
       imgField("Foto", "photo", e.photo),
       async (f) => { const copy = eds.slice(); if (i >= 0) copy[i] = { ...e, ...f }; else copy.push({ ...e, ...f }); await saveSection("educators", copy); },
       i >= 0 ? async () => {
-        const n = S.content.lives.filter((l) => l.educatorId === e.id).length;
-        if (n && !confirm(`Insieme a ${e.name} verranno eliminate anche le sue ${n} live. Continuare?`)) return;
-        const copy = eds.slice(); copy.splice(i, 1); await saveSection("educators", copy, n ? `Eliminato insieme a ${n} live` : "Eliminato");
+        const copy = eds.slice(); copy.splice(i, 1); await saveSection("educators", copy, "Eliminato");
       } : null);
   };
   $("#add").onclick = () => edit(-1);
@@ -2048,7 +1165,7 @@ async function admUsers() {
     if (content) { S.content = content; toast("Creati i profili educatore mancanti"); }
     const draw = (t = "") => {
       const list = users.filter((u) => `${u.name} ${u.email} ${u.city}`.toLowerCase().includes(t.toLowerCase()));
-      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button><button data-ref="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Modifica</button></p>` : ""}${u.role === "agent" ? `<p class="row" style="gap:8px;margin-top:4px"><span class="ell" style="color:${u.access && !u.access.length ? "var(--warn)" : "#15803d"}">${icon("key", "sm")} ${esc(accessSummary(u.access))}</span><button data-acc="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Accessi</button></p>` : ""}</div>
+      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.role === "agent" ? `<p class="row" style="gap:8px;margin-top:4px"><span class="ell" style="color:${u.access && !u.access.length ? "var(--warn)" : "#15803d"}">${icon("key", "sm")} ${esc(accessSummary(u.access))}</span><button data-acc="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Accessi</button></p>` : ""}</div>
         <select data-role="${esc(u.id)}">${[["agent", "Agente"], ["educator", "Educatore"], ["admin", "Admin"]].map(([v, n]) => `<option value="${v}" ${u.role === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>`).join("") || `<div class="empty">Nessun utente</div>`;
       $("#ulist").querySelectorAll("[data-acc]").forEach((b) => (b.onclick = () => {
         const u = users.find((x) => x.id === b.dataset.acc);
@@ -2062,24 +1179,9 @@ async function admUsers() {
         const u = users.find((x) => x.id === b.dataset.mkedu); u.role = "agent";
         sel.value = "educator"; sel.onchange();
       }));
-      $("#ulist").querySelectorAll("[data-ref]").forEach((b) => (b.onclick = () => {
-        const u = users.find((x) => x.id === b.dataset.ref);
-        formSheet(`Link invito di ${u.name}`,
-          `<p class="small muted" style="margin-bottom:10px">Scegli la parte finale del link (es. il nome). Il link vecchio continua a funzionare.</p>` +
-          field("Link", "code", u.refCode, "text", 'required autocapitalize="characters" autocomplete="off" maxlength="20"') +
-          `<p class="small" style="margin:-4px 0 12px;color:var(--blue-3)" id="refPrev"></p>`,
-          async (f) => { const d = await api("/admin/refcode", { id: u.id, code: f.code }); u.refCode = d.refCode; closeSheet(); toast("Link invito aggiornato"); draw($("#uq").value); });
-        const inp = $("#sf [name=code]"), pv = $("#refPrev");
-        const show = () => (pv.textContent = `${location.host}/app/?ref=${inp.value.toUpperCase().replace(/\s+/g, "")}`);
-        inp.oninput = show; show();
-      }));
-      $("#ulist").querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => {
-        const l = `${location.origin}/app/?ref=${b.dataset.copy}`;
-        try { await navigator.clipboard.writeText(l); toast("Link invito copiato"); } catch { prompt("Copia il link:", l); }
-      }));
       $("#ulist").querySelectorAll("[data-role]").forEach((s) => (s.onchange = async () => {
         const prev = (users.find((x) => x.id === s.dataset.role) || {}).role || "agent";
-        if (prev === "educator" && s.value === "agent" && !confirm("Togliendolo dagli educatori si eliminano anche il suo profilo educatore e le sue live. Continuare?")) { s.value = prev; return; }
+        if (prev === "educator" && s.value === "agent" && !confirm("Togliendolo dagli educatori si elimina anche il suo profilo educatore. Continuare?")) { s.value = prev; return; }
         let extra = {};
         if (s.value === "educator") {
           extra = await new Promise((ok) => {
@@ -2111,14 +1213,6 @@ async function admUsers() {
       <div class="card" id="ulist" style="margin-top:12px"></div>`;
     $("#uq").oninput = (e) => draw(e.target.value);
     draw();
-  } catch (e) { $("#adm").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
-}
-
-async function admZones() {
-  $("#adm").innerHTML = `<div class="loading" style="min-height:100px"><div class="spin"></div></div>`;
-  try {
-    const { zones } = await api("/admin/zones");
-    $("#adm").innerHTML = `<div class="card">${zones.map((z) => `<div class="adm-item"><div class="grow"><h4>${esc(z.comune)} · ${esc(z.name)}</h4><p>${esc(z.phone)} · ${esc(z.email)} · ${ago(z.at)}</p>${z.note ? `<p>${esc(z.note)}</p>` : ""}</div><a class="btn sec" href="tel:${esc(z.phone.replace(/[^\d+]/g, ""))}" style="padding:8px">${icon("phone", "sm")}</a></div>`).join("") || `<div class="empty">${icon("pin")}Nessuna richiesta ancora.</div>`}</div>`;
   } catch (e) { $("#adm").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
 }
 
@@ -2673,16 +1767,6 @@ async function viewVerify([code = ""]) {
 
 // ---------- avvio ----------
 (function start() {
-  const ref = new URLSearchParams(location.search).get("ref");
-  if (ref) {
-    localStorage.setItem("vu_ref", ref.slice(0, 20));
-    history.replaceState(null, "", location.pathname + (location.hash || "#/accedi"));
-  }
   window.addEventListener("hashchange", router);
-  router().then(() => { scheduleReminders(); refreshNotifs(); });
-  // Aggiorna lo stato delle live (in diretta / passata) ogni minuto.
-  setInterval(() => {
-    const { name } = parseHash();
-    if (S.user && name === "live" && !$("#sheet").classList.contains("open")) drawLive();
-  }, 60000);
+  router().then(() => refreshNotifs());
 })();

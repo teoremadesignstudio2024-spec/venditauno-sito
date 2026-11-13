@@ -561,7 +561,9 @@ export async function handleAppApi(request, env) {
   if (path === "/notifications" && method === "GET") {
     const [all, mine, read] = await Promise.all([getJSON(kv, "app:notif:all", []), getJSON(kv, `app:notif:u:${me.id}`, []), kv.get(`app:notifread:${me.id}`)]);
     const since = Math.max(Number(read) || 0, me.createdAt - 7 * 86400000);
-    const list = [...all, ...mine].sort((a, b) => b.at - a.at).slice(0, 60).map((n) => ({ ...n, unread: n.at > since }));
+    // Avvisi delle sezioni tolte (live, guadagni, notizie, educatori): non si mostrano più.
+    const old = /^#\/(live|guadagni|notizie|educator|mie-live|percorso)/;
+    const list = [...all, ...mine].filter((n) => !old.test(n.link || "")).sort((a, b) => b.at - a.at).slice(0, 60).map((n) => ({ ...n, unread: n.at > since }));
     return json({ notifications: list, unread: list.filter((n) => n.unread).length });
   }
   if (path === "/notifications/read" && method === "POST") {
