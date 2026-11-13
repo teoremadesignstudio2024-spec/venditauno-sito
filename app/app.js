@@ -168,11 +168,17 @@ function courseStats(m) {
   const all = m.lessons.length, done = m.lessons.filter((l) => S.progress[l.id]).length;
   return { all, done, pct: all ? Math.round((done / all) * 100) : 0 };
 }
+// Ogni sezione dell'accademia ha il suo colore, così le copertine si distinguono.
+const SUB_COLORS = ["#2f6bff", "#7c3aed", "#0f9d58", "#ea580c", "#0891b2", "#db2777"];
+function courseColor(m) {
+  const a = academyById(m.academyId), i = a ? (a.subs || []).findIndex((x) => x.id === m.subId) : -1;
+  return i >= 0 ? SUB_COLORS[i % SUB_COLORS.length] : accColor(a);
+}
 function courseCard(m) {
-  const a = academyById(m.academyId), e = eduById(m.educatorId), c = accColor(a), st = courseStats(m);
+  const a = academyById(m.academyId), e = eduById(m.educatorId), c = courseColor(m), st = courseStats(m);
   const saved = (S.user.saved || []).includes(m.id);
   return `<a class="ccard ${canCourse(m) ? "" : "locked"}" href="#/corso/${esc(m.id)}">${canCourse(m) ? "" : `<span class="lockchip">${icon("lock", "sm")}Bloccato</span>`}
-    <div class="cov">${coverBg(m.cover, c, a ? a.icon : "cap")}
+    <div class="cov" style="--c:${c}">${coverBg(m.cover, c, (subOf(m) || a || {}).icon || "cap")}
       <div class="info">
         <h3>${esc(m.title)}</h3>
         ${e ? `<div class="by">${face(e.name, e.photo)}${esc(e.name)}</div>` : ""}
@@ -286,20 +292,22 @@ const ROUTES = {
   accademia: { fn: viewAcademy, title: "Accademia", nav: "accademia" },
   corso: { fn: viewCourse, title: "Corso", nav: "accademia" },
   lezione: { fn: viewLesson, title: "Lezione", nav: "accademia" },
-  live: { fn: viewLive, title: "Live", nav: "live" },
-  educatori: { fn: viewEducators, title: "Educatori", nav: "educatori" },
-  percorso: { fn: viewAcademyEdu, title: "Accademia", nav: "accademia" },
-  educatore: { fn: viewEducator, title: "Educatore", nav: "educatori" },
+  // Sezioni tolte: chi ha un vecchio link torna alla home o all'accademia.
+  live: { fn: () => { location.hash = "#/home"; }, title: "" },
+  educatori: { fn: () => { location.hash = "#/home"; }, title: "" },
+  percorso: { fn: () => { location.hash = "#/accademia"; }, title: "" },
+  educatore: { fn: viewEducator, title: "Educatore", nav: "" },
   community: { fn: viewCommunity, title: "Community", nav: "community" },
   guadagni: { fn: viewEarn, title: "Guadagni", nav: "guadagni" },
-  notizie: { fn: viewPremium, title: "Servizio", nav: "notizie" },
+  notizie: { fn: () => { location.hash = "#/home"; }, title: "" },
   profilo: { fn: viewProfile, title: "Profilo", nav: "" },
-  "mie-live": { fn: viewMyLives, title: "Le mie live", nav: "live" },
+  "mie-live": { fn: () => { location.hash = "#/home"; }, title: "" },
   notifiche: { fn: viewNotifications, title: "Notifiche", nav: "notifiche" },
   sblocca: { fn: viewShop, title: "Sblocca", nav: "" },
   grazie: { fn: viewThanks, title: "Grazie", nav: "" },
   admin: { fn: viewAdmin, title: "Admin", nav: "admin", admin: true, noRail: true },
-  allenati: { fn: viewGym, title: "Allenati", nav: "allenati" },
+  allenati: { fn: () => viewGym([""]), title: "Allenati", nav: "allenati" },
+  progressi: { fn: ([t]) => viewGym([t || "risultati"]), title: "Progressi", nav: "progressi" },
   sim: { fn: viewSim, title: "Telefonata", nav: "allenati", noRail: true, incall: true },
   verifica: { fn: viewVerify, auth: false },
 };
@@ -342,7 +350,8 @@ function render(r = ROUTES.accedi, args = [], q = new URLSearchParams()) {
   if (logged) {
     $("#sideMe").innerHTML = userFace(S.user);
     $("#sideAdmin").hidden = S.user.role !== "admin";
-    renderRail();
+    $("#rail").hidden = true;
+    shell.classList.add("noRail");
     $("#title").textContent = r.title;
     document.querySelectorAll("[data-nav]").forEach((a) => a.classList.toggle("on", a.dataset.nav === r.nav));
     paintBell();
@@ -670,10 +679,7 @@ async function viewNotifications() {
 }
 
 // ---------- radiale ----------
-const radial = $("#radial"), uno = $("#uno");
-function closeRadial() { radial.classList.remove("open"); uno.classList.remove("open"); }
-uno.onclick = () => { radial.classList.toggle("open"); uno.classList.toggle("open"); };
-radial.addEventListener("click", (e) => { if (e.target === radial || e.target.closest("a")) closeRadial(); });
+function closeRadial() {}
 
 // =====================================================================
 // ACCESSO
@@ -691,8 +697,8 @@ function viewAuth() {
       <h1 class="hero">${mode === "reg" ? "Crea il tuo <span>account gratuito.</span>" : "Bentornato, <span>accedi.</span>"}</h1>
       <div class="perks">
         <div>${icon("cap")} Corsi passo passo, dalla chiamata al rogito</div>
-        <div>${icon("live")} Live ogni settimana con gli educatori</div>
-        <div>${icon("users")} Community di agenti in tutta Italia</div>
+        <div>${icon("phone")} Allenati al telefono con clienti simulati e ricevi il voto</div>
+        <div>${icon("trend")} Punti, classifica e certificati per ogni corso</div>
       </div>
       <div class="seg"><button data-m="reg" class="${mode === "reg" ? "on" : ""}">Registrati</button><button data-m="login" class="${mode === "login" ? "on" : ""}">Accedi</button></div>
       ${mode === "reg" && ref ? `<div class="refnote">${icon("handshake", "sm")} Ti ha invitato un collega (codice ${esc(ref)})</div>` : ""}
@@ -738,127 +744,86 @@ function viewAuth() {
 }
 
 // =====================================================================
-// HOME
+// HOME: la tua giornata
 // =====================================================================
-function liveCard(l) {
-  const e = eduById(l.educatorId) || { name: "Vendita Uno" };
-  const st = liveState(l), d = new Date(l.start);
-  const when = st === "now" ? `<span class="pulse"></span> In diretta · ${esc(e.name)}` : `${sameDay(d, new Date()) ? "Oggi" : DOW[d.getDay()]} ${fmtTime(d)} · ${esc(e.name)}`;
-  return `<a class="card livecard ${st}" href="#/live/${esc(l.id)}">${face(e.name, e.photo)}<div class="grow"><h3>${esc(l.title)}</h3><p>${when}</p></div><span class="go">${st === "now" ? "Entra" : "Vedi"}</span></a>`;
+const romeDay = (t) => new Date(t).toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
+function todayTasks() {
+  const g = gymNow(), today = romeDay(Date.now()), nl = nextLesson();
+  const lessonToday = Object.values(S.progress || {}).some((t) => romeDay(t) === today);
+  return [
+    { done: lessonToday, ic: "play", t: "Guarda una lezione", s: nl ? nl.title : "Le lezioni arrivano presto", href: nl ? `#/lezione/${nl.id}` : "#/accademia" },
+    { done: g.simToday > 0, ic: "phone", t: "Fai una telefonata di allenamento", s: g.simToday ? `${g.simToday} fatte oggi` : "Un cliente difficile ti aspetta", href: "#/allenati" },
+    { done: !!g.resToday, ic: "trend", t: "Segna i risultati di oggi", s: "Chiamate, appuntamenti, incarichi", href: "#/progressi" },
+  ];
 }
-
-function evCard(l) {
-  const e = eduById(l.educatorId) || { name: "Vendita Uno" };
-  const d = new Date(l.start);
-  return `<a class="card ev" href="#/live/${esc(l.id)}"><div class="when">${sameDay(d, new Date()) ? "Oggi" : DOW[d.getDay()] + " " + d.getDate()} · ${fmtTime(d)}</div><h4>${esc(l.title)}</h4><div class="who">${face(e.name, e.photo)}${esc(e.name)}</div></a>`;
-}
-
 function viewHome() {
-  const set = S.content.settings || {}, ls = allLessons(), done = ls.filter((l) => S.progress[l.id]).length;
-  const nl = nextLesson(), now = liveNow(), next = nextLives(8);
-  const banners = S.content.banners || [];
-  const started = S.content.modules.filter((m) => courseStats(m).done && courseStats(m).done < m.lessons.length);
-  const vid = set.onboardingVideo;
+  const g = gymNow(), lv = levelOf(g.xp), tasks = todayTasks(), done = tasks.filter((t) => t.done).length;
+  const ls = allLessons(), doneL = ls.filter((l) => S.progress[l.id]).length, nl = nextLesson();
+  const C = 2 * Math.PI * 22;
+  const day = new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+  const subsHtml = S.content.academies.flatMap((a) => (a.subs || []).map((sb) => ({ a, sb, ms: S.content.modules.filter((m) => m.academyId === a.id && m.subId === sb.id) }))).filter((x) => x.ms.length)
+    .map((x) => `${secHd(x.sb.name, null, `<a href="#/accademia?sez=${esc(x.sb.id)}">Tutti</a>`)}<div class="hcourses">${x.ms.map(courseCard).join("")}</div>`).join("");
   view.innerHTML = `
-    <section class="home-hero"><picture><img src="/app/splash.webp" alt="Vendita Uno. Tutto in uno, tutto per te: formazione, strumenti e una community di professionisti per crescere nel settore immobiliare."></picture></section>
-    ${storiesBar()}
-    <div class="home-top">
-      <div>
-        <p class="hi-name">Ciao ${esc(S.user.name)}, ${esc((set.welcomeSub || "scopri Vendita Uno").replace(/^./, (c) => c.toLowerCase()))}</p>
-        <div class="onb" id="onb">
-          <button class="onb-hd" id="onbBtn"><span class="pl">${icon("play")}</span><div class="grow"><h3>${esc(set.onboardingTitle || "Inizia da qui")}</h3><p>${esc(set.onboardingText || "")}</p></div><span class="wave"><i></i><i></i><i></i><i></i><i></i></span></button>
-          <div id="onbVid"></div>
-        </div>
-        ${nl && done ? `<div class="acc">
-          <div style="display:flex;justify-content:space-between"><span class="chip blue">${icon("cap", "sm")} Continua</span><span class="chip ok">${done} su ${ls.length}</span></div>
-          <div class="mod">${esc(nl.module.title)}</div><h3>${esc(nl.title)}</h3>
-          <div class="prog"><i style="width:${Math.round((done / ls.length) * 100)}%"></i></div>
-          <a class="btn pri block" href="#/lezione/${esc(nl.id)}">${icon("play", "sm")}Continua da dove eri</a></div>` : ""}
+    <section class="hello-blk"><p>${esc(day)}</p><h1>Ciao ${esc(S.user.name)}</h1></section>
+    <section class="today">
+      <div class="today-hd">
+        <div class="grow"><h2>La tua giornata</h2><p>${done === 3 ? "Fatto tutto. Domani si ricomincia." : `${3 - done} ${3 - done === 1 ? "cosa" : "cose"} da fare per tenere la serie`}</p></div>
+        <div class="dayring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" class="trk"/><circle cx="26" cy="26" r="22" class="val" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - done / 3)}"/></svg><b>${done}/3</b></div>
       </div>
-      ${banners.length ? `<div class="banners" id="bnr"><div class="track">${banners.map((bn) => `<a class="bn ${!bn.title && !bn.text && safeUrl(bn.cover) ? "plain" : ""}" href="${esc(bn.link && /^(#\/|\/|https:\/\/)/.test(bn.link) ? bn.link : "#/home")}">${coverBg(bn.cover, "#2f6bff", "spark")}<h3>${esc(bn.title)}</h3><p>${esc(bn.text)}</p></a>`).join("")}</div>
-        ${banners.length > 1 ? `<div class="ctl"><button data-b="-1" aria-label="Precedente">${icon("back")}</button><span class="dots">${banners.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</span><button data-b="1" aria-label="Successivo">${icon("chev")}</button></div>` : ""}</div>` : ""}
-    </div>
-    ${gymCard()}
-    ${now ? `<h2 class="sec">In diretta ora</h2>${lvItem(now)}` : ""}
-    ${secHd("Scegli come guadagnare", null, carouselArrows("hAcc"))}
-    <div class="acards" id="hAcc">${S.content.academies.map(academyCard).join("")}</div>
-    ${S.content.educators.length ? `${secHd("I nostri educatori", null, `<a href="#/educatori">Tutti</a>`)}
-    <div class="edus">${S.content.educators.map((e) => `<a class="edu-pill" href="#/educatore/${esc(e.id)}">${face(e.name, e.photo)}<b>${esc(e.name)}</b><small>${esc(e.role || (academyById(e.academyId) || {}).name || "")}</small></a>`).join("")}</div>` : ""}
-    ${started.length ? `${secHd("Continua i tuoi corsi", null, `<a href="#/accademia">Tutti</a>`)}
-    <div class="hcourses" id="hCourses">${started.map(courseCard).join("")}</div>` : ""}
-    <div class="hide-desk">
-      ${secHd("Prossime live", null, `<a href="#/live">Calendario</a>`)}
-      ${next.length ? `<div class="lv-list">${next.slice(0, 3).map(lvItem).join("")}</div>` : `<div class="card empty">${icon("cal")}Nessuna live in programma per ora.</div>`}
-    </div>
-    <div id="homeWins"></div>
-    <a class="card teaser" href="#/notizie" style="margin-top:20px"><span class="lk">${icon("lock")}</span><div class="grow"><h4>Notizie esclusive nella tua zona</h4><p>${S.user.city ? `Verifica se ${esc(S.user.city)} è ancora libera` : "Scopri il servizio per avere le notizie"}</p></div>${icon("chev")}</a>`;
+      ${tasks.map((t) => `<a class="task ${t.done ? "done" : ""}" href="${esc(t.href)}"><span class="tk">${icon(t.done ? "check" : t.ic, "sm")}</span><div class="grow"><h3>${esc(t.t)}</h3><p class="ell">${esc(t.s)}</p></div>${icon("chev", "sm")}</a>`).join("")}
+    </section>
+    <a class="lvline" href="#/progressi/classifica">${lvlBadge(lv, 44)}<div class="grow"><b>${esc(lv.name)}</b><div class="prog"><i style="width:${lv.pct}%"></i></div><small>${g.xp} punti${lv.next ? ` · ${lv.next - g.xp} per ${esc(lv.nextName)}` : ""}</small></div><span class="gc-streak ${g.today ? "on" : ""}">${flame(g.streak > 0)}<b>${g.streak}</b><small>di fila</small></span></a>
+    ${nl ? `<a class="resume" href="#/lezione/${esc(nl.id)}">
+      <div class="rs-cov">${coverBg(nl.module.cover, courseColor(nl.module), (subOf(nl.module) || {}).icon || "play")}<span class="rs-play">${icon("play")}</span></div>
+      <div class="rs-tx"><small>${doneL ? "Riprendi da qui" : "Inizia da qui"} · ${esc(nl.module.title)}</small><h3>${esc(nl.title)}</h3>
+      <div class="prog"><i style="width:${ls.length ? Math.round((doneL / ls.length) * 100) : 0}%"></i></div><p>${doneL} di ${ls.length} lezioni dell'Accademia</p></div></a>` : ""}
+    ${subsHtml}
+    <div id="homeWins"></div>`;
   bindCourses(view);
-  bindScroll(view);
-  view.querySelectorAll("[data-stories]").forEach(paintStories);
-  loadStories();
   paintHomeWins();
-  $("#onbBtn").onclick = () => {
-    const box = $("#onbVid");
-    box.innerHTML = box.innerHTML ? "" : vid ? `<div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>` : `<p class="small muted" style="padding:0 16px 16px">Il video di benvenuto arriva presto.</p>`;
-  };
-  const bnr = $("#bnr");
-  if (bnr && banners.length > 1) {
-    let i = 0;
-    const go = (d) => {
-      i = (i + d + banners.length) % banners.length;
-      bnr.querySelector(".track").style.transform = `translateX(-${i * 100}%)`;
-      bnr.querySelectorAll(".dots i").forEach((x, k) => x.classList.toggle("on", k === i));
-    };
-    bnr.querySelectorAll("[data-b]").forEach((b) => (b.onclick = () => { go(Number(b.dataset.b)); clearInterval(S.bnrT); }));
-    clearInterval(S.bnrT);
-    S.bnrT = setInterval(() => { if (document.body.contains(bnr)) go(1); else clearInterval(S.bnrT); }, 6000);
-  }
 }
 
 // =====================================================================
 // ACCADEMIA
 // =====================================================================
-let acTab = "corsi", acFilter = "";
-function viewAcademy() {
-  const ls = allLessons(), done = ls.filter((l) => S.progress[l.id]).length;
-  const tabs = [["corsi", "Corsi"], ["educatori", "Educatori"], ["live", "Live"]];
-  let body = "";
-  if (acTab === "corsi") {
-    const saved = S.user.saved || [];
-    let list = S.content.modules;
-    if (acFilter === "_saved") list = list.filter((m) => saved.includes(m.id));
-    else if (acFilter) list = list.filter((m) => m.academyId === acFilter);
-    const used = S.content.academies.filter((a) => S.content.modules.some((m) => m.academyId === a.id));
-    body = `<div class="fchips"><button data-f="" class="${!acFilter ? "on" : ""}">Tutti</button>${saved.length ? `<button data-f="_saved" class="${acFilter === "_saved" ? "on" : ""}">${icon("check", "sm")}Salvati</button>` : ""}${used.map((a) => `<button data-f="${esc(a.id)}" class="${acFilter === a.id ? "on" : ""}" style="--c:${accColor(a)}"><i></i>${esc(a.name)}</button>`).join("")}</div>
-      ${acFilter ? `<div class="sec-hd" style="margin-top:4px"><h2>${acFilter === "_saved" ? "I tuoi corsi" : esc((academyById(acFilter) || {}).name || "")}</h2><span class="ln"></span><span class="small muted">${list.length} corsi</span></div>` : `<p class="small muted" style="margin:-4px 0 4px">${done} lezioni completate su ${ls.length}</p>`}
-      ${!acFilter ? S.content.academies.filter((a) => S.content.modules.some((m) => m.academyId === a.id)).map((a) => `${secHd(a.name, S.content.modules.filter((m) => m.academyId === a.id).length, `<a href="#/percorso/${esc(a.id)}">Apri</a>`)}<div class="hcourses">${S.content.modules.filter((m) => m.academyId === a.id).map(courseCard).join("")}</div>`).join("")
-        : `<div class="courses">${list.map(courseCard).join("") || `<div class="card empty">${icon("cap")}Nessun corso qui, per ora.</div>`}</div>`}
-      ${secHd("Scegli come guadagnare", null, carouselArrows("aAcc"))}
-      <div class="acards" id="aAcc">${S.content.academies.map(academyCard).join("")}</div>`;
-  } else if (acTab === "educatori") {
-    body = `${S.content.educators.map(eduRow).join("") || `<div class="card empty">Nessun educatore.</div>`}`;
-  } else {
-    const up = sortedLives().filter((l) => liveState(l) !== "past");
-    body = `<div class="lv-list">${up.map(lvItem).join("") || `<div class="card empty">${icon("cal")}Nessuna live in programma.</div>`}</div><a class="btn sec block" href="#/live" style="margin-top:14px">${icon("cal", "sm")}Apri il calendario</a>`;
-  }
-  view.innerHTML = `<div class="utabs">${tabs.map(([k, n]) => `<button data-t="${k}" class="${acTab === k ? "on" : ""}">${n}</button>`).join("")}</div>${body}`;
-  view.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => { acTab = b.dataset.t; viewAcademy(); }));
+let acFilter = "";
+function viewAcademy(_, q) {
+  if (q && q.get("sez")) acFilter = q.get("sez");
+  const a = S.content.academies[0];
+  const ls = allLessons(), done = ls.filter((l) => S.progress[l.id]).length, pct = ls.length ? Math.round((done / ls.length) * 100) : 0;
+  const certs = Object.keys(S.user.certs || {}).length, saved = S.user.saved || [];
+  const subs = S.content.academies.flatMap((x) => x.subs || []).filter((sb) => S.content.modules.some((m) => m.subId === sb.id));
+  let list = S.content.modules;
+  if (acFilter === "_saved") list = list.filter((m) => saved.includes(m.id));
+  else if (acFilter) list = list.filter((m) => m.subId === acFilter);
+  view.innerHTML = `
+    <section class="ac-hd">
+      <h1 class="h1">Accademia</h1>
+      <p class="lead-tx">${esc(a ? a.name : "Vendita Uno")}: ${S.content.modules.length} corsi, ${ls.length} lezioni. Dal primo contatto alla firma.</p>
+      <div class="ac-stats">
+        <div><b>${pct}%</b><span>completato</span></div>
+        <div><b>${done}</b><span>lezioni fatte</span></div>
+        <div><b>${certs}</b><span>${certs === 1 ? "certificato" : "certificati"}</span></div>
+      </div>
+      <div class="prog" style="margin-top:14px"><i style="width:${pct}%"></i></div>
+    </section>
+    <div class="fchips"><button data-f="" class="${!acFilter ? "on" : ""}">Tutti</button>${subs.map((sb) => `<button data-f="${esc(sb.id)}" class="${acFilter === sb.id ? "on" : ""}">${icon(sb.icon || "cap", "sm")}${esc(sb.name)}</button>`).join("")}${saved.length ? `<button data-f="_saved" class="${acFilter === "_saved" ? "on" : ""}">${icon("save", "sm")}Salvati</button>` : ""}</div>
+    <div class="courses">${list.map(courseCard).join("") || `<div class="card empty">${icon("cap")}Nessun corso qui, per ora.</div>`}</div>`;
   view.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { acFilter = b.dataset.f; viewAcademy(); }));
   bindCourses(view);
-  bindScroll(view);
 }
 
 function viewCourse([id]) {
   const m = courseById(id);
   if (!m) { location.hash = "#/accademia"; return; }
-  const a = academyById(m.academyId), e = eduById(m.educatorId), c = accColor(a), st = courseStats(m);
+  const a = academyById(m.academyId), e = eduById(m.educatorId), c = courseColor(m), st = courseStats(m);
   const next = m.lessons.find((l) => !S.progress[l.id]) || m.lessons[0];
   const saved = (S.user.saved || []).includes(m.id);
   view.innerHTML = `
     <div class="chero">${coverBg(m.cover, c, a ? a.icon : "cap")}
       <a class="back" href="#/accademia">${icon("back", "sm")} Accademia</a>
       <div class="info">
-        <div class="row" style="gap:8px;flex-wrap:wrap">${a ? `<a class="chip" href="#/percorso/${esc(a.id)}" style="background:${c};color:#fff;text-decoration:none">${esc(a.name)}${subOf(m) ? " › " + esc(subOf(m).name) : ""}</a>` : ""}<span class="lvl ${m.level === "premium" ? "premium" : "base"}">${m.level === "premium" ? "Premium" : "Base"}</span></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">${a ? `<a class="chip" href="#/accademia?sez=${esc(m.subId || "")}" style="background:${c};color:#fff;text-decoration:none">${esc(subOf(m) ? subOf(m).name : a.name)}</a>` : ""}<span class="lvl ${m.level === "premium" ? "premium" : "base"}">${m.level === "premium" ? "Premium" : "Base"}</span></div>
         <h1>${esc(m.title)}</h1>
         ${e ? `<a class="row" href="#/educatore/${esc(e.id)}" style="gap:8px;margin-top:10px;text-decoration:none;font-size:13px;color:#d3dcef">${face(e.name, e.photo)}${esc(e.name)}</a>` : ""}
       </div>
@@ -986,7 +951,7 @@ function drawLive() {
     ${lives.length ? `<h2 class="sec">Tutte le live della settimana</h2><div class="card" style="padding:0 14px">${lives.map((l) => {
       const d = new Date(l.start), e = eduById(l.educatorId) || { name: "" }, st = liveState(l);
       const ea = academyById(e.academyId);
-      return `<button class="lrow" data-live="${esc(l.id)}"><div class="dt"><span>${DOW[d.getDay()]}</span><b>${d.getDate()}</b></div><div class="grow"><h4>${esc(l.title)}</h4><p>${fmtTime(d)} · ${esc(e.name)}${ea && !acad ? ` · <span style="color:${accColor(ea)}">${esc(ea.name)}</span>` : ""}${st === "now" ? ' · <span style="color:#ff6b6b">in diretta</span>' : st === "past" ? " · passata" : ""}</p></div>${icon("chev", "sm")}</button>`;
+      return `<button class="lrow" data-live="${esc(l.id)}"><div class="dt"><span>${DOW[d.getDay()]}</span><b>${d.getDate()}</b></div><div class="grow"><h4>${esc(l.title)}</h4><p>${fmtTime(d)} · ${esc(e.name)}${ea && !acad ? ` · <span style="color:${accColor(ea)}">${esc(ea.name)}</span>` : ""}${st === "now" ? ' · <span style="color:#dc2626">in diretta</span>' : st === "past" ? " · passata" : ""}</p></div>${icon("chev", "sm")}</button>`;
     }).join("")}</div>` : ""}`;
 
   view.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { S.week += Number(b.dataset.w); S.selLive = null; drawLive(); }));
@@ -1006,7 +971,7 @@ function drawDetail() {
   const e = eduById(l.educatorId) || { name: "Vendita Uno", role: "" };
   const st = liveState(l), d = new Date(l.start), on = S.reminders.includes(l.id);
   const enterUrl = safeUrl(l.url), replay = safeUrl(l.replayUrl);
-  const when = st === "now" ? `<span class="pulse"></span><span style="color:#ff6b6b">In diretta ora</span>` : `${esc(fmtDay(d))} · ${fmtTime(d)}`;
+  const when = st === "now" ? `<span class="pulse"></span><span style="color:#dc2626">In diretta ora</span>` : `${esc(fmtDay(d))} · ${fmtTime(d)}`;
   let btns;
   if (!can("live")) btns = `<button class="btn pri" data-unlive>${icon("lock", "sm")}Sblocca le live</button>`;
   else if (st === "now") btns = enterUrl ? `<button class="btn live" data-enter>${icon("live", "sm")}Entra in live</button>` : `<button class="btn live" disabled>${icon("live", "sm")}Link in arrivo</button>`;
@@ -1133,24 +1098,21 @@ function viewAcademyEdu([id]) {
 async function viewEducator([id]) {
   const e = eduById(id);
   if (!e) { location.hash = "#/educatori"; return; }
-  if (!can("educators")) { lockedView("educators", e.name, "La sezione educatori è bloccata: sbloccala per vedere profili, corsi e live di ogni educatore."); return; }
   const a = academyById(e.academyId);
   const lives = sortedLives().filter((l) => l.educatorId === id);
   const up = lives.filter((l) => liveState(l) !== "past"), past = lives.filter((l) => liveState(l) === "past");
   const following = (S.user.following || []).includes(id);
   view.innerHTML = `
-    <a class="back" href="#/educatori">${icon("back", "sm")} Educatori</a>
+    <a class="back" href="#/accademia">${icon("back", "sm")} Accademia</a>
     <div class="card prof">
       ${face(e.name, e.photo)}
       <h3>${esc(e.name)}</h3>
       <div class="role">${esc([a && a.name, e.role].filter(Boolean).join(" · "))}</div>
       ${e.bio ? `<p class="bio">${esc(e.bio)}</p>` : ""}
-      <div class="nums"><div><b>${up.length}</b><span>In programma</span></div><div><b>${past.length}</b><span>Live fatte</span></div></div>
+      <div class="nums"><div><b>${S.content.modules.filter((m) => m.educatorId === id).length}</b><span>Corsi</span></div><div><b>${S.content.modules.filter((m) => m.educatorId === id).reduce((n, m) => n + m.lessons.length, 0)}</b><span>Lezioni</span></div></div>
       <button class="follow ${following ? "on" : ""}" id="follow">${following ? "Seguito" : "Segui"}</button>
     </div>
     ${S.content.modules.some((m) => m.educatorId === id) ? `<h2 class="sec">Corsi</h2><div class="hcourses">${S.content.modules.filter((m) => m.educatorId === id).map(courseCard).join("")}</div>` : ""}
-    <h2 class="sec">Prossime live</h2>
-    <div class="card" style="padding:0 14px">${up.map((l) => { const d = new Date(l.start); return `<a class="lrow" href="#/live/${esc(l.id)}" style="text-decoration:none"><div class="dt"><span>${DOW[d.getDay()]}</span><b>${d.getDate()}</b></div><div class="grow"><h4>${esc(l.title)}</h4><p>${fmtTime(d)} · ${l.minutes} min${liveState(l) === "now" ? ' · <span style="color:#ff6b6b">in diretta</span>' : ""}</p></div>${icon("chev", "sm")}</a>`; }).join("") || `<div class="empty">Nessuna live in programma.</div>`}</div>
     <h2 class="sec">Post</h2><div id="eduPosts"><div class="loading" style="min-height:80px"><div class="spin"></div></div></div>`;
   bindCourses(view);
   $("#follow").onclick = async () => {
@@ -1233,7 +1195,10 @@ async function viewCommunity(_, q) {
   if (!can("community")) { lockedView("community", "Community bloccata", "Sblocca la community per leggere e scrivere con gli altri agenti e con gli educatori."); return; }
   let image = "";
   view.innerHTML = `
-    ${storiesBar()}
+    <div class="row" style="justify-content:space-between;margin-bottom:6px"><h1 class="h1">Community</h1><button class="btn sec" id="shareW" style="padding:9px 14px">${icon("spark", "sm")}Successo</button></div>
+    <p class="lead-tx" style="margin:0 0 6px">Domande, consigli e risultati degli agenti Vendita Uno.</p>
+    <div id="homeWins"></div>
+    <h2 class="sec">Bacheca</h2>
     <div class="card compose">
       <div class="row" style="align-items:flex-start">${userFace(S.user)}<textarea id="ptx" placeholder="Racconta un incarico preso, fai una domanda…" maxlength="2000" rows="2"></textarea></div>
       <div class="prev" id="pprev" hidden></div>
@@ -1242,8 +1207,8 @@ async function viewCommunity(_, q) {
     <div id="feed"><div class="loading" style="min-height:120px"><div class="spin"></div></div></div>
     <div id="more"></div>`;
   view.querySelector(".compose .av, .compose .ini").style.cssText = "width:34px;height:34px;font-size:12px";
-  view.querySelectorAll("[data-stories]").forEach(paintStories);
-  loadStories();
+  paintHomeWins();
+  $("#shareW").onclick = () => shareWin(paintHomeWins);
   const tx = $("#ptx");
   tx.oninput = () => { tx.style.height = "auto"; tx.style.height = tx.scrollHeight + "px"; };
   if (q.get("scrivi")) setTimeout(() => tx.focus(), 50);
@@ -1408,7 +1373,7 @@ function viewShop() {
     ${list.length ? `<div class="prods" style="margin-top:16px">${productsHtml(list)}</div>` : `<div class="card empty" style="margin-top:16px">${icon("lock")}Al momento non ci sono prodotti da acquistare.</div>`}`;
 }
 async function viewThanks() {
-  view.innerHTML = `<div class="lockbox" style="margin:40px auto"><span class="lk" style="background:rgba(34,197,94,.18);color:#5ee08f">${icon("check")}</span><h2>Grazie per l'acquisto!</h2><p id="thx">Stiamo attivando il tuo accesso…</p><a class="btn pri block" href="#/accademia">Vai all'accademia</a></div>`;
+  view.innerHTML = `<div class="lockbox" style="margin:40px auto"><span class="lk" style="background:#e7f6ec;color:#15803d">${icon("check")}</span><h2>Grazie per l'acquisto!</h2><p id="thx">Stiamo attivando il tuo accesso…</p><a class="btn pri block" href="#/accademia">Vai all'accademia</a></div>`;
   const before = JSON.stringify(S.user.access);
   for (let i = 0; i < 6; i++) {
     await new Promise((r) => setTimeout(r, 2500));
@@ -1519,12 +1484,9 @@ function viewProfile() {
       <div class="grow"><h1 class="h1" style="font-size:22px">${esc(fullName(u))}</h1><p class="muted small" style="margin-top:4px">${roleName}${u.city ? " · " + esc(u.city) : ""}</p></div>
     </div>
     <div class="card menu" style="margin-top:20px">
-      ${u.role === "educator" || (u.role === "admin" && myEducator()) ? `<a href="#/mie-live">${icon("live")}Le mie live${icon("chev", "chev")}</a>` : ""}
       <a href="#/allenati">${icon("phone")}Allenati, risultati e classifica${icon("chev", "chev")}</a>
       <a href="#/guadagni">${icon("wallet")}Guadagni e inviti${icon("chev", "chev")}</a>
       ${fullAccess() ? "" : `<a href="#/sblocca">${icon("key")}Sblocca i contenuti${icon("chev", "chev")}</a>`}
-      <a href="#/educatori?tab=seguiti">${icon("users")}Educatori che segui${icon("chev", "chev")}</a>
-      <a href="#/notizie">${icon("lock")}Notizie esclusive${icon("chev", "chev")}</a>
       ${u.role === "admin" ? `<a href="#/admin">${icon("shield")}Pannello admin${icon("chev", "chev")}</a>` : `<button id="claim">${icon("key")}Ho un codice amministratore${icon("chev", "chev")}</button>`}
     </div>
     <h2 class="sec">I tuoi dati</h2>
@@ -1843,7 +1805,7 @@ function admModules() {
       },
       j >= 0 ? async () => { const ls = m.lessons.slice(); ls.splice(j, 1); await saveSection("modules", withLessons(ls), "Lezione eliminata"); } : null);
     const vin = $("#sf [name=video]"), vk = $("#vkind");
-    const showKind = () => { const v = videoSrc(vin.value); vk.textContent = vin.value.trim() ? (v ? `✓ Video ${v.kind} riconosciuto` : "Link non riconosciuto") : ""; vk.style.color = v ? "#5ee08f" : "var(--warn)"; };
+    const showKind = () => { const v = videoSrc(vin.value); vk.textContent = vin.value.trim() ? (v ? `✓ Video ${v.kind} riconosciuto` : "Link non riconosciuto") : ""; vk.style.color = v ? "#15803d" : "var(--warn)"; };
     vin.oninput = showKind; showKind();
     const up = $("#lup");
     if (up) up.onclick = () => { const ls = m.lessons.slice(); [ls[j - 1], ls[j]] = [ls[j], ls[j - 1]]; saveSection("modules", withLessons(ls), "Ordine aggiornato").catch((e) => toast(e.message)); };
@@ -2015,7 +1977,7 @@ function admOverview() {
 function admEducators() {
   const eds = S.content.educators;
   $("#adm").innerHTML = `<button class="btn pri block" id="add">${icon("plus", "sm")}Nuovo educatore</button>
-    <div class="card" style="margin-top:14px">${eds.map((e, i) => `<div class="adm-item">${face(e.name, e.photo)}<div class="grow"><h4>${esc(e.name)}</h4><p>${esc((academyById(e.academyId) || {}).name || "—")}</p><p>${e.email ? `<span style="color:#5ee08f">✓ Account collegato: ${esc(e.email)}</span>` : `<span style="color:var(--warn)">Nessun account collegato: premi ✏️ e scegli chi è</span>`}</p></div>${itemActs(i, eds.length)}</div>`).join("") || `<div class="empty">Nessun educatore</div>`}</div>`;
+    <div class="card" style="margin-top:14px">${eds.map((e, i) => `<div class="adm-item">${face(e.name, e.photo)}<div class="grow"><h4>${esc(e.name)}</h4><p>${esc((academyById(e.academyId) || {}).name || "—")}</p><p>${e.email ? `<span style="color:#15803d">✓ Account collegato: ${esc(e.email)}</span>` : `<span style="color:var(--warn)">Nessun account collegato: premi ✏️ e scegli chi è</span>`}</p></div>${itemActs(i, eds.length)}</div>`).join("") || `<div class="empty">Nessun educatore</div>`}</div>`;
   $("#adm").querySelectorAll(".adm-item .av,.adm-item .ini").forEach((x) => (x.style.cssText = "width:40px;height:40px;font-size:13px"));
   const edit = async (i) => {
     const e = i >= 0 ? eds[i] : { name: "", academyId: (S.content.academies[0] || {}).id, role: "", bio: "", photo: "", email: "" };
@@ -2086,7 +2048,7 @@ async function admUsers() {
     if (content) { S.content = content; toast("Creati i profili educatore mancanti"); }
     const draw = (t = "") => {
       const list = users.filter((u) => `${u.name} ${u.email} ${u.city}`.toLowerCase().includes(t.toLowerCase()));
-      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button><button data-ref="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Modifica</button></p>` : ""}${u.role === "agent" ? `<p class="row" style="gap:8px;margin-top:4px"><span class="ell" style="color:${u.access && !u.access.length ? "var(--warn)" : "#5ee08f"}">${icon("key", "sm")} ${esc(accessSummary(u.access))}</span><button data-acc="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Accessi</button></p>` : ""}</div>
+      $("#ulist").innerHTML = list.map((u) => `<div class="adm-item"><div class="grow"><h4>${esc(u.name)}</h4><p>${esc(u.email)}${u.city ? " · " + esc(u.city) : ""}${u.referredBy ? " · invitato da " + esc(u.referredBy) : ""}</p>${u.educatorId ? `<p><a href="#/educatore/${esc(u.educatorId)}" style="color:var(--blue-2);font-weight:600">Profilo educatore collegato ›</a></p>` : u.role === "educator" ? `<p><button data-mkedu="${esc(u.id)}" style="color:var(--warn);font-weight:700">Crea profilo educatore ›</button></p>` : ""}${u.refCode ? `<p class="row" style="gap:6px;margin-top:4px"><span class="ell" style="color:var(--blue-3)">${esc(location.host)}/app/?ref=${esc(u.refCode)}</span><button data-copy="${esc(u.refCode)}" style="color:var(--blue-2);font-weight:700;flex:none">Copia</button><button data-ref="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Modifica</button></p>` : ""}${u.role === "agent" ? `<p class="row" style="gap:8px;margin-top:4px"><span class="ell" style="color:${u.access && !u.access.length ? "var(--warn)" : "#15803d"}">${icon("key", "sm")} ${esc(accessSummary(u.access))}</span><button data-acc="${esc(u.id)}" style="color:var(--blue-2);font-weight:700;flex:none">Accessi</button></p>` : ""}</div>
         <select data-role="${esc(u.id)}">${[["agent", "Agente"], ["educator", "Educatore"], ["admin", "Admin"]].map(([v, n]) => `<option value="${v}" ${u.role === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>`).join("") || `<div class="empty">Nessun utente</div>`;
       $("#ulist").querySelectorAll("[data-acc]").forEach((b) => (b.onclick = () => {
         const u = users.find((x) => x.id === b.dataset.acc);
@@ -2206,7 +2168,7 @@ function flame(on) {
 function gymCard() {
   const g = gymNow(), lv = levelOf(g.xp);
   return `<section class="gymcard">
-    <a class="gc-top" href="#/allenati/classifica">
+    <a class="gc-top" href="#/progressi/classifica">
       ${lvlBadge(lv, 58)}
       <div class="grow"><h3>${esc(lv.name)}</h3>
         <div class="prog"><i style="width:${lv.pct}%"></i></div>
@@ -2253,7 +2215,7 @@ async function paintHomeWins() {
   try {
     const { wins } = await api("/wins");
     if (!document.body.contains(box)) return;
-    box.innerHTML = wins.length ? `${secHd("Muro dei successi", null, `<a href="#/allenati/successi">Tutti</a>`)}<div class="wins-row">${wins.slice(0, 8).map(winCard).join("")}</div>` : "";
+    box.innerHTML = wins.length ? `${secHd("Muro dei successi", null, `<a href="#/progressi/successi">Tutti</a>`)}<div class="wins-row">${wins.slice(0, 8).map(winCard).join("")}</div>` : "";
     bindWins(box);
   } catch {}
 }
@@ -2281,7 +2243,7 @@ async function loadGym() {
   gymData = d; S.gym = d.gym;
   return d;
 }
-const GYM_TABS = [["", "Telefonate"], ["risultati", "Risultati"], ["classifica", "Classifica"], ["successi", "Successi"]];
+const GYM_TABS = [["risultati", "Risultati"], ["classifica", "Classifica"], ["successi", "Successi"]];
 async function viewGym([tab = ""]) {
   const g = gymNow(), lv = levelOf(g.xp);
   view.innerHTML = `
@@ -2292,7 +2254,7 @@ async function viewGym([tab = ""]) {
         <p class="small muted" style="margin-top:6px">${g.xp} punti${lv.next ? ` · ${lv.next - g.xp} al livello ${esc(lv.nextName)}` : ""}</p></div>
       <div class="gc-streak ${g.today ? "on" : ""}">${flame(g.streak > 0)}<b>${g.streak}</b><small>di fila</small></div>
     </header>
-    <div class="utabs">${GYM_TABS.map(([k, n]) => `<a href="#/allenati${k ? "/" + k : ""}" class="${tab === k ? "on" : ""}">${n}</a>`).join("")}</div>
+    ${tab ? `<div class="utabs">${GYM_TABS.map(([k, n]) => `<a href="#/progressi/${k}" class="${tab === k ? "on" : ""}">${n}</a>`).join("")}</div>` : ""}
     <div id="gymBody"><div class="loading"><div class="spin"></div></div></div>`;
   try { if (!gymData || tab === "" || tab === "risultati") await loadGym(); } catch (e) { $("#gymBody").innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   const body = $("#gymBody");

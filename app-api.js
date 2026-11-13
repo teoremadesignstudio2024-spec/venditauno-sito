@@ -108,7 +108,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 12;
+const CATALOG_V = 13;
 
 function catalogAcademies() {
   return [
@@ -117,32 +117,6 @@ function catalogAcademies() {
       { id: "tra", name: "Trattativa", icon: "handshake" },
       { id: "chiu", name: "Chiusura", icon: "doc" },
       { id: "chi", name: "Chiamate a freddo", icon: "phone" },
-    ] },
-    { id: "inv", name: "Investimenti immobiliari", icon: "trend", color: "#eab308", cover: "", card: "/app/academies/investimenti-immobiliari.jpg", subs: [
-      { id: "affari", name: "Trovare gli affari", icon: "search" },
-      { id: "numeri", name: "Numeri e analisi", icon: "euro" },
-      { id: "ristr", name: "Ristrutturazione e materiali", icon: "tool" },
-      { id: "aste", name: "Aste", icon: "doc" },
-      { id: "affitti", name: "Affitti e rendita", icon: "home2" },
-    ] },
-    { id: "pm", name: "Property manager", icon: "key", color: "#22c55e", cover: "", card: "/app/academies/property-manager.jpg", subs: [
-      { id: "diventare", name: "Diventare property manager", icon: "cap" },
-      { id: "piattaforme", name: "Airbnb e Booking", icon: "home2" },
-      { id: "gestione", name: "Ospiti, pulizie e check-in", icon: "users" },
-      { id: "prezzi", name: "Prezzi e guadagni", icon: "trend" },
-      { id: "regole", name: "Regole e fisco", icon: "doc" },
-    ] },
-    { id: "cond", name: "Amministratore di condominio", icon: "users", color: "#0ea5e9", cover: "", subs: [
-      { id: "diventare", name: "Diventare amministratore", icon: "cap" },
-      { id: "clienti", name: "Trovare i condomini", icon: "handshake" },
-      { id: "assemblee", name: "Assemblee e bilanci", icon: "doc" },
-      { id: "manutenzioni", name: "Manutenzioni e fornitori", icon: "tool" },
-    ] },
-    { id: "hs", name: "Home stager", icon: "home2", color: "#ec4899", cover: "", subs: [
-      { id: "diventare", name: "Diventare home stager", icon: "cap" },
-      { id: "allestire", name: "Allestire per vendere", icon: "home2" },
-      { id: "foto", name: "Foto e presentazione", icon: "camera" },
-      { id: "clienti", name: "Trovare clienti", icon: "handshake" },
     ] },
   ];
 }
@@ -168,106 +142,6 @@ function catalogModules() {
       ["Chiamare i privati che vendono da soli", "La telefonata completa, frase per frase."],
       ["Gestire il \"non mi interessa\"", "Le risposte che riaprono la conversazione."],
       ["Quante chiamate fare ogni giorno", "I numeri che servono per arrivare ai tuoi incarichi."],
-    ]),
-    // Investimenti immobiliari
-    C("inv1", "inv", "affari", "base", "Le case che profumano di soldi", "Come riconoscere e trovare gli immobili che nascondono un guadagno, prima degli altri.", [
-      ["Cosa rende un immobile un affare", "Prezzo, zona, stato e motivazione del venditore: i quattro segnali da guardare sempre."],
-      ["Dove cercarle", "Aste, successioni, immobili da ristrutturare, privati che devono vendere in fretta: dove nascono le occasioni."],
-      ["Leggere un annuncio come un investitore", "Cosa dicono davvero foto, descrizione e tempo online di un annuncio."],
-      ["Il primo sopralluogo: la checklist", "Impianti, strutture, documenti e difetti nascosti da controllare prima di fare un'offerta."],
-      ["Fare l'offerta giusta", "Come arrivare al prezzo che ti lascia margine, senza far saltare la trattativa."],
-    ]),
-    C("inv2", "inv", "numeri", "premium", "Calcolare se l'operazione conviene", "I numeri da fare prima di comprare: costi, tasse, valore finale e margine.", [
-      ["Prezzo, costi e tasse di acquisto", "Notaio, imposte, agenzia, mutuo: tutto quello che si aggiunge al prezzo."],
-      ["Stimare il valore dopo i lavori", "Come usare le vendite vicine per capire quanto varrà l'immobile finito."],
-      ["Margine e rendimento: il foglio di calcolo", "Il modello da compilare per ogni operazione, passo per passo."],
-      ["Gli errori che mangiano il guadagno", "Tempi lunghi, lavori sottostimati, imprevisti: come proteggersi."],
-    ]),
-    C("inv3", "inv", "ristr", "premium", "Ristrutturare: materiali e fornitori", "Dove comprare i materiali, come scegliere le imprese e tenere sotto controllo costi e tempi.", [
-      ["Dove comprare i materiali e a che prezzo", "Grossisti, outlet, fornitori diretti: come spendere meno senza perdere qualità."],
-      ["Scegliere imprese e artigiani", "Le domande da fare, i lavori da controllare e i segnali di allarme."],
-      ["Capitolato e preventivi", "Come scrivere cosa vuoi e confrontare i preventivi alla pari."],
-      ["Tempi di cantiere e controllo dei costi", "Pianificare i lavori e tenere il budget giorno per giorno."],
-      ["Home staging per vendere prima", "Pochi interventi e allestimento per vendere più in fretta e a un prezzo migliore."],
-    ]),
-    C("inv4", "inv", "aste", "premium", "Aste immobiliari da zero", "Come funzionano le aste, come leggere la perizia e come partecipare senza rischi.", [
-      ["Come funziona un'asta", "Tribunale, delegato, offerta minima e rilanci spiegati semplici."],
-      ["Leggere la perizia", "Abusi, occupanti, spese condominiali: cosa cercare prima di partecipare."],
-      ["Partecipare e aggiudicarsi l'immobile", "Cauzione, offerta, saldo prezzo e liberazione dell'immobile."],
-    ]),
-    C("inv5", "inv", "affitti", "premium", "Affitti e rendita", "Mettere a reddito un immobile: quale affitto scegliere e quanto rende davvero.", [
-      ["Affitto lungo, breve o a studenti", "Pro e contro di ogni formula, con i numeri."],
-      ["Calcolare il rendimento netto", "Dall'affitto lordo a quello che ti resta davvero in tasca."],
-      ["Contratti e tutele per il proprietario", "Garanzie, cauzioni e come scegliere l'inquilino."],
-    ]),
-    // Property manager
-    C("pm1", "pm", "diventare", "base", "Diventare property manager: il corso completo", "Dal primo proprietario all'attività avviata: tutto quello che serve per partire.", [
-      ["Cos'è un property manager e quanto guadagna", "Il lavoro, i servizi che offri e come vieni pagato."],
-      ["Trovare i primi proprietari", "Dove cercarli e cosa proporre per convincerli ad affidarti la casa."],
-      ["Il contratto di gestione e la percentuale", "Cosa scrivere, quanto chiedere e cosa è a carico di chi."],
-      ["Aprire l'attività", "Le scelte da fare all'inizio per lavorare in regola."],
-    ]),
-    C("pm2", "pm", "piattaforme", "premium", "Airbnb e Booking: annunci che si prenotano", "Creare e gestire annunci che riempiono il calendario.", [
-      ["Creare l'annuncio", "Titolo, descrizione e servizi che fanno la differenza."],
-      ["Foto e recensioni", "Le foto che fanno cliccare e come arrivare a 5 stelle."],
-      ["Calendario e regole della casa", "Soggiorno minimo, orari e regole che evitano problemi."],
-    ]),
-    C("pm3", "pm", "gestione", "premium", "Ospiti, pulizie e check-in", "L'organizzazione di tutti i giorni, senza correre da una casa all'altra.", [
-      ["Check-in autonomo e serrature smart", "Far entrare gli ospiti senza essere presente."],
-      ["Pulizie e biancheria", "Trovare, organizzare e controllare chi pulisce."],
-      ["Problemi e reclami", "Cosa fare quando qualcosa va storto, prima che arrivi la recensione."],
-    ]),
-    C("pm4", "pm", "prezzi", "premium", "Prezzi e guadagni", "Fare rendere ogni casa il più possibile.", [
-      ["Prezzi dinamici", "Alzare e abbassare i prezzi in base a stagione ed eventi."],
-      ["Calcolare il guadagno per ogni casa", "Incassi, costi e quanto resta a te e al proprietario."],
-      ["Il report al proprietario", "Cosa mandare ogni mese per tenerlo contento."],
-    ]),
-    C("pm5", "pm", "regole", "premium", "Regole e fisco degli affitti brevi", "Le regole da rispettare per lavorare tranquillo.", [
-      ["Codice CIN, comunicazioni e tassa di soggiorno", "Gli obblighi per ogni casa in affitto breve."],
-      ["Tasse sugli affitti brevi", "Cedolare secca, fatture e cosa cambia se lo fai come attività."],
-      ["Assicurazioni e tutele", "Come proteggere te, il proprietario e la casa."],
-    ]),
-    // Amministratore di condominio
-    C("cond1", "cond", "diventare", "base", "Diventare amministratore di condominio", "Cosa fa, quanto guadagna e cosa serve per iniziare in regola.", [
-      ["Il lavoro e quanto si guadagna", "Compiti, compensi e quanti condomini servono per viverci."],
-      ["Requisiti e formazione obbligatoria", "Il corso iniziale, l'aggiornamento annuale e i requisiti di legge."],
-      ["Aprire l'attività", "Partita IVA, assicurazione, software e organizzazione dello studio."],
-    ]),
-    C("cond2", "cond", "clienti", "premium", "Trovare i primi condomini", "Come farsi scegliere dall'assemblea e far crescere il portafoglio.", [
-      ["Dove nascono le opportunità", "Condomini scontenti, nuovi edifici, piccoli stabili senza amministratore."],
-      ["Il preventivo che vince", "Cosa mettere nell'offerta e come presentarla in assemblea."],
-      ["Passaparola e collaborazioni", "Agenzie, imprese e professionisti che ti segnalano nuovi condomini."],
-    ]),
-    C("cond3", "cond", "assemblee", "premium", "Assemblee, bilanci e riparti", "Gestire i conti e le assemblee senza litigi.", [
-      ["Convocare e condurre l'assemblea", "Ordine del giorno, maggioranze e verbale."],
-      ["Bilancio e rendiconto", "Preventivo, consuntivo e come presentarli ai condòmini."],
-      ["Ripartire le spese e recuperare i crediti", "Tabelle millesimali, morosi e solleciti."],
-    ]),
-    C("cond4", "cond", "manutenzioni", "premium", "Manutenzioni, fornitori e urgenze", "Tenere l'edificio in ordine e i condòmini tranquilli.", [
-      ["Scegliere e gestire i fornitori", "Pulizie, ascensore, caldaia: contratti e controlli."],
-      ["Lavori straordinari", "Preventivi, approvazione e controllo del cantiere."],
-      ["Urgenze e sinistri", "Cosa fare subito e come gestire l'assicurazione."],
-    ]),
-    // Home stager
-    C("hs1", "hs", "diventare", "base", "Diventare home stager", "Il lavoro di chi prepara le case per venderle o affittarle meglio.", [
-      ["Cos'è l'home staging e quanto si guadagna", "Servizi, prezzi e chi sono i clienti."],
-      ["Gli attrezzi del mestiere", "Magazzino, arredi in noleggio, accessori e trasporto."],
-      ["Aprire l'attività", "Come partire con poco e lavorare in regola."],
-    ]),
-    C("hs2", "hs", "allestire", "premium", "Allestire una casa per venderla", "Gli interventi che fanno vendere prima e a un prezzo migliore.", [
-      ["Il sopralluogo e il progetto", "Cosa togliere, cosa spostare, cosa aggiungere."],
-      ["Colori, luci e arredi", "Le scelte che piacciono alla maggior parte degli acquirenti."],
-      ["Allestire con un budget piccolo", "Come ottenere il massimo spendendo poco."],
-    ]),
-    C("hs3", "hs", "foto", "premium", "Foto e presentazione dell'immobile", "Far risaltare il lavoro di staging su portali e social.", [
-      ["Preparare la casa per le foto", "Ordine, luce e dettagli che fanno la differenza."],
-      ["Foto e video con il telefono", "Inquadrature, luce e montaggio veloce."],
-      ["Prima e dopo", "Usare le foto per vendere il tuo servizio."],
-    ]),
-    C("hs4", "hs", "clienti", "premium", "Trovare clienti: agenzie e privati", "Costruire un flusso di lavori costante.", [
-      ["Lavorare con le agenzie immobiliari", "Come proporsi e quali accordi fare."],
-      ["Privati e costruttori", "Chi ha più bisogno di te e come raggiungerlo."],
-      ["Prezzi e preventivi", "Quanto chiedere e come presentarlo."],
     ]),
   ];
 }
@@ -309,7 +183,7 @@ function defaultBanners() {
 const defaultSettings = () => ({ welcomeTitle: "Benvenuto!", welcomeSub: "Scopri Vendita Uno", onboardingTitle: "Inizia da qui", onboardingText: "Scopri come usare l'app e tutto quello che offre", onboardingVideo: "jqOjebgNQvk", presentationPdf: "" });
 
 // Vecchie accademie (versioni 1 e 2) → nuova accademia e sottocategoria.
-const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["agenti", ""], min: ["agenti", ""], fin: ["agenti", ""], leg: ["agenti", ""], ai: ["agenti", ""], inv: ["inv", ""] };
+const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["agenti", ""], min: ["agenti", ""], fin: ["agenti", ""], leg: ["agenti", ""], ai: ["agenti", ""], inv: ["agenti", ""] };
 
 // Porta i contenuti salvati con una versione precedente alla struttura con sottocategorie.
 // Mantiene video, copertine e modifiche fatte dall'admin; aggiunge solo ciò che manca.
@@ -376,8 +250,15 @@ async function getContent(kv) {
     c.academies = c.academies.filter((a) => a.id !== "mkt" && a.id !== "fin");
     c.modules = c.modules.filter((m) => m.academyId !== "mkt" && m.academyId !== "fin");
     const catA = catalogAcademies(), catM = catalogModules();
-    for (const id of ["cond", "hs"]) if (!c.academies.some((a) => a.id === id)) c.academies.push(catA.find((a) => a.id === id));
+    for (const id of ["cond", "hs"]) { const x = catA.find((a) => a.id === id); if (x && !c.academies.some((a) => a.id === id)) c.academies.push(x); }
     for (const m of catM) if ((m.academyId === "cond" || m.academyId === "hs") && !c.modules.some((x) => x.id === m.id)) c.modules.push(m);
+  }
+  if ((c.seedV || 1) < 13) {
+    // Resta solo l'accademia Agenti immobiliari: tolte le altre e i loro corsi.
+    const keep = new Set(catalogAcademies().map((a) => a.id));
+    c.academies = c.academies.filter((a) => keep.has(a.id));
+    c.modules = c.modules.filter((m) => keep.has(m.academyId));
+    c.educators = c.educators.map((e) => (keep.has(e.academyId) || !e.academyId ? e : { ...e, academyId: "agenti" }));
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
@@ -1159,7 +1040,9 @@ function streakOf(days) {
 }
 function gymOut(g) {
   const streak = streakOf(g.days || []);
-  return { xp: g.xp || 0, streak, best: Math.max(g.best || 0, streak), today: (g.days || []).includes(dayKey()), days: (g.days || []).slice(-42), quiz: g.quiz || {} };
+  const d = dayKey();
+  return { xp: g.xp || 0, streak, best: Math.max(g.best || 0, streak), today: (g.days || []).includes(d), days: (g.days || []).slice(-42), quiz: g.quiz || {},
+    simToday: (g.sims || []).filter((x) => dayKey(x.at) === d).length, resToday: !!(g.once || {})[`res:${d}`] };
 }
 const getGym = (kv, uid) => getJSON(kv, `app:xp:${uid}`, { xp: 0, days: [], once: {}, quiz: {} });
 
@@ -1215,15 +1098,6 @@ const SIM_SCENARIOS = [
   { id: "prezzo", academy: "agenti", level: 2, who: "Anna Galli", role: "Vuole un prezzo troppo alto", title: "Prezzo fuori mercato", goal: "Fai accettare un prezzo realistico di partenza",
     opener: "Pronto? Ah sì, l'agente per la casa. Mi dica.",
     persona: "Sei Anna Galli, 57 anni, insegnante a Bologna. Vuoi vendere il tuo quadrilocale a 520.000 euro perché 'ci abbiamo messo tanti soldi nella ristrutturazione' (cucina nuova nel 2015). Le vendite vere in zona sono intorno a 410-430.000. Sei emotiva sulla casa. Ti offendi se l'agente dice che la casa vale poco. Ti convinci se ti fa vedere i dati delle vendite reali e ti fa capire cosa succede a una casa che resta mesi sul mercato." },
-  { id: "airbnb", academy: "pm", level: 2, who: "Chiara Fontana", role: "Ha un bilocale vuoto in centro", title: "Proprietaria indecisa sull'affitto breve", goal: "Ottieni un sopralluogo per proporre la gestione",
-    opener: "Pronto?",
-    persona: "Sei Chiara Fontana, 39 anni, vivi a Firenze. Hai ereditato un bilocale vicino a Santa Croce, vuoto da 6 mesi. Pensi di metterlo su Airbnb da sola perché 'quanto vuoi che sia', ma lavori a tempo pieno e hai paura di ospiti che fanno danni e delle tasse. Un'amica ti ha detto che le società di gestione prendono il 25%. Ti convince chi ti fa due conti chiari (incasso, costi, tempo) e ti toglie le paure con esempi concreti." },
-  { id: "investitore", academy: "inv", level: 2, who: "Davide Conti", role: "Investitore con 150.000 euro", title: "Investitore che vuole i numeri", goal: "Fissa una call per presentargli un'operazione",
-    opener: "Buongiorno, mi ha scritto lei? Ho cinque minuti.",
-    persona: "Sei Davide Conti, 50 anni, imprenditore a Padova. Hai 150.000 euro liquidi e vuoi investirli nel mattone, ma sei scettico: un consulente ti ha già proposto un'operazione con numeri gonfiati. Fai domande precise su rendimento netto, tempi, rischi, costi di ristrutturazione e tasse. Odi le risposte vaghe e l'entusiasmo eccessivo. Ti convince chi ti fa domande sui tuoi obiettivi (rendita o rivendita?) e ammette i rischi." },
-  { id: "condominio", academy: "cond", level: 2, who: "Roberto Sala", role: "Consigliere di un condominio di 24 famiglie", title: "Condominio scontento dell'amministratore", goal: "Fatti invitare alla prossima assemblea",
-    opener: "Sì, Sala, chi parla?",
-    persona: "Sei Roberto Sala, 66 anni, pensionato e consigliere di un condominio di 24 appartamenti a Roma (Monteverde). L'attuale amministratore non risponde mai al telefono, i lavori al tetto sono fermi e il bilancio arriva sempre in ritardo. Non sei tu a decidere da solo: serve l'assemblea. Sei diffidente perché un altro amministratore vi aveva promesso miracoli. Ti convince chi ascolta i problemi, spiega come lavora (tempi di risposta, rendiconti) e ti propone un passo semplice." },
 ];
 const scenarioOut = (s) => ({ id: s.id, academy: s.academy, level: s.level, who: s.who, role: s.role, title: s.title, goal: s.goal, opener: s.opener });
 
