@@ -108,7 +108,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 12;
+const CATALOG_V = 13;
 
 function catalogAcademies() {
   return [
@@ -117,32 +117,6 @@ function catalogAcademies() {
       { id: "tra", name: "Trattativa", icon: "handshake" },
       { id: "chiu", name: "Chiusura", icon: "doc" },
       { id: "chi", name: "Chiamate a freddo", icon: "phone" },
-    ] },
-    { id: "inv", name: "Investimenti immobiliari", icon: "trend", color: "#eab308", cover: "", card: "/app/academies/investimenti-immobiliari.jpg", subs: [
-      { id: "affari", name: "Trovare gli affari", icon: "search" },
-      { id: "numeri", name: "Numeri e analisi", icon: "euro" },
-      { id: "ristr", name: "Ristrutturazione e materiali", icon: "tool" },
-      { id: "aste", name: "Aste", icon: "doc" },
-      { id: "affitti", name: "Affitti e rendita", icon: "home2" },
-    ] },
-    { id: "pm", name: "Property manager", icon: "key", color: "#22c55e", cover: "", card: "/app/academies/property-manager.jpg", subs: [
-      { id: "diventare", name: "Diventare property manager", icon: "cap" },
-      { id: "piattaforme", name: "Airbnb e Booking", icon: "home2" },
-      { id: "gestione", name: "Ospiti, pulizie e check-in", icon: "users" },
-      { id: "prezzi", name: "Prezzi e guadagni", icon: "trend" },
-      { id: "regole", name: "Regole e fisco", icon: "doc" },
-    ] },
-    { id: "cond", name: "Amministratore di condominio", icon: "users", color: "#0ea5e9", cover: "", subs: [
-      { id: "diventare", name: "Diventare amministratore", icon: "cap" },
-      { id: "clienti", name: "Trovare i condomini", icon: "handshake" },
-      { id: "assemblee", name: "Assemblee e bilanci", icon: "doc" },
-      { id: "manutenzioni", name: "Manutenzioni e fornitori", icon: "tool" },
-    ] },
-    { id: "hs", name: "Home stager", icon: "home2", color: "#ec4899", cover: "", subs: [
-      { id: "diventare", name: "Diventare home stager", icon: "cap" },
-      { id: "allestire", name: "Allestire per vendere", icon: "home2" },
-      { id: "foto", name: "Foto e presentazione", icon: "camera" },
-      { id: "clienti", name: "Trovare clienti", icon: "handshake" },
     ] },
   ];
 }
@@ -168,106 +142,6 @@ function catalogModules() {
       ["Chiamare i privati che vendono da soli", "La telefonata completa, frase per frase."],
       ["Gestire il \"non mi interessa\"", "Le risposte che riaprono la conversazione."],
       ["Quante chiamate fare ogni giorno", "I numeri che servono per arrivare ai tuoi incarichi."],
-    ]),
-    // Investimenti immobiliari
-    C("inv1", "inv", "affari", "base", "Le case che profumano di soldi", "Come riconoscere e trovare gli immobili che nascondono un guadagno, prima degli altri.", [
-      ["Cosa rende un immobile un affare", "Prezzo, zona, stato e motivazione del venditore: i quattro segnali da guardare sempre."],
-      ["Dove cercarle", "Aste, successioni, immobili da ristrutturare, privati che devono vendere in fretta: dove nascono le occasioni."],
-      ["Leggere un annuncio come un investitore", "Cosa dicono davvero foto, descrizione e tempo online di un annuncio."],
-      ["Il primo sopralluogo: la checklist", "Impianti, strutture, documenti e difetti nascosti da controllare prima di fare un'offerta."],
-      ["Fare l'offerta giusta", "Come arrivare al prezzo che ti lascia margine, senza far saltare la trattativa."],
-    ]),
-    C("inv2", "inv", "numeri", "premium", "Calcolare se l'operazione conviene", "I numeri da fare prima di comprare: costi, tasse, valore finale e margine.", [
-      ["Prezzo, costi e tasse di acquisto", "Notaio, imposte, agenzia, mutuo: tutto quello che si aggiunge al prezzo."],
-      ["Stimare il valore dopo i lavori", "Come usare le vendite vicine per capire quanto varrà l'immobile finito."],
-      ["Margine e rendimento: il foglio di calcolo", "Il modello da compilare per ogni operazione, passo per passo."],
-      ["Gli errori che mangiano il guadagno", "Tempi lunghi, lavori sottostimati, imprevisti: come proteggersi."],
-    ]),
-    C("inv3", "inv", "ristr", "premium", "Ristrutturare: materiali e fornitori", "Dove comprare i materiali, come scegliere le imprese e tenere sotto controllo costi e tempi.", [
-      ["Dove comprare i materiali e a che prezzo", "Grossisti, outlet, fornitori diretti: come spendere meno senza perdere qualità."],
-      ["Scegliere imprese e artigiani", "Le domande da fare, i lavori da controllare e i segnali di allarme."],
-      ["Capitolato e preventivi", "Come scrivere cosa vuoi e confrontare i preventivi alla pari."],
-      ["Tempi di cantiere e controllo dei costi", "Pianificare i lavori e tenere il budget giorno per giorno."],
-      ["Home staging per vendere prima", "Pochi interventi e allestimento per vendere più in fretta e a un prezzo migliore."],
-    ]),
-    C("inv4", "inv", "aste", "premium", "Aste immobiliari da zero", "Come funzionano le aste, come leggere la perizia e come partecipare senza rischi.", [
-      ["Come funziona un'asta", "Tribunale, delegato, offerta minima e rilanci spiegati semplici."],
-      ["Leggere la perizia", "Abusi, occupanti, spese condominiali: cosa cercare prima di partecipare."],
-      ["Partecipare e aggiudicarsi l'immobile", "Cauzione, offerta, saldo prezzo e liberazione dell'immobile."],
-    ]),
-    C("inv5", "inv", "affitti", "premium", "Affitti e rendita", "Mettere a reddito un immobile: quale affitto scegliere e quanto rende davvero.", [
-      ["Affitto lungo, breve o a studenti", "Pro e contro di ogni formula, con i numeri."],
-      ["Calcolare il rendimento netto", "Dall'affitto lordo a quello che ti resta davvero in tasca."],
-      ["Contratti e tutele per il proprietario", "Garanzie, cauzioni e come scegliere l'inquilino."],
-    ]),
-    // Property manager
-    C("pm1", "pm", "diventare", "base", "Diventare property manager: il corso completo", "Dal primo proprietario all'attività avviata: tutto quello che serve per partire.", [
-      ["Cos'è un property manager e quanto guadagna", "Il lavoro, i servizi che offri e come vieni pagato."],
-      ["Trovare i primi proprietari", "Dove cercarli e cosa proporre per convincerli ad affidarti la casa."],
-      ["Il contratto di gestione e la percentuale", "Cosa scrivere, quanto chiedere e cosa è a carico di chi."],
-      ["Aprire l'attività", "Le scelte da fare all'inizio per lavorare in regola."],
-    ]),
-    C("pm2", "pm", "piattaforme", "premium", "Airbnb e Booking: annunci che si prenotano", "Creare e gestire annunci che riempiono il calendario.", [
-      ["Creare l'annuncio", "Titolo, descrizione e servizi che fanno la differenza."],
-      ["Foto e recensioni", "Le foto che fanno cliccare e come arrivare a 5 stelle."],
-      ["Calendario e regole della casa", "Soggiorno minimo, orari e regole che evitano problemi."],
-    ]),
-    C("pm3", "pm", "gestione", "premium", "Ospiti, pulizie e check-in", "L'organizzazione di tutti i giorni, senza correre da una casa all'altra.", [
-      ["Check-in autonomo e serrature smart", "Far entrare gli ospiti senza essere presente."],
-      ["Pulizie e biancheria", "Trovare, organizzare e controllare chi pulisce."],
-      ["Problemi e reclami", "Cosa fare quando qualcosa va storto, prima che arrivi la recensione."],
-    ]),
-    C("pm4", "pm", "prezzi", "premium", "Prezzi e guadagni", "Fare rendere ogni casa il più possibile.", [
-      ["Prezzi dinamici", "Alzare e abbassare i prezzi in base a stagione ed eventi."],
-      ["Calcolare il guadagno per ogni casa", "Incassi, costi e quanto resta a te e al proprietario."],
-      ["Il report al proprietario", "Cosa mandare ogni mese per tenerlo contento."],
-    ]),
-    C("pm5", "pm", "regole", "premium", "Regole e fisco degli affitti brevi", "Le regole da rispettare per lavorare tranquillo.", [
-      ["Codice CIN, comunicazioni e tassa di soggiorno", "Gli obblighi per ogni casa in affitto breve."],
-      ["Tasse sugli affitti brevi", "Cedolare secca, fatture e cosa cambia se lo fai come attività."],
-      ["Assicurazioni e tutele", "Come proteggere te, il proprietario e la casa."],
-    ]),
-    // Amministratore di condominio
-    C("cond1", "cond", "diventare", "base", "Diventare amministratore di condominio", "Cosa fa, quanto guadagna e cosa serve per iniziare in regola.", [
-      ["Il lavoro e quanto si guadagna", "Compiti, compensi e quanti condomini servono per viverci."],
-      ["Requisiti e formazione obbligatoria", "Il corso iniziale, l'aggiornamento annuale e i requisiti di legge."],
-      ["Aprire l'attività", "Partita IVA, assicurazione, software e organizzazione dello studio."],
-    ]),
-    C("cond2", "cond", "clienti", "premium", "Trovare i primi condomini", "Come farsi scegliere dall'assemblea e far crescere il portafoglio.", [
-      ["Dove nascono le opportunità", "Condomini scontenti, nuovi edifici, piccoli stabili senza amministratore."],
-      ["Il preventivo che vince", "Cosa mettere nell'offerta e come presentarla in assemblea."],
-      ["Passaparola e collaborazioni", "Agenzie, imprese e professionisti che ti segnalano nuovi condomini."],
-    ]),
-    C("cond3", "cond", "assemblee", "premium", "Assemblee, bilanci e riparti", "Gestire i conti e le assemblee senza litigi.", [
-      ["Convocare e condurre l'assemblea", "Ordine del giorno, maggioranze e verbale."],
-      ["Bilancio e rendiconto", "Preventivo, consuntivo e come presentarli ai condòmini."],
-      ["Ripartire le spese e recuperare i crediti", "Tabelle millesimali, morosi e solleciti."],
-    ]),
-    C("cond4", "cond", "manutenzioni", "premium", "Manutenzioni, fornitori e urgenze", "Tenere l'edificio in ordine e i condòmini tranquilli.", [
-      ["Scegliere e gestire i fornitori", "Pulizie, ascensore, caldaia: contratti e controlli."],
-      ["Lavori straordinari", "Preventivi, approvazione e controllo del cantiere."],
-      ["Urgenze e sinistri", "Cosa fare subito e come gestire l'assicurazione."],
-    ]),
-    // Home stager
-    C("hs1", "hs", "diventare", "base", "Diventare home stager", "Il lavoro di chi prepara le case per venderle o affittarle meglio.", [
-      ["Cos'è l'home staging e quanto si guadagna", "Servizi, prezzi e chi sono i clienti."],
-      ["Gli attrezzi del mestiere", "Magazzino, arredi in noleggio, accessori e trasporto."],
-      ["Aprire l'attività", "Come partire con poco e lavorare in regola."],
-    ]),
-    C("hs2", "hs", "allestire", "premium", "Allestire una casa per venderla", "Gli interventi che fanno vendere prima e a un prezzo migliore.", [
-      ["Il sopralluogo e il progetto", "Cosa togliere, cosa spostare, cosa aggiungere."],
-      ["Colori, luci e arredi", "Le scelte che piacciono alla maggior parte degli acquirenti."],
-      ["Allestire con un budget piccolo", "Come ottenere il massimo spendendo poco."],
-    ]),
-    C("hs3", "hs", "foto", "premium", "Foto e presentazione dell'immobile", "Far risaltare il lavoro di staging su portali e social.", [
-      ["Preparare la casa per le foto", "Ordine, luce e dettagli che fanno la differenza."],
-      ["Foto e video con il telefono", "Inquadrature, luce e montaggio veloce."],
-      ["Prima e dopo", "Usare le foto per vendere il tuo servizio."],
-    ]),
-    C("hs4", "hs", "clienti", "premium", "Trovare clienti: agenzie e privati", "Costruire un flusso di lavori costante.", [
-      ["Lavorare con le agenzie immobiliari", "Come proporsi e quali accordi fare."],
-      ["Privati e costruttori", "Chi ha più bisogno di te e come raggiungerlo."],
-      ["Prezzi e preventivi", "Quanto chiedere e come presentarlo."],
     ]),
   ];
 }
@@ -309,7 +183,7 @@ function defaultBanners() {
 const defaultSettings = () => ({ welcomeTitle: "Benvenuto!", welcomeSub: "Scopri Vendita Uno", onboardingTitle: "Inizia da qui", onboardingText: "Scopri come usare l'app e tutto quello che offre", onboardingVideo: "jqOjebgNQvk", presentationPdf: "" });
 
 // Vecchie accademie (versioni 1 e 2) → nuova accademia e sottocategoria.
-const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["agenti", ""], min: ["agenti", ""], fin: ["agenti", ""], leg: ["agenti", ""], ai: ["agenti", ""], inv: ["inv", ""] };
+const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["agenti", ""], min: ["agenti", ""], fin: ["agenti", ""], leg: ["agenti", ""], ai: ["agenti", ""], inv: ["agenti", ""] };
 
 // Porta i contenuti salvati con una versione precedente alla struttura con sottocategorie.
 // Mantiene video, copertine e modifiche fatte dall'admin; aggiunge solo ciò che manca.
@@ -376,8 +250,15 @@ async function getContent(kv) {
     c.academies = c.academies.filter((a) => a.id !== "mkt" && a.id !== "fin");
     c.modules = c.modules.filter((m) => m.academyId !== "mkt" && m.academyId !== "fin");
     const catA = catalogAcademies(), catM = catalogModules();
-    for (const id of ["cond", "hs"]) if (!c.academies.some((a) => a.id === id)) c.academies.push(catA.find((a) => a.id === id));
+    for (const id of ["cond", "hs"]) { const x = catA.find((a) => a.id === id); if (x && !c.academies.some((a) => a.id === id)) c.academies.push(x); }
     for (const m of catM) if ((m.academyId === "cond" || m.academyId === "hs") && !c.modules.some((x) => x.id === m.id)) c.modules.push(m);
+  }
+  if ((c.seedV || 1) < 13) {
+    // Resta solo l'accademia Agenti immobiliari: tolte le altre e i loro corsi.
+    const keep = new Set(catalogAcademies().map((a) => a.id));
+    c.academies = c.academies.filter((a) => keep.has(a.id));
+    c.modules = c.modules.filter((m) => keep.has(m.academyId));
+    c.educators = c.educators.map((e) => (keep.has(e.academyId) || !e.academyId ? e : { ...e, academyId: "agenti" }));
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
@@ -398,7 +279,7 @@ const SECTIONS = {
     id: str(m.id, 40) || rid(4), title: str(m.title, 120), desc: str(m.desc, 400),
     academyId: str(m.academyId, 40), subId: str(m.subId, 40), educatorId: str(m.educatorId, 40), level: m.level === "premium" ? "premium" : "base", cover: str(m.cover, 300),
     lessons: (Array.isArray(m.lessons) ? m.lessons : []).slice(0, 100).map((l) => ({
-      id: str(l.id, 40) || rid(4), title: str(l.title, 140), youtubeId: str(l.youtubeId, 20), video: str(l.video, 400), minutes: Math.max(0, Math.min(600, Number(l.minutes) || 0)), desc: str(l.desc, 1000), pdf: str(l.pdf, 300),
+      id: str(l.id, 40) || rid(4), title: str(l.title, 140), youtubeId: str(l.youtubeId, 20), video: str(l.video, 400), minutes: Math.max(0, Math.min(600, Number(l.minutes) || 0)), desc: str(l.desc, 1000), pdf: str(l.pdf, 300), quiz: cleanQuiz(l.quiz),
     })),
   }),
   lives: (l) => ({
@@ -456,6 +337,13 @@ export async function handleAppApi(request, env) {
     return new Response(v, { headers });
   }
 
+  // Verifica pubblica di un certificato (dal QR code stampato sul PDF)
+  const cm = path.match(/^\/cert\/(VU-[A-F0-9]{6}-[A-F0-9]{4})$/);
+  if (cm && method === "GET") {
+    const c = await getJSON(kv, `app:cert:${cm[1]}`);
+    return c ? json({ cert: c }) : fail("Certificato non trovato", 404);
+  }
+
   if (path === "/register" && method === "POST") return register(body, kv, env);
   if (path === "/login" && method === "POST") return login(body, kv, env);
   if (path === "/logout" && method === "POST") return json({ ok: true }, 200, { "Set-Cookie": sessionCookie("", 0) });
@@ -467,10 +355,10 @@ export async function handleAppApi(request, env) {
   const isAdmin = me.role === "admin";
 
   if (path === "/me" && method === "GET") {
-    const [content, progress, reminders] = await Promise.all([
-      getContent(kv), getJSON(kv, `app:progress:${me.id}`, {}), getJSON(kv, `app:rem:${me.id}`, []),
+    const [content, progress, reminders, g] = await Promise.all([
+      getContent(kv), getJSON(kv, `app:progress:${me.id}`, {}), getJSON(kv, `app:rem:${me.id}`, []), getGym(kv, me.id),
     ]);
-    return json({ user: publicUser(me), content: contentFor(me, content), progress, reminders });
+    return json({ user: publicUser(me), content: contentFor(me, content), progress, reminders, gym: gymOut(g) });
   }
 
   if (path === "/profile" && method === "POST") {
@@ -528,7 +416,11 @@ export async function handleAppApi(request, env) {
     const id = str(body.lessonId, 40);
     if (body.done) p[id] = now(); else delete p[id];
     await putJSON(kv, `app:progress:${me.id}`, p);
-    return json({ progress: p });
+    // Punti solo la prima volta e solo per lezioni che esistono davvero.
+    const content = body.done ? await getContent(kv) : null;
+    const real = content && content.modules.some((m) => m.lessons.some((l) => l.id === id) && canCourse(me, m));
+    const r = real ? await award(kv, me, XP.lesson, `les:${id}`) : { g: await getGym(kv, me.id), gained: 0 };
+    return json({ progress: p, gained: r.gained, gym: gymOut(r.g) });
   }
 
   if (path === "/remind" && method === "POST") {
@@ -699,6 +591,10 @@ export async function handleAppApi(request, env) {
     await putJSON(kv, key, { key, uid: me.id, name: `${me.name} ${me.surname}`.trim(), email: me.email, comune, phone, note: str(body.note, 500), at: now() });
     return json({ ok: true });
   }
+
+  // ----- allenamento -----
+  const gymRes = await handleGym(path, method, body, me, kv, env, url);
+  if (gymRes) return gymRes;
 
   // ----- admin -----
   if (path.startsWith("/admin/")) {
@@ -901,11 +797,14 @@ function canSee(u, what) { return fullAccess(u) || u.access.includes(what); }
 function canCourse(u, m) { return fullAccess(u) || u.access.includes(`course:${m.id}`) || u.access.includes(`acad:${m.academyId}`); }
 // Contenuti per l'utente: i video e i link dei contenuti bloccati non vengono inviati.
 function contentFor(u, c) {
-  if (fullAccess(u)) return c;
+  if (u.role === "admin") return c;
+  // Le risposte dei quiz arrivano mescolate: la giusta non è più la prima.
+  const withQuiz = (m) => ({ ...m, lessons: m.lessons.map((l) => ({ ...l, quiz: quizForStudent(l.quiz) })) });
+  if (fullAccess(u)) return { ...c, modules: c.modules.map(withQuiz) };
   const live = canSee(u, "live");
   return {
     ...c,
-    modules: c.modules.map((m) => (canCourse(u, m) ? m : { ...m, lessons: m.lessons.map((l) => ({ ...l, video: "", youtubeId: "", pdf: "" })) })),
+    modules: c.modules.map((m) => (canCourse(u, m) ? withQuiz(m) : { ...m, lessons: m.lessons.map((l) => ({ ...l, video: "", youtubeId: "", pdf: "", quiz: (l.quiz || []).map(() => ({ q: "", opts: [] })) })) })),
     lives: live ? c.lives : c.lives.map((l) => ({ ...l, url: "", replayUrl: "" })),
   };
 }
@@ -1104,4 +1003,354 @@ async function login(body, kv, env) {
   }
   const token = await makeToken(user.id, env);
   return json({ user: publicUser(user) }, 200, { "Set-Cookie": sessionCookie(token, SESSION_DAYS * 86400) });
+}
+
+// =====================================================================
+// ALLENAMENTO: punti, giorni di fila, classifica, quiz, certificati,
+// risultati, muro dei successi e simulatore di chiamate con l'AI.
+// =====================================================================
+// Chiavi KV:
+//   app:xp:<uid>        punti, giorni attivi, premi già dati (once)
+//   app:lb:<lunedì>     classifica della settimana { uid: { n, a, c, x } }
+//   app:res:<uid>       risultati di lavoro per giorno { "2026-11-13": { c, a, m, s } }
+//   app:win:<ts>_<id>   un successo nel muro
+//   app:cert:<codice>   certificato (pubblico, si verifica dal QR)
+// Simulatore: serve la variabile segreta ANTHROPIC_API_KEY (Cloudflare → Workers → Impostazioni → Variabili).
+
+const SIM_MODEL = "claude-opus-5-5";
+const SIM_PER_DAY = 8; // telefonate valutate al giorno per persona
+const SIM_TURNS_PER_DAY = 160; // battute al giorno per persona (protegge i costi)
+const SIM_MAX_TURNS = 30; // battute in una telefonata
+
+const XP = { lesson: 20, quiz: 30, quizPerfect: 10, results: 10, win: 25 };
+
+const dayKey = (t = now()) => new Date(t).toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
+function weekKey(t = now()) {
+  const d = new Date(`${dayKey(t)}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+function streakOf(days) {
+  const set = new Set(days);
+  const d = new Date(`${dayKey()}T12:00:00Z`);
+  if (!set.has(d.toISOString().slice(0, 10))) d.setUTCDate(d.getUTCDate() - 1); // oggi non è ancora finito
+  let n = 0;
+  while (set.has(d.toISOString().slice(0, 10))) { n++; d.setUTCDate(d.getUTCDate() - 1); }
+  return n;
+}
+function gymOut(g) {
+  const streak = streakOf(g.days || []);
+  const d = dayKey();
+  return { xp: g.xp || 0, streak, best: Math.max(g.best || 0, streak), today: (g.days || []).includes(d), days: (g.days || []).slice(-42), quiz: g.quiz || {},
+    simToday: (g.sims || []).filter((x) => dayKey(x.at) === d).length, resToday: !!(g.once || {})[`res:${d}`] };
+}
+const getGym = (kv, uid) => getJSON(kv, `app:xp:${uid}`, { xp: 0, days: [], once: {}, quiz: {} });
+
+// Dà i punti (una volta sola se c'è onceKey), segna il giorno attivo e aggiorna la classifica della settimana.
+async function award(kv, me, pts, onceKey, g) {
+  g = g || (await getGym(kv, me.id));
+  g.once = g.once || {};
+  if (onceKey && g.once[onceKey]) return { g, gained: 0 };
+  if (onceKey) g.once[onceKey] = 1;
+  g.xp = (g.xp || 0) + pts;
+  const d = dayKey();
+  if (!(g.days || []).includes(d)) g.days = [...(g.days || []), d].slice(-400);
+  g.best = Math.max(g.best || 0, streakOf(g.days));
+  await putJSON(kv, `app:xp:${me.id}`, g);
+  if (pts > 0) {
+    const wk = `app:lb:${weekKey()}`;
+    const lb = await getJSON(kv, wk, {});
+    const r = lb[me.id] || { x: 0 };
+    lb[me.id] = { n: `${me.name} ${me.surname}`.trim(), a: me.avatar || "", c: me.city || "", x: r.x + pts };
+    await putJSON(kv, wk, lb, { expirationTtl: 70 * 86400 });
+  }
+  return { g, gained: pts };
+}
+
+// ---------- quiz ----------
+// Nei dati la prima risposta è quella giusta; agli studenti arrivano mescolate.
+function cleanQuiz(q) {
+  return (Array.isArray(q) ? q : []).slice(0, 10).map((x) => ({
+    q: str(x && x.q, 300),
+    opts: (Array.isArray(x && x.opts) ? x.opts : []).slice(0, 5).map((o) => str(o, 200)).filter(Boolean),
+  })).filter((x) => x.q && x.opts.length >= 2);
+}
+function shuffled(a) {
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+  return b;
+}
+const quizForStudent = (quiz) => (quiz || []).map((x) => ({ q: x.q, opts: shuffled(x.opts) }));
+
+// ---------- simulatore ----------
+const SIM_SCENARIOS = [
+  { id: "freddo", academy: "agenti", level: 1, who: "Paolo Ferri", role: "Ha messo in vendita il trilocale su un portale", title: "Chiamata a freddo dall'annuncio", goal: "Fissa un appuntamento per vedere la casa", opener: "Pronto? Chi parla?",
+    persona: "Sei Paolo Ferri, 52 anni, impiegato a Bergamo. Hai messo da 10 giorni il tuo trilocale (95 mq, terzo piano senza ascensore) su un portale come privato a 245.000 euro. Ti hanno già chiamato 6 agenzie, sei un po' stufo ma educato. Hai fretta perché sei in pausa pranzo. Non hai ancora ricevuto nessuna proposta seria e un po' ti preoccupa. Ti convince chi ti fa domande sulla tua situazione invece di vendere se stesso, e chi ti propone qualcosa di concreto e breve (es. 20 minuti per darti una valutazione con i dati delle vendite vere della zona)." },
+  { id: "privato", academy: "agenti", level: 2, who: "Giovanna Russo", role: "Vuole vendere casa da sola", title: "«Vendo da sola, niente agenzie»", goal: "Ottieni un incontro di persona senza litigare",
+    opener: "Sì, pronto?",
+    persona: "Sei Giovanna Russo, 61 anni, pensionata a Napoli (Vomero). Vendi la casa della madre scomparsa, 110 mq, chiedi 420.000 euro. Sei convinta che le agenzie prendano soldi per niente: tua cugina ha pagato il 4% per una vendita fatta in un mese. Rispondi secca all'inizio. In realtà hai paura di sbagliare con documenti, eredità e successione (non hai ancora fatto la voltura catastale) e da 2 mesi ricevi solo curiosi. Ti apri se l'agente ti chiede del perché vendi e delle visite fatte finora, e se tocca il tema documenti/sicurezza senza spaventarti." },
+  { id: "giaagenzia", academy: "agenti", level: 3, who: "Marco Bianchi", role: "Ha già un incarico con un'altra agenzia", title: "«Ho già un'agenzia»", goal: "Fatti richiamare quando scade l'incarico, con una data precisa",
+    opener: "Pronto, chi è?",
+    persona: "Sei Marco Bianchi, 45 anni, ingegnere a Torino. Hai firmato 4 mesi fa un incarico in esclusiva di 6 mesi con un'agenzia per la tua villetta a schiera (prezzo 380.000). Hai avuto 3 visite, nessuna proposta, l'agente si fa sentire poco. Scade il 15 del mese prossimo. Sei leale e all'inizio chiudi subito ('sono già con un'agenzia, grazie'). Non dici la data di scadenza se non te la chiedono bene. Ti dà fastidio chi parla male dell'altra agenzia. Ti convince chi è rispettoso e ti fa ragionare su cosa non sta funzionando." },
+  { id: "provvigione", academy: "agenti", level: 3, who: "Luca Moretti", role: "Proprietario pronto a firmare, ma tratta", title: "«Il 3% è troppo»", goal: "Difendi la provvigione e porta a casa l'incarico",
+    opener: "Allora, ci ho pensato. Prima di firmare però dobbiamo parlare della provvigione.",
+    persona: "Sei Luca Moretti, 48 anni, commerciante a Milano. Vendi un bilocale in zona Isola valutato 360.000. L'agente al telefono ti ha già fatto la valutazione e ti è piaciuto. Ora dici che il 3% è troppo: un'altra agenzia ti fa l'1,5%. È in parte vero, ma quell'agenzia non fa foto professionali né pubblicità a pagamento. Se l'agente cede subito allo sconto, lo rispetti meno e chiedi ancora di più. Ti convince chi ti mostra quanto vale il suo lavoro in euro (prezzo finale più alto, tempi più brevi) con calma e sicurezza." },
+  { id: "prezzo", academy: "agenti", level: 2, who: "Anna Galli", role: "Vuole un prezzo troppo alto", title: "Prezzo fuori mercato", goal: "Fai accettare un prezzo realistico di partenza",
+    opener: "Pronto? Ah sì, l'agente per la casa. Mi dica.",
+    persona: "Sei Anna Galli, 57 anni, insegnante a Bologna. Vuoi vendere il tuo quadrilocale a 520.000 euro perché 'ci abbiamo messo tanti soldi nella ristrutturazione' (cucina nuova nel 2015). Le vendite vere in zona sono intorno a 410-430.000. Sei emotiva sulla casa. Ti offendi se l'agente dice che la casa vale poco. Ti convinci se ti fa vedere i dati delle vendite reali e ti fa capire cosa succede a una casa che resta mesi sul mercato." },
+];
+const scenarioOut = (s) => ({ id: s.id, academy: s.academy, level: s.level, who: s.who, role: s.role, title: s.title, goal: s.goal, opener: s.opener });
+
+function simSystem(s) {
+  return `Questa è una simulazione di allenamento al telefono per professionisti immobiliari italiani (app Vendita Uno). Tu interpreti un personaggio; l'utente è il professionista che ti sta chiamando.
+
+Il tuo personaggio:
+${s.persona}
+
+La telefonata è già iniziata e tu hai risposto: «${s.opener}»
+Obiettivo del professionista (tu non lo sai, ma serve a capire quando cedere): ${s.goal}.
+
+Come rispondere:
+- Resta sempre nel personaggio. Non dire mai di essere un'intelligenza artificiale e non dare consigli al professionista.
+- Parla come una persona vera al telefono: italiano colloquiale, frasi brevi, di solito 1-3 frasi. Niente elenchi, niente emoji, niente descrizioni di azioni.
+- Sii realistico: all'inizio hai le tue resistenze. Apriti un po' alla volta solo quando il professionista fa bene (ascolta, fa domande, dà valore concreto, gestisce le obiezioni senza insistere). Se è insistente, generico o maleducato, diventa più freddo.
+- Se il professionista raggiunge l'obiettivo in modo convincente, accetta in modo naturale e aggiungi alla fine il segno [OBIETTIVO].
+- Se ti irrita davvero o la telefonata non ha più senso, saluta e chiudi aggiungendo alla fine il segno [RIATTACCA].`;
+}
+
+const SCORE_SCHEMA = {
+  type: "object",
+  properties: {
+    voto: { type: "integer", description: "Da 0 a 100" },
+    obiettivo: { type: "boolean" },
+    sintesi: { type: "string" },
+    puntiForti: { type: "array", items: { type: "string" } },
+    errori: { type: "array", items: { type: "string" } },
+    fraseMigliore: { type: "string" },
+    fraseDaRifare: { type: "string" },
+    comeDirla: { type: "string" },
+    consiglio: { type: "string" },
+  },
+  required: ["voto", "obiettivo", "sintesi", "puntiForti", "errori", "fraseMigliore", "fraseDaRifare", "comeDirla", "consiglio"],
+  additionalProperties: false,
+};
+
+function scoreSystem(s) {
+  return `Sei un formatore esperto di vendita immobiliare in Italia e alleni i professionisti dell'app Vendita Uno. Valuti una telefonata di allenamento con un cliente simulato.
+
+Scenario: ${s.title}. Cliente: ${s.who} (${s.role.toLowerCase()}).
+Obiettivo del professionista: ${s.goal}.
+
+Valuta con onestà, come un allenatore esigente ma che vuole far crescere la persona:
+- voto: da 0 a 100. 90+ solo per telefonate davvero eccellenti; sotto 50 se ha sbagliato approccio.
+- obiettivo: true solo se l'obiettivo è stato raggiunto davvero.
+- sintesi: 1-2 frasi su com'è andata.
+- puntiForti: da 1 a 3 cose fatte bene, concrete (cita cosa ha detto).
+- errori: da 1 a 3 errori concreti, ognuno con il perché.
+- fraseMigliore: la frase migliore detta dal professionista, citata alla lettera.
+- fraseDaRifare: la frase più debole detta dal professionista, citata alla lettera.
+- comeDirla: come avrebbe potuto dire meglio quella frase, pronta da usare.
+- consiglio: un solo consiglio pratico per la prossima telefonata.
+Scrivi in italiano semplice, dando del tu. Le frasi citate devono essere del professionista, non del cliente.`;
+}
+
+async function callClaude(env, system, messages, extra = {}) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2026-10-21",
+      "anthropic-beta": "server-side-fallback-2026-07-01",
+    },
+    body: JSON.stringify({ model: SIM_MODEL, max_tokens: 4000, system, messages, fallbacks: "default", ...extra }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data.error && data.error.message) || `Errore ${res.status}`);
+  if (data.stop_reason === "refusal") throw new Error("refusal");
+  return (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+}
+
+// La conversazione arriva dal telefono: si ripulisce e deve alternare professionista / cliente.
+function simHistory(raw) {
+  const h = (Array.isArray(raw) ? raw : []).slice(-SIM_MAX_TURNS * 2).map((m) => ({ role: m && m.role === "assistant" ? "assistant" : "user", content: str(m && m.text, 700) })).filter((m) => m.content);
+  const out = [];
+  for (const m of h) {
+    if (out.length && out[out.length - 1].role === m.role) out[out.length - 1].content += "\n" + m.content;
+    else out.push(m);
+  }
+  while (out.length && out[0].role !== "user") out.shift();
+  return out;
+}
+
+async function simQuota(kv, me, kind) {
+  const key = `app:simq:${me.id}:${dayKey()}`;
+  const q = await getJSON(kv, key, { t: 0, s: 0 });
+  if (kind === "turn" && q.t >= SIM_TURNS_PER_DAY) return "Per oggi hai finito le battute del simulatore. Riprova domani.";
+  if (kind === "score" && q.s >= SIM_PER_DAY) return `Hai già fatto ${SIM_PER_DAY} telefonate oggi. Riposa la voce e riprova domani.`;
+  q[kind === "turn" ? "t" : "s"]++;
+  await putJSON(kv, key, q, { expirationTtl: 2 * 86400 });
+  return "";
+}
+
+const winOut = (w, me) => ({ key: w.key, author: w.author, avatar: w.avatar, city: w.city, kind: w.kind, text: w.text, at: w.at, claps: w.claps.length, clapped: w.claps.includes(me.id), mine: w.uid === me.id });
+const WIN_KINDS = ["incarico", "vendita", "appuntamento", "affitto", "altro"];
+
+async function handleGym(path, method, body, me, kv, env, url) {
+  const isAdmin = me.role === "admin";
+
+  if (path === "/gym" && method === "GET") {
+    const [g, res] = await Promise.all([getGym(kv, me.id), getJSON(kv, `app:res:${me.id}`, {})]);
+    return json({ gym: gymOut(g), results: res, scenarios: SIM_SCENARIOS.map(scenarioOut), simReady: !!env.ANTHROPIC_API_KEY, certs: me.certs || {}, sims: (g.sims || []).slice(-20) });
+  }
+
+  if (path === "/gym/board" && method === "GET") {
+    const prev = url.searchParams.get("week") === "prev";
+    const t = prev ? now() - 7 * 86400000 : now();
+    const lb = await getJSON(kv, `app:lb:${weekKey(t)}`, {});
+    const all = Object.entries(lb).map(([id, r]) => ({ id, name: r.n, avatar: r.a, city: r.c, xp: r.x, me: id === me.id })).sort((a, b) => b.xp - a.xp);
+    const rank = all.findIndex((x) => x.me) + 1;
+    return json({ week: weekKey(t), list: all.slice(0, 50), rank, total: all.length });
+  }
+
+  if (path === "/quiz" && method === "POST") {
+    const content = await getContent(kv);
+    const id = str(body.lessonId, 40);
+    const m = content.modules.find((x) => x.lessons.some((l) => l.id === id));
+    const l = m && m.lessons.find((x) => x.id === id);
+    if (!l || !(l.quiz || []).length) return fail("Quiz non trovato", 404);
+    if (!canCourse(me, m)) return fail("Corso bloccato", 403);
+    const answers = Array.isArray(body.answers) ? body.answers : [];
+    const right = l.quiz.map((q, i) => str(answers[i], 200) === q.opts[0]);
+    const n = right.filter(Boolean).length, pct = Math.round((n / l.quiz.length) * 100), passed = pct >= 70;
+    let g = await getGym(kv, me.id), gained = 0, progress;
+    g.quiz = g.quiz || {};
+    g.quiz[id] = Math.max(g.quiz[id] || 0, pct);
+    if (passed) {
+      let r = await award(kv, me, XP.quiz + (pct === 100 ? XP.quizPerfect : 0), `quiz:${id}`, g); g = r.g; gained += r.gained;
+      r = await award(kv, me, XP.lesson, `les:${id}`, g); g = r.g; gained += r.gained;
+      const p = await getJSON(kv, `app:progress:${me.id}`, {});
+      if (!p[id]) { p[id] = now(); await putJSON(kv, `app:progress:${me.id}`, p); }
+      progress = p;
+    } else await putJSON(kv, `app:xp:${me.id}`, g);
+    return json({ right, pct, passed, gained, gym: gymOut(g), progress, solutions: passed ? l.quiz.map((q) => q.opts[0]) : null });
+  }
+
+  if (path === "/cert" && method === "POST") {
+    const content = await getContent(kv);
+    const m = content.modules.find((x) => x.id === str(body.courseId, 40));
+    if (!m || !m.lessons.length) return fail("Corso non trovato", 404);
+    const p = await getJSON(kv, `app:progress:${me.id}`, {});
+    const missing = m.lessons.filter((l) => !p[l.id]).length;
+    if (missing) return fail(`Ti mancano ${missing} ${missing === 1 ? "lezione" : "lezioni"} per il certificato`);
+    me.certs = me.certs || {};
+    let code = me.certs[m.id];
+    if (!code) {
+      code = `VU-${rid(3).toUpperCase()}-${rid(2).toUpperCase()}`;
+      const a = content.academies.find((x) => x.id === m.academyId), e = content.educators.find((x) => x.id === m.educatorId);
+      await putJSON(kv, `app:cert:${code}`, { code, name: `${me.name} ${me.surname}`.trim(), course: m.title, academy: a ? a.name : "", educator: e ? e.name : "", lessons: m.lessons.length, at: now() });
+      me.certs[m.id] = code;
+      await saveUser(kv, me);
+      await pushNotif(kv, me.id, { title: "Certificato ottenuto", text: m.title, link: `#/corso/${m.id}`, icon: "check" });
+    }
+    return json({ cert: await getJSON(kv, `app:cert:${code}`), user: publicUser(me) });
+  }
+
+  if (path === "/results" && method === "POST") {
+    const date = str(body.date, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return fail("Data non valida");
+    const age = (Date.parse(`${dayKey()}T12:00:00Z`) - Date.parse(`${date}T12:00:00Z`)) / 86400000;
+    if (isNaN(age) || age < 0 || age > 60) return fail("Puoi segnare solo gli ultimi 60 giorni");
+    const n = (v) => Math.max(0, Math.min(999, Math.round(Number(v) || 0)));
+    const res = await getJSON(kv, `app:res:${me.id}`, {});
+    const row = { c: n(body.c), a: n(body.a), m: n(body.m), s: n(body.s) };
+    if (row.c + row.a + row.m + row.s === 0) delete res[date]; else res[date] = row;
+    const keep = Object.keys(res).sort().slice(-400);
+    const out = Object.fromEntries(keep.map((k) => [k, res[k]]));
+    await putJSON(kv, `app:res:${me.id}`, out);
+    const r = age <= 1 && res[date] ? await award(kv, me, XP.results, `res:${date}`) : { g: await getGym(kv, me.id), gained: 0 };
+    return json({ results: out, gained: r.gained, gym: gymOut(r.g) });
+  }
+
+  if (path === "/wins" && method === "GET") {
+    const page = await kv.list({ prefix: "app:win:", limit: 30 });
+    const wins = (await Promise.all(page.keys.map((k) => getJSON(kv, k.name)))).filter(Boolean);
+    return json({ wins: wins.map((w) => winOut(w, me)) });
+  }
+
+  if (path === "/wins" && method === "POST") {
+    const text = str(body.text, 280);
+    const kind = WIN_KINDS.includes(body.kind) ? body.kind : "altro";
+    if (text.length < 3) return fail("Racconta in una riga cosa hai ottenuto");
+    const rl = `app:winrl:${me.id}:${dayKey()}`, count = Number(await kv.get(rl)) || 0;
+    if (count >= 3) return fail("Hai già condiviso 3 successi oggi");
+    await kv.put(rl, String(count + 1), { expirationTtl: 2 * 86400 });
+    const key = `app:win:${invTs()}_${rid(4)}`;
+    const w = { key, uid: me.id, author: `${me.name} ${me.surname}`.trim(), avatar: me.avatar || "", city: me.city || "", kind, text, at: now(), claps: [] };
+    await putJSON(kv, key, w);
+    const r = await award(kv, me, XP.win, `win:${dayKey()}`);
+    return json({ win: winOut(w, me), gained: r.gained, gym: gymOut(r.g) });
+  }
+
+  const wm = path.match(/^\/wins\/(app:win:[0-9]{13}_[a-f0-9]{8})\/(clap|delete)$/);
+  if (wm && method === "POST") {
+    const w = await getJSON(kv, wm[1]);
+    if (!w) return fail("Successo non trovato", 404);
+    if (wm[2] === "delete") {
+      if (w.uid !== me.id && !isAdmin) return fail("Non puoi eliminarlo", 403);
+      await kv.delete(wm[1]);
+      return json({ ok: true });
+    }
+    const had = w.claps.includes(me.id);
+    w.claps = w.claps.filter((x) => x !== me.id);
+    if (!had) w.claps.push(me.id);
+    await putJSON(kv, wm[1], w);
+    if (!had && w.uid !== me.id && w.claps.length === 1) await pushNotif(kv, w.uid, { title: `${me.name} applaude il tuo successo`, text: w.text, link: "#/allenati/successi", icon: "spark" });
+    return json({ win: winOut(w, me) });
+  }
+
+  if (path === "/sim/turn" && method === "POST") {
+    if (!env.ANTHROPIC_API_KEY) return fail("Il simulatore non è ancora attivo.", 503);
+    const s = SIM_SCENARIOS.find((x) => x.id === body.scenario);
+    if (!s) return fail("Scenario non trovato", 404);
+    const history = simHistory(body.history);
+    if (!history.length || history[history.length - 1].role !== "user") return fail("Di' qualcosa al cliente");
+    if (history.length > SIM_MAX_TURNS * 2) return fail("La telefonata è troppo lunga: chiudila e guarda la valutazione");
+    const q = await simQuota(kv, me, "turn");
+    if (q) return fail(q, 429);
+    try {
+      let text = await callClaude(env, simSystem(s), history, { max_tokens: 3000, output_config: { effort: "low" } });
+      const goal = text.includes("[OBIETTIVO]"), hangup = text.includes("[RIATTACCA]");
+      text = text.replace(/\[(OBIETTIVO|RIATTACCA)\]/g, "").trim();
+      return json({ text, goal, hangup });
+    } catch (e) {
+      return fail(e.message === "refusal" ? "Il cliente non può rispondere a questa frase. Prova a dirla in un altro modo." : "Il cliente non ha sentito: linea disturbata, riprova.", 502);
+    }
+  }
+
+  if (path === "/sim/score" && method === "POST") {
+    if (!env.ANTHROPIC_API_KEY) return fail("Il simulatore non è ancora attivo.", 503);
+    const s = SIM_SCENARIOS.find((x) => x.id === body.scenario);
+    if (!s) return fail("Scenario non trovato", 404);
+    const history = simHistory(body.history);
+    if (history.filter((m) => m.role === "user").length < 2) return fail("Telefonata troppo corta per una valutazione: dì almeno due frasi");
+    const q = await simQuota(kv, me, "score");
+    if (q) return fail(q, 429);
+    const transcript = [`CLIENTE: ${s.opener}`, ...history.map((m) => `${m.role === "user" ? "PROFESSIONISTA" : "CLIENTE"}: ${m.content}`)].join("\n");
+    let score;
+    try {
+      const raw = await callClaude(env, scoreSystem(s), [{ role: "user", content: `Ecco la telefonata da valutare:\n\n${transcript}` }], { max_tokens: 8000, output_config: { effort: "medium", format: { type: "json_schema", schema: SCORE_SCHEMA } } });
+      score = JSON.parse(raw);
+    } catch {
+      return fail("La valutazione non è arrivata. Riprova tra poco.", 502);
+    }
+    score.voto = Math.max(0, Math.min(100, Math.round(Number(score.voto) || 0)));
+    const pts = 10 + Math.round(score.voto / 5) + (score.obiettivo ? 10 : 0);
+    const g = await getGym(kv, me.id);
+    g.sims = [...(g.sims || []), { id: s.id, voto: score.voto, ok: !!score.obiettivo, at: now() }].slice(-60);
+    const r = await award(kv, me, pts, null, g);
+    return json({ score, gained: r.gained, gym: gymOut(r.g) });
+  }
+
+  return null;
 }

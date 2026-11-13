@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a2a8f">
+<meta name="theme-color" content="#f3f5f9">
 <meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Vendita Uno">
 <title>App Vendita Uno</title>
 <link rel="icon" type="image/png" href="/assets/img/logo.png">
@@ -82,12 +82,10 @@
     <nav>
       <a href="#/home" data-nav="home"><svg class="i"><use href="#i-home"/></svg><span>Home</span></a>
       <a href="#/accademia" data-nav="accademia"><svg class="i"><use href="#i-cap"/></svg><span>Accademia</span></a>
-      <a href="#/live" data-nav="live"><svg class="i"><use href="#i-live"/></svg><span>Live</span></a>
-      <a href="#/educatori" data-nav="educatori"><svg class="i"><use href="#i-users"/></svg><span>Educatori</span></a>
+      <a href="#/allenati" data-nav="allenati"><svg class="i"><use href="#i-phone"/></svg><span>Allenati</span></a>
+      <a href="#/progressi" data-nav="progressi"><svg class="i"><use href="#i-trend"/></svg><span>Progressi</span></a>
       <a href="#/community" data-nav="community"><svg class="i"><use href="#i-feed"/></svg><span>Community</span></a>
-      <a href="#/guadagni" data-nav="guadagni"><svg class="i"><use href="#i-wallet"/></svg><span>Guadagni</span></a>
       <a href="#/notifiche" data-nav="notifiche" id="sideBell"><svg class="i"><use href="#i-bell"/></svg><span>Notifiche</span></a>
-      <a href="#/notizie" data-nav="notizie"><svg class="i"><use href="#i-pin"/></svg><span>Notizie</span></a>
       <a href="#/admin" data-nav="admin" id="sideAdmin" hidden><svg class="i"><use href="#i-shield"/></svg><span>Admin</span></a>
     </nav>
     <button class="side-out" id="sideOut" aria-label="Esci"><svg class="i"><use href="#i-logout"/></svg><span>Esci</span></button>
@@ -97,25 +95,17 @@
 
   <main id="view" class="view"><div class="loading"><div class="spin"></div></div></main>
 
-  <div class="radial" id="radial">
-    <div class="wrap">
-      <a class="it lv" href="#/live"><svg class="i"><use href="#i-live"/></svg>Live</a>
-      <a class="it" href="#/educatori"><svg class="i"><use href="#i-users"/></svg>Educatori</a>
-      <a class="it" href="#/community?scrivi=1"><svg class="i"><use href="#i-pen"/></svg>Post</a>
-      <a class="it" href="#/notizie"><svg class="i"><use href="#i-pin"/></svg>Notizie</a>
-      <a class="it" href="#/guadagni"><svg class="i"><use href="#i-link"/></svg>Invita</a>
-    </div>
-  </div>
+  <div class="radial" id="radial" hidden></div>
 
   <nav class="nav" id="nav" hidden>
     <div class="bar">
       <a href="#/home" data-nav="home"><svg class="i"><use href="#i-home"/></svg>Home</a>
       <a href="#/accademia" data-nav="accademia"><svg class="i"><use href="#i-cap"/></svg>Accademia</a>
-      <span></span>
-      <a href="#/live" data-nav="live"><svg class="i"><use href="#i-live"/></svg>Live</a>
+      <span class="uno-lb" data-nav="allenati">Allenati</span>
+      <a href="#/progressi" data-nav="progressi"><svg class="i"><use href="#i-trend"/></svg>Progressi</a>
       <a href="#/community" data-nav="community"><svg class="i"><use href="#i-feed"/></svg>Community</a>
     </div>
-    <button class="uno" id="uno" aria-label="Azioni rapide"><span class="t">UNO</span><svg class="i x"><use href="#i-plus"/></svg></button>
+    <a class="uno" id="uno" href="#/allenati" aria-label="Allenati al telefono"><svg class="i"><use href="#i-phone"/></svg></a>
   </nav>
 </div>
 
