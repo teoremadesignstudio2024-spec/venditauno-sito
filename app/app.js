@@ -494,7 +494,7 @@ function pathHtml() {
 }
 function ringSvg(done, tot, r = 34) {
   const C = 2 * Math.PI * r, sz = (r + 7) * 2;
-  return `<svg viewBox="0 0 ${sz} ${sz}"><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" class="trk"/><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" class="val" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - (tot ? done / tot : 0))}"/></svg>`;
+  return `<svg viewBox="0 0 ${sz} ${sz}"><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" class="trk"/><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" class="val" style="--c0:${C};stroke-dasharray:${C};stroke-dashoffset:${C * (1 - (tot ? done / tot : 0))}"/></svg>`;
 }
 function viewHome() {
   const g = gymNow(), lv = levelOf(g.xp), tasks = todayTasks(), done = tasks.filter((t) => t.done).length;
@@ -1814,6 +1814,15 @@ async function viewVerify([code = ""]) {
     <div class="vf-card"><div class="vf-ok ko">${icon("x")}</div><h1>Certificato non trovato</h1><p class="muted">Controlla il codice${code ? ` ${esc(code)}` : ""}: deve essere quello stampato sotto il QR.</p></div>
     <a class="btn sec block" href="#/accedi">Vai a Vendita Uno</a>`;
 }
+
+// Luce che segue il dito o il mouse sul palco (effetto vetro).
+document.addEventListener("pointermove", (e) => {
+  const st = e.target.closest && e.target.closest(".stage, .callcta, .t3:first-child");
+  if (!st) return;
+  const r = st.getBoundingClientRect();
+  st.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
+  st.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
+}, { passive: true });
 
 // ---------- avvio ----------
 (function start() {
