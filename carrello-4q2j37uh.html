@@ -149,11 +149,11 @@ footer a { color: var(--frost-2); text-decoration: none; }
       </ul>
       <div class="pay">
         <!-- PayPal, parte 2: il pulsante del prodotto -->
-        <div id="paypal-container-QNB4AR7E4WSNG"></div>
+        <div id="paypal-container-2XKWD7E6YLH9Q"></div>
         <script>
           paypal.HostedButtons({
-            hostedButtonId: "QNB4AR7E4WSNG",
-          }).render("#paypal-container-QNB4AR7E4WSNG")
+            hostedButtonId: "2XKWD7E6YLH9Q",
+          }).render("#paypal-container-2XKWD7E6YLH9Q")
         </script>
         <p class="pay-msg" id="payMsg">Il pagamento con PayPal non si è caricato. Ricarica la pagina, oppure scrivici su WhatsApp e ti aiutiamo subito.</p>
       </div>
@@ -171,7 +171,7 @@ footer a { color: var(--frost-2); text-decoration: none; }
 // Se PayPal non si carica (blocco del browser, rete), al posto di un riquadro vuoto compare un messaggio.
 window.addEventListener('load', function () {
   setTimeout(function () {
-    var box = document.getElementById('paypal-container-QNB4AR7E4WSNG');
+    var box = document.getElementById('paypal-container-2XKWD7E6YLH9Q');
     if (!window.paypal || !box || !box.children.length) document.getElementById('payMsg').classList.add('on');
   }, 4000);
 });
