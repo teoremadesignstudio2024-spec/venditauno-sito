@@ -155,7 +155,7 @@ const accColor = (a) => (a && /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : "#2f6b
 // Sfondo: foto caricata, altrimenti copertina generata con colore e icona dell'accademia.
 function coverBg(url, color, ic) {
   const u = safeUrl(url);
-  return u ? `<div class="bg" style="background-image:url('${esc(u)}')"></div>` : `<div class="bg gen" style="--c:${color}">${icon(ic || "cap", "big-ic")}</div>`;
+  return u ? `<div class="bg" style="background-image:url('${esc(u)}')"></div>` : `<div class="bg gen" style="--c:${color}">${typeof ic === "number" ? `<b class="big-n">${ic}</b>` : icon(ic || "cap", "big-ic")}</div>`;
 }
 function courseStats(m) {
   const all = m.lessons.length, done = m.lessons.filter((l) => S.progress[l.id]).length;
@@ -167,11 +167,16 @@ function courseColor(m) {
   const a = academyById(m.academyId), i = a ? (a.subs || []).findIndex((x) => x.id === m.subId) : -1;
   return i >= 0 ? SUB_COLORS[i % SUB_COLORS.length] : accColor(a);
 }
+// Numero della sezione a cui appartiene il corso (1-7), oppure l'icona se non ne ha una.
+function subNum(m) {
+  const a = academyById(m.academyId), i = a ? (a.subs || []).findIndex((x) => x.id === m.subId) : -1;
+  return i >= 0 ? i + 1 : "cap";
+}
 function courseCard(m) {
   const a = academyById(m.academyId), e = eduById(m.educatorId), c = courseColor(m), st = courseStats(m);
   const saved = (S.user.saved || []).includes(m.id);
   return `<a class="ccard ${canCourse(m) ? "" : "locked"}" href="#/corso/${esc(m.id)}">${canCourse(m) ? "" : `<span class="lockchip">${icon("lock", "sm")}Bloccato</span>`}
-    <div class="cov" style="--c:${c}">${coverBg(m.cover, c, (subOf(m) || a || {}).icon || "cap")}
+    <div class="cov" style="--c:${c}">${coverBg(m.cover, c, subNum(m))}
       <div class="info">
         <h3>${esc(m.title)}</h3>
         ${e ? `<div class="by">${face(e.name, e.photo)}${esc(e.name)}</div>` : ""}
@@ -461,34 +466,67 @@ function todayTasks() {
   const lessonToday = Object.values(S.progress || {}).some((t) => romeDay(t) === today);
   return [
     { done: lessonToday, ic: "play", t: "Guarda una lezione", s: nl ? nl.title : "Le lezioni arrivano presto", href: nl ? `#/lezione/${nl.id}` : "#/accademia" },
-    { done: g.simToday > 0, ic: "phone", t: "Fai una telefonata di allenamento", s: g.simToday ? `${g.simToday} fatte oggi` : "Un cliente difficile ti aspetta", href: "#/allenati" },
-    { done: !!g.resToday, ic: "trend", t: "Segna i risultati di oggi", s: "Chiamate, appuntamenti, incarichi", href: "#/progressi" },
+    { done: g.simToday > 0, ic: "phone", t: "Fai una telefonata", s: g.simToday ? `${g.simToday} ${g.simToday === 1 ? "fatta" : "fatte"} oggi` : "Un cliente difficile ti aspetta", href: "#/allenati" },
+    { done: !!g.resToday, ic: "trend", t: "Segna i risultati", s: "Chiamate, appuntamenti, incarichi", href: "#/progressi" },
   ];
+}
+// Le tappe del percorso: una per sezione dell'Accademia, con il suo numero gigante.
+function pathSteps() {
+  const a = S.content.academies[0] || { subs: [] };
+  let currentSet = false;
+  return (a.subs || []).map((sb, i) => {
+    const les = S.content.modules.filter((m) => m.subId === sb.id).flatMap((m) => m.lessons);
+    const d = les.filter((l) => S.progress[l.id]).length;
+    const state = !les.length ? "soon" : d === les.length ? "done" : !currentSet ? "now" : "todo";
+    if (state === "now") currentSet = true;
+    return { id: sb.id, n: i + 1, name: sb.name, c: SUB_COLORS[i % SUB_COLORS.length], all: les.length, done: d, pct: les.length ? Math.round((d / les.length) * 100) : 0, state };
+  });
+}
+function pathHtml() {
+  const steps = pathSteps();
+  if (!steps.length) return "";
+  return `<div class="path7">${steps.map((s) => `<a class="step7 ${s.state}" href="#/accademia?sez=${esc(s.id)}" style="--c:${s.c}">
+      <b class="n7">${s.n}</b>
+      <span class="s7-st">${s.state === "done" ? `${icon("check", "sm")}Fatta` : s.state === "now" ? "Sei qui" : s.state === "soon" ? "In arrivo" : `${s.all} lezioni`}</span>
+      <h3>${esc(s.name)}</h3>
+      <div class="prog"><i style="width:${s.pct}%"></i></div>
+    </a>`).join("")}</div>`;
+}
+function ringSvg(done, tot, r = 34) {
+  const C = 2 * Math.PI * r, sz = (r + 7) * 2;
+  return `<svg viewBox="0 0 ${sz} ${sz}"><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" class="trk"/><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" class="val" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - (tot ? done / tot : 0))}"/></svg>`;
 }
 function viewHome() {
   const g = gymNow(), lv = levelOf(g.xp), tasks = todayTasks(), done = tasks.filter((t) => t.done).length;
   const ls = allLessons(), doneL = ls.filter((l) => S.progress[l.id]).length, nl = nextLesson();
-  const C = 2 * Math.PI * 22;
   const day = new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
-  const subsHtml = S.content.academies.flatMap((a) => (a.subs || []).map((sb) => ({ a, sb, ms: S.content.modules.filter((m) => m.academyId === a.id && m.subId === sb.id) }))).filter((x) => x.ms.length)
-    .map((x) => `${secHd(x.sb.name, null, `<a href="#/accademia?sez=${esc(x.sb.id)}">Tutti</a>`)}<div class="hcourses">${x.ms.map(courseCard).join("")}</div>`).join("");
   view.innerHTML = `
-    <section class="hello-blk"><p>${esc(day)}</p><h1>Ciao ${esc(S.user.name)}</h1></section>
-    <section class="today">
-      <div class="today-hd">
-        <div class="grow"><h2>La tua giornata</h2><p>${done === 3 ? "Fatto tutto. Domani si ricomincia." : `${3 - done} ${3 - done === 1 ? "cosa" : "cose"} da fare per tenere la serie`}</p></div>
-        <div class="dayring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" class="trk"/><circle cx="26" cy="26" r="22" class="val" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - done / 3)}"/></svg><b>${done}/3</b></div>
+    <header class="stage">
+      <div class="st-row">
+        <div class="grow"><p class="st-k">${esc(day)}</p><h1>Ciao ${esc(S.user.name)}</h1></div>
+        <a class="st-ring" href="#/progressi" aria-label="${done} su 3 fatte oggi">${ringSvg(done, 3)}<b>${done}<small>/3</small></b></a>
       </div>
-      ${tasks.map((t) => `<a class="task ${t.done ? "done" : ""}" href="${esc(t.href)}"><span class="tk">${icon(t.done ? "check" : t.ic, "sm")}</span><div class="grow"><h3>${esc(t.t)}</h3><p class="ell">${esc(t.s)}</p></div>${icon("chev", "sm")}</a>`).join("")}
-    </section>
-    <a class="lvline" href="#/progressi/classifica">${lvlBadge(lv, 44)}<div class="grow"><b>${esc(lv.name)}</b><div class="prog"><i style="width:${lv.pct}%"></i></div><small>${g.xp} punti${lv.next ? ` · ${lv.next - g.xp} per ${esc(lv.nextName)}` : ""}</small></div><span class="gc-streak ${g.today ? "on" : ""}">${flame(g.streak > 0)}<b>${g.streak}</b><small>di fila</small></span></a>
-    ${nl ? `<a class="resume" href="#/lezione/${esc(nl.id)}">
-      <div class="rs-cov">${coverBg(nl.module.cover, courseColor(nl.module), (subOf(nl.module) || {}).icon || "play")}<span class="rs-play">${icon("play")}</span></div>
-      <div class="rs-tx"><small>${doneL ? "Riprendi da qui" : "Inizia da qui"} · ${esc(nl.module.title)}</small><h3>${esc(nl.title)}</h3>
-      <div class="prog"><i style="width:${ls.length ? Math.round((doneL / ls.length) * 100) : 0}%"></i></div><p>${doneL} di ${ls.length} lezioni dell'Accademia</p></div></a>` : ""}
-    ${subsHtml}
-    <div id="homeWins"></div>`;
-  bindCourses(view);
+      <div class="st-chips">
+        <a class="st-chip" href="#/progressi/classifica">${lvlBadge(lv, 26)}<span><b>${esc(lv.name)}</b>${g.xp} punti</span></a>
+        <a class="st-chip ${g.streak ? "hot" : ""}" href="#/progressi">${flame(g.streak > 0)}<span><b>${g.streak} ${g.streak === 1 ? "giorno" : "giorni"}</b>di fila</span></a>
+      </div>
+    </header>
+    <div class="body">
+      <section class="today3">
+        <div class="t3-hd"><h2>Oggi</h2><p>${done === 3 ? "Fatto tutto. Domani si ricomincia." : `Fai queste ${3 - done === 1 ? "ultima cosa" : `${3 - done} cose`} e tieni viva la serie`}</p></div>
+        <div class="t3-grid">${tasks.map((t, i) => `<a class="t3 ${t.done ? "done" : ""}" href="${esc(t.href)}">
+          <b class="t3-n">${i + 1}</b><span class="t3-ic">${icon(t.done ? "check" : t.ic)}</span>
+          <h3>${esc(t.t)}</h3><p>${esc(t.s)}</p></a>`).join("")}</div>
+      </section>
+      ${nl ? `<a class="resume" href="#/lezione/${esc(nl.id)}">
+        <div class="rs-cov">${coverBg(nl.module.cover, courseColor(nl.module), subNum(nl.module))}<span class="rs-play">${icon("play")}</span></div>
+        <div class="rs-tx"><small>${doneL ? "Riprendi da qui" : "Inizia da qui"} · ${esc(nl.module.title)}</small><h3>${esc(nl.title)}</h3>
+        <div class="prog"><i style="width:${ls.length ? Math.round((doneL / ls.length) * 100) : 0}%"></i></div><p>${doneL} di ${ls.length} lezioni dell'Accademia</p></div></a>` : ""}
+      ${secHd("Il tuo percorso", null, `<a href="#/accademia">Accademia</a>`)}
+      ${pathHtml()}
+      <a class="callcta" href="#/allenati"><span class="cc-ic">${icon("phone")}</span><div class="grow"><h3>Chiama un cliente difficile</h3><p>Ti risponde l'AI. Alla fine ricevi il voto.</p></div>${icon("chev")}</a>
+      <div id="homeWins"></div>
+    </div>`;
   paintHomeWins();
 }
 
@@ -497,35 +535,34 @@ function viewHome() {
 // =====================================================================
 // Le sezioni sono un percorso in ordine: si mostrano tutte, anche quelle con i corsi in arrivo.
 function viewAcademy(_, q) {
-  const a = S.content.academies[0] || { name: "Vendita Uno", subs: [] };
   const ls = allLessons(), done = ls.filter((l) => S.progress[l.id]).length, pct = ls.length ? Math.round((done / ls.length) * 100) : 0;
   const certs = Object.keys(S.user.certs || {}).length, saved = S.user.saved || [];
-  const subs = a.subs || [], ids = new Set(subs.map((x) => x.id));
-  const blocks = subs.map((sb, i) => ({ id: sb.id, n: i + 1, name: sb.name, icon: sb.icon, c: SUB_COLORS[i % SUB_COLORS.length], ms: S.content.modules.filter((m) => m.subId === sb.id) }));
+  const steps = pathSteps(), ids = new Set(steps.map((x) => x.id));
   const other = S.content.modules.filter((m) => !ids.has(m.subId));
-  if (other.length) blocks.push({ id: "_altri", n: "", name: "Altri corsi", icon: "cap", c: "#5d6678", ms: other });
   const block = (b) => {
-    const les = b.ms.flatMap((m) => m.lessons), d = les.filter((l) => S.progress[l.id]).length, full = les.length && d === les.length;
-    return `<section class="acs" id="sez-${esc(b.id)}" style="--c:${b.c}">
-      <div class="acs-hd"><span class="acs-n">${b.n || icon(b.icon || "cap", "sm")}</span>
-        <div class="grow"><h2>${esc(b.name)}</h2><p>${b.ms.length ? `${b.ms.length} ${b.ms.length === 1 ? "corso" : "corsi"} · ${les.length} ${les.length === 1 ? "lezione" : "lezioni"}${d ? ` · ${full ? "completata" : `${d} fatte`}` : ""}` : "Corsi in arrivo"}</p></div>
-        ${full ? `<span class="acs-ok">${icon("check", "sm")}</span>` : ""}</div>
-      ${b.ms.length ? `<div class="hcourses">${b.ms.map(courseCard).join("")}</div>` : ""}
+    const ms = b.ms || S.content.modules.filter((m) => m.subId === b.id);
+    return `<section class="acs ${b.state}" id="sez-${esc(b.id)}" style="--c:${b.c}">
+      <div class="acs-hd"><b class="acs-n">${b.n}</b>
+        <div class="grow"><h2>${esc(b.name)}</h2><p>${ms.length ? `${ms.length} ${ms.length === 1 ? "corso" : "corsi"} · ${b.all} ${b.all === 1 ? "lezione" : "lezioni"}${b.done ? ` · ${b.state === "done" ? "completata" : `${b.done} fatte`}` : ""}` : "Corsi in arrivo"}</p></div>
+        ${b.state === "done" ? `<span class="acs-ok">${icon("check", "sm")}</span>` : b.state === "now" ? `<span class="acs-now">Sei qui</span>` : ""}</div>
+      ${ms.length ? `<div class="hcourses">${ms.map(courseCard).join("")}</div>` : ""}
     </section>`;
   };
   view.innerHTML = `
-    <section class="ac-hd">
-      <h1 class="h1">Accademia</h1>
-      <p class="lead-tx">${subs.length} sezioni, ${S.content.modules.length} corsi, ${ls.length} lezioni. Parti da "${esc((subs[0] || {}).name || "Inizia da qui!")}" e vai avanti in ordine.</p>
-      <div class="ac-stats">
-        <div><b>${pct}%</b><span>completato</span></div>
-        <div><b>${done}</b><span>lezioni fatte</span></div>
-        <div><b>${certs}</b><span>${certs === 1 ? "certificato" : "certificati"}</span></div>
+    <header class="stage">
+      <div class="st-row">
+        <div class="grow"><p class="st-k">${steps.length} tappe · ${S.content.modules.length} corsi · ${ls.length} lezioni</p><h1>Accademia</h1></div>
+        <div class="st-ring">${ringSvg(done, ls.length)}<b>${pct}<small>%</small></b></div>
       </div>
-      <div class="prog" style="margin-top:14px"><i style="width:${pct}%"></i></div>
-    </section>
-    ${saved.length ? `${secHd("I tuoi corsi salvati")}<div class="hcourses">${S.content.modules.filter((m) => saved.includes(m.id)).map(courseCard).join("")}</div>` : ""}
-    <div class="acs-list">${blocks.map(block).join("")}</div>`;
+      <div class="st-chips">
+        <span class="st-chip">${icon("play", "sm")}<span><b>${done}</b>lezioni fatte</span></span>
+        <span class="st-chip">${icon("doc", "sm")}<span><b>${certs}</b>${certs === 1 ? "certificato" : "certificati"}</span></span>
+      </div>
+    </header>
+    <div class="body">
+      ${saved.length ? `${secHd("Salvati")}<div class="hcourses">${S.content.modules.filter((m) => saved.includes(m.id)).map(courseCard).join("")}</div>` : ""}
+      <div class="acs-list">${steps.map(block).join("")}${other.length ? block({ id: "_altri", n: "+", name: "Altri corsi", c: "#5d6678", ms: other, all: other.flatMap((m) => m.lessons).length, done: 0, state: "todo" }) : ""}</div>
+    </div>`;
   bindCourses(view);
   const sez = q && q.get("sez");
   if (sez) { const el = document.getElementById(`sez-${sez}`); if (el) setTimeout(() => el.scrollIntoView({ block: "start" }), 50); }
@@ -538,7 +575,7 @@ function viewCourse([id]) {
   const next = m.lessons.find((l) => !S.progress[l.id]) || m.lessons[0];
   const saved = (S.user.saved || []).includes(m.id);
   view.innerHTML = `
-    <div class="chero">${coverBg(m.cover, c, a ? a.icon : "cap")}
+    <div class="chero">${coverBg(m.cover, c, subNum(m))}
       <a class="back" href="#/accademia">${icon("back", "sm")} Accademia</a>
       <div class="info">
         <div class="row" style="gap:8px;flex-wrap:wrap">${a ? `<a class="chip" href="#/accademia?sez=${esc(m.subId || "")}" style="background:${c};color:#fff;text-decoration:none">${esc(subOf(m) ? subOf(m).name : a.name)}</a>` : ""}<span class="lvl ${m.level === "premium" ? "premium" : "base"}">${m.level === "premium" ? "Premium" : "Base"}</span></div>
@@ -668,8 +705,9 @@ async function viewCommunity(_, q) {
   if (!can("community")) { lockedView("community", "Community bloccata", "Sblocca la community per leggere e scrivere con gli altri agenti e con gli educatori."); return; }
   let image = "";
   view.innerHTML = `
-    <div class="row" style="justify-content:space-between;margin-bottom:6px"><h1 class="h1">Community</h1><button class="btn sec" id="shareW" style="padding:9px 14px">${icon("spark", "sm")}Successo</button></div>
-    <p class="lead-tx" style="margin:0 0 6px">Domande, consigli e risultati degli agenti Vendita Uno.</p>
+    <header class="stage"><div class="st-row"><div class="grow"><p class="st-k">Agenti Vendita Uno</p><h1>Community</h1><p class="st-sub">Domande, consigli e risultati di chi lavora col metodo.</p></div></div>
+      <button class="btn white" id="shareW" style="margin-top:16px">${icon("spark", "sm")}Condividi un successo</button></header>
+    <div class="body">
     <div id="homeWins"></div>
     <h2 class="sec">Bacheca</h2>
     <div class="card compose">
@@ -678,7 +716,7 @@ async function viewCommunity(_, q) {
       <div class="bar"><label style="color:var(--blue-2);cursor:pointer;display:flex">${icon("image")}<input type="file" accept="image/*" id="pimg" hidden></label><button class="btn pri" id="psend">Pubblica</button></div>
     </div>
     <div id="feed"><div class="loading" style="min-height:120px"><div class="spin"></div></div></div>
-    <div id="more"></div>`;
+    <div id="more"></div></div>`;
   view.querySelector(".compose .av, .compose .ini").style.cssText = "width:34px;height:34px;font-size:12px";
   paintHomeWins();
   $("#shareW").onclick = () => shareWin(paintHomeWins);
@@ -768,11 +806,12 @@ function viewProfile() {
   const u = S.user;
   const roleName = { admin: "Amministratore", educator: "Educatore", agent: "Agente" }[u.role] || "Agente";
   view.innerHTML = `
-    <div class="me-hd">
+    <header class="stage"><div class="me-hd">
       <div class="avedit">${userFace(u)}<label aria-label="Cambia foto">${icon("camera")}<input type="file" accept="image/*" id="avf" hidden></label></div>
-      <div class="grow"><h1 class="h1" style="font-size:22px">${esc(fullName(u))}</h1><p class="muted small" style="margin-top:4px">${roleName}${u.city ? " · " + esc(u.city) : ""}</p></div>
-    </div>
-    <div class="card menu" style="margin-top:20px">
+      <div class="grow"><h1>${esc(fullName(u))}</h1><p class="st-sub">${roleName}${u.city ? " · " + esc(u.city) : ""}</p></div>
+    </div></header>
+    <div class="body">
+    <div class="card menu">
       <a href="#/allenati">${icon("phone")}Allenati, risultati e classifica${icon("chev", "chev")}</a>
       ${fullAccess() ? "" : `<a href="#/sblocca">${icon("key")}Sblocca i contenuti${icon("chev", "chev")}</a>`}
       ${u.role === "admin" ? `<a href="#/admin">${icon("shield")}Pannello admin${icon("chev", "chev")}</a>` : `<button id="claim">${icon("key")}Ho un codice amministratore${icon("chev", "chev")}</button>`}
@@ -791,7 +830,7 @@ function viewProfile() {
       <label class="field"><span>Nuova password</span><input class="inp" name="password" type="password" autocomplete="new-password"></label>
       <button class="btn sec block">Cambia password</button>
     </form>
-    <button class="btn danger block" id="logout" style="margin-top:20px">${icon("logout", "sm")}Esci</button>`;
+    <button class="btn danger block" id="logout" style="margin-top:20px">${icon("logout", "sm")}Esci</button></div>`;
   const cl = $("#claim");
   if (cl) cl.onclick = () => formSheet("Accesso amministratore", field("Codice amministratore", "code", "", "text", 'required autocomplete="off" placeholder="VU-XXXX-XXXX-XXXX" style="text-transform:uppercase"'), async (f) => {
     S.user = (await api("/admin-claim", { code: f.code })).user;
@@ -1349,15 +1388,19 @@ const GYM_TABS = [["risultati", "Risultati"], ["classifica", "Classifica"], ["su
 async function viewGym([tab = ""]) {
   const g = gymNow(), lv = levelOf(g.xp);
   view.innerHTML = `
-    <header class="gym-hd">
-      ${lvlBadge(lv, 64)}
-      <div class="grow"><p class="muted small">Livello ${lv.n}</p><h1>${esc(lv.name)}</h1>
-        <div class="prog"><i style="width:${lv.pct}%"></i></div>
-        <p class="small muted" style="margin-top:6px">${g.xp} punti${lv.next ? ` · ${lv.next - g.xp} al livello ${esc(lv.nextName)}` : ""}</p></div>
-      <div class="gc-streak ${g.today ? "on" : ""}">${flame(g.streak > 0)}<b>${g.streak}</b><small>di fila</small></div>
+    <header class="stage">
+      ${tab ? `<div class="st-row">
+        <div class="grow"><p class="st-k">Livello ${lv.n} · ${g.xp} punti</p><h1>${esc(lv.name)}</h1>
+          <div class="prog"><i style="width:${lv.pct}%"></i></div>
+          <p class="st-sub">${lv.next ? `Ancora ${lv.next - g.xp} punti per diventare ${esc(lv.nextName)}` : "Hai raggiunto il livello più alto"}</p></div>
+        ${lvlBadge(lv, 76)}
+      </div>
+      <div class="st-chips"><span class="st-chip ${g.streak ? "hot" : ""}">${flame(g.streak > 0)}<span><b>${g.streak} ${g.streak === 1 ? "giorno" : "giorni"}</b>di fila</span></span><span class="st-chip">${icon("trend", "sm")}<span><b>${g.best}</b>record</span></span></div>`
+      : `<div class="st-row"><div class="grow"><p class="st-k">${g.simToday ? `${g.simToday} ${g.simToday === 1 ? "telefonata" : "telefonate"} oggi` : "Nessuna telefonata oggi"}</p><h1>Allenati al telefono</h1><p class="st-sub">Scegli un cliente e chiamalo. Risponde come una persona vera, poi il coach ti dà il voto.</p></div><span class="st-phone">${icon("phone")}</span></div>`}
     </header>
+    <div class="body">
     ${tab ? `<div class="utabs">${GYM_TABS.map(([k, n]) => `<a href="#/progressi/${k}" class="${tab === k ? "on" : ""}">${n}</a>`).join("")}</div>` : ""}
-    <div id="gymBody"><div class="loading"><div class="spin"></div></div></div>`;
+    <div id="gymBody"><div class="loading"><div class="spin"></div></div></div></div>`;
   try { if (!gymData || tab === "" || tab === "risultati") await loadGym(); } catch (e) { $("#gymBody").innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   const body = $("#gymBody");
   if (!body) return;
@@ -1375,7 +1418,6 @@ function gymCalls(body) {
   const list = d.scenarios.filter((s) => !simFilter || s.academy === simFilter);
   const lvlName = ["", "Facile", "Media", "Difficile"];
   body.innerHTML = `
-    <p class="gym-intro">Scegli un cliente e chiamalo. Ti risponde come una persona vera: diffidente, di fretta, pieno di obiezioni. Parla col microfono o scrivi. Quando chiudi, il coach ti dà il voto e ti dice cosa migliorare.</p>
     ${d.simReady ? "" : `<div class="card pad warnbox">${icon("lock")}<div><b>Il simulatore si sta accendendo</b><p class="small muted">${S.user.role === "admin" ? "Per attivarlo aggiungi la chiave ANTHROPIC_API_KEY nelle variabili segrete del Worker su Cloudflare." : "Sarà disponibile a breve. Intanto puoi segnare i tuoi risultati e scalare la classifica."}</p></div></div>`}
     <div class="fchips"><button data-sf="" class="${!simFilter ? "on" : ""}">Tutti</button>${accs.map((a) => `<button data-sf="${esc(a.id)}" class="${simFilter === a.id ? "on" : ""}" style="--c:${accColor(a)}"><i></i>${esc(a.name)}</button>`).join("")}</div>
     <div class="scen-list">${list.map((s) => {
