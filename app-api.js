@@ -108,7 +108,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 14;
+const CATALOG_V = 15;
 
 function catalogAcademies() {
   return [
@@ -123,6 +123,13 @@ function catalogAcademies() {
     ] },
   ];
 }
+
+// Corso "Cos'è una USP e come crearla" (sezione 3: Diventa il punto di riferimento della tua zona).
+const USP_COURSE = () => ({
+  id: "ag-usp1", academyId: "agenti", subId: "zona", level: "base", educatorId: "", cover: "",
+  title: "Cos'è una USP e come crearla", desc: "La tua proposta unica: perché i proprietari dovrebbero scegliere te e non le altre agenzie della zona.",
+  lessons: [{ id: "ag-usp1v1", title: "Cos'è una USP e come crearla", video: "https://www.loom.com/share/f0948ac5854a4c7491e7ff4c08d0f885", youtubeId: "", minutes: 0, desc: "", pdf: "", quiz: [] }],
+});
 
 function catalogModules() {
   const yt = "jqOjebgNQvk";
@@ -140,6 +147,7 @@ function catalogModules() {
       ["Portare le parti all'accordo", "Proposta, controproposta e quando fermarsi."],
     ]),
     { id: "m3", title: "Chiusura e firma", desc: "Portare il cliente alla firma senza pressioni.", academyId: "agenti", subId: "basi", educatorId: "md", level: "premium", cover: "", lessons: [{ id: "m3v1", title: "Chiusura e firma del mandato", youtubeId: yt, minutes: 15, desc: "", pdf: "" }] },
+    USP_COURSE(),
     C("ag-chi1", "agenti", "zona", "base", "Chiamate a freddo che funzionano", "Lo script, il tono e i numeri per trasformare le chiamate in appuntamenti.", [
       ["I primi 30 secondi", "Come presentarti senza farti attaccare il telefono."],
       ["Chiamare i privati che vendono da soli", "La telefonata completa, frase per frase."],
@@ -275,6 +283,11 @@ async function getContent(kv) {
       else if (move[m.subId]) m.subId = move[m.subId];
       else if (!ids.has(m.subId)) m.subId = "inizia";
     }
+  }
+  if ((c.seedV || 1) < 15 && !c.modules.some((m) => m.id === "ag-usp1")) {
+    // Nuovo corso nella sezione 3, messo prima degli altri corsi della sezione.
+    const i = c.modules.findIndex((m) => m.subId === "zona");
+    c.modules.splice(i < 0 ? c.modules.length : i, 0, USP_COURSE());
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
