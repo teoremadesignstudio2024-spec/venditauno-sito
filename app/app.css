@@ -1070,3 +1070,18 @@ a.uno:active{transform:translateX(-50%) scale(.94)}
   .rs-tx{flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px}
   .rs-tx h3{font-size:26px}
 }
+
+/* Accademia: le sezioni come percorso numerato */
+.acs-list{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.acs{min-width:0}
+.acs{padding:16px 0 4px;border-radius:24px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--sh-1);scroll-margin-top:72px}
+.acs-hd{display:flex;align-items:center;gap:12px;padding:0 16px 12px}
+.acs-n{width:38px;height:38px;border-radius:12px;flex:none;display:grid;place-items:center;background:var(--c);color:#fff;font-family:var(--display);font-weight:800;font-size:17px}
+.acs-hd h2{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.acs-hd p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.acs-ok{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--ok);color:#fff;flex:none}
+.acs .hcourses{margin:0;padding:2px 16px 14px}
+.acs .hcourses .ccard{width:min(78vw,300px);box-shadow:var(--sh-1)}
+.acs:not(:has(.hcourses)){padding-bottom:4px}
+.acs:not(:has(.hcourses)) .acs-n{background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c)}
+@media (min-width:1024px){.acs .hcourses .ccard{width:320px}}

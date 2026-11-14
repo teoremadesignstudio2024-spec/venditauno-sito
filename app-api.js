@@ -108,15 +108,18 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 13;
+const CATALOG_V = 14;
 
 function catalogAcademies() {
   return [
     { id: "agenti", name: "Agenti immobiliari", icon: "handshake", color: "#2f6bff", cover: "", card: "/app/academies/agenti.jpg", subs: [
-      { id: "acq", name: "Acquisizione", icon: "key" },
-      { id: "tra", name: "Trattativa", icon: "handshake" },
-      { id: "chiu", name: "Chiusura", icon: "doc" },
-      { id: "chi", name: "Chiamate a freddo", icon: "phone" },
+      { id: "inizia", name: "Inizia da qui!", icon: "play" },
+      { id: "basi", name: "Le basi di un'agenzia che vende", icon: "home2" },
+      { id: "zona", name: "Diventa il punto di riferimento della tua zona", icon: "pin" },
+      { id: "numeri", name: "I numeri che contano", icon: "trend" },
+      { id: "team", name: "Costruire un team che vende", icon: "users" },
+      { id: "organizzata", name: "L'agenzia organizzata", icon: "tool" },
+      { id: "freno", name: "Cosa ti sta frenando", icon: "brain" },
     ] },
   ];
 }
@@ -129,15 +132,15 @@ function catalogModules() {
   });
   return [
     // Agenti immobiliari (i primi tre corsi esistevano già)
-    { id: "m1", title: "Introduzione al metodo", desc: "Come funziona Vendita Uno e come usare l'accademia.", academyId: "agenti", subId: "acq", educatorId: "sd", level: "base", cover: "", lessons: [{ id: "m1v1", title: "Introduzione al metodo Vendita Uno", youtubeId: yt, minutes: 6, desc: "", pdf: "" }] },
-    { id: "m2", title: "Acquisizione mandati", desc: "Dal primo contatto all'incarico in esclusiva.", academyId: "agenti", subId: "acq", educatorId: "sd", level: "premium", cover: "", lessons: [{ id: "m2v1", title: "Come acquisire mandati in esclusiva", youtubeId: yt, minutes: 18, desc: "", pdf: "" }] },
-    C("ag-tra1", "agenti", "tra", "premium", "Trattativa senza sconti", "Difendere il prezzo e la provvigione portando le parti all'accordo.", [
+    { id: "m1", title: "Introduzione al metodo", desc: "Come funziona Vendita Uno e come usare l'accademia.", academyId: "agenti", subId: "inizia", educatorId: "sd", level: "base", cover: "", lessons: [{ id: "m1v1", title: "Introduzione al metodo Vendita Uno", youtubeId: yt, minutes: 6, desc: "", pdf: "" }] },
+    { id: "m2", title: "Acquisizione mandati", desc: "Dal primo contatto all'incarico in esclusiva.", academyId: "agenti", subId: "zona", educatorId: "sd", level: "premium", cover: "", lessons: [{ id: "m2v1", title: "Come acquisire mandati in esclusiva", youtubeId: yt, minutes: 18, desc: "", pdf: "" }] },
+    C("ag-tra1", "agenti", "basi", "premium", "Trattativa senza sconti", "Difendere il prezzo e la provvigione portando le parti all'accordo.", [
       ["Preparare la trattativa", "Cosa sapere di venditore e acquirente prima di sederti al tavolo."],
       ["Le obiezioni sul prezzo", "Come rispondere a \"è troppo\" senza abbassare subito."],
       ["Portare le parti all'accordo", "Proposta, controproposta e quando fermarsi."],
     ]),
-    { id: "m3", title: "Chiusura e firma", desc: "Portare il cliente alla firma senza pressioni.", academyId: "agenti", subId: "chiu", educatorId: "md", level: "premium", cover: "", lessons: [{ id: "m3v1", title: "Chiusura e firma del mandato", youtubeId: yt, minutes: 15, desc: "", pdf: "" }] },
-    C("ag-chi1", "agenti", "chi", "base", "Chiamate a freddo che funzionano", "Lo script, il tono e i numeri per trasformare le chiamate in appuntamenti.", [
+    { id: "m3", title: "Chiusura e firma", desc: "Portare il cliente alla firma senza pressioni.", academyId: "agenti", subId: "basi", educatorId: "md", level: "premium", cover: "", lessons: [{ id: "m3v1", title: "Chiusura e firma del mandato", youtubeId: yt, minutes: 15, desc: "", pdf: "" }] },
+    C("ag-chi1", "agenti", "zona", "base", "Chiamate a freddo che funzionano", "Lo script, il tono e i numeri per trasformare le chiamate in appuntamenti.", [
       ["I primi 30 secondi", "Come presentarti senza farti attaccare il telefono."],
       ["Chiamare i privati che vendono da soli", "La telefonata completa, frase per frase."],
       ["Gestire il \"non mi interessa\"", "Le risposte che riaprono la conversazione."],
@@ -183,7 +186,7 @@ function defaultBanners() {
 const defaultSettings = () => ({ welcomeTitle: "Benvenuto!", welcomeSub: "Scopri Vendita Uno", onboardingTitle: "Inizia da qui", onboardingText: "Scopri come usare l'app e tutto quello che offre", onboardingVideo: "jqOjebgNQvk", presentationPdf: "" });
 
 // Vecchie accademie (versioni 1 e 2) → nuova accademia e sottocategoria.
-const OLD_ACADEMIES = { acq: ["agenti", "acq"], tra: ["agenti", "tra"], chi: ["agenti", "chi"], soc: ["agenti", ""], min: ["agenti", ""], fin: ["agenti", ""], leg: ["agenti", ""], ai: ["agenti", ""], inv: ["agenti", ""] };
+const OLD_ACADEMIES = { acq: ["agenti", "zona"], tra: ["agenti", "basi"], chi: ["agenti", "zona"], soc: ["agenti", ""], min: ["agenti", ""], fin: ["agenti", ""], leg: ["agenti", ""], ai: ["agenti", ""], inv: ["agenti", ""] };
 
 // Porta i contenuti salvati con una versione precedente alla struttura con sottocategorie.
 // Mantiene video, copertine e modifiche fatte dall'admin; aggiunge solo ciò che manca.
@@ -259,6 +262,19 @@ async function getContent(kv) {
     c.academies = c.academies.filter((a) => keep.has(a.id));
     c.modules = c.modules.filter((m) => keep.has(m.academyId));
     c.educators = c.educators.map((e) => (keep.has(e.academyId) || !e.academyId ? e : { ...e, academyId: "agenti" }));
+  }
+  if ((c.seedV || 1) < 14) {
+    // Nuove sezioni dell'Accademia; i corsi già esistenti vanno nella sezione più vicina.
+    const ag = c.academies.find((a) => a.id === "agenti");
+    if (ag) ag.subs = catalogAcademies()[0].subs;
+    const move = { acq: "zona", tra: "basi", chiu: "basi", chi: "zona" };
+    const ids = new Set(catalogAcademies()[0].subs.map((x) => x.id));
+    for (const m of c.modules) {
+      if (m.academyId !== "agenti") continue;
+      if (m.id === "m1") m.subId = "inizia";
+      else if (move[m.subId]) m.subId = move[m.subId];
+      else if (!ids.has(m.subId)) m.subId = "inizia";
+    }
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;

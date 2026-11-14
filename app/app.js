@@ -162,7 +162,7 @@ function courseStats(m) {
   return { all, done, pct: all ? Math.round((done / all) * 100) : 0 };
 }
 // Ogni sezione dell'accademia ha il suo colore, così le copertine si distinguono.
-const SUB_COLORS = ["#2f6bff", "#7c3aed", "#0f9d58", "#ea580c", "#0891b2", "#db2777"];
+const SUB_COLORS = ["#2f6bff", "#7c3aed", "#0f9d58", "#ea580c", "#0891b2", "#db2777", "#ca8a04"];
 function courseColor(m) {
   const a = academyById(m.academyId), i = a ? (a.subs || []).findIndex((x) => x.id === m.subId) : -1;
   return i >= 0 ? SUB_COLORS[i % SUB_COLORS.length] : accColor(a);
@@ -176,7 +176,6 @@ function courseCard(m) {
         <h3>${esc(m.title)}</h3>
         ${e ? `<div class="by">${face(e.name, e.photo)}${esc(e.name)}</div>` : ""}
         <div class="meta">
-          ${a ? `<div class="ac" style="--c:${c}"><span class="tile">${icon((subOf(m) || a).icon || "cap")}</span><span>${esc(subOf(m) ? subOf(m).name : a.name)}<small>${esc(subOf(m) ? a.name : "Accademia")}</small></span></div>` : ""}
           <span class="lvl ${m.level === "premium" ? "premium" : "base"}"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.6 7 .7-5.3 4.7 1.6 7L12 17.3 5.7 21l1.6-7L2 9.3l7-.7z"/></svg>${m.level === "premium" ? "Premium" : "Base"}</span>
           <span class="acts"><button data-play="${esc(m.id)}" aria-label="${canCourse(m) ? "Inizia" : "Bloccato"}" class="${canCourse(m) ? "" : "lockb"}">${icon(canCourse(m) ? "play" : "lock")}</button><button data-save="${esc(m.id)}" class="${saved ? "saved" : ""}" aria-label="Salva">${icon(saved ? "check" : "plus")}</button></span>
         </div>
@@ -496,20 +495,28 @@ function viewHome() {
 // =====================================================================
 // ACCADEMIA
 // =====================================================================
-let acFilter = "";
+// Le sezioni sono un percorso in ordine: si mostrano tutte, anche quelle con i corsi in arrivo.
 function viewAcademy(_, q) {
-  if (q && q.get("sez")) acFilter = q.get("sez");
-  const a = S.content.academies[0];
+  const a = S.content.academies[0] || { name: "Vendita Uno", subs: [] };
   const ls = allLessons(), done = ls.filter((l) => S.progress[l.id]).length, pct = ls.length ? Math.round((done / ls.length) * 100) : 0;
   const certs = Object.keys(S.user.certs || {}).length, saved = S.user.saved || [];
-  const subs = S.content.academies.flatMap((x) => x.subs || []).filter((sb) => S.content.modules.some((m) => m.subId === sb.id));
-  let list = S.content.modules;
-  if (acFilter === "_saved") list = list.filter((m) => saved.includes(m.id));
-  else if (acFilter) list = list.filter((m) => m.subId === acFilter);
+  const subs = a.subs || [], ids = new Set(subs.map((x) => x.id));
+  const blocks = subs.map((sb, i) => ({ id: sb.id, n: i + 1, name: sb.name, icon: sb.icon, c: SUB_COLORS[i % SUB_COLORS.length], ms: S.content.modules.filter((m) => m.subId === sb.id) }));
+  const other = S.content.modules.filter((m) => !ids.has(m.subId));
+  if (other.length) blocks.push({ id: "_altri", n: "", name: "Altri corsi", icon: "cap", c: "#5d6678", ms: other });
+  const block = (b) => {
+    const les = b.ms.flatMap((m) => m.lessons), d = les.filter((l) => S.progress[l.id]).length, full = les.length && d === les.length;
+    return `<section class="acs" id="sez-${esc(b.id)}" style="--c:${b.c}">
+      <div class="acs-hd"><span class="acs-n">${b.n || icon(b.icon || "cap", "sm")}</span>
+        <div class="grow"><h2>${esc(b.name)}</h2><p>${b.ms.length ? `${b.ms.length} ${b.ms.length === 1 ? "corso" : "corsi"} · ${les.length} ${les.length === 1 ? "lezione" : "lezioni"}${d ? ` · ${full ? "completata" : `${d} fatte`}` : ""}` : "Corsi in arrivo"}</p></div>
+        ${full ? `<span class="acs-ok">${icon("check", "sm")}</span>` : ""}</div>
+      ${b.ms.length ? `<div class="hcourses">${b.ms.map(courseCard).join("")}</div>` : ""}
+    </section>`;
+  };
   view.innerHTML = `
     <section class="ac-hd">
       <h1 class="h1">Accademia</h1>
-      <p class="lead-tx">${esc(a ? a.name : "Vendita Uno")}: ${S.content.modules.length} corsi, ${ls.length} lezioni. Dal primo contatto alla firma.</p>
+      <p class="lead-tx">${subs.length} sezioni, ${S.content.modules.length} corsi, ${ls.length} lezioni. Parti da "${esc((subs[0] || {}).name || "Inizia da qui!")}" e vai avanti in ordine.</p>
       <div class="ac-stats">
         <div><b>${pct}%</b><span>completato</span></div>
         <div><b>${done}</b><span>lezioni fatte</span></div>
@@ -517,10 +524,11 @@ function viewAcademy(_, q) {
       </div>
       <div class="prog" style="margin-top:14px"><i style="width:${pct}%"></i></div>
     </section>
-    <div class="fchips"><button data-f="" class="${!acFilter ? "on" : ""}">Tutti</button>${subs.map((sb) => `<button data-f="${esc(sb.id)}" class="${acFilter === sb.id ? "on" : ""}">${icon(sb.icon || "cap", "sm")}${esc(sb.name)}</button>`).join("")}${saved.length ? `<button data-f="_saved" class="${acFilter === "_saved" ? "on" : ""}">${icon("save", "sm")}Salvati</button>` : ""}</div>
-    <div class="courses">${list.map(courseCard).join("") || `<div class="card empty">${icon("cap")}Nessun corso qui, per ora.</div>`}</div>`;
-  view.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { acFilter = b.dataset.f; viewAcademy(); }));
+    ${saved.length ? `${secHd("I tuoi corsi salvati")}<div class="hcourses">${S.content.modules.filter((m) => saved.includes(m.id)).map(courseCard).join("")}</div>` : ""}
+    <div class="acs-list">${blocks.map(block).join("")}</div>`;
   bindCourses(view);
+  const sez = q && q.get("sez");
+  if (sez) { const el = document.getElementById(`sez-${sez}`); if (el) setTimeout(() => el.scrollIntoView({ block: "start" }), 50); }
 }
 
 function viewCourse([id]) {
