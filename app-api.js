@@ -108,7 +108,7 @@ function publicUser(u) {
 // ---------- contenuti iniziali ----------
 // Struttura: accademia → sottocategorie → corsi → lezioni. Tutto modificabile dal pannello admin.
 
-const CATALOG_V = 15;
+const CATALOG_V = 16;
 
 function catalogAcademies() {
   return [
@@ -131,6 +131,13 @@ const USP_COURSE = () => ({
   lessons: [{ id: "ag-usp1v1", title: "Cos'è una USP e come crearla", video: "https://www.loom.com/share/f0948ac5854a4c7491e7ff4c08d0f885", youtubeId: "", minutes: 0, desc: "", pdf: "", quiz: [] }],
 });
 
+// Corso video della sezione 2: Le basi di un'agenzia che vende.
+const BASI_COURSE = () => ({
+  id: "ag-basi1", academyId: "agenti", subId: "basi", level: "base", educatorId: "", cover: "",
+  title: "Le basi di un'agenzia che vende", desc: "Cosa deve avere un'agenzia per vendere davvero: le fondamenta da cui partire.",
+  lessons: [{ id: "ag-basi1v1", title: "Le basi di un'agenzia che vende", video: "https://www.loom.com/share/695e304d0b35481dbd5d6652311bf9bd", youtubeId: "", minutes: 0, desc: "", pdf: "", quiz: [] }],
+});
+
 function catalogModules() {
   const yt = "jqOjebgNQvk";
   const C = (id, academyId, subId, level, title, desc, lessons) => ({
@@ -141,6 +148,7 @@ function catalogModules() {
     // Agenti immobiliari (i primi tre corsi esistevano già)
     { id: "m1", title: "Introduzione al metodo", desc: "Come funziona Vendita Uno e come usare l'accademia.", academyId: "agenti", subId: "inizia", educatorId: "sd", level: "base", cover: "", lessons: [{ id: "m1v1", title: "Introduzione al metodo Vendita Uno", youtubeId: yt, minutes: 6, desc: "", pdf: "" }] },
     { id: "m2", title: "Acquisizione mandati", desc: "Dal primo contatto all'incarico in esclusiva.", academyId: "agenti", subId: "zona", educatorId: "sd", level: "premium", cover: "", lessons: [{ id: "m2v1", title: "Come acquisire mandati in esclusiva", youtubeId: yt, minutes: 18, desc: "", pdf: "" }] },
+    BASI_COURSE(),
     C("ag-tra1", "agenti", "basi", "premium", "Trattativa senza sconti", "Difendere il prezzo e la provvigione portando le parti all'accordo.", [
       ["Preparare la trattativa", "Cosa sapere di venditore e acquirente prima di sederti al tavolo."],
       ["Le obiezioni sul prezzo", "Come rispondere a \"è troppo\" senza abbassare subito."],
@@ -288,6 +296,11 @@ async function getContent(kv) {
     // Nuovo corso nella sezione 3, messo prima degli altri corsi della sezione.
     const i = c.modules.findIndex((m) => m.subId === "zona");
     c.modules.splice(i < 0 ? c.modules.length : i, 0, USP_COURSE());
+  }
+  if ((c.seedV || 1) < 16 && !c.modules.some((m) => m.id === "ag-basi1")) {
+    // Nuovo corso nella sezione 2, messo prima degli altri corsi della sezione.
+    const i = c.modules.findIndex((m) => m.subId === "basi");
+    c.modules.splice(i < 0 ? c.modules.length : i, 0, BASI_COURSE());
   }
   if ((c.seedV || 1) < CATALOG_V) {
     c.seedV = CATALOG_V;
