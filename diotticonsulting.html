@@ -10,9 +10,8 @@
 <meta name="theme-color" content="#08080a">
 <meta property="og:title" content="Diotti Consulting · Ti portiamo nuovi cantieri">
 <meta property="og:description" content="Il sistema testato nella nostra impresa edile, ora al servizio della tua. Tu vai solo a chiudere.">
-<meta property="og:image" content="/assets/img/gianluca-diotti.webp">
+<meta property="og:image" content="/assets/img/diotti-consulting-icon.png">
 <link rel="icon" type="image/png" href="/assets/img/diotti-consulting-icon.png">
-<link rel="preload" as="image" href="/assets/img/gianluca-diotti.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -111,13 +110,20 @@ em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spa
 .proof div { font-size: 14px; color: var(--frost-2); display: flex; align-items: center; gap: 10px; }
 .proof b { font-size: 26px; color: var(--frost); letter-spacing: -.04em; }
 .proof svg { width: 18px; height: 18px; stroke: var(--o2); }
-.hero-photo { position: relative; align-self: end; height: min(86svh, 820px); display: flex; justify-content: center; }
+.hero-photo { position: relative; align-self: end; height: min(86svh, 820px); display: flex; justify-content: center; align-items: center; }
 .hero-photo .year { position: absolute; z-index: 0; top: 4%; left: 50%; transform: translateX(-50%); font-size: clamp(140px, 19vw, 300px); font-weight: 900; letter-spacing: -.07em; line-height: .8; color: transparent; -webkit-text-stroke: 1.5px rgba(255,140,50,.45); white-space: nowrap; }
 .hero-photo .glow { position: absolute; z-index: 0; left: 50%; top: 42%; width: 100%; aspect-ratio: 1; transform: translate(-50%,-50%); border-radius: 50%; background: radial-gradient(closest-side, rgba(255,110,30,.55), rgba(255,110,30,.12) 55%, transparent 75%); }
 .hero-photo img { position: relative; z-index: 1; height: 100%; width: auto; object-fit: contain; object-position: bottom; filter: grayscale(1) contrast(1.15) brightness(1.02); -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent 100%); mask-image: linear-gradient(180deg, #000 72%, transparent 100%); }
-.hero-photo .tag { position: absolute; z-index: 2; left: 2%; bottom: 22%; padding: 16px 20px; border-radius: 20px; }
-.hero-photo .tag b { display: block; font-size: 18px; letter-spacing: -.02em; }
-.hero-photo .tag span { font-size: 13px; color: var(--frost-2); }
+.hero-photo .flow { position: relative; z-index: 2; align-self: center; width: min(100%, 440px); display: grid; gap: 14px; margin-bottom: 60px; }
+.flow .step { display: grid; grid-template-columns: 44px 1fr auto; gap: 16px; align-items: center; padding: 18px 20px; border-radius: 22px; }
+.flow .step:nth-child(2) { margin-left: 28px; } .flow .step:nth-child(3) { margin-left: 56px; }
+.flow .step i { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; color: var(--frost); background: rgba(255,255,255,.08); }
+.flow .step.on i { background: var(--grad); color: #111; }
+.flow .step b { display: block; font-size: 17px; letter-spacing: -.02em; }
+.flow .step span { font-size: 13px; color: var(--frost-2); }
+.flow .step small { font-size: 12px; color: var(--frost-2); white-space: nowrap; }
+.flow .step.on small { color: var(--o1); font-weight: 700; }
+.flow-note { margin: 8px 0 0 56px; font-family: var(--serif); font-style: italic; font-size: 26px; color: var(--o1); }
 
 /* Nastri da cantiere: due nastri incrociati a X, bordi a righe veri, scorrimento continuo */
 .tapes { position: relative; z-index: 4; height: clamp(150px, 15vw, 200px); margin-top: -30px; pointer-events: none; }
@@ -251,18 +257,6 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border: 0; bord
 .job svg { width: 46px; height: 46px; stroke: var(--o1); }
 .job h3 { font-size: 30px; letter-spacing: -.04em; line-height: 1.05; }
 
-/* Gianluca */
-.founder .grid { display: grid; grid-template-columns: .85fr 1.15fr; gap: 60px; align-items: center; }
-.portrait { position: relative; border-radius: 40px; overflow: hidden; aspect-ratio: 4/5; background: radial-gradient(90% 70% at 50% 35%, rgba(255,122,26,.55), rgba(255,77,18,.1) 60%, transparent 80%), #120d0a; }
-.portrait img { position: absolute; inset: auto 0 0 0; width: 100%; height: 96%; object-fit: contain; object-position: bottom; filter: grayscale(1) contrast(1.12); }
-.portrait .name { position: absolute; left: 18px; right: 18px; bottom: 18px; padding: 18px 22px; border-radius: 22px; display: flex; justify-content: space-between; align-items: center; }
-.portrait .name b { font-size: 20px; letter-spacing: -.03em; display: block; }
-.portrait .name span { font-size: 13px; color: var(--frost-2); }
-.portrait .name i { font-style: normal; font-weight: 800; font-size: 26px; letter-spacing: -.05em; color: var(--o1); }
-.founder blockquote { margin-top: 30px; padding: 28px 30px; font-family: var(--serif); font-style: italic; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.22; }
-.founder .roles { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
-.founder .roles span { padding: 10px 16px; border-radius: 999px; font-size: 14px; color: var(--frost-2); border: 1px solid var(--line); background: rgba(255,255,255,.03); }
-.founder .roles b { color: var(--frost); font-weight: 600; }
 
 /* Contatti */
 .contact .box { padding: clamp(28px, 5vw, 64px); border-radius: 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: start; overflow: hidden; }
@@ -296,7 +290,7 @@ footer small { color: var(--frost-3); font-size: 13px; }
 
 @media (max-width: 1040px) {
   .nav ul { display: none; }
-  .hero-grid, .manifesto .grid, .agenda .grid, .calc, .zone .grid, .founder .grid, .contact .box { grid-template-columns: 1fr; }
+  .hero-grid, .manifesto .grid, .agenda .grid, .calc, .zone .grid, .contact .box { grid-template-columns: 1fr; }
   .hero-copy { padding-bottom: 0; }
   .hero-photo { height: 560px; }
   .method-grid { grid-template-columns: 1fr 1fr; }
@@ -311,7 +305,12 @@ footer small { color: var(--frost-3); font-size: 13px; }
   .nav .btn .long { display: none; }
   .nav .btn .short { display: inline; }
   .hero { padding-top: 110px; }
-  .hero-photo { height: 470px; }
+  .hero-photo { height: auto; padding: 30px 0 20px; }
+  .flow .step:nth-child(2) { margin-left: 14px; } .flow .step:nth-child(3) { margin-left: 28px; }
+  .flow .step { grid-template-columns: 38px 1fr auto; gap: 12px; padding: 14px 16px; }
+  .flow .step i { width: 38px; height: 38px; }
+  .flow-note { margin-left: 28px; }
+  .hero-photo .flow { margin-bottom: 30px; }
     .proof { gap: 16px; }
   .options, .method-grid, .jobs, .res .row { grid-template-columns: 1fr; }
   .m { min-height: 0; }
@@ -347,7 +346,7 @@ footer small { color: var(--frost-3); font-size: 13px; }
     <li><a href="#metodo">Il metodo</a></li>
     <li><a href="#calcolatore">Calcolatore</a></li>
     <li><a href="#zona">La tua zona</a></li>
-    <li><a href="#gianluca">Chi siamo</a></li>
+    <li><a href="#chi-siamo">Chi siamo</a></li>
   </ul>
   <a href="#contatti" class="btn btn-o"><span class="long">Prenota una chiamata</span><span class="short">Prenota</span></a>
 </nav>
@@ -372,8 +371,12 @@ footer small { color: var(--frost-3); font-size: 13px; }
     <div class="hero-photo">
       <div class="year" aria-hidden="true">1993</div>
       <div class="glow" aria-hidden="true"></div>
-      <img src="/assets/img/gianluca-diotti.webp" alt="Gianluca Diotti, fondatore di Diotti Consulting">
-      <div class="tag glass"><b>Gianluca Diotti</b><span>Fondatore · imprenditore edile dal 1993</span></div>
+      <div class="flow" aria-label="Esempio: dalla richiesta al sopralluogo">
+        <div class="step glass"><i>1</i><div><b>Nuova richiesta</b><span>Ristrutturazione bagno, nella tua zona</span></div><small>adesso</small></div>
+        <div class="step glass"><i>2</i><div><b>Chiamata da noi</b><span>Budget, tempi e lavori verificati</span></div><small>10 min</small></div>
+        <div class="step glass on"><i>3</i><div><b>Sopralluogo fissato</b><span>Giovedì 10:00, nella tua agenda</span></div><small>fatto</small></div>
+        <p class="flow-note">Tu vai solo a chiudere.</p>
+      </div>
     </div>
   </div>
   <div class="tapes" aria-hidden="true">
@@ -383,7 +386,7 @@ footer small { color: var(--frost-3); font-size: 13px; }
 </header>
 
 <!-- Manifesto -->
-<section class="manifesto">
+<section class="manifesto" id="chi-siamo">
   <div class="photo-bg" aria-hidden="true"></div>
   <div class="wrap grid">
     <div>
@@ -392,8 +395,8 @@ footer small { color: var(--frost-3); font-size: 13px; }
       <p class="lead rv d2" style="margin-top:28px">È inutile raccontarvi teorie. La nostra impresa edile funziona grazie a un metodo di marketing che abbiamo costruito e messo alla prova <b>prima di tutto su noi stessi</b>. Niente giri strani, niente promesse vaghe: lo stesso sistema che usiamo ogni giorno, dentro la tua impresa.</p>
     </div>
     <div class="timeline">
-      <div class="tl glass rv"><div class="y">1993</div><div><b>Inizia il percorso</b><span>Gianluca Diotti entra nel settore edile.</span></div></div>
-      <div class="tl glass rv d1"><div class="y">Anni</div><div><b>Nascono le aziende</b><span>Fonda svariate imprese nel settore edile.</span></div></div>
+      <div class="tl glass rv"><div class="y">1993</div><div><b>Inizia il percorso</b><span>Entriamo nel settore edile.</span></div></div>
+      <div class="tl glass rv d1"><div class="y">Anni</div><div><b>Nascono le aziende</b><span>Fondiamo svariate imprese nel settore edile.</span></div></div>
       <div class="tl glass rv d2"><div class="y">Test</div><div><b>Il metodo nasce in casa</b><span>Lo costruiamo e lo proviamo sulla nostra impresa.</span></div></div>
       <div class="tl glass now rv d3"><div class="y">Oggi</div><div><b>Diotti Consulting</b><span>Lo stesso sistema, a disposizione della tua impresa.</span></div></div>
     </div>
@@ -516,22 +519,6 @@ footer small { color: var(--frost-3); font-size: 13px; }
   </div>
 </section>
 
-<!-- Gianluca -->
-<section class="founder" id="gianluca" style="padding-top:0">
-  <div class="wrap grid">
-    <div class="portrait rv">
-      <img src="/assets/img/gianluca-diotti.webp" alt="Gianluca Diotti" loading="lazy">
-      <div class="name glass"><div><b>Gianluca Diotti</b><span>Fondatore, Diotti Consulting</span></div><i>dal 1993</i></div>
-    </div>
-    <div>
-      <span class="eyebrow rv">Chi c'è dietro</span>
-      <h2 class="rv d1">Un imprenditore<br><em>dell'edilizia.</em></h2>
-      <p class="lead rv d2">Gianluca Diotti ha <b>fondato svariate aziende nel settore edile</b>. Il suo percorso inizia nel 1993 e da allora non si è mai fermato: cantieri, squadre, clienti, crescita. Ha sviluppato un metodo concreto che <b>ogni mese porta cantieri in modo costante</b>, e oggi lo mette a disposizione di altre imprese.</p>
-      <div class="roles rv d2"><span><b>Fondatore</b> · impresa edile</span><span><b>Fondatore</b> · Diotti Consulting</span></div>
-      <blockquote class="glass rv d3">“Prima l'abbiamo testato su di noi. Poi abbiamo deciso di darlo anche a voi.”</blockquote>
-    </div>
-  </div>
-</section>
 
 <!-- Contatti -->
 <section class="contact" id="contatti" style="padding-top:0">
