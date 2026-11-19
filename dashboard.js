@@ -183,12 +183,14 @@ async function readGHL(env) {
   // al giorno in cui sono diventate vinte (o sono entrate in quella fase).
   const isClosed = (o) => o.status === "won" || (o.status === "open" && (o.pipelineStageId === GHL_WON_STAGE || o.pipelineStageId === GHL_UPSELL_STAGE));
   const wonByDay = {};
+  const closedClients = [];
   for (const o of opps) {
     if (!isClosed(o)) continue;
     const at = (o.status === "won" ? o.lastStatusChangeAt : o.lastStageChangeAt) || o.updatedAt || o.createdAt;
     const w = { id: String(o.id), name: who(o), amount: num(Number(o.monetaryValue) || 0), ts: Date.parse(at) || 0, day: ROME_DAY.format(new Date(at)),
       seller: (users[o.assignedTo] || "").slice(0, 30), upsell: isUpsell(o), leadMonth: ROME_MONTH(o.createdAt) };
     (wonByDay[w.day] = wonByDay[w.day] || []).push(w);
+    if (!w.upsell) closedClients.push({ oppId: w.id, nome: w.name, agenzia: txt(o.contact && o.contact.companyName, 80), telefono: txt(o.contact && o.contact.phone, 30), day: w.day, amount: w.amount, seller: w.seller });
   }
   for (const d in wonByDay) wonByDay[d].sort((a, b) => a.ts - b.ts);
 
@@ -226,7 +228,7 @@ async function readGHL(env) {
   });
   const recall = stages.filter((st) => st.recall);
   const data = {
-    leadsByDay, wonByDay, stages, cohorts,
+    leadsByDay, wonByDay, stages, cohorts, closedClients,
     toCall: stages.filter((st) => st.toCall).reduce((a, st) => a + st.count, 0),
     toRecall: recall.reduce((a, st) => a + st.count, 0),
     recallValue: round2(recall.reduce((a, st) => a + st.value, 0)),
@@ -265,7 +267,7 @@ function monthPayload(ym, today, g, ads) {
   const leadsOn = (d) => (g ? g.leadsByDay[d] || 0 : 0);
 
   const cashed = round2(pastDates.reduce((s, d) => s + cashedOn(d), 0));
-  const clients = pastDates.reduce((s, d) => s + wonOn(d).length, 0);
+  const clients = pastDates.reduce((s, d) => s + wonOn(d).filter((w) => !w.upsell).length, 0);
   const leads = pastDates.reduce((s, d) => s + leadsOn(d), 0);
   const adsSpend = ads ? round2(pastDates.reduce((s, d) => s + (ads[d] ? ads[d].spend : 0), 0)) : 0;
   const adsLeads = ads ? pastDates.reduce((s, d) => s + (ads[d] ? ads[d].leads : 0), 0) : null;
@@ -313,10 +315,18 @@ function monthPayload(ym, today, g, ads) {
 async function payload(ym, today, env) {
   if (!env.GHL_TOKEN) return monthPayload(ym, today, null, null);
   const lastDay = `${ym}-${pad2(daysInMonth(ym))}`;
-  const [g, ads] = await Promise.all([
+  const [g0, ads, clienti] = await Promise.all([
     readGHL(env).catch(() => null),
     `${ym}-01` <= today ? readAds(env, `${ym}-01`, lastDay < today ? lastDay : today).catch(() => null) : null,
+    clientiList(env).catch(() => []),
   ]);
+  let g = g0;
+  const ups = upsellIncassi(clienti);
+  if (g && ups.length) {
+    const wonByDay = { ...g.wonByDay };
+    for (const u of ups) wonByDay[u.day] = [...(wonByDay[u.day] || []), u].sort((a, b) => a.ts - b.ts);
+    g = { ...g, wonByDay };
+  }
   return monthPayload(ym, today, g, ads);
 }
 
@@ -621,6 +631,17 @@ ${GLASS_CSS}
   .clients .none { color: var(--bone-3); padding: 14px 4px; }
 
   /* Annuncio nuovo cliente: l'unico momento animato */
+  /* Finestrella importo upsell */
+  .ups-ov { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(10,9,7,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .ups-box { width: min(420px, calc(100vw - 32px)); max-width: 100%; padding: 24px; border-radius: 26px; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)), rgba(30,27,22,0.92); }
+  .ups-box h3 { font-family: var(--serif); font-weight: 400; font-size: 1.9rem; color: var(--bone); margin: 0; }
+  .ups-box .meta { color: var(--bone-2); margin-top: 6px; }
+  .ups-amt { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 6px 16px; border-radius: 16px; background: rgba(0,0,0,0.28); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+  .ups-amt span { font-size: 1.6rem; color: var(--bone-2); }
+  .ups-amt input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--bone); font: inherit; font-size: 2rem; font-weight: 600; padding: 6px 0; outline: none; color-scheme: dark; }
+  .ups-amt:focus-within { box-shadow: inset 0 0 0 2px rgba(236,230,218,0.6); }
+  .ups-note { color: var(--bone-3); font-size: 0.85rem; margin: 8px 0 16px; }
+
   /* Clienti attivi */
   [hidden] { display: none !important; }
   .cli-open { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; padding: 9px 10px 9px 18px; border: 0; border-radius: 999px; color: var(--bone); font: inherit; font-weight: 600; cursor: pointer; }
@@ -695,6 +716,14 @@ ${GLASS_CSS}
   .cli-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .cli-acts button { border: 0; background: transparent; color: var(--bone-3); font: inherit; font-size: 0.82rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; }
   .cli-acts button:hover { color: var(--bone); background: rgba(255,255,255,0.08); }
+  .cli-name .src { color: var(--bone-3); font-size: 0.78rem; }
+  .cli-name .paid { color: var(--bone-2); font-size: 0.85rem; margin-top: 4px; }
+  .cli-name .paid b { display: inline; font-size: inherit; color: #f6d27a; font-weight: 600; }
+  .cli-acts button.up { color: #1c1a16; background: #f2c14e; font-weight: 600; padding: 5px 11px; border-radius: 999px; }
+  .cli-acts button.up:hover { background: #f6d27a; color: #1c1a16; }
+  .cli-panel { overflow-x: hidden; }
+  .cli-form label, .cli-form input { min-width: 0; }
+  .cli-form input { width: 100%; }
   .cli-note { grid-column: 1 / -1; font-size: 0.85rem; color: var(--bone-3); margin-top: -6px; }
   @media (max-width: 760px) {
     .cli-panel { border-radius: 0; padding: 18px 14px 40px; }
@@ -705,6 +734,29 @@ ${GLASS_CSS}
     .todo-row { grid-template-columns: 12px minmax(0, 1fr); }
     .todo-row .acts { grid-column: 2; }
     .cli-open { padding: 7px 8px 7px 14px; font-size: 0.85rem; }
+  }
+  @media (max-width: 560px) {
+    .top { flex-wrap: nowrap; gap: 8px; }
+    .top > img { height: 26px; width: auto; flex: none; }
+    .cli-open { gap: 6px; padding: 5px 5px 5px 12px; font-size: 0.8rem; }
+    .cli-open .lg { display: none; }
+    .cli-open b { min-width: 24px; padding: 3px 7px; }
+    .when .clock { font-size: 0.85rem; padding: 6px 10px; }
+    .todo { padding: 14px 12px; border-radius: 22px; }
+    .todo h3 { font-size: 1.3rem; margin-bottom: 8px; }
+    .todo-row { gap: 4px 10px; padding: 10px; font-size: 0.86rem; line-height: 1.35; }
+    .todo-row .dot { width: 9px; height: 9px; align-self: start; margin-top: 5px; }
+    .todo-row .acts { margin-top: 6px; }
+    .todo-row .btn-pri, .todo-row .btn-sec { padding: 6px 12px; font-size: 0.8rem; }
+    .cli-head h2 { font-size: 1.8rem; }
+    .cli-head .meta { font-size: 0.82rem; }
+    .cli-head-act { width: 100%; justify-content: space-between; }
+    .cli-form { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+    .cli-form input { font-size: 16px; }
+    .cli { padding: 14px; border-radius: 18px; }
+    .cli-name b { font-size: 1rem; }
+    .cli-inc button { width: 34px; height: 34px; }
+    .cli-inc .n { font-size: 1.45rem; }
   }
 
   .toast { position: fixed; left: 50%; top: 44%; z-index: 20; transform: translate(-50%, -50%) scale(0.94); opacity: 0; pointer-events: none; text-align: center; padding: 28px 48px 30px; border-radius: 40px; visibility: hidden; transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s .45s; }
@@ -777,7 +829,7 @@ ${GLASS_CSS}
 <div class="layout" id="screen">
   <header class="top">
     <img src="/assets/img/logo.png" alt="Vendita Uno">
-    <button type="button" class="cli-open glass" id="cliOpen">Clienti attivi <b class="num" id="cliCount">0</b></button>
+    <button type="button" class="cli-open glass" id="cliOpen"><span>Clienti<span class="lg"> attivi</span></span> <b class="num" id="cliCount">0</b></button>
     <div class="when glass"><span class="alert" id="alert">GoHighLevel non raggiungibile</span><span class="d" id="date"></span><span class="clock num well" id="clock"></span></div>
   </header>
 
@@ -843,7 +895,7 @@ ${GLASS_CSS}
 <div class="cli-ov" id="cliPanel" hidden>
   <div class="cli-panel glass" role="dialog" aria-modal="true" aria-labelledby="cliTitle">
     <div class="cli-head">
-      <div><h2 id="cliTitle">Clienti attivi</h2><div class="meta">Partenza, scadenza e incarichi presi. A 3 incarichi è il momento dell'upsell.</div></div>
+      <div><h2 id="cliTitle">Clienti attivi</h2><div class="meta">Chi chiudete su GoHighLevel entra qui da solo. Segna gli incarichi: al terzo ti ricordo di valutare l'upsell.</div></div>
       <div class="cli-head-act">
         <button type="button" class="btn-pri" id="cliAdd">+ Aggiungi cliente</button>
         <button type="button" class="cli-x" id="cliClose" aria-label="Chiudi">✕</button>
@@ -855,6 +907,7 @@ ${GLASS_CSS}
       <label>Agenzia<input name="agenzia" maxlength="80" placeholder="Es. Immobiliare Rossi"></label>
       <label>Zona<input name="zona" maxlength="80" placeholder="Es. Bergamo centro"></label>
       <label>Telefono<input name="telefono" maxlength="30" inputmode="tel" placeholder="Es. 333 1234567"></label>
+      <label>Ha pagato (€)<input name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Es. 2500"></label>
       <label>Partito il<input name="start" type="date" required></label>
       <label>Scade il<input name="end" type="date" required></label>
       <label class="f-wide">Note<input name="note" maxlength="500" placeholder="Facoltativo"></label>
@@ -863,6 +916,15 @@ ${GLASS_CSS}
     <div class="seg well cli-tabs" role="group" aria-label="Quali clienti vedere"><button type="button" class="on" data-tab="attivi">Attivi</button><button type="button" data-tab="archiviati">Archiviati</button></div>
     <div class="cli-list" id="cliList"></div>
   </div>
+</div>
+<div class="ups-ov" id="upsDlg" hidden>
+  <form class="ups-box glass" id="upsForm" role="dialog" aria-modal="true" aria-labelledby="upsTitle">
+    <h3 id="upsTitle">Chiudi upsell</h3>
+    <p class="meta" id="upsText"></p>
+    <label class="ups-amt"><span>€</span><input name="amount" type="number" inputmode="decimal" min="0" step="0.01" required placeholder="0"></label>
+    <p class="ups-note">Va nell'incassato di oggi.</p>
+    <div class="cli-form-act"><span class="cli-err" id="upsErr"></span><button type="button" class="btn-sec" id="upsCancel">Annulla</button><button type="submit" class="btn-pri">Salva incasso</button></div>
+  </form>
 </div>
 <div class="toast glass" id="toast" role="status" aria-live="polite"><div class="k">Nuovo cliente</div><div class="n" id="toastName"></div><div class="a num" id="toastAmt"></div></div>
 
@@ -1043,6 +1105,7 @@ placeNapo();
 // ---- Annuncio nuovo cliente ----
 let toastT;
 function announce(c) {
+  document.querySelector('#toast .k').textContent = c.upsell ? 'Upsell' : 'Nuovo cliente';
   $('toastName').textContent = c.name;
   $('toastAmt').textContent = '+ ' + money(c.amount);
   $('toast').classList.add('on');
@@ -1244,7 +1307,7 @@ function leftText(c) {
   return 'da ' + giorni(-c.left);
 }
 function todoText(t) {
-  if (t.kind === 'upsell') return '<b>' + esc(t.nome) + '</b> <span class="t">ha preso ' + t.count + ' incarichi: è il momento dell’upsell.</span>';
+  if (t.kind === 'upsell') return '<b>' + esc(t.nome) + '</b> <span class="t">ha preso ' + t.count + ' incarichi: valuta l’upsell.</span>';
   if (t.kind === 'scaduto') return '<b>' + esc(t.nome) + '</b> <span class="t">è arrivato alla scadenza ' + (t.left === 0 ? 'oggi' : 'da ' + giorni(-t.left)) + ', con ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo e senti com’è andata.</span>';
   return '<b>' + esc(t.nome) + '</b> <span class="t">scade ' + (t.left === 1 ? 'domani' : 'tra ' + giorni(t.left)) + ', ha ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo adesso.</span>';
 }
@@ -1257,20 +1320,24 @@ function renderTodo() {
   setHTML('todo', '<h3>Da fare adesso</h3>' + cli.todos.map((t) =>
     '<div class="todo-row ' + t.kind + '"><span class="dot"></span><div>' + todoText(t) + '</div><div class="acts">' +
     '<button type="button" class="btn-sec" data-open="' + esc(t.id) + '">Apri</button>' +
-    '<button type="button" class="btn-pri" data-done="' + (t.kind === 'upsell' ? 'upsell' : 'call') + '" data-id="' + esc(t.id) + '">' + (t.kind === 'upsell' ? 'Upsell fatto' : 'Chiamato') + '</button>' +
+    (t.kind === 'upsell' ? '<button type="button" class="btn-sec" data-skip="' + esc(t.id) + '">Non ora</button>' : '') +
+    '<button type="button" class="btn-pri" data-done="' + (t.kind === 'upsell' ? 'upsell' : 'call') + '" data-id="' + esc(t.id) + '">' + (t.kind === 'upsell' ? 'Chiudi upsell' : 'Chiamato') + '</button>' +
     '</div></div>').join(''));
 }
-const ST_LABEL = { upsell: 'Upsell adesso', scaduto: 'Scaduto, chiamalo', chiama: 'Scade a breve', chiamato: 'Già chiamato', 'upsell-fatto': 'Upsell fatto', attivo: 'In corso', archiviato: 'Archiviato' };
+const ST_LABEL = { upsell: 'Valuta upsell', scaduto: 'Scaduto, chiamalo', chiama: 'Scade a breve', chiamato: 'Già chiamato', 'upsell-fatto': 'Upsell fatto', attivo: 'In corso', archiviato: 'Archiviato' };
 function cliRow(c) {
   const pips = [0, 1, 2].map((i) => '<i' + (c.count > i ? ' class="on"' : '') + '></i>').join('');
   const sub = [c.agenzia, c.zona, c.telefono].filter(Boolean).map(esc).join(' · ');
+  const src = c.source === 'ghl' ? '<span class="src">Chiuso su GoHighLevel' + (c.seller ? ' da ' + esc(c.seller) : '') + '</span>' : '';
+  const paid = '<span class="paid">Ha pagato <b>' + money0(c.paid || 0) + '</b>' + (c.upsellTot ? ' (di cui upsell ' + money0(c.upsellTot) + ')' : '') + '</span>';
   const acts = c.archived
     ? '<button type="button" data-act="unarchive">Ripristina</button><button type="button" data-act="delete">Elimina</button>'
-    : '<button type="button" data-act="edit">Modifica</button>' +
-      (c.upsellDone ? '<button type="button" data-act="unupsell">Annulla upsell</button>' : (c.count >= 3 ? '<button type="button" data-act="upsell">Upsell fatto</button>' : '')) +
+    : '<button type="button" class="up" data-act="upsell">Chiudi upsell</button>' +
+      '<button type="button" data-act="edit">Modifica</button>' +
+      ((c.upsells || []).length ? '<button type="button" data-act="unupsell">Annulla ultimo upsell</button>' : '') +
       '<button type="button" data-act="archive">Archivia</button>';
   return '<div class="cli ' + c.status + '" data-id="' + esc(c.id) + '">' +
-    '<div class="cli-name"><b>' + esc(c.nome) + '</b><span>' + (sub || '&nbsp;') + '</span></div>' +
+    '<div class="cli-name"><b>' + esc(c.nome) + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + paid + src + '</div>' +
     '<div class="cli-dates"><div class="line"><span>Partito <b>' + dShort(c.start) + '</b></span><span>' + (c.day >= 0 ? 'giorno ' + (c.day + 1) : 'parte ' + dShort(c.start)) + '</span></div>' +
     '<div class="line"><span>Scade <b>' + dShort(c.end) + '</b></span><span>' + leftText(c) + '</span></div>' +
     '<div class="cli-bar"><i style="width:' + Math.round(c.progress * 100) + '%"></i></div></div>' +
@@ -1303,7 +1370,7 @@ async function cliOp(body) {
     const r = await fetch(CAPI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const d = await r.json().catch(() => ({}));
     if (r.status === 401) { location.reload(); return false; }
-    if (!r.ok) { setText('cliErr', d.error || 'Non salvato, riprova.'); if ($('cliForm').hidden) alert(d.error || 'Non salvato, riprova.'); return false; }
+    if (!r.ok) { const m = d.error || 'Non salvato, riprova.'; if (!$('upsDlg').hidden) setText('upsErr', m); else if (!$('cliForm').hidden) setText('cliErr', m); else alert(m); return false; }
     cli = d; renderTodo(); renderClienti(); return true;
   } catch (e) { setText('cliErr', 'Connessione persa, riprova.'); return false; }
   finally { cliBusy = false; }
@@ -1323,17 +1390,33 @@ function openForm(c) {
   setText('cliFormTitle', c ? 'Modifica ' + c.nome : 'Nuovo cliente');
   const today = cli.today || new Date().toISOString().slice(0, 10);
   f.nome.value = c ? c.nome : ''; f.agenzia.value = c ? c.agenzia || '' : ''; f.zona.value = c ? c.zona || '' : '';
-  f.telefono.value = c ? c.telefono || '' : ''; f.note.value = c ? c.note || '' : '';
+  f.telefono.value = c ? c.telefono || '' : ''; f.note.value = c ? c.note || '' : ''; f.amount.value = c && c.amount ? c.amount : '';
   f.start.value = c ? c.start : today; f.end.value = c ? c.end : addD(today, 30);
   f.hidden = false; f.nome.focus();
 }
 function closeForm() { $('cliForm').hidden = true; cliEdit = ''; }
+let upsId = '';
+function askUpsell(id) {
+  const c = cli.clienti.find((x) => x.id === id); if (!c) return;
+  upsId = id; setText('upsErr', '');
+  setText('upsText', c.nome + ' ha già pagato ' + money0(c.paid || 0) + '. Quanto hai chiuso con l’upsell?');
+  $('upsForm').amount.value = ''; $('upsDlg').hidden = false; $('upsForm').amount.focus();
+}
+function closeUps() { $('upsDlg').hidden = true; upsId = ''; }
 if (!tvMode) {
   $('cliOpen').onclick = () => openClienti();
   $('cliClose').onclick = closeClienti;
   $('cliPanel').onclick = (e) => { if (e.target === $('cliPanel')) closeClienti(); };
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('cliPanel').hidden) closeClienti(); });
+  document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (!$('upsDlg').hidden) closeUps(); else if (!$('cliPanel').hidden) closeClienti(); });
   $('cliAdd').onclick = () => openForm(null);
+  $('upsCancel').onclick = closeUps;
+  $('upsDlg').onclick = (e) => { if (e.target === $('upsDlg')) closeUps(); };
+  $('upsForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const v = Number(String($('upsForm').amount.value).replace(',', '.'));
+    if (!(v >= 0)) { setText('upsErr', 'Scrivi un importo.'); return; }
+    if (await cliOp({ op: 'done', id: upsId, what: 'upsell', amount: v })) { closeUps(); refresh(curMonth); }
+  };
   $('cliCancel').onclick = closeForm;
   // La scadenza segue la partenza (+30 giorni) finché non la cambi a mano.
   $('cliForm').start.onchange = () => { const f = $('cliForm'); if (!cliEndTouched && f.start.value) f.end.value = addD(f.start.value, 30); };
@@ -1341,7 +1424,7 @@ if (!tvMode) {
   $('cliForm').onsubmit = async (e) => {
     e.preventDefault();
     const f = $('cliForm');
-    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, end: f.end.value, note: f.note.value };
+    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, end: f.end.value, note: f.note.value, amount: f.amount.value || 0 };
     if (await cliOp(cliEdit ? { op: 'update', id: cliEdit, data } : { op: 'add', data })) closeForm();
   };
   document.querySelector('.cli-tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) { cliTab = b.dataset.tab; renderClienti(); } };
@@ -1352,15 +1435,17 @@ if (!tvMode) {
     if (a === 'plus') cliOp({ op: 'incarico', id, delta: 1 });
     else if (a === 'minus') { if (c.count > 0) cliOp({ op: 'incarico', id, delta: -1 }); }
     else if (a === 'edit') { openForm(c); $('cliPanel').querySelector('.cli-panel').scrollTop = 0; }
-    else if (a === 'upsell') cliOp({ op: 'done', id, what: 'upsell' });
-    else if (a === 'unupsell') cliOp({ op: 'done', id, what: 'upsell', undo: true });
+    else if (a === 'upsell') askUpsell(id);
+    else if (a === 'unupsell') { if (confirm('Annullare l’ultimo upsell di ' + c.nome + '? L’incasso viene tolto.')) cliOp({ op: 'done', id, what: 'upsell', undo: true }).then((ok) => { if (ok) refresh(curMonth); }); }
     else if (a === 'archive') cliOp({ op: 'archive', id, archived: true });
     else if (a === 'unarchive') cliOp({ op: 'archive', id, archived: false });
     else if (a === 'delete') { if (confirm('Eliminare ' + c.nome + ' per sempre?')) cliOp({ op: 'delete', id }); }
   };
   $('todo').onclick = (e) => {
     const o = e.target.closest('[data-open]'); if (o) { openClienti(o.dataset.open); return; }
-    const d = e.target.closest('[data-done]'); if (d) cliOp({ op: 'done', id: d.dataset.id, what: d.dataset.done });
+    const k = e.target.closest('[data-skip]'); if (k) { cliOp({ op: 'done', id: k.dataset.skip, what: 'skip' }); return; }
+    const d = e.target.closest('[data-done]'); if (!d) return;
+    if (d.dataset.done === 'upsell') askUpsell(d.dataset.id); else cliOp({ op: 'done', id: d.dataset.id, what: 'call' });
   };
   loadClienti(); setInterval(loadClienti, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadClienti(); });
@@ -1392,6 +1477,7 @@ function applyClientiOp(list, body, today) {
     if ("zona" in d) c.zona = txt(d.zona, 80);
     if ("telefono" in d) c.telefono = txt(d.telefono, 30);
     if ("note" in d) c.note = txt(d.note, 500);
+    if ("amount" in d) { const a = Math.round(Number(String(d.amount).replace(",", ".")) * 100) / 100; c.amount = a >= 0 && a <= 1000000 ? a : 0; }
     if ("start" in d) c.start = ISO_RE.test(d.start || "") ? d.start : c.start;
     if ("end" in d) c.end = ISO_RE.test(d.end || "") ? d.end : c.end;
     if (!c.start) c.start = today;
@@ -1405,8 +1491,23 @@ function applyClientiOp(list, body, today) {
     if (c.end < c.start) return { error: "La scadenza non può venire prima della partenza." };
     return { list: [...list, c] };
   }
+  if (op === "sync") {
+    const have = new Set(list.map((x) => x.id));
+    const add = [];
+    for (const it of Array.isArray(body.items) ? body.items.slice(0, 200) : []) {
+      const id = "ghl:" + txt(it.oppId, 40);
+      if (have.has(id) || !ISO_RE.test(it.day || "")) continue;
+      const end = addDays(it.day, 30);
+      add.push({ id, source: "ghl", nome: txt(it.nome, 80) || "Cliente", agenzia: txt(it.agenzia, 80), zona: "", telefono: txt(it.telefono, 30), note: "",
+        start: it.day, end, amount: Number(it.amount) || 0, seller: txt(it.seller, 30), incarichi: [], upsellDone: null, callDone: null,
+        archived: daysBetween(end, today) > 30, createdAt: today });
+      have.add(id);
+    }
+    if (list.length + add.length > CLI_MAX) return { error: "Troppi clienti in archivio." };
+    return { list: [...list, ...add] };
+  }
   const c = find();
-  if (!c) return { error: "Cliente non trovato." };
+  if (!c || c.deleted) return { error: "Cliente non trovato." };
   let next;
   if (op === "update") {
     next = fields(body.data || {}, c);
@@ -1418,13 +1519,24 @@ function applyClientiOp(list, body, today) {
     if (body.delta === 1 && inc.length < 999) inc.push(today);
     else if (body.delta === -1) inc.pop();
     next = { ...c, incarichi: inc };
+  } else if (op === "done" && body.what === "upsell") {
+    const ups = [...(c.upsells || [])];
+    if (body.undo) ups.pop();
+    else {
+      const amount = Math.round(Number(body.amount) * 100) / 100;
+      if (!(amount >= 0 && amount <= 1000000)) return { error: "Scrivi quanto avete incassato con l'upsell." };
+      ups.push({ day: today, amount, ts: Date.now() });
+    }
+    next = { ...c, upsells: ups, upsellDone: ups.length ? ups[ups.length - 1].day : null };
+  } else if (op === "done" && body.what === "skip") {
+    next = { ...c, upsellSkip: body.undo ? null : today };
   } else if (op === "done") {
-    const key = body.what === "upsell" ? "upsellDone" : body.what === "call" ? "callDone" : null;
-    if (!key) return { error: "Azione non valida." };
-    next = { ...c, [key]: body.undo ? null : today };
+    if (body.what !== "call") return { error: "Azione non valida." };
+    next = { ...c, callDone: body.undo ? null : today };
   } else if (op === "archive") {
     next = { ...c, archived: !!body.archived };
   } else if (op === "delete") {
+    if (c.source === "ghl") return { list: list.map((x) => (x.id === c.id ? { id: c.id, deleted: true } : x)) };
     return { list: list.filter((x) => x.id !== c.id) };
   } else {
     return { error: "Azione non valida." };
@@ -1434,19 +1546,20 @@ function applyClientiOp(list, body, today) {
 
 // Cosa fare adesso: upsell a 3 incarichi, chiamata alla scadenza e 5 giorni prima.
 function clientiView(list, today) {
-  const clienti = list.map((c) => {
+  const clienti = list.filter((c) => !c.deleted).map((c) => {
     const count = (c.incarichi || []).length;
     const period = Math.max(1, daysBetween(c.start, c.end));
     const day = daysBetween(c.start, today);
     const left = daysBetween(today, c.end);
     let status = "attivo";
     if (c.archived) status = "archiviato";
-    else if (count >= 3 && !c.upsellDone) status = "upsell";
+    else if (count >= 3 && !c.upsellDone && !c.upsellSkip) status = "upsell";
     else if (left <= 0 && !c.callDone) status = "scaduto";
     else if (left <= 5 && !c.callDone) status = "chiama";
     else if (c.upsellDone) status = "upsell-fatto";
     else if (c.callDone && left <= 5) status = "chiamato";
-    return { ...c, count, day, left, period, progress: Math.max(0, Math.min(1, day / period)), status };
+    const upTot = (c.upsells || []).reduce((s, u) => s + (Number(u.amount) || 0), 0);
+    return { ...c, count, day, left, period, progress: Math.max(0, Math.min(1, day / period)), status, paid: round2((Number(c.amount) || 0) + upTot), upsellTot: round2(upTot) };
   });
   const todos = [];
   for (const c of clienti) {
@@ -1473,19 +1586,40 @@ export class ClientiStore {
   }
 }
 
+let clientiCache = { at: 0, list: null };
+async function clientiList(env) {
+  if (clientiCache.list && Date.now() - clientiCache.at < 20000) return clientiCache.list;
+  const out = await clientiStore(env, null);
+  if (out.list) clientiCache = { at: Date.now(), list: out.list };
+  return out.list || [];
+}
+// Upsell segnati in dashboard: incassi del giorno in cui li segni, come le vinte di GoHighLevel.
+function upsellIncassi(list) {
+  const out = [];
+  for (const c of list) {
+    if (c.deleted) continue;
+    (c.upsells || []).forEach((u, i) => {
+      if (!(u.amount > 0) || !ISO_RE.test(u.day || "")) return;
+      out.push({ id: "up:" + c.id + ":" + i, name: c.nome, amount: u.amount, ts: u.ts || Date.parse(u.day + "T12:00:00Z"), day: u.day, seller: "", upsell: true, manual: true });
+    });
+  }
+  return out;
+}
+
 // Senza il Durable Object (prove in locale) si usa il KV: va bene per provare, non per due persone insieme.
 async function clientiStore(env, body) {
   if (env.CLIENTI) {
     const stub = env.CLIENTI.get(env.CLIENTI.idFromName("clienti"));
     const r = await stub.fetch("https://clienti/", body ? { method: "POST", body: JSON.stringify({ ...body, today: romeDate() }) } : {});
     const d = await r.json();
+    if (r.ok) clientiCache = { at: Date.now(), list: d };
     return r.ok ? { list: d } : { error: d.error || "Errore" };
   }
   const kv = env.ACADEMY_PROGRESS;
   const list = JSON.parse((await kv.get("clienti:v1")) || "[]");
   if (!body) return { list };
   const out = applyClientiOp(list, body, romeDate());
-  if (!out.error) await kv.put("clienti:v1", JSON.stringify(out.list));
+  if (!out.error) { await kv.put("clienti:v1", JSON.stringify(out.list)); clientiCache = { at: Date.now(), list: out.list }; }
   return out;
 }
 
@@ -1518,8 +1652,14 @@ export async function handleDashboard(request, env, url) {
   if (path === `${DASH_PATH}/api/clienti`) {
     if (!loggedIn) return json({ error: "unauthorized" }, 401);
     if (request.method === "GET") {
-      const out = await clientiStore(env, null);
-      return json(clientiView(out.list, romeDate()));
+      let out = { list: await clientiList(env) };
+      const g = env.GHL_TOKEN ? await readGHL(env).catch(() => null) : null;
+      if (g && out.list) {
+        const have = new Set(out.list.map((x) => x.id));
+        const items = g.closedClients.filter((it) => !have.has("ghl:" + it.oppId));
+        if (items.length) { const synced = await clientiStore(env, { op: "sync", items }); if (synced.list) out = synced; }
+      }
+      return json({ ...clientiView(out.list || [], romeDate()), ghl: !!g });
     }
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
     if (!(request.headers.get("Content-Type") || "").includes("application/json")) return json({ error: "Formato non valido." }, 415);
