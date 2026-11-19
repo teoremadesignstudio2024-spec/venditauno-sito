@@ -146,7 +146,7 @@ async function allOpps(env, extra, stop = () => false) {
 // Risposte tenute 20 secondi (venditori e nomi delle fasi un'ora): TV e PC aggiornano spesso e GoHighLevel ha dei limiti.
 let ghlCache = { at: 0, data: null };
 let ghlUsers = { at: 0, map: {} };
-let ghlStageNames = { at: 0, map: {} };
+let ghlStageNames = { at: 0, map: {}, order: [] };
 
 async function readGHL(env) {
   if (ghlCache.data && Date.now() - ghlCache.at < 20000) return ghlCache.data;
@@ -159,9 +159,13 @@ async function readGHL(env) {
     }).catch(() => ghlUsers.map);
   const namesP = Date.now() - ghlStageNames.at < 3600000 ? Promise.resolve(ghlStageNames.map)
     : ghl(env, `/opportunities/pipelines?locationId=${GHL_LOCATION}`).then((d) => {
-      const map = {};
-      for (const p of d.pipelines || []) if (p.id === GHL_PIPELINE) for (const st of p.stages || []) map[st.id] = String(st.name || "").trim();
-      ghlStageNames = { at: Date.now(), map };
+      const map = {}, order = [];
+      for (const p of d.pipelines || []) if (p.id === GHL_PIPELINE) {
+        for (const st of [...(p.stages || [])].sort((a, b) => (a.position || 0) - (b.position || 0))) {
+          map[st.id] = String(st.name || "").trim(); order.push(st.id);
+        }
+      }
+      ghlStageNames = { at: Date.now(), map, order };
       return map;
     }).catch(() => ghlStageNames.map);
   // Tutta la VENDITA PIPELINE in una lettura: da qui lead per giorno, vinte e tabella delle fasi.
@@ -227,7 +231,16 @@ async function readGHL(env) {
     };
   });
   const recall = stages.filter((st) => st.recall);
+  // Tabellone della pipeline: una scheda per ogni opportunità, nella fase in cui è su GoHighLevel.
+  const board = opps.map((o) => ({
+    id: String(o.id), nome: who(o), tel: String((o.contact && o.contact.phone) || "").slice(0, 30),
+    stage: o.pipelineStageId, status: o.status, value: num(Number(o.monetaryValue) || 0),
+    seller: (users[o.assignedTo] || "").slice(0, 30), source: String(o.source || "").slice(0, 40),
+    since: Math.max(0, Math.floor((now - (Date.parse(o.lastStageChangeAt || o.updatedAt || o.createdAt) || now)) / 86400000)),
+    created: ROME_DAY.format(new Date(o.createdAt)),
+  }));
   const data = {
+    board, stageOrder: ghlStageNames.order.length ? ghlStageNames.order : null, stageNames,
     leadsByDay, wonByDay, stages, cohorts, closedClients,
     toCall: stages.filter((st) => st.toCall).reduce((a, st) => a + st.count, 0),
     toRecall: recall.reduce((a, st) => a + st.count, 0),
@@ -631,6 +644,63 @@ ${GLASS_CSS}
   .clients .none { color: var(--bone-3); padding: 14px 4px; }
 
   /* Annuncio nuovo cliente: l'unico momento animato */
+  /* Tabellone pipeline */
+  .pipe-open { margin-left: auto; padding: 9px 18px; }
+  .pipe-open + .cli-open { margin-left: 0; }
+  .pb-ov { position: fixed; inset: 0; z-index: 30; background: rgba(10,9,7,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); display: flex; }
+  .pb-panel { margin: 14px; flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 30px; padding: 22px 22px 16px; background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 40%), rgba(26,23,19,0.9); }
+  .pb-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+  .pb-head h2 { font-family: var(--serif); font-weight: 400; font-size: 2.2rem; line-height: 1; color: var(--bone); margin: 0; }
+  .pb-head .meta { color: var(--bone-3); margin-top: 6px; }
+  .pb-tools { display: flex; gap: 10px; align-items: center; }
+  .pb-tools input { font: inherit; font-size: 16px; color: var(--bone); background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 9px 16px; width: 220px; color-scheme: dark; }
+  .pb-board { flex: 1; min-height: 0; margin-top: 16px; display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; scroll-snap-type: x proximity; }
+  .pb-col { flex: 0 0 268px; display: flex; flex-direction: column; min-height: 0; border-radius: 20px; background: rgba(0,0,0,0.2); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); scroll-snap-align: start; }
+  .pb-col.over { box-shadow: inset 0 0 0 2px rgba(236,230,218,0.6); background: rgba(255,255,255,0.06); }
+  .pb-col-h { padding: 12px 14px 8px; }
+  .pb-col-h b { display: block; color: var(--bone); font-size: 0.86rem; font-weight: 600; letter-spacing: 0.01em; }
+  .pb-col-h span { color: var(--bone-3); font-size: 0.78rem; }
+  .pb-col.won .pb-col-h b { color: #9fe8bb; } .pb-col.lost .pb-col-h b { color: var(--bone-3); }
+  .pb-list { flex: 1; min-height: 40px; overflow-y: auto; padding: 0 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .pb-c { text-align: left; width: 100%; border: 0; cursor: grab; font: inherit; color: var(--bone); padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,0.07); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+  .pb-c:hover { background: rgba(255,255,255,0.11); }
+  .pb-c.drag { opacity: 0.4; }
+  .pb-c.busy { opacity: 0.55; pointer-events: none; }
+  .pb-c b { display: block; font-weight: 600; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pb-c span { display: flex; justify-content: space-between; gap: 8px; color: var(--bone-3); font-size: 0.76rem; margin-top: 3px; }
+  .pb-c em { font-style: normal; color: #f6d27a; font-weight: 600; }
+  .pb-more { color: var(--bone-3); font-size: 0.78rem; text-align: center; padding: 6px; }
+  .pb-sheet { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+  .pb-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .pb-links a { text-decoration: none; }
+  .pb-move-t { color: var(--bone-3); font-size: 0.82rem; margin: 18px 0 8px; }
+  .pb-move { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .pb-move button { border: 0; cursor: pointer; font: inherit; font-size: 0.82rem; text-align: left; padding: 9px 11px; border-radius: 12px; color: var(--bone); background: rgba(255,255,255,0.07); }
+  .pb-move button:hover { background: rgba(255,255,255,0.13); }
+  .pb-move button.cur { background: var(--bone); color: #1c1a16; font-weight: 600; cursor: default; }
+  @media (max-width: 760px) {
+    .pb-panel { margin: 0; border-radius: 0; padding: 16px 12px 10px; }
+    .pb-head h2 { font-size: 1.8rem; }
+    .pb-head .meta { font-size: 0.8rem; }
+    .pb-tools { width: 100%; }
+    .pb-tools input { flex: 1; width: auto; }
+    .pb-col { flex-basis: 78vw; }
+    .pb-c { cursor: pointer; }
+  }
+  @media (max-width: 560px) {
+    .pipe-open { padding: 5px 12px; font-size: 0.8rem; }
+    .top .when .clock { display: none; }
+    .top .when:not(:has(.alert.on)) { display: none; }
+    .top > img { height: 22px !important; }
+  }
+  @media (max-width: 380px) {
+    .top { gap: 6px; }
+    .top > img { height: 17px !important; }
+    .pipe-open, .cli-open { font-size: 0.74rem !important; }
+    .pipe-open { padding: 5px 9px !important; }
+    .cli-open { padding: 4px 4px 4px 9px !important; }
+  }
+
   /* Finestrella importo upsell */
   .ups-ov { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(10,9,7,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .ups-box { width: min(420px, calc(100vw - 32px)); max-width: 100%; padding: 24px; border-radius: 26px; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)), rgba(30,27,22,0.92); }
@@ -680,6 +750,8 @@ ${GLASS_CSS}
   .cli-form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--bone-2); }
   .cli-form input { font: inherit; font-size: 0.95rem; color: var(--bone); background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 10px 12px; color-scheme: dark; }
   .cli-form input:focus { outline: 2px solid rgba(236,230,218,0.6); outline-offset: 0; }
+  .f-end { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--bone-2); }
+  .f-end b { font-weight: 600; color: var(--bone); font-size: 0.95rem; padding: 10px 0; }
   .cli-form-act { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
   .cli-err { margin-right: auto; color: var(--bad); font-size: 0.88rem; }
   .cli-tabs { display: inline-flex; margin-top: 22px; }
@@ -856,6 +928,7 @@ ${GLASS_CSS}
 <div class="layout" id="screen">
   <header class="top">
     <img src="/assets/img/logo.png" alt="Vendita Uno">
+    <button type="button" class="cli-open pipe-open glass" id="pipeOpen"><span>Pipeline</span></button>
     <button type="button" class="cli-open glass" id="cliOpen"><span>Clienti<span class="lg"> attivi</span></span> <b class="num" id="cliCount">0</b></button>
     <div class="when glass"><span class="alert" id="alert">GoHighLevel non raggiungibile</span><span class="d" id="date"></span><span class="clock num well" id="clock"></span></div>
   </header>
@@ -937,12 +1010,34 @@ ${GLASS_CSS}
       <label>Ha pagato (€)<input name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Es. 2500"></label>
       <label>Chiuso il<input name="start" type="date" required></label>
       <label>Pubblicità partita il<input name="adsStart" type="date"></label>
-      <label>Scade il (30 giorni dopo)<input name="end" type="date"></label>
+      <div class="f-end"><span>Scade il</span><b id="cliEndShow">quando parte la pubblicità</b></div>
       <label class="f-wide">Note<input name="note" maxlength="500" placeholder="Facoltativo"></label>
       <div class="cli-form-act f-wide"><span class="cli-err" id="cliErr"></span><button type="button" class="btn-sec" id="cliCancel">Annulla</button><button type="submit" class="btn-pri" id="cliSave">Salva</button></div>
     </form>
     <div class="seg well cli-tabs" role="group" aria-label="Quali clienti vedere"><button type="button" class="on" data-tab="attivi">Attivi</button><button type="button" data-tab="archiviati">Archiviati</button></div>
     <div class="cli-list" id="cliList"></div>
+  </div>
+</div>
+<div class="pb-ov" id="pbPanel" hidden>
+  <div class="pb-panel glass" role="dialog" aria-modal="true" aria-labelledby="pbTitle">
+    <div class="pb-head">
+      <div><h2 id="pbTitle">Pipeline</h2><div class="meta" id="pbMeta">VENDITA PIPELINE di GoHighLevel. Quello che sposti qui si sposta anche lì.</div></div>
+      <div class="pb-tools">
+        <input type="search" id="pbSearch" placeholder="Cerca un nome" autocomplete="off" aria-label="Cerca un lead">
+        <button type="button" class="cli-x" id="pbClose" aria-label="Chiudi">✕</button>
+      </div>
+    </div>
+    <div class="pb-board" id="pbBoard"><div class="cli-empty">Carico la pipeline…</div></div>
+  </div>
+</div>
+<div class="ups-ov" id="pbCard" hidden>
+  <div class="ups-box glass pb-sheet" role="dialog" aria-modal="true" aria-labelledby="pbcName">
+    <h3 id="pbcName"></h3>
+    <p class="meta" id="pbcInfo"></p>
+    <div class="pb-links" id="pbcLinks"></div>
+    <div class="pb-move-t">Sposta in</div>
+    <div class="pb-move" id="pbcMove"></div>
+    <div class="cli-form-act"><span class="cli-err" id="pbcErr"></span><button type="button" class="btn-sec" id="pbcClose">Chiudi</button></div>
   </div>
 </div>
 <div class="ups-ov" id="adsDlg" hidden>
@@ -1331,6 +1426,89 @@ $('vMonth').onclick = () => setView({ mode: 'month', day: '' });
 $('tileMonth').onclick = () => setView({ mode: 'month', day: '' });
 $('tileMonth').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView({ mode: 'month', day: '' }); } };
 
+// ---- Pipeline: tabellone della VENDITA PIPELINE, gli spostamenti vanno su GoHighLevel ----
+const PAPI = API + '/pipeline';
+let pb = { stages: [], cards: [] }, pbQ = '', pbBusy = new Set(), pbTimer = 0, pbOpenId = '';
+const PB_WON = '13142cf4', PB_LOST = ['3b604e9a', 'fa6ce1d8'];
+const pbKind = (id) => id.startsWith(PB_WON) ? 'won' : PB_LOST.some((x) => id.startsWith(x)) ? 'lost' : '';
+function pbCard(c) {
+  return '<button type="button" class="pb-c' + (pbBusy.has(c.id) ? ' busy' : '') + '" draggable="true" data-id="' + esc(c.id) + '">' +
+    '<b>' + esc(c.nome || 'Senza nome') + '</b><span><em>' + money0(c.value || 0) + '</em>' + (c.since === 0 ? 'da oggi' : 'da ' + giorni(c.since)) + '</span></button>';
+}
+function renderBoard() {
+  const q = pbQ.trim().toLowerCase();
+  const cards = q ? pb.cards.filter((c) => (c.nome || '').toLowerCase().includes(q) || (c.tel || '').replace(/\\s/g, '').includes(q.replace(/\\s/g, ''))) : pb.cards;
+  const html = pb.stages.map((st) => {
+    const list = cards.filter((c) => c.stage === st.id).sort((a, b) => a.since - b.since);
+    const kind = pbKind(st.id), max = kind && !q ? 40 : 300;
+    const tot = list.reduce((a, c) => a + (c.value || 0), 0);
+    return '<section class="pb-col ' + kind + '" data-stage="' + esc(st.id) + '"><div class="pb-col-h"><b>' + esc(st.name) + '</b><span>' + list.length + (list.length === 1 ? ' lead' : ' lead') + ' · ' + money0(tot) + '</span></div>' +
+      '<div class="pb-list">' + list.slice(0, max).map(pbCard).join('') + (list.length > max ? '<div class="pb-more">e altri ' + (list.length - max) + ': cerca il nome</div>' : '') + '</div></section>';
+  }).join('');
+  const box = $('pbBoard'), sl = box.scrollLeft;
+  box.innerHTML = html || '<div class="cli-empty">Nessun lead.</div>';
+  box.scrollLeft = sl;
+}
+async function loadBoard() {
+  try {
+    const r = await fetch(PAPI, { cache: 'no-store' });
+    if (r.status === 401) { location.reload(); return; }
+    const d = await r.json();
+    if (!r.ok) { setHTML('pbBoard', '<div class="cli-empty">' + esc(d.error || 'Pipeline non disponibile.') + '</div>'); return; }
+    // Non sovrascrivere le schede che si stanno spostando adesso.
+    const keep = {}; pb.cards.forEach((c) => { if (pbBusy.has(c.id)) keep[c.id] = c.stage; });
+    pb = { stages: d.stages, cards: d.cards.map((c) => (keep[c.id] ? { ...c, stage: keep[c.id] } : c)) };
+    renderBoard(); if (pbOpenId) showCard(pbOpenId);
+  } catch (e) {}
+}
+async function moveCard(id, stage) {
+  const c = pb.cards.find((x) => x.id === id); if (!c || c.stage === stage || pbBusy.has(id)) return;
+  const from = c.stage, st = pb.stages.find((x) => x.id === stage);
+  if (pbKind(stage) === 'won' && !confirm('Segnare ' + c.nome + ' come CHIUSO VINTO? Entra nell’incassato di oggi con ' + money0(c.value || 0) + '.')) return;
+  c.stage = stage; c.since = 0; pbBusy.add(id); renderBoard();
+  try {
+    const r = await fetch(PAPI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, stage }) });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401) { location.reload(); return; }
+    if (!r.ok) throw new Error(d.error || 'Spostamento non riuscito.');
+    pbBusy.delete(id); renderBoard(); refresh(curMonth); if (pbKind(stage) === 'won') loadClienti();
+  } catch (e) {
+    c.stage = from; pbBusy.delete(id); renderBoard();
+    alert((e.message || 'Spostamento non riuscito.') + ' ' + c.nome + ' è rimasto in ' + ((pb.stages.find((x) => x.id === from) || {}).name || '') + '.');
+  }
+  if (pbOpenId === id) showCard(id);
+}
+function showCard(id) {
+  const c = pb.cards.find((x) => x.id === id); if (!c) return;
+  pbOpenId = id; setText('pbcErr', '');
+  setText('pbcName', c.nome || 'Senza nome');
+  const st = pb.stages.find((x) => x.id === c.stage);
+  setText('pbcInfo', [st ? st.name : '', money0(c.value || 0), c.seller ? 'di ' + c.seller : '', 'arrivato il ' + dShort(c.created)].filter(Boolean).join(' · '));
+  const tel = (c.tel || '').replace(/[^\\d+]/g, '');
+  setHTML('pbcLinks', tel ? '<a class="btn-pri" href="tel:' + esc(tel) + '">Chiama ' + esc(c.tel) + '</a><a class="btn-sec" href="https://wa.me/' + esc(tel.replace(/^\\+/, '')) + '" target="_blank" rel="noopener">WhatsApp</a>' : '<span class="meta">Nessun telefono su GoHighLevel</span>');
+  setHTML('pbcMove', pb.stages.map((s2) => '<button type="button" data-stage="' + esc(s2.id) + '"' + (s2.id === c.stage ? ' class="cur" disabled' : '') + '>' + esc(s2.name) + '</button>').join(''));
+  $('pbCard').hidden = false;
+}
+function closeCard() { $('pbCard').hidden = true; pbOpenId = ''; }
+function openBoard() { $('pbPanel').hidden = false; document.body.style.overflow = 'hidden'; loadBoard(); clearInterval(pbTimer); pbTimer = setInterval(loadBoard, 15000); $('pbSearch').focus(); }
+function closeBoard() { $('pbPanel').hidden = true; document.body.style.overflow = ''; clearInterval(pbTimer); closeCard(); $('pipeOpen').focus(); }
+if (!tvMode) {
+  $('pipeOpen').onclick = openBoard;
+  $('pbClose').onclick = closeBoard;
+  $('pbSearch').oninput = (e) => { pbQ = e.target.value; renderBoard(); };
+  $('pbBoard').onclick = (e) => { const b = e.target.closest('.pb-c'); if (b) showCard(b.dataset.id); };
+  $('pbCard').onclick = (e) => { if (e.target === $('pbCard')) closeCard(); };
+  $('pbcClose').onclick = closeCard;
+  $('pbcMove').onclick = (e) => { const b = e.target.closest('button[data-stage]'); if (b && !b.disabled) moveCard(pbOpenId, b.dataset.stage); };
+  // Trascinare da PC
+  let dragId = '';
+  $('pbBoard').addEventListener('dragstart', (e) => { const b = e.target.closest('.pb-c'); if (!b) return; dragId = b.dataset.id; b.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', dragId); } catch (x) {} });
+  $('pbBoard').addEventListener('dragend', (e) => { const b = e.target.closest('.pb-c'); if (b) b.classList.remove('drag'); document.querySelectorAll('.pb-col.over').forEach((x) => x.classList.remove('over')); });
+  $('pbBoard').addEventListener('dragover', (e) => { const col = e.target.closest('.pb-col'); if (!col || !dragId) return; e.preventDefault(); document.querySelectorAll('.pb-col.over').forEach((x) => { if (x !== col) x.classList.remove('over'); }); col.classList.add('over'); });
+  $('pbBoard').addEventListener('drop', (e) => { const col = e.target.closest('.pb-col'); if (!col || !dragId) return; e.preventDefault(); col.classList.remove('over'); const id = dragId; dragId = ''; moveCard(id, col.dataset.stage); });
+  document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (!$('pbCard').hidden) closeCard(); else if (!$('pbPanel').hidden) closeBoard(); }, true);
+}
+
 // ---- Clienti attivi (solo PC e telefono, non sulla TV) ----
 const CAPI = API + '/clienti';
 let cli = { clienti: [], todos: [], today: '' }, cliTab = 'attivi', cliEdit = '', cliEndTouched = false, cliBusy = false;
@@ -1434,11 +1612,11 @@ function openForm(c) {
   const today = cli.today || new Date().toISOString().slice(0, 10);
   f.nome.value = c ? c.nome : ''; f.agenzia.value = c ? c.agenzia || '' : ''; f.zona.value = c ? c.zona || '' : '';
   f.telefono.value = c ? c.telefono || '' : ''; f.note.value = c ? c.note || '' : ''; f.amount.value = c && c.amount ? c.amount : '';
-  f.start.value = c ? c.start : today; f.adsStart.value = c && c.adsStart ? c.adsStart : ''; f.end.value = c && c.end ? c.end : '';
-  cliEndTouched = !!(c && c.end && c.adsStart && c.end !== addD(c.adsStart, 30));
+  f.start.value = c ? c.start : today; f.adsStart.value = c && c.adsStart ? c.adsStart : ''; showEnd();
   f.hidden = false; f.nome.focus();
 }
 function closeForm() { $('cliForm').hidden = true; cliEdit = ''; }
+function showEnd() { const v = $('cliForm').adsStart.value; setText('cliEndShow', v ? dShort(addD(v, 30)) + ' (30 giorni dopo)' : 'quando parte la pubblicità'); }
 let upsId = '';
 function askUpsell(id) {
   const c = cli.clienti.find((x) => x.id === id); if (!c) return;
@@ -1474,12 +1652,11 @@ if (!tvMode) {
   };
   $('cliCancel').onclick = closeForm;
   // La scadenza segue la partenza della pubblicità (+30 giorni) finché non la cambi a mano.
-  $('cliForm').adsStart.onchange = () => { const f = $('cliForm'); if (!f.adsStart.value) f.end.value = ''; else if (!cliEndTouched || !f.end.value) f.end.value = addD(f.adsStart.value, 30); };
-  $('cliForm').end.oninput = () => { cliEndTouched = true; };
+  $('cliForm').adsStart.oninput = showEnd; $('cliForm').adsStart.onchange = showEnd;
   $('cliForm').onsubmit = async (e) => {
     e.preventDefault();
     const f = $('cliForm');
-    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, adsStart: f.adsStart.value, end: f.adsStart.value ? f.end.value : '', note: f.note.value, amount: f.amount.value || 0 };
+    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, adsStart: f.adsStart.value, note: f.note.value, amount: f.amount.value || 0 };
     if (await cliOp(cliEdit ? { op: 'update', id: cliEdit, data } : { op: 'add', data })) closeForm();
   };
   document.querySelector('.cli-tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) { cliTab = b.dataset.tab; renderClienti(); } };
@@ -1538,11 +1715,8 @@ function applyClientiOp(list, body, today) {
     if ("start" in d) c.start = ISO_RE.test(d.start || "") ? d.start : c.start;
     if (!c.start) c.start = today;
     // I 30 giorni partono quando parte la pubblicità, non quando si chiude.
-    const adsBefore = base.adsStart;
     if ("adsStart" in d) c.adsStart = ISO_RE.test(d.adsStart || "") ? d.adsStart : null;
-    if ("end" in d) c.end = ISO_RE.test(d.end || "") ? d.end : null;
-    if (!c.adsStart) c.end = null;
-    else if (!c.end || c.end < c.adsStart || (c.adsStart !== adsBefore && !("end" in d && ISO_RE.test(d.end || "")))) c.end = addDays(c.adsStart, 30);
+    c.end = c.adsStart ? addDays(c.adsStart, 30) : null;
     return c;
   };
   if (op === "add") {
@@ -1621,7 +1795,7 @@ function adsOf(c) {
 function clientiView(list, today) {
   const clienti = list.filter((c) => !c.deleted).map((c0) => {
     const adsStart = adsOf(c0);
-    const c = { ...c0, adsStart, end: adsStart ? (c0.end && c0.end >= adsStart ? c0.end : addDays(adsStart, 30)) : null };
+    const c = { ...c0, adsStart, end: adsStart ? addDays(adsStart, 30) : null };
     const count = (c.incarichi || []).length;
     const sinceClose = daysBetween(c.start, today);
     const period = adsStart ? Math.max(1, daysBetween(adsStart, c.end)) : 30;
@@ -1683,6 +1857,33 @@ function upsellIncassi(list) {
     });
   }
   return out;
+}
+
+// Sposta un'opportunità della VENDITA PIPELINE in un'altra fase, direttamente su GoHighLevel.
+// CHIUSO VINTO la segna vinta (entra nell'incassato), PERSO e FUORI TARGET la segnano persa, le altre aperta.
+const GHL_LOST_STAGES = ["3b604e9a-", "fa6ce1d8-"];
+async function moveOpportunity(env, id, stageId) {
+  if (!/^[A-Za-z0-9_-]{6,40}$/.test(id || "")) return { error: "Opportunità non valida." };
+  const g = await readGHL(env);
+  const order = g.stageOrder || GHL_STAGES.map((st) => st.id);
+  if (!order.includes(stageId)) return { error: "Fase non valida." };
+  const cur = await ghl(env, `/opportunities/${id}`).catch(() => null);
+  const o = cur && (cur.opportunity || cur);
+  if (!o || o.pipelineId !== GHL_PIPELINE) return { error: "Questa opportunità non è nella VENDITA PIPELINE." };
+  const status = stageId === GHL_WON_STAGE ? "won" : GHL_LOST_STAGES.some((p) => stageId.startsWith(p)) ? "lost" : "open";
+  const body = { pipelineId: GHL_PIPELINE, pipelineStageId: stageId };
+  if (o.status !== status) body.status = status;
+  const r = await fetch(GHL_API + `/opportunities/${id}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${env.GHL_TOKEN}`, Version: "2021-07-28", Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text().catch(() => "");
+    return { error: r.status === 401 || r.status === 403 ? "GoHighLevel non dà il permesso di spostare le opportunità." : "GoHighLevel ha rifiutato lo spostamento (" + r.status + ").", detail: t.slice(0, 200) };
+  }
+  ghlCache = { at: 0, data: null };
+  return { ok: true, status };
 }
 
 // Senza il Durable Object (prove in locale) si usa il KV: va bene per provare, non per due persone insieme.
@@ -1748,6 +1949,23 @@ export async function handleDashboard(request, env, url) {
     const out = await clientiStore(env, body);
     if (out.error) return json({ error: out.error }, 400);
     return json(clientiView(out.list, romeDate()));
+  }
+
+  if (path === `${DASH_PATH}/api/pipeline`) {
+    if (!loggedIn) return json({ error: "unauthorized" }, 401);
+    if (!env.GHL_TOKEN) return json({ error: "GoHighLevel non collegato." }, 503);
+    if (request.method === "GET") {
+      const g = await readGHL(env).catch(() => null);
+      if (!g) return json({ error: "GoHighLevel non raggiungibile." }, 502);
+      const order = g.stageOrder || GHL_STAGES.map((st) => st.id);
+      return json({ stages: order.map((id) => ({ id, name: g.stageNames[id] || id, owner: (GHL_STAGES.find((x) => x.id === id) || {}).owner || "" })), cards: g.board });
+    }
+    if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
+    if (!(request.headers.get("Content-Type") || "").includes("application/json")) return json({ error: "Formato non valido." }, 415);
+    const body = await request.json().catch(() => null);
+    if (!body) return json({ error: "Formato non valido." }, 400);
+    const out = await moveOpportunity(env, String(body.id || ""), String(body.stage || "")).catch(() => ({ error: "GoHighLevel non raggiungibile." }));
+    return out.error ? json(out, 400) : json(out);
   }
 
   if (path === `${DASH_PATH}/api`) {
