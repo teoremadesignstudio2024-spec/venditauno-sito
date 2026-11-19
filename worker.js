@@ -1,4 +1,7 @@
-import { DASH_PATH, TV_PATH, handleDashboard } from "./dashboard.js";
+import { DASH_PATH, TV_PATH, handleDashboard, ClientiStore } from "./dashboard.js";
+
+// Archivio dei clienti attivi della dashboard (Durable Object).
+export { ClientiStore };
 import { handleAppApi } from "./app-api.js";
 
 // Pagine tolte dal sito: chi ha un vecchio link finisce sulla home invece che su una pagina vuota.

@@ -621,6 +621,92 @@ ${GLASS_CSS}
   .clients .none { color: var(--bone-3); padding: 14px 4px; }
 
   /* Annuncio nuovo cliente: l'unico momento animato */
+  /* Clienti attivi */
+  [hidden] { display: none !important; }
+  .cli-open { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; padding: 9px 10px 9px 18px; border: 0; border-radius: 999px; color: var(--bone); font: inherit; font-weight: 600; cursor: pointer; }
+  .cli-open b { min-width: 28px; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,0.12); text-align: center; }
+  .cli-open.alert-on b { background: var(--bad); color: #1a0e0c; }
+  .cli-open:focus-visible, .cli-panel button:focus-visible, .todo button:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
+  .top .cli-open + .when { margin-left: 0; }
+  body.tv .cli-open, body.tv .todo { display: none !important; }
+
+  .todo { grid-column: 1 / -1; padding: 18px 20px; border-radius: 28px; }
+  .todo h3 { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.6rem; color: var(--bone); margin: 0 0 10px; }
+  .todo-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 12px; border-radius: var(--r-md); }
+  .todo-row + .todo-row { margin-top: 6px; }
+  .todo-row .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .todo-row.scaduto { background: rgba(255,138,128,0.12); } .todo-row.scaduto .dot { background: var(--bad); box-shadow: 0 0 0 4px rgba(255,138,128,0.2); }
+  .todo-row.upsell { background: rgba(185,131,24,0.18); } .todo-row.upsell .dot { background: #f2c14e; box-shadow: 0 0 0 4px rgba(242,193,78,0.22); }
+  .todo-row.chiama { background: rgba(255,255,255,0.05); } .todo-row.chiama .dot { background: #f2a64e; }
+  .todo-row b { color: var(--bone); font-weight: 600; }
+  .todo-row .t { color: var(--bone-2); }
+  .todo-row .acts { display: flex; gap: 8px; }
+  .btn-pri, .btn-sec { border: 0; border-radius: 999px; padding: 9px 16px; font: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
+  .btn-pri { background: var(--bone); color: #1c1a16; }
+  .btn-sec { background: rgba(255,255,255,0.1); color: var(--bone); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+  .btn-pri:hover { filter: brightness(1.08); } .btn-sec:hover { background: rgba(255,255,255,0.16); }
+
+  .cli-ov { position: fixed; inset: 0; z-index: 30; background: rgba(10,9,7,0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); display: flex; justify-content: flex-end; }
+  .cli-panel { width: min(1000px, 100%); height: 100%; overflow-y: auto; border-radius: 30px 0 0 30px; padding: 26px 26px 40px; background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 40%), rgba(26,23,19,0.86); }
+  .cli-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .cli-head h2 { font-family: var(--serif); font-weight: 400; font-size: 2.2rem; line-height: 1; color: var(--bone); margin: 0; }
+  .cli-head .meta { color: var(--bone-3); margin-top: 6px; }
+  .cli-head-act { display: flex; gap: 10px; align-items: center; }
+  .cli-x { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.1); color: var(--bone); cursor: pointer; font-size: 1rem; }
+  .cli-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; padding: 18px; margin-top: 20px; }
+  .cli-form .f-wide { grid-column: 1 / -1; }
+  .cli-form-title { grid-column: 1 / -1; font-weight: 600; color: var(--bone); }
+  .cli-form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--bone-2); }
+  .cli-form input { font: inherit; font-size: 0.95rem; color: var(--bone); background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 10px 12px; color-scheme: dark; }
+  .cli-form input:focus { outline: 2px solid rgba(236,230,218,0.6); outline-offset: 0; }
+  .cli-form-act { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .cli-err { margin-right: auto; color: var(--bad); font-size: 0.88rem; }
+  .cli-tabs { display: inline-flex; margin-top: 22px; }
+  .cli-list { display: grid; gap: 10px; margin-top: 14px; }
+  .cli-empty { color: var(--bone-3); padding: 24px 4px; }
+  .cli { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr) auto minmax(0, 0.9fr); gap: 18px; align-items: center; padding: 16px 18px; border-radius: 20px; background: rgba(255,255,255,0.045); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+  .cli.upsell { box-shadow: inset 0 0 0 1px rgba(242,193,78,0.55); background: rgba(185,131,24,0.12); }
+  .cli.scaduto { box-shadow: inset 0 0 0 1px rgba(255,138,128,0.5); }
+  .cli.focus { animation: cliFlash 1.6s ease-out; }
+  @keyframes cliFlash { 0%, 30% { background: rgba(236,230,218,0.18); } }
+  .cli-name b { display: block; color: var(--bone); font-weight: 600; font-size: 1.05rem; }
+  .cli-name span { display: block; color: var(--bone-3); font-size: 0.85rem; margin-top: 2px; overflow-wrap: anywhere; }
+  .cli-dates { font-size: 0.85rem; color: var(--bone-2); }
+  .cli-dates b { color: var(--bone); font-weight: 600; }
+  .cli-dates .line { display: flex; justify-content: space-between; gap: 8px; }
+  .cli-bar { position: relative; height: 6px; border-radius: 99px; background: rgba(255,255,255,0.1); margin-top: 8px; overflow: hidden; }
+  .cli-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold), #f2c14e); }
+  .cli.scaduto .cli-bar i { background: var(--bad); }
+  .cli-inc { display: flex; align-items: center; gap: 10px; }
+  .cli-inc button { width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; font: inherit; font-size: 1.2rem; line-height: 1; color: var(--bone); background: rgba(255,255,255,0.1); }
+  .cli-inc button.plus { background: var(--bone); color: #1c1a16; font-weight: 700; }
+  .cli-inc .n { min-width: 2.2ch; text-align: center; font-size: 1.7rem; font-weight: 600; color: var(--bone); }
+  .cli-inc .lab { display: block; font-size: 0.72rem; color: var(--bone-3); text-align: center; margin-top: -2px; }
+  .cli-pips { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+  .cli-pips i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+  .cli-pips i.on { background: #f2c14e; }
+  .cli-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .st { padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; background: rgba(255,255,255,0.08); color: var(--bone-2); }
+  .st.upsell { background: rgba(242,193,78,0.2); color: #f6d27a; }
+  .st.scaduto { background: rgba(255,138,128,0.18); color: #ffb2aa; }
+  .st.chiama { background: rgba(242,166,78,0.18); color: #f7c48a; }
+  .st.chiamato { background: rgba(255,255,255,0.1); color: var(--bone); }
+  .st.upsell-fatto { background: rgba(111,220,154,0.16); color: #9fe8bb; }
+  .cli-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .cli-acts button { border: 0; background: transparent; color: var(--bone-3); font: inherit; font-size: 0.82rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; }
+  .cli-acts button:hover { color: var(--bone); background: rgba(255,255,255,0.08); }
+  .cli-note { grid-column: 1 / -1; font-size: 0.85rem; color: var(--bone-3); margin-top: -6px; }
+  @media (max-width: 760px) {
+    .cli-panel { border-radius: 0; padding: 18px 14px 40px; }
+    .cli-form { grid-template-columns: 1fr 1fr; }
+    .cli { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+    .cli-dates { grid-column: 1 / -1; order: 3; }
+    .cli-side { grid-column: 1 / -1; order: 4; flex-direction: row; justify-content: space-between; align-items: center; }
+    .todo-row { grid-template-columns: 12px minmax(0, 1fr); }
+    .todo-row .acts { grid-column: 2; }
+    .cli-open { padding: 7px 8px 7px 14px; font-size: 0.85rem; }
+  }
+
   .toast { position: fixed; left: 50%; top: 44%; z-index: 20; transform: translate(-50%, -50%) scale(0.94); opacity: 0; pointer-events: none; text-align: center; padding: 28px 48px 30px; border-radius: 40px; visibility: hidden; transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s .45s; }
   .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s; }
   .toast .k { font-family: var(--serif); font-style: italic; font-size: clamp(1.4rem, 2.2vw, 2.2rem); color: var(--bone-2); }
@@ -691,10 +777,12 @@ ${GLASS_CSS}
 <div class="layout" id="screen">
   <header class="top">
     <img src="/assets/img/logo.png" alt="Vendita Uno">
+    <button type="button" class="cli-open glass" id="cliOpen">Clienti attivi <b class="num" id="cliCount">0</b></button>
     <div class="when glass"><span class="alert" id="alert">GoHighLevel non raggiungibile</span><span class="d" id="date"></span><span class="clock num well" id="clock"></span></div>
   </header>
 
   <section class="tiles" aria-label="Numeri principali">
+    <div class="todo glass" id="todo" hidden></div>
     <div class="tile glass hero">
       <div>
         <h3>Incassato oggi</h3>
@@ -751,6 +839,30 @@ ${GLASS_CSS}
     <div class="funnel" id="funnel"></div>
   </section>
 
+</div>
+<div class="cli-ov" id="cliPanel" hidden>
+  <div class="cli-panel glass" role="dialog" aria-modal="true" aria-labelledby="cliTitle">
+    <div class="cli-head">
+      <div><h2 id="cliTitle">Clienti attivi</h2><div class="meta">Partenza, scadenza e incarichi presi. A 3 incarichi è il momento dell'upsell.</div></div>
+      <div class="cli-head-act">
+        <button type="button" class="btn-pri" id="cliAdd">+ Aggiungi cliente</button>
+        <button type="button" class="cli-x" id="cliClose" aria-label="Chiudi">✕</button>
+      </div>
+    </div>
+    <form class="cli-form well" id="cliForm" hidden autocomplete="off">
+      <div class="cli-form-title" id="cliFormTitle">Nuovo cliente</div>
+      <label class="f-wide">Nome e cognome<input name="nome" required maxlength="80" placeholder="Es. Mario Rossi"></label>
+      <label>Agenzia<input name="agenzia" maxlength="80" placeholder="Es. Immobiliare Rossi"></label>
+      <label>Zona<input name="zona" maxlength="80" placeholder="Es. Bergamo centro"></label>
+      <label>Telefono<input name="telefono" maxlength="30" inputmode="tel" placeholder="Es. 333 1234567"></label>
+      <label>Partito il<input name="start" type="date" required></label>
+      <label>Scade il<input name="end" type="date" required></label>
+      <label class="f-wide">Note<input name="note" maxlength="500" placeholder="Facoltativo"></label>
+      <div class="cli-form-act f-wide"><span class="cli-err" id="cliErr"></span><button type="button" class="btn-sec" id="cliCancel">Annulla</button><button type="submit" class="btn-pri" id="cliSave">Salva</button></div>
+    </form>
+    <div class="seg well cli-tabs" role="group" aria-label="Quali clienti vedere"><button type="button" class="on" data-tab="attivi">Attivi</button><button type="button" data-tab="archiviati">Archiviati</button></div>
+    <div class="cli-list" id="cliList"></div>
+  </div>
 </div>
 <div class="toast glass" id="toast" role="status" aria-live="polite"><div class="k">Nuovo cliente</div><div class="n" id="toastName"></div><div class="a num" id="toastAmt"></div></div>
 
@@ -1119,6 +1231,141 @@ $('vMonth').onclick = () => setView({ mode: 'month', day: '' });
 $('tileMonth').onclick = () => setView({ mode: 'month', day: '' });
 $('tileMonth').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView({ mode: 'month', day: '' }); } };
 
+// ---- Clienti attivi (solo PC e telefono, non sulla TV) ----
+const CAPI = API + '/clienti';
+let cli = { clienti: [], todos: [], today: '' }, cliTab = 'attivi', cliEdit = '', cliEndTouched = false, cliBusy = false;
+function dShort(iso) { return iso ? cap(new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })) : ''; }
+function addD(iso, n) { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function giorni(n) { return n === 1 ? '1 giorno' : n + ' giorni'; }
+function leftText(c) {
+  if (c.left > 1) return 'tra ' + giorni(c.left);
+  if (c.left === 1) return 'domani';
+  if (c.left === 0) return 'oggi';
+  return 'da ' + giorni(-c.left);
+}
+function todoText(t) {
+  if (t.kind === 'upsell') return '<b>' + esc(t.nome) + '</b> <span class="t">ha preso ' + t.count + ' incarichi: è il momento dell’upsell.</span>';
+  if (t.kind === 'scaduto') return '<b>' + esc(t.nome) + '</b> <span class="t">è arrivato alla scadenza ' + (t.left === 0 ? 'oggi' : 'da ' + giorni(-t.left)) + ', con ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo e senti com’è andata.</span>';
+  return '<b>' + esc(t.nome) + '</b> <span class="t">scade ' + (t.left === 1 ? 'domani' : 'tra ' + giorni(t.left)) + ', ha ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo adesso.</span>';
+}
+function renderTodo() {
+  const n = cli.clienti.filter((c) => !c.archived).length;
+  setText('cliCount', String(n));
+  $('cliOpen').classList.toggle('alert-on', cli.todos.length > 0);
+  if (!cli.todos.length) { $('todo').hidden = true; setHTML('todo', ''); return; }
+  $('todo').hidden = false;
+  setHTML('todo', '<h3>Da fare adesso</h3>' + cli.todos.map((t) =>
+    '<div class="todo-row ' + t.kind + '"><span class="dot"></span><div>' + todoText(t) + '</div><div class="acts">' +
+    '<button type="button" class="btn-sec" data-open="' + esc(t.id) + '">Apri</button>' +
+    '<button type="button" class="btn-pri" data-done="' + (t.kind === 'upsell' ? 'upsell' : 'call') + '" data-id="' + esc(t.id) + '">' + (t.kind === 'upsell' ? 'Upsell fatto' : 'Chiamato') + '</button>' +
+    '</div></div>').join(''));
+}
+const ST_LABEL = { upsell: 'Upsell adesso', scaduto: 'Scaduto, chiamalo', chiama: 'Scade a breve', chiamato: 'Già chiamato', 'upsell-fatto': 'Upsell fatto', attivo: 'In corso', archiviato: 'Archiviato' };
+function cliRow(c) {
+  const pips = [0, 1, 2].map((i) => '<i' + (c.count > i ? ' class="on"' : '') + '></i>').join('');
+  const sub = [c.agenzia, c.zona, c.telefono].filter(Boolean).map(esc).join(' · ');
+  const acts = c.archived
+    ? '<button type="button" data-act="unarchive">Ripristina</button><button type="button" data-act="delete">Elimina</button>'
+    : '<button type="button" data-act="edit">Modifica</button>' +
+      (c.upsellDone ? '<button type="button" data-act="unupsell">Annulla upsell</button>' : (c.count >= 3 ? '<button type="button" data-act="upsell">Upsell fatto</button>' : '')) +
+      '<button type="button" data-act="archive">Archivia</button>';
+  return '<div class="cli ' + c.status + '" data-id="' + esc(c.id) + '">' +
+    '<div class="cli-name"><b>' + esc(c.nome) + '</b><span>' + (sub || '&nbsp;') + '</span></div>' +
+    '<div class="cli-dates"><div class="line"><span>Partito <b>' + dShort(c.start) + '</b></span><span>' + (c.day >= 0 ? 'giorno ' + (c.day + 1) : 'parte ' + dShort(c.start)) + '</span></div>' +
+    '<div class="line"><span>Scade <b>' + dShort(c.end) + '</b></span><span>' + leftText(c) + '</span></div>' +
+    '<div class="cli-bar"><i style="width:' + Math.round(c.progress * 100) + '%"></i></div></div>' +
+    '<div><div class="cli-inc"><button type="button" data-act="minus" aria-label="Togli un incarico">−</button><span class="n num">' + c.count + '</span><button type="button" class="plus" data-act="plus" aria-label="Aggiungi un incarico">+</button></div>' +
+    '<span class="lab">incarichi</span><div class="cli-pips" title="3 incarichi = upsell">' + pips + '</div></div>' +
+    '<div class="cli-side"><span class="st ' + c.status + '">' + (c.status === 'chiamato' && c.left <= 0 ? 'Scaduto, già chiamato' : ST_LABEL[c.status]) + '</span><div class="cli-acts">' + acts + '</div></div>' +
+    (c.note ? '<div class="cli-note">' + esc(c.note) + '</div>' : '') +
+    '</div>';
+}
+function renderClienti() {
+  const list = cli.clienti.filter((c) => (cliTab === 'archiviati') === !!c.archived);
+  setHTML('cliList', list.length ? list.map(cliRow).join('') :
+    '<div class="cli-empty">' + (cliTab === 'archiviati' ? 'Nessun cliente archiviato.' : 'Nessun cliente attivo. Premi "Aggiungi cliente" per inserire il primo.') + '</div>');
+  document.querySelectorAll('.cli-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === cliTab));
+}
+async function loadClienti() {
+  if (tvMode) return;
+  try {
+    const r = await fetch(CAPI, { cache: 'no-store' });
+    if (r.status === 401) { location.reload(); return; }
+    if (!r.ok) return;
+    cli = await r.json(); renderTodo();
+    if (!$('cliPanel').hidden) renderClienti();
+  } catch (e) {}
+}
+async function cliOp(body) {
+  if (cliBusy) return false;
+  cliBusy = true;
+  try {
+    const r = await fetch(CAPI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401) { location.reload(); return false; }
+    if (!r.ok) { setText('cliErr', d.error || 'Non salvato, riprova.'); if ($('cliForm').hidden) alert(d.error || 'Non salvato, riprova.'); return false; }
+    cli = d; renderTodo(); renderClienti(); return true;
+  } catch (e) { setText('cliErr', 'Connessione persa, riprova.'); return false; }
+  finally { cliBusy = false; }
+}
+function openClienti(focusId) {
+  $('cliPanel').hidden = false; document.body.style.overflow = 'hidden';
+  if (focusId) { const c = cli.clienti.find((x) => x.id === focusId); cliTab = c && c.archived ? 'archiviati' : 'attivi'; }
+  renderClienti(); loadClienti();
+  if (focusId) {
+    const row = document.querySelector('.cli[data-id="' + CSS.escape(focusId) + '"]');
+    if (row) { row.scrollIntoView({ block: 'center' }); row.classList.add('focus'); }
+  } else $('cliAdd').focus();
+}
+function closeClienti() { $('cliPanel').hidden = true; document.body.style.overflow = ''; closeForm(); $('cliOpen').focus(); }
+function openForm(c) {
+  const f = $('cliForm'); cliEdit = c ? c.id : ''; cliEndTouched = !!c; setText('cliErr', '');
+  setText('cliFormTitle', c ? 'Modifica ' + c.nome : 'Nuovo cliente');
+  const today = cli.today || new Date().toISOString().slice(0, 10);
+  f.nome.value = c ? c.nome : ''; f.agenzia.value = c ? c.agenzia || '' : ''; f.zona.value = c ? c.zona || '' : '';
+  f.telefono.value = c ? c.telefono || '' : ''; f.note.value = c ? c.note || '' : '';
+  f.start.value = c ? c.start : today; f.end.value = c ? c.end : addD(today, 30);
+  f.hidden = false; f.nome.focus();
+}
+function closeForm() { $('cliForm').hidden = true; cliEdit = ''; }
+if (!tvMode) {
+  $('cliOpen').onclick = () => openClienti();
+  $('cliClose').onclick = closeClienti;
+  $('cliPanel').onclick = (e) => { if (e.target === $('cliPanel')) closeClienti(); };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('cliPanel').hidden) closeClienti(); });
+  $('cliAdd').onclick = () => openForm(null);
+  $('cliCancel').onclick = closeForm;
+  // La scadenza segue la partenza (+30 giorni) finché non la cambi a mano.
+  $('cliForm').start.onchange = () => { const f = $('cliForm'); if (!cliEndTouched && f.start.value) f.end.value = addD(f.start.value, 30); };
+  $('cliForm').end.oninput = () => { cliEndTouched = true; };
+  $('cliForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = $('cliForm');
+    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, end: f.end.value, note: f.note.value };
+    if (await cliOp(cliEdit ? { op: 'update', id: cliEdit, data } : { op: 'add', data })) closeForm();
+  };
+  document.querySelector('.cli-tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) { cliTab = b.dataset.tab; renderClienti(); } };
+  $('cliList').onclick = (e) => {
+    const b = e.target.closest('button[data-act]'); if (!b) return;
+    const id = b.closest('.cli').dataset.id, c = cli.clienti.find((x) => x.id === id); if (!c) return;
+    const a = b.dataset.act;
+    if (a === 'plus') cliOp({ op: 'incarico', id, delta: 1 });
+    else if (a === 'minus') { if (c.count > 0) cliOp({ op: 'incarico', id, delta: -1 }); }
+    else if (a === 'edit') { openForm(c); $('cliPanel').querySelector('.cli-panel').scrollTop = 0; }
+    else if (a === 'upsell') cliOp({ op: 'done', id, what: 'upsell' });
+    else if (a === 'unupsell') cliOp({ op: 'done', id, what: 'upsell', undo: true });
+    else if (a === 'archive') cliOp({ op: 'archive', id, archived: true });
+    else if (a === 'unarchive') cliOp({ op: 'archive', id, archived: false });
+    else if (a === 'delete') { if (confirm('Eliminare ' + c.nome + ' per sempre?')) cliOp({ op: 'delete', id }); }
+  };
+  $('todo').onclick = (e) => {
+    const o = e.target.closest('[data-open]'); if (o) { openClienti(o.dataset.open); return; }
+    const d = e.target.closest('[data-done]'); if (d) cliOp({ op: 'done', id: d.dataset.id, what: d.dataset.done });
+  };
+  loadClienti(); setInterval(loadClienti, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadClienti(); });
+}
+
 </script>
 </body>
 </html>`;
@@ -1126,6 +1373,121 @@ $('tileMonth').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const YM_RE = /^\d{4}-\d{2}$/;
+
+// ---- Clienti attivi: inseriti a mano dalla dashboard (partenza, scadenza, incarichi presi).
+// Stanno in un Durable Object: una sola copia, così due persone che scrivono insieme non si perdono modifiche.
+const CLI_MAX = 500;
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+const dayNum = (s) => Math.round(Date.parse(s + "T12:00:00Z") / 86400000);
+const daysBetween = (a, b) => dayNum(b) - dayNum(a);
+const txt = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u001f]/g, " ").trim().slice(0, n);
+
+function applyClientiOp(list, body, today) {
+  const op = body && body.op;
+  const find = () => list.find((c) => c.id === body.id);
+  const fields = (d, base) => {
+    const c = { ...base };
+    if ("nome" in d) c.nome = txt(d.nome, 80);
+    if ("agenzia" in d) c.agenzia = txt(d.agenzia, 80);
+    if ("zona" in d) c.zona = txt(d.zona, 80);
+    if ("telefono" in d) c.telefono = txt(d.telefono, 30);
+    if ("note" in d) c.note = txt(d.note, 500);
+    if ("start" in d) c.start = ISO_RE.test(d.start || "") ? d.start : c.start;
+    if ("end" in d) c.end = ISO_RE.test(d.end || "") ? d.end : c.end;
+    if (!c.start) c.start = today;
+    if (!c.end) c.end = addDays(c.start, 30);
+    return c;
+  };
+  if (op === "add") {
+    if (list.length >= CLI_MAX) return { error: "Troppi clienti in archivio." };
+    const c = fields(body.data || {}, { id: toHex(crypto.getRandomValues(new Uint8Array(6))), incarichi: [], upsellDone: null, callDone: null, archived: false, createdAt: today });
+    if (!c.nome) return { error: "Scrivi il nome del cliente." };
+    if (c.end < c.start) return { error: "La scadenza non può venire prima della partenza." };
+    return { list: [...list, c] };
+  }
+  const c = find();
+  if (!c) return { error: "Cliente non trovato." };
+  let next;
+  if (op === "update") {
+    next = fields(body.data || {}, c);
+    if (!next.nome) return { error: "Scrivi il nome del cliente." };
+    if (next.end < next.start) return { error: "La scadenza non può venire prima della partenza." };
+    if (next.end !== c.end) next.callDone = null; // nuova scadenza: il promemoria riparte
+  } else if (op === "incarico") {
+    const inc = [...(c.incarichi || [])];
+    if (body.delta === 1 && inc.length < 999) inc.push(today);
+    else if (body.delta === -1) inc.pop();
+    next = { ...c, incarichi: inc };
+  } else if (op === "done") {
+    const key = body.what === "upsell" ? "upsellDone" : body.what === "call" ? "callDone" : null;
+    if (!key) return { error: "Azione non valida." };
+    next = { ...c, [key]: body.undo ? null : today };
+  } else if (op === "archive") {
+    next = { ...c, archived: !!body.archived };
+  } else if (op === "delete") {
+    return { list: list.filter((x) => x.id !== c.id) };
+  } else {
+    return { error: "Azione non valida." };
+  }
+  return { list: list.map((x) => (x.id === c.id ? next : x)) };
+}
+
+// Cosa fare adesso: upsell a 3 incarichi, chiamata alla scadenza e 5 giorni prima.
+function clientiView(list, today) {
+  const clienti = list.map((c) => {
+    const count = (c.incarichi || []).length;
+    const period = Math.max(1, daysBetween(c.start, c.end));
+    const day = daysBetween(c.start, today);
+    const left = daysBetween(today, c.end);
+    let status = "attivo";
+    if (c.archived) status = "archiviato";
+    else if (count >= 3 && !c.upsellDone) status = "upsell";
+    else if (left <= 0 && !c.callDone) status = "scaduto";
+    else if (left <= 5 && !c.callDone) status = "chiama";
+    else if (c.upsellDone) status = "upsell-fatto";
+    else if (c.callDone && left <= 5) status = "chiamato";
+    return { ...c, count, day, left, period, progress: Math.max(0, Math.min(1, day / period)), status };
+  });
+  const todos = [];
+  for (const c of clienti) {
+    if (c.archived || c.day < 0) continue;
+    if (c.status === "upsell") todos.push({ id: c.id, kind: "upsell", rank: 1, nome: c.nome, count: c.count, left: c.left });
+    else if (c.status === "scaduto") todos.push({ id: c.id, kind: "scaduto", rank: 0, nome: c.nome, count: c.count, left: c.left });
+    else if (c.status === "chiama") todos.push({ id: c.id, kind: "chiama", rank: 2, nome: c.nome, count: c.count, left: c.left });
+  }
+  todos.sort((a, b) => a.rank - b.rank || a.left - b.left);
+  clienti.sort((a, b) => (a.archived - b.archived) || a.end.localeCompare(b.end) || a.nome.localeCompare(b.nome));
+  return { today, clienti, todos };
+}
+
+export class ClientiStore {
+  constructor(ctx) { this.ctx = ctx; }
+  async fetch(request) {
+    const list = (await this.ctx.storage.get("clienti")) || [];
+    if (request.method === "GET") return Response.json(list);
+    const body = await request.json().catch(() => ({}));
+    const out = applyClientiOp(list, body, body.today || romeDate());
+    if (out.error) return Response.json(out, { status: 400 });
+    await this.ctx.storage.put("clienti", out.list);
+    return Response.json(out.list);
+  }
+}
+
+// Senza il Durable Object (prove in locale) si usa il KV: va bene per provare, non per due persone insieme.
+async function clientiStore(env, body) {
+  if (env.CLIENTI) {
+    const stub = env.CLIENTI.get(env.CLIENTI.idFromName("clienti"));
+    const r = await stub.fetch("https://clienti/", body ? { method: "POST", body: JSON.stringify({ ...body, today: romeDate() }) } : {});
+    const d = await r.json();
+    return r.ok ? { list: d } : { error: d.error || "Errore" };
+  }
+  const kv = env.ACADEMY_PROGRESS;
+  const list = JSON.parse((await kv.get("clienti:v1")) || "[]");
+  if (!body) return { list };
+  const out = applyClientiOp(list, body, romeDate());
+  if (!out.error) await kv.put("clienti:v1", JSON.stringify(out.list));
+  return out;
+}
 
 export async function handleDashboard(request, env, url) {
   const kv = env.ACADEMY_PROGRESS;
@@ -1152,6 +1514,21 @@ export async function handleDashboard(request, env, url) {
   }
 
   const loggedIn = await isLoggedIn(request, kv);
+
+  if (path === `${DASH_PATH}/api/clienti`) {
+    if (!loggedIn) return json({ error: "unauthorized" }, 401);
+    if (request.method === "GET") {
+      const out = await clientiStore(env, null);
+      return json(clientiView(out.list, romeDate()));
+    }
+    if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
+    if (!(request.headers.get("Content-Type") || "").includes("application/json")) return json({ error: "Formato non valido." }, 415);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object") return json({ error: "Formato non valido." }, 400);
+    const out = await clientiStore(env, body);
+    if (out.error) return json({ error: out.error }, 400);
+    return json(clientiView(out.list, romeDate()));
+  }
 
   if (path === `${DASH_PATH}/api`) {
     if (!loggedIn) return json({ error: "unauthorized" }, 401);

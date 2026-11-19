@@ -28,3 +28,12 @@ new_sqlite_classes = ["DashStore"]
 [[migrations]]
 tag = "v4"
 deleted_classes = ["DashStore"]
+
+# Clienti attivi della dashboard vendite: un solo archivio, sempre aggiornato.
+[[durable_objects.bindings]]
+name = "CLIENTI"
+class_name = "ClientiStore"
+
+[[migrations]]
+tag = "v5"
+new_sqlite_classes = ["ClientiStore"]
