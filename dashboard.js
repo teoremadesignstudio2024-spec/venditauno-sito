@@ -395,7 +395,7 @@ const GLASS_CSS = `
     background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
     background-size: 200px 200px, auto, auto, auto, auto, auto, auto, auto, auto, 100% 1500px;
   }
-  body { margin: 0; color: var(--bone); font-family: var(--sans); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; background: transparent; }
+  body { margin: 0; color: var(--bone); font-family: var(--sans); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: transparent; overflow-x: hidden; max-width: 100vw; }
   .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "ss01" 1; }
 
   /* Napoleone: posizionato dallo script accanto allo spazio libero (cavallo compreso); sfuma a
@@ -711,6 +711,12 @@ ${GLASS_CSS}
   .st.upsell { background: rgba(242,193,78,0.2); color: #f6d27a; }
   .st.scaduto { background: rgba(255,138,128,0.18); color: #ffb2aa; }
   .st.chiama { background: rgba(242,166,78,0.18); color: #f7c48a; }
+  .st.attesa { background: rgba(160,190,255,0.14); color: #c9dbff; }
+  .cli-dates .wait { color: #c9dbff; margin-top: 2px; }
+  .ads-go { margin-top: 8px; border: 0; cursor: pointer; font: inherit; font-size: 0.82rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; color: #10192e; background: #c9dbff; }
+  .ads-go:hover { background: #dce7ff; }
+  .todo-row.ads .dot { background: #9fbfff; box-shadow: 0 0 0 4px rgba(160,190,255,0.18); }
+  .ups-amt input[type=date] { font-size: 1.4rem; }
   .st.chiamato { background: rgba(255,255,255,0.1); color: var(--bone); }
   .st.upsell-fatto { background: rgba(111,220,154,0.16); color: #9fe8bb; }
   .cli-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
@@ -755,8 +761,27 @@ ${GLASS_CSS}
     .cli-form input { font-size: 16px; }
     .cli { padding: 14px; border-radius: 18px; }
     .cli-name b { font-size: 1rem; }
-    .cli-inc button { width: 34px; height: 34px; }
-    .cli-inc .n { font-size: 1.45rem; }
+    .tiles { align-items: start; }
+    .tile .sub { margin-top: 4px; }
+    .cli { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; padding: 12px; }
+    .cli-name b { font-size: 0.98rem; }
+    .cli-name span { font-size: 0.78rem; margin-top: 1px; }
+    .cli-name .paid { font-size: 0.82rem; margin-top: 2px; }
+    .cli-name .src { display: none; }
+    .cli-inc { gap: 6px; }
+    .cli-inc button { width: 30px; height: 30px; font-size: 1.05rem; }
+    .cli-inc .n { font-size: 1.25rem; min-width: 1.6ch; }
+    .cli-inc .lab { display: none; }
+    .cli-pips { margin-top: 2px; }
+    .cli-dates { font-size: 0.78rem; }
+    .cli-dates .line + .line { margin-top: 1px; }
+    .cli-bar { height: 4px; margin-top: 6px; }
+    .cli-side { gap: 6px; }
+    .cli-side .st { font-size: 0.72rem; padding: 3px 8px; }
+    .cli-acts { gap: 2px; flex-wrap: nowrap; }
+    .cli-acts button { font-size: 0.76rem; padding: 4px 5px; }
+    .cli-acts button.up { padding: 5px 10px; }
+    .cli-note { font-size: 0.78rem; margin-top: 0; }
   }
 
   .toast { position: fixed; left: 50%; top: 44%; z-index: 20; transform: translate(-50%, -50%) scale(0.94); opacity: 0; pointer-events: none; text-align: center; padding: 28px 48px 30px; border-radius: 40px; visibility: hidden; transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s .45s; }
@@ -768,9 +793,11 @@ ${GLASS_CSS}
 
 
   /* TV: tutto in uno schermo */
-  body.tv { height: 100vh; overflow: hidden; }
-  body.tv .layout { height: 100vh; max-width: none; grid-template-rows: auto auto minmax(0, 0.92fr) minmax(0, 1.18fr); grid-template-areas: "top top hole" "tiles tiles hole" "chart chart side" "pipe funnel side"; }
-  body.tv .chart { min-height: 0; }
+  @media (min-width: 1181px) {
+    body.tv { height: 100vh; overflow: hidden; }
+    body.tv .layout { height: 100vh; max-width: none; grid-template-rows: auto auto minmax(0, 0.92fr) minmax(0, 1.18fr); grid-template-areas: "top top hole" "tiles tiles hole" "chart chart side" "pipe funnel side"; }
+    body.tv .chart { min-height: 0; }
+  }
   body.tv .pipe-card .tr { padding-top: 4px; padding-bottom: 4px; }
   body.tv .pipe-card .thead { padding-bottom: 2px; }
   body.tv .pipe-card .card-head { margin-bottom: 6px; }
@@ -908,14 +935,24 @@ ${GLASS_CSS}
       <label>Zona<input name="zona" maxlength="80" placeholder="Es. Bergamo centro"></label>
       <label>Telefono<input name="telefono" maxlength="30" inputmode="tel" placeholder="Es. 333 1234567"></label>
       <label>Ha pagato (€)<input name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Es. 2500"></label>
-      <label>Partito il<input name="start" type="date" required></label>
-      <label>Scade il<input name="end" type="date" required></label>
+      <label>Chiuso il<input name="start" type="date" required></label>
+      <label>Pubblicità partita il<input name="adsStart" type="date"></label>
+      <label>Scade il (30 giorni dopo)<input name="end" type="date"></label>
       <label class="f-wide">Note<input name="note" maxlength="500" placeholder="Facoltativo"></label>
       <div class="cli-form-act f-wide"><span class="cli-err" id="cliErr"></span><button type="button" class="btn-sec" id="cliCancel">Annulla</button><button type="submit" class="btn-pri" id="cliSave">Salva</button></div>
     </form>
     <div class="seg well cli-tabs" role="group" aria-label="Quali clienti vedere"><button type="button" class="on" data-tab="attivi">Attivi</button><button type="button" data-tab="archiviati">Archiviati</button></div>
     <div class="cli-list" id="cliList"></div>
   </div>
+</div>
+<div class="ups-ov" id="adsDlg" hidden>
+  <form class="ups-box glass" id="adsForm" role="dialog" aria-modal="true" aria-labelledby="adsTitle">
+    <h3 id="adsTitle">Pubblicità partita</h3>
+    <p class="meta" id="adsText"></p>
+    <label class="ups-amt"><input name="date" type="date" required></label>
+    <p class="ups-note">Da questo giorno partono i 30 giorni: scadenza e promemoria li calcolo io.</p>
+    <div class="cli-form-act"><span class="cli-err" id="adsErr"></span><button type="button" class="btn-sec" id="adsCancel">Annulla</button><button type="submit" class="btn-pri">Salva</button></div>
+  </form>
 </div>
 <div class="ups-ov" id="upsDlg" hidden>
   <form class="ups-box glass" id="upsForm" role="dialog" aria-modal="true" aria-labelledby="upsTitle">
@@ -1309,6 +1346,7 @@ function leftText(c) {
 function todoText(t) {
   if (t.kind === 'upsell') return '<b>' + esc(t.nome) + '</b> <span class="t">ha preso ' + t.count + ' incarichi: valuta l’upsell.</span>';
   if (t.kind === 'scaduto') return '<b>' + esc(t.nome) + '</b> <span class="t">è arrivato alla scadenza ' + (t.left === 0 ? 'oggi' : 'da ' + giorni(-t.left)) + ', con ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo e senti com’è andata.</span>';
+  if (t.kind === 'ads') return '<b>' + esc(t.nome) + '</b> <span class="t">è chiuso da ' + giorni(t.since) + ' e la pubblicità non è ancora partita.</span>';
   return '<b>' + esc(t.nome) + '</b> <span class="t">scade ' + (t.left === 1 ? 'domani' : 'tra ' + giorni(t.left)) + ', ha ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo adesso.</span>';
 }
 function renderTodo() {
@@ -1321,10 +1359,11 @@ function renderTodo() {
     '<div class="todo-row ' + t.kind + '"><span class="dot"></span><div>' + todoText(t) + '</div><div class="acts">' +
     '<button type="button" class="btn-sec" data-open="' + esc(t.id) + '">Apri</button>' +
     (t.kind === 'upsell' ? '<button type="button" class="btn-sec" data-skip="' + esc(t.id) + '">Non ora</button>' : '') +
-    '<button type="button" class="btn-pri" data-done="' + (t.kind === 'upsell' ? 'upsell' : 'call') + '" data-id="' + esc(t.id) + '">' + (t.kind === 'upsell' ? 'Chiudi upsell' : 'Chiamato') + '</button>' +
+    (t.kind === 'ads' ? '<button type="button" class="btn-pri" data-ads="' + esc(t.id) + '">Ads partite</button>' :
+    '<button type="button" class="btn-pri" data-done="' + (t.kind === 'upsell' ? 'upsell' : 'call') + '" data-id="' + esc(t.id) + '">' + (t.kind === 'upsell' ? 'Chiudi upsell' : 'Chiamato') + '</button>') +
     '</div></div>').join(''));
 }
-const ST_LABEL = { upsell: 'Valuta upsell', scaduto: 'Scaduto, chiamalo', chiama: 'Scade a breve', chiamato: 'Già chiamato', 'upsell-fatto': 'Upsell fatto', attivo: 'In corso', archiviato: 'Archiviato' };
+const ST_LABEL = { attesa: 'Aspetta le ads', upsell: 'Valuta upsell', scaduto: 'Scaduto, chiamalo', chiama: 'Scade a breve', chiamato: 'Già chiamato', 'upsell-fatto': 'Upsell fatto', attivo: 'In corso', archiviato: 'Archiviato' };
 function cliRow(c) {
   const pips = [0, 1, 2].map((i) => '<i' + (c.count > i ? ' class="on"' : '') + '></i>').join('');
   const sub = [c.agenzia, c.zona, c.telefono].filter(Boolean).map(esc).join(' · ');
@@ -1338,9 +1377,13 @@ function cliRow(c) {
       '<button type="button" data-act="archive">Archivia</button>';
   return '<div class="cli ' + c.status + '" data-id="' + esc(c.id) + '">' +
     '<div class="cli-name"><b>' + esc(c.nome) + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + paid + src + '</div>' +
-    '<div class="cli-dates"><div class="line"><span>Partito <b>' + dShort(c.start) + '</b></span><span>' + (c.day >= 0 ? 'giorno ' + (c.day + 1) : 'parte ' + dShort(c.start)) + '</span></div>' +
-    '<div class="line"><span>Scade <b>' + dShort(c.end) + '</b></span><span>' + leftText(c) + '</span></div>' +
-    '<div class="cli-bar"><i style="width:' + Math.round(c.progress * 100) + '%"></i></div></div>' +
+    (c.adsStart
+      ? '<div class="cli-dates"><div class="line"><span>Ads dal <b>' + dShort(c.adsStart) + '</b></span><span>' + (c.day >= 0 ? 'giorno ' + (c.day + 1) : 'partono ' + dShort(c.adsStart)) + '</span></div>' +
+        '<div class="line"><span>Scade <b>' + dShort(c.end) + '</b></span><span>' + leftText(c) + '</span></div>' +
+        '<div class="cli-bar"><i style="width:' + Math.round(c.progress * 100) + '%"></i></div></div>'
+      : '<div class="cli-dates"><div class="line"><span>Chiuso <b>' + dShort(c.start) + '</b></span><span>' + (c.sinceClose > 0 ? 'da ' + giorni(c.sinceClose) : 'oggi') + '</span></div>' +
+        '<div class="line wait"><span>Pubblicità non ancora partita</span></div>' +
+        '<button type="button" class="ads-go" data-act="ads">Ads partite</button></div>') +
     '<div><div class="cli-inc"><button type="button" data-act="minus" aria-label="Togli un incarico">−</button><span class="n num">' + c.count + '</span><button type="button" class="plus" data-act="plus" aria-label="Aggiungi un incarico">+</button></div>' +
     '<span class="lab">incarichi</span><div class="cli-pips" title="3 incarichi = upsell">' + pips + '</div></div>' +
     '<div class="cli-side"><span class="st ' + c.status + '">' + (c.status === 'chiamato' && c.left <= 0 ? 'Scaduto, già chiamato' : ST_LABEL[c.status]) + '</span><div class="cli-acts">' + acts + '</div></div>' +
@@ -1370,7 +1413,7 @@ async function cliOp(body) {
     const r = await fetch(CAPI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const d = await r.json().catch(() => ({}));
     if (r.status === 401) { location.reload(); return false; }
-    if (!r.ok) { const m = d.error || 'Non salvato, riprova.'; if (!$('upsDlg').hidden) setText('upsErr', m); else if (!$('cliForm').hidden) setText('cliErr', m); else alert(m); return false; }
+    if (!r.ok) { const m = d.error || 'Non salvato, riprova.'; if (!$('adsDlg').hidden) setText('adsErr', m); else if (!$('upsDlg').hidden) setText('upsErr', m); else if (!$('cliForm').hidden) setText('cliErr', m); else alert(m); return false; }
     cli = d; renderTodo(); renderClienti(); return true;
   } catch (e) { setText('cliErr', 'Connessione persa, riprova.'); return false; }
   finally { cliBusy = false; }
@@ -1391,7 +1434,8 @@ function openForm(c) {
   const today = cli.today || new Date().toISOString().slice(0, 10);
   f.nome.value = c ? c.nome : ''; f.agenzia.value = c ? c.agenzia || '' : ''; f.zona.value = c ? c.zona || '' : '';
   f.telefono.value = c ? c.telefono || '' : ''; f.note.value = c ? c.note || '' : ''; f.amount.value = c && c.amount ? c.amount : '';
-  f.start.value = c ? c.start : today; f.end.value = c ? c.end : addD(today, 30);
+  f.start.value = c ? c.start : today; f.adsStart.value = c && c.adsStart ? c.adsStart : ''; f.end.value = c && c.end ? c.end : '';
+  cliEndTouched = !!(c && c.end && c.adsStart && c.end !== addD(c.adsStart, 30));
   f.hidden = false; f.nome.focus();
 }
 function closeForm() { $('cliForm').hidden = true; cliEdit = ''; }
@@ -1403,13 +1447,24 @@ function askUpsell(id) {
   $('upsForm').amount.value = ''; $('upsDlg').hidden = false; $('upsForm').amount.focus();
 }
 function closeUps() { $('upsDlg').hidden = true; upsId = ''; }
+let adsId = '';
+function askAds(id) {
+  const c = cli.clienti.find((x) => x.id === id); if (!c) return;
+  adsId = id; setText('adsErr', '');
+  setText('adsText', 'Da quando è accesa la pubblicità di ' + c.nome + '?');
+  $('adsForm').date.value = c.adsStart || cli.today; $('adsDlg').hidden = false; $('adsForm').date.focus();
+}
+function closeAds() { $('adsDlg').hidden = true; adsId = ''; }
 if (!tvMode) {
   $('cliOpen').onclick = () => openClienti();
   $('cliClose').onclick = closeClienti;
   $('cliPanel').onclick = (e) => { if (e.target === $('cliPanel')) closeClienti(); };
-  document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (!$('upsDlg').hidden) closeUps(); else if (!$('cliPanel').hidden) closeClienti(); });
+  document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (!$('adsDlg').hidden) closeAds(); else if (!$('upsDlg').hidden) closeUps(); else if (!$('cliPanel').hidden) closeClienti(); });
   $('cliAdd').onclick = () => openForm(null);
   $('upsCancel').onclick = closeUps;
+  $('adsCancel').onclick = closeAds;
+  $('adsDlg').onclick = (e) => { if (e.target === $('adsDlg')) closeAds(); };
+  $('adsForm').onsubmit = async (e) => { e.preventDefault(); if (await cliOp({ op: 'ads', id: adsId, date: $('adsForm').date.value })) closeAds(); };
   $('upsDlg').onclick = (e) => { if (e.target === $('upsDlg')) closeUps(); };
   $('upsForm').onsubmit = async (e) => {
     e.preventDefault();
@@ -1418,13 +1473,13 @@ if (!tvMode) {
     if (await cliOp({ op: 'done', id: upsId, what: 'upsell', amount: v })) { closeUps(); refresh(curMonth); }
   };
   $('cliCancel').onclick = closeForm;
-  // La scadenza segue la partenza (+30 giorni) finché non la cambi a mano.
-  $('cliForm').start.onchange = () => { const f = $('cliForm'); if (!cliEndTouched && f.start.value) f.end.value = addD(f.start.value, 30); };
+  // La scadenza segue la partenza della pubblicità (+30 giorni) finché non la cambi a mano.
+  $('cliForm').adsStart.onchange = () => { const f = $('cliForm'); if (!f.adsStart.value) f.end.value = ''; else if (!cliEndTouched || !f.end.value) f.end.value = addD(f.adsStart.value, 30); };
   $('cliForm').end.oninput = () => { cliEndTouched = true; };
   $('cliForm').onsubmit = async (e) => {
     e.preventDefault();
     const f = $('cliForm');
-    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, end: f.end.value, note: f.note.value, amount: f.amount.value || 0 };
+    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, adsStart: f.adsStart.value, end: f.adsStart.value ? f.end.value : '', note: f.note.value, amount: f.amount.value || 0 };
     if (await cliOp(cliEdit ? { op: 'update', id: cliEdit, data } : { op: 'add', data })) closeForm();
   };
   document.querySelector('.cli-tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) { cliTab = b.dataset.tab; renderClienti(); } };
@@ -1436,6 +1491,7 @@ if (!tvMode) {
     else if (a === 'minus') { if (c.count > 0) cliOp({ op: 'incarico', id, delta: -1 }); }
     else if (a === 'edit') { openForm(c); $('cliPanel').querySelector('.cli-panel').scrollTop = 0; }
     else if (a === 'upsell') askUpsell(id);
+    else if (a === 'ads') askAds(id);
     else if (a === 'unupsell') { if (confirm('Annullare l’ultimo upsell di ' + c.nome + '? L’incasso viene tolto.')) cliOp({ op: 'done', id, what: 'upsell', undo: true }).then((ok) => { if (ok) refresh(curMonth); }); }
     else if (a === 'archive') cliOp({ op: 'archive', id, archived: true });
     else if (a === 'unarchive') cliOp({ op: 'archive', id, archived: false });
@@ -1444,6 +1500,7 @@ if (!tvMode) {
   $('todo').onclick = (e) => {
     const o = e.target.closest('[data-open]'); if (o) { openClienti(o.dataset.open); return; }
     const k = e.target.closest('[data-skip]'); if (k) { cliOp({ op: 'done', id: k.dataset.skip, what: 'skip' }); return; }
+    const g = e.target.closest('[data-ads]'); if (g) { askAds(g.dataset.ads); return; }
     const d = e.target.closest('[data-done]'); if (!d) return;
     if (d.dataset.done === 'upsell') askUpsell(d.dataset.id); else cliOp({ op: 'done', id: d.dataset.id, what: 'call' });
   };
@@ -1479,16 +1536,20 @@ function applyClientiOp(list, body, today) {
     if ("note" in d) c.note = txt(d.note, 500);
     if ("amount" in d) { const a = Math.round(Number(String(d.amount).replace(",", ".")) * 100) / 100; c.amount = a >= 0 && a <= 1000000 ? a : 0; }
     if ("start" in d) c.start = ISO_RE.test(d.start || "") ? d.start : c.start;
-    if ("end" in d) c.end = ISO_RE.test(d.end || "") ? d.end : c.end;
     if (!c.start) c.start = today;
-    if (!c.end) c.end = addDays(c.start, 30);
+    // I 30 giorni partono quando parte la pubblicità, non quando si chiude.
+    const adsBefore = base.adsStart;
+    if ("adsStart" in d) c.adsStart = ISO_RE.test(d.adsStart || "") ? d.adsStart : null;
+    if ("end" in d) c.end = ISO_RE.test(d.end || "") ? d.end : null;
+    if (!c.adsStart) c.end = null;
+    else if (!c.end || c.end < c.adsStart || (c.adsStart !== adsBefore && !("end" in d && ISO_RE.test(d.end || "")))) c.end = addDays(c.adsStart, 30);
     return c;
   };
   if (op === "add") {
     if (list.length >= CLI_MAX) return { error: "Troppi clienti in archivio." };
-    const c = fields(body.data || {}, { id: toHex(crypto.getRandomValues(new Uint8Array(6))), incarichi: [], upsellDone: null, callDone: null, archived: false, createdAt: today });
+    const c = fields(body.data || {}, { id: toHex(crypto.getRandomValues(new Uint8Array(6))), adsStart: null, end: null, incarichi: [], upsellDone: null, callDone: null, archived: false, createdAt: today });
     if (!c.nome) return { error: "Scrivi il nome del cliente." };
-    if (c.end < c.start) return { error: "La scadenza non può venire prima della partenza." };
+    if (c.adsStart && c.end < c.adsStart) return { error: "La scadenza non può venire prima della partenza della pubblicità." };
     return { list: [...list, c] };
   }
   if (op === "sync") {
@@ -1497,10 +1558,9 @@ function applyClientiOp(list, body, today) {
     for (const it of Array.isArray(body.items) ? body.items.slice(0, 200) : []) {
       const id = "ghl:" + txt(it.oppId, 40);
       if (have.has(id) || !ISO_RE.test(it.day || "")) continue;
-      const end = addDays(it.day, 30);
       add.push({ id, source: "ghl", nome: txt(it.nome, 80) || "Cliente", agenzia: txt(it.agenzia, 80), zona: "", telefono: txt(it.telefono, 30), note: "",
-        start: it.day, end, amount: Number(it.amount) || 0, seller: txt(it.seller, 30), incarichi: [], upsellDone: null, callDone: null,
-        archived: daysBetween(end, today) > 30, createdAt: today });
+        start: it.day, adsStart: null, end: null, amount: Number(it.amount) || 0, seller: txt(it.seller, 30), incarichi: [], upsellDone: null, callDone: null,
+        archived: daysBetween(it.day, today) > 90, createdAt: today });
       have.add(id);
     }
     if (list.length + add.length > CLI_MAX) return { error: "Troppi clienti in archivio." };
@@ -1510,10 +1570,16 @@ function applyClientiOp(list, body, today) {
   if (!c || c.deleted) return { error: "Cliente non trovato." };
   let next;
   if (op === "update") {
-    next = fields(body.data || {}, c);
+    next = fields(body.data || {}, { ...c, adsStart: adsOf(c) });
     if (!next.nome) return { error: "Scrivi il nome del cliente." };
-    if (next.end < next.start) return { error: "La scadenza non può venire prima della partenza." };
+    if (next.adsStart && next.end < next.adsStart) return { error: "La scadenza non può venire prima della partenza della pubblicità." };
     if (next.end !== c.end) next.callDone = null; // nuova scadenza: il promemoria riparte
+  } else if (op === "ads") {
+    if (body.undo) next = { ...c, adsStart: null, end: null, callDone: null };
+    else {
+      if (!ISO_RE.test(body.date || "")) return { error: "Scegli il giorno in cui è partita la pubblicità." };
+      next = { ...c, adsStart: body.date, end: addDays(body.date, 30), callDone: null };
+    }
   } else if (op === "incarico") {
     const inc = [...(c.incarichi || [])];
     if (body.delta === 1 && inc.length < 999) inc.push(today);
@@ -1544,32 +1610,45 @@ function applyClientiOp(list, body, today) {
   return { list: list.map((x) => (x.id === c.id ? next : x)) };
 }
 
-// Cosa fare adesso: upsell a 3 incarichi, chiamata alla scadenza e 5 giorni prima.
+// Giorno di partenza della pubblicità. Le schede salvate prima di questa regola: quelle arrivate da
+// GoHighLevel aspettano la pubblicità, quelle inserite a mano erano già partite il giorno di partenza.
+function adsOf(c) {
+  if (c.adsStart !== undefined) return c.adsStart;
+  return c.source === "ghl" ? null : c.start;
+}
+
+// Cosa fare adesso: pubblicità da far partire, upsell a 3 incarichi, chiamata alla scadenza e 5 giorni prima.
 function clientiView(list, today) {
-  const clienti = list.filter((c) => !c.deleted).map((c) => {
+  const clienti = list.filter((c) => !c.deleted).map((c0) => {
+    const adsStart = adsOf(c0);
+    const c = { ...c0, adsStart, end: adsStart ? (c0.end && c0.end >= adsStart ? c0.end : addDays(adsStart, 30)) : null };
     const count = (c.incarichi || []).length;
-    const period = Math.max(1, daysBetween(c.start, c.end));
-    const day = daysBetween(c.start, today);
-    const left = daysBetween(today, c.end);
+    const sinceClose = daysBetween(c.start, today);
+    const period = adsStart ? Math.max(1, daysBetween(adsStart, c.end)) : 30;
+    const day = adsStart ? daysBetween(adsStart, today) : -1;
+    const left = adsStart ? daysBetween(today, c.end) : 999;
     let status = "attivo";
     if (c.archived) status = "archiviato";
+    else if (!adsStart) status = count >= 3 && !c.upsellDone && !c.upsellSkip ? "upsell" : "attesa";
     else if (count >= 3 && !c.upsellDone && !c.upsellSkip) status = "upsell";
     else if (left <= 0 && !c.callDone) status = "scaduto";
     else if (left <= 5 && !c.callDone) status = "chiama";
     else if (c.upsellDone) status = "upsell-fatto";
     else if (c.callDone && left <= 5) status = "chiamato";
     const upTot = (c.upsells || []).reduce((s, u) => s + (Number(u.amount) || 0), 0);
-    return { ...c, count, day, left, period, progress: Math.max(0, Math.min(1, day / period)), status, paid: round2((Number(c.amount) || 0) + upTot), upsellTot: round2(upTot) };
+    return { ...c, count, day, left, period, sinceClose, progress: adsStart ? Math.max(0, Math.min(1, day / period)) : 0, status, paid: round2((Number(c.amount) || 0) + upTot), upsellTot: round2(upTot) };
   });
   const todos = [];
   for (const c of clienti) {
-    if (c.archived || c.day < 0) continue;
+    if (c.archived) continue;
+    if (!c.adsStart && c.sinceClose >= 7) todos.push({ id: c.id, kind: "ads", rank: 3, nome: c.nome, count: c.count, left: -c.sinceClose, since: c.sinceClose });
+    if (c.adsStart && c.day < 0) continue;
     if (c.status === "upsell") todos.push({ id: c.id, kind: "upsell", rank: 1, nome: c.nome, count: c.count, left: c.left });
     else if (c.status === "scaduto") todos.push({ id: c.id, kind: "scaduto", rank: 0, nome: c.nome, count: c.count, left: c.left });
     else if (c.status === "chiama") todos.push({ id: c.id, kind: "chiama", rank: 2, nome: c.nome, count: c.count, left: c.left });
   }
   todos.sort((a, b) => a.rank - b.rank || a.left - b.left);
-  clienti.sort((a, b) => (a.archived - b.archived) || a.end.localeCompare(b.end) || a.nome.localeCompare(b.nome));
+  clienti.sort((a, b) => (a.archived - b.archived) || (!a.adsStart - !b.adsStart) || (a.end || a.start).localeCompare(b.end || b.start) || a.nome.localeCompare(b.nome));
   return { today, clienti, todos };
 }
 
@@ -1629,12 +1708,13 @@ export async function handleDashboard(request, env, url) {
   const path = url.pathname.replace(/\/+$/, "");
 
   // Il cookie vale solo sotto /dashboardvenditatop: la scorciatoia /tv porta lì.
-  if (path === TV_PATH) return new Response(null, { status: 302, headers: { Location: `${DASH_PATH}/tv` } });
+  // La versione TV non c'è più: /tv e /dashboardvenditatop/tv portano alla dashboard normale.
+  if (path === TV_PATH || path === `${DASH_PATH}/tv`) return new Response(null, { status: 302, headers: { Location: DASH_PATH } });
 
   if (path === `${DASH_PATH}/login` && request.method === "POST") {
     const form = await request.formData();
     const ok = await checkDashPassword((form.get("password") || "").toString());
-    const tv = !!url.searchParams.get("tv");
+    const tv = false;
     if (!ok) return html(loginPage("Password non corretta.", tv));
     const token = toHex(crypto.getRandomValues(new Uint8Array(32)));
     await kv.put(`dashsess:${token}`, "1", { expirationTtl: DASH_SESSION_DAYS * 86400 });
@@ -1680,10 +1760,6 @@ export async function handleDashboard(request, env, url) {
 
   if (path === DASH_PATH || path === `${DASH_PATH}/login`) {
     return html(loggedIn ? dashboardPage(false) : loginPage(null));
-  }
-
-  if (path === `${DASH_PATH}/tv`) {
-    return html(loggedIn ? dashboardPage(true) : loginPage(null, true));
   }
 
   return new Response(null, { status: 302, headers: { Location: DASH_PATH } });
