@@ -83,14 +83,19 @@ const GHL_STAGES = [
   { id: "79808f73-52c0-4221-a8e0-9caedb29fa41", name: "NO SHOW DEMO", recall: true, owner: "closing", rank: 4 },
   { id: "f529954b-d016-4d25-8269-0b96bfd84b77", name: "DEMO FISSATA", owner: "closing", rank: 5 },
 ];
-// Fasi dei chiusi: CHIUSO VINTO MESE e UP SELL contano nell'incassato anche se l'opportunità non è segnata won.
+// Fasi dei chiusi: CHIUSO VINTO MESE, 5 incarichi presi e CHIUSO 2 contano come chiusi anche se l'opportunità non è segnata won.
 // Scontrino medio: vale per i lead aperti senza valore su GoHighLevel. Chi ha avuto l'offerta da 200 € resta a 200.
 const SCONTRINO_MEDIO = 2500;
 const GHL_WON_STAGE = "13142cf4-d73b-4088-917d-2be4a7364651";
-const GHL_UPSELL_STAGE = "5710267f-315b-44b8-9895-4674b933a515";
+// Fasi dopo la vendita, sulla stessa opportunità: "5 incarichi presi" e "CHIUSO 2" (upsell chiuso).
+// Il cliente resta chiuso; i soldi dell'upsell arrivano dalla dashboard ("Chiudi upsell"), non da qui.
+const GHL_5INC_STAGE = "5710267f-315b-44b8-9895-4674b933a515";
+const GHL_UPSELL_STAGE = "b65e1a5f-39b8-4a99-baa5-ade85325f83a";
+const GHL_AFTER_SALE = [GHL_WON_STAGE, GHL_5INC_STAGE, GHL_UPSELL_STAGE];
 const STAGE_RANK = Object.fromEntries(GHL_STAGES.map((st) => [st.id, st.rank]));
 STAGE_RANK[GHL_WON_STAGE] = 6;
 STAGE_RANK[GHL_UPSELL_STAGE] = 6;
+STAGE_RANK[GHL_5INC_STAGE] = 6;
 const ROME_MONTH = (iso) => ROME_DAY.format(new Date(iso)).slice(0, 7);
 
 // Fin dove è arrivato ogni lead, salvato nel KV: quando un lead finisce in PERSO o FUORI TARGET
@@ -175,7 +180,7 @@ async function readGHL(env) {
   const now = Date.now();
 
   // Lead arrivati: opportunità per giorno di creazione (ora di Roma). Gli upsell non sono lead nuovi.
-  const isUpsell = (o) => o.pipelineStageId === GHL_UPSELL_STAGE;
+  const isUpsell = () => false; // gli upsell non sono più opportunità nuove: si segnano in dashboard
   const leadsByDay = {};
   for (const o of opps) {
     if (isUpsell(o)) continue;
@@ -185,7 +190,7 @@ async function readGHL(env) {
 
   // Incassato: opportunità vinte (status won) oppure aperte in CHIUSO VINTO MESE o UP SELL,
   // al giorno in cui sono diventate vinte (o sono entrate in quella fase).
-  const isClosed = (o) => o.status === "won" || (o.status === "open" && (o.pipelineStageId === GHL_WON_STAGE || o.pipelineStageId === GHL_UPSELL_STAGE));
+  const isClosed = (o) => o.status === "won" || (o.status === "open" && GHL_AFTER_SALE.includes(o.pipelineStageId));
   const wonByDay = {};
   const closedClients = [];
   for (const o of opps) {
@@ -1054,7 +1059,7 @@ ${GLASS_CSS}
     <h3 id="upsTitle">Chiudi upsell</h3>
     <p class="meta" id="upsText"></p>
     <label class="ups-amt"><span>€</span><input name="amount" type="number" inputmode="decimal" min="0" step="0.01" required placeholder="0"></label>
-    <p class="ups-note">Va nell'incassato di oggi.</p>
+    <p class="ups-note">Va nell'incassato di oggi. Su GoHighLevel il cliente passa in CHIUSO 2.</p>
     <div class="cli-form-act"><span class="cli-err" id="upsErr"></span><button type="button" class="btn-sec" id="upsCancel">Annulla</button><button type="submit" class="btn-pri">Salva incasso</button></div>
   </form>
 </div>
@@ -1592,7 +1597,9 @@ async function cliOp(body) {
     const d = await r.json().catch(() => ({}));
     if (r.status === 401) { location.reload(); return false; }
     if (!r.ok) { const m = d.error || 'Non salvato, riprova.'; if (!$('adsDlg').hidden) setText('adsErr', m); else if (!$('upsDlg').hidden) setText('upsErr', m); else if (!$('cliForm').hidden) setText('cliErr', m); else alert(m); return false; }
-    cli = d; renderTodo(); renderClienti(); return true;
+    cli = d; renderTodo(); renderClienti();
+    if (d.ghlNote) alert(d.ghlNote);
+    return true;
   } catch (e) { setText('cliErr', 'Connessione persa, riprova.'); return false; }
   finally { cliBusy = false; }
 }
@@ -1870,7 +1877,7 @@ async function moveOpportunity(env, id, stageId) {
   const cur = await ghl(env, `/opportunities/${id}`).catch(() => null);
   const o = cur && (cur.opportunity || cur);
   if (!o || o.pipelineId !== GHL_PIPELINE) return { error: "Questa opportunità non è nella VENDITA PIPELINE." };
-  const status = stageId === GHL_WON_STAGE ? "won" : GHL_LOST_STAGES.some((p) => stageId.startsWith(p)) ? "lost" : "open";
+  const status = GHL_AFTER_SALE.includes(stageId) ? "won" : GHL_LOST_STAGES.some((p) => stageId.startsWith(p)) ? "lost" : "open";
   const body = { pipelineId: GHL_PIPELINE, pipelineStageId: stageId };
   if (o.status !== status) body.status = status;
   const r = await fetch(GHL_API + `/opportunities/${id}`, {
@@ -1948,7 +1955,18 @@ export async function handleDashboard(request, env, url) {
     if (!body || typeof body !== "object") return json({ error: "Formato non valido." }, 400);
     const out = await clientiStore(env, body);
     if (out.error) return json({ error: out.error }, 400);
-    return json(clientiView(out.list, romeDate()));
+    // Upsell chiuso su un cliente arrivato da GoHighLevel: l'opportunità va in CHIUSO 2 (annullato: torna in CHIUSO VINTO).
+    let ghlNote = "";
+    const cid = String(body.id || "");
+    if (body.op === "done" && body.what === "upsell" && cid.startsWith("ghl:") && env.GHL_TOKEN) {
+      const c = out.list.find((x) => x.id === cid);
+      const target = body.undo ? ((c && (c.upsells || []).length) ? null : GHL_WON_STAGE) : GHL_UPSELL_STAGE;
+      if (target) {
+        const mv = await moveOpportunity(env, cid.slice(4), target).catch(() => ({ error: "GoHighLevel non raggiungibile." }));
+        if (mv.error) ghlNote = "Incasso salvato, ma su GoHighLevel non l'ho spostato: " + mv.error;
+      }
+    }
+    return json({ ...clientiView(out.list, romeDate()), ghlNote });
   }
 
   if (path === `${DASH_PATH}/api/pipeline`) {
