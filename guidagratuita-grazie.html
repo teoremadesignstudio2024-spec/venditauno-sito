@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050816">
+<title>La tua guida è pronta | Vendita Uno</title>
+<meta name="description" content="Grazie per aver richiesto la guida gratuita Acquisizioni Milionarie. Scaricala subito e guarda le testimonianze di chi usa il sistema Vendita Uno.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--ink:#050816;--card:rgba(255,255,255,0.045);--line:rgba(255,255,255,0.1);--fg:#fff;--muted:#a6afc8;--blue:#2b4bff;--yellow:#ffe500;--yellow-2:#fff36b;--r:18px;
+  --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{font-family:var(--font);background:var(--ink);color:var(--fg);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;height:auto;display:block}
+.wrap{width:100%;max-width:1120px;margin:0 auto;padding:0 20px}
+::selection{background:var(--yellow);color:#000}
+.glow{position:absolute;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+.grid-bg{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:56px 56px;mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,#000 30%,transparent 80%);-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,#000 30%,transparent 80%)}
+.topbar{display:flex;justify-content:center;padding:22px 20px 0;position:relative;z-index:2}
+.topbar img{height:34px;width:auto}
+
+.hero{position:relative;overflow:hidden;padding:30px 0 90px}
+.hero .wrap{position:relative;z-index:1;display:grid;grid-template-columns:1.25fr .75fr;gap:48px;align-items:center}
+.ok{display:inline-flex;align-items:center;gap:10px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.4);color:#86efac;font-weight:800;font-size:.86rem;
+  letter-spacing:.06em;text-transform:uppercase;padding:9px 16px;border-radius:999px}
+.ok svg{width:16px;height:16px}
+h1{font-size:clamp(2rem,5vw,3.6rem);line-height:1.06;font-weight:900;letter-spacing:-.035em;margin-top:22px}
+.hl{background:var(--yellow);color:#000;padding:0 .22em;border-radius:8px;-webkit-box-decoration-break:clone;box-decoration-break:clone;box-shadow:0 8px 30px -10px rgba(255,229,0,.55)}
+.lead{color:var(--muted);font-size:clamp(1.05rem,2.2vw,1.22rem);margin-top:20px;max-width:620px}
+.lead strong{color:var(--fg)}
+.book{position:relative;animation:float 6s ease-in-out infinite;filter:drop-shadow(0 30px 40px rgba(0,0,0,.6))}
+.book::before{content:"";position:absolute;inset:6% -14% -4%;background:radial-gradient(closest-side,rgba(43,75,255,.85),transparent);filter:blur(30px);z-index:-1}
+@keyframes float{50%{transform:translateY(-12px)}}
+
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:12px;background:var(--yellow);color:#000;font-family:inherit;font-weight:900;font-size:clamp(1.02rem,2.6vw,1.2rem);
+  padding:20px 34px;border:0;border-radius:14px;cursor:pointer;text-decoration:none;transition:transform .2s;animation:ring 2.4s infinite}
+.cta:hover{transform:translateY(-2px);background:var(--yellow-2)}
+.cta svg{width:20px;height:20px}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(255,229,0,.5),0 18px 40px -12px rgba(255,229,0,.65)}70%{box-shadow:0 0 0 16px rgba(255,229,0,0),0 18px 40px -12px rgba(255,229,0,.65)}100%{box-shadow:0 0 0 0 rgba(255,229,0,0),0 18px 40px -12px rgba(255,229,0,.65)}}
+.cta-box{margin-top:32px;display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.cta-note{font-size:.86rem;color:var(--muted)}
+
+.sec{position:relative;padding:100px 0;overflow:hidden;background:linear-gradient(180deg,var(--ink) 0%,#0b1446 50%,var(--ink) 100%)}
+.center{text-align:center}
+.kicker{display:inline-block;font-size:.8rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--yellow)}
+h2{font-size:clamp(1.8rem,4.4vw,3rem);line-height:1.1;letter-spacing:-.03em;font-weight:900;margin-top:12px}
+.sec .sub{color:var(--muted);max-width:620px;margin:16px auto 0;font-size:1.08rem}
+
+.tests{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin-top:52px;max-width:980px;margin-left:auto;margin-right:auto}
+.test{border-radius:22px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));border:1px solid var(--line);display:flex;flex-direction:column}
+.watch{display:flex;align-items:center;gap:8px;background:var(--yellow);color:#000;font-weight:900;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;padding:9px 16px}
+.watch i{width:8px;height:8px;border-radius:50%;background:#e11d48;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.yt{position:relative;display:block;width:100%;aspect-ratio:16/9;background:#000;border:0;cursor:pointer;overflow:hidden}
+.yt img{width:100%;height:100%;object-fit:cover;filter:brightness(.8);transition:transform .4s,filter .4s}
+.yt:hover img{transform:scale(1.04);filter:brightness(.95)}
+.yt .play{position:absolute;inset:0;margin:auto;width:76px;height:76px;border-radius:50%;background:var(--yellow);display:grid;place-items:center;box-shadow:0 0 0 10px rgba(255,229,0,.25)}
+.yt .play svg{width:30px;height:30px;margin-left:4px}
+.yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.quote{padding:24px 24px 26px}
+.quote .big{font-size:2rem;font-weight:900;letter-spacing:-.03em;color:var(--yellow);line-height:1.1}
+.quote p{margin-top:8px;font-size:1.05rem;color:#cfd5e6}
+.quote p strong{color:var(--fg)}
+.who{display:flex;align-items:center;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font-size:.92rem}
+.who b{display:block}
+.who span{color:var(--muted);font-size:.82rem}
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#7c95ff);display:grid;place-items:center;font-weight:900;font-size:.9rem;flex:none}
+
+.final{position:relative;padding:90px 0 110px;text-align:center;overflow:hidden}
+.final-box{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:52px 26px;border-radius:28px;border:1px solid rgba(124,149,255,.35);
+  background:radial-gradient(ellipse at top,rgba(43,75,255,.35),transparent 70%),rgba(255,255,255,.03)}
+.final-box img{width:170px;margin:0 auto 20px;filter:drop-shadow(0 24px 30px rgba(0,0,0,.6))}
+.final-box p{color:var(--muted);max-width:540px;margin:14px auto 0;font-size:1.06rem}
+.final .cta-box{align-items:center}
+
+footer{border-top:1px solid var(--line);padding:36px 20px 40px;text-align:center;color:#6f7896;font-size:.8rem}
+footer nav{display:flex;justify-content:center;gap:18px;margin:12px 0}
+footer a{color:#9aa4c4;text-decoration:none}
+footer .disc{max-width:760px;margin:14px auto 0;font-size:.72rem}
+
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+@media (max-width:860px){
+  .hero .wrap{grid-template-columns:1fr;gap:30px;text-align:center}
+  .hero .book{max-width:250px;margin:0 auto;order:-1}
+  .lead{margin-left:auto;margin-right:auto}
+  .cta-box{align-items:center}
+}
+@media (max-width:620px){
+  .wrap{padding:0 16px}
+  .sec{padding:76px 0}
+  .cta{width:100%;padding:18px 20px}
+  .tests{grid-template-columns:1fr}
+  .final-box{padding:40px 18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width:620px;height:620px;background:#2b4bff;opacity:.35;top:-260px;left:50%;transform:translateX(-50%)"></div>
+  <div class="topbar"><img src="assets/img/logo.png" alt="Vendita Uno"></div>
+
+  <div class="wrap" style="margin-top:40px">
+    <div>
+      <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>La tua guida è pronta</span>
+      <h1><span class="hl">Grazie!</span> Ecco la tua guida gratuita. Scaricala subito dal pulsante qui sotto.</h1>
+      <p class="lead">Sei a un passo dal trasformare il modo in cui la tua agenzia acquisisce incarichi. Scopri le strategie che stanno permettendo ad agenti e agenzie immobiliari di riempire l'agenda di appuntamenti di acquisizione <strong>senza dipendere dal passaparola</strong>.</p>
+      <div class="cta-box">
+        <a class="cta" data-pdf href="#" download>Scarica la Guida Gratuita <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg></a>
+        <span class="cta-note">PDF · Leggila con calma, poi guarda le testimonianze qui sotto 👇</span>
+      </div>
+    </div>
+    <div class="book"><img src="assets/img/guida-acquisizioni-milionarie-3d.webp" alt="Guida Acquisizioni Milionarie" width="1059" height="1417" fetchpriority="high"></div>
+  </div>
+</header>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="center reveal">
+      <span class="kicker">Risultati veri</span>
+      <h2><span class="hl">Testimonianze</span> di successo</h2>
+      <p class="sub">Ecco cosa dicono alcuni degli agenti e delle agenzie immobiliari che usano il nostro sistema.</p>
+    </div>
+    <div class="tests" id="tests"></div>
+    <div class="cta-box reveal" style="align-items:center;margin-top:48px">
+      <a class="cta" data-pdf href="#" download>Scarica la Guida Gratuita <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="glow" style="width:520px;height:520px;background:#2b4bff;opacity:.25;top:10%;left:50%;transform:translateX(-50%)"></div>
+  <div class="wrap">
+    <div class="final-box reveal">
+      <img src="assets/img/guida-acquisizioni-milionarie-3d.webp" alt="" width="1059" height="1417" loading="lazy">
+      <span class="kicker">Non lasciarla nei download</span>
+      <h2>Il primo incarico in più<br>parte da <span class="hl">questa lettura</span>.</h2>
+      <p>Scaricala adesso e dedicale 20 minuti: è il metodo che usiamo ogni giorno per portare appuntamenti di acquisizione ad agenti e agenzie in tutta Italia.</p>
+      <div class="cta-box">
+        <a class="cta" data-pdf href="#" download>Scarica la Guida Gratuita <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Vendita Uno · ufficio@venditauno.it</p>
+  <nav aria-label="Link utili"><a href="privacy.html">Privacy</a><a href="cookie.html">Cookie</a><a href="termini.html">Termini</a></nav>
+  <p>© <span id="y"></span> Vendita Uno · Tutti i diritti riservati</p>
+  <p class="disc">Questo sito non fa parte di Facebook™ né di Meta Platforms, Inc. Inoltre, questo sito NON è in alcun modo approvato da Facebook™. Facebook™ è un marchio registrato di Meta Platforms, Inc.</p>
+</footer>
+
+<script>
+// Link al PDF della guida: incollalo qui e tutti i pulsanti "Scarica" lo useranno.
+var PDF_URL = "";
+
+// Testimonianze: per aggiungerne una basta aggiungere una riga qui (id del video YouTube, numero in evidenza, frase, nome).
+var TESTIMONIANZE = [
+  { yt: "jqOjebgNQvk", big: "22.000 €", text: "<strong>incassati in un mese.</strong> E oggi una media di 6 incarichi in esclusiva al mese.", name: "Giuseppe Lanza", role: "Agenzia partner" },
+  { yt: "D-DQiwgqWYg", big: "Caso studio", text: "<strong>Come lavora con il metodo Vendita Uno</strong>, raccontato da lui.", name: "Massimiliano Bonomo", role: "Agenzia partner" }
+];
+
+(function(){
+  document.getElementById('y').textContent = new Date().getFullYear();
+
+  document.querySelectorAll('[data-pdf]').forEach(function(a){
+    if (PDF_URL) { a.href = PDF_URL; a.target = "_blank"; a.rel = "noopener"; }
+    else { a.addEventListener('click', function(e){ e.preventDefault(); alert('Scrivici a ufficio@venditauno.it e ti inviamo subito la guida.'); }); }
+  });
+
+  var box = document.getElementById('tests');
+  TESTIMONIANZE.forEach(function(t){
+    var ini = t.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2);
+    var el = document.createElement('article');
+    el.className = 'test reveal';
+    el.innerHTML =
+      '<div class="watch"><i></i>Guarda ora il video</div>' +
+      '<button type="button" class="yt" aria-label="Guarda la testimonianza di ' + t.name + '">' +
+        '<img src="https://i.ytimg.com/vi/' + t.yt + '/hqdefault.jpg" alt="" loading="lazy">' +
+        '<span class="play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></button>' +
+      '<div class="quote"><div class="big">' + t.big + '</div><p>' + t.text + '</p>' +
+        '<div class="who"><span class="av">' + ini + '</span><div><b>' + t.name + '</b><span>' + t.role + '</span></div></div></div>';
+    el.querySelector('.yt').addEventListener('click', function(){
+      this.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + t.yt + '?autoplay=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="Testimonianza ' + t.name + '"></iframe>';
+    }, { once: true });
+    box.appendChild(el);
+  });
+
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+})();
+</script>
+</body>
+</html>
