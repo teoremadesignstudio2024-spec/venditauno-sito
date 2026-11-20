@@ -71,7 +71,11 @@ h2{font-size:clamp(1.9rem,4.6vw,3.1rem);line-height:1.1;letter-spacing:-.03em;fo
 
 /* Player nostro: niente titolo, logo o consigliati di YouTube */
 .stage{position:relative;aspect-ratio:16/9;background:#000;overflow:hidden}
-.stage.vertical{aspect-ratio:9/16;max-height:640px;margin:0 auto;width:100%}
+/* Tutte le anteprime 16:9; un video verticale, appena parte, diventa 9:16 e si vede intero. */
+.stage{transition:width .35s ease}
+.stage.tall{aspect-ratio:9/16;width:min(100%,calc(80vh * 9 / 16));margin:0 auto}
+.cover .bg{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);object-fit:cover;filter:blur(18px) brightness(.55)}
+.cover .fg{position:absolute;top:0;left:50%;transform:translateX(-50%);height:100%;width:auto;aspect-ratio:9/16;object-fit:cover}
 .stage .ytbox{position:absolute;inset:0}
 .stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
 .shield{position:absolute;inset:0;cursor:pointer;z-index:2}
@@ -206,6 +210,7 @@ var TESTIMONIANZE = [
     c.box.innerHTML = '<div class="ytbox"></div>';
     c.cover.classList.remove('hide', 'wait');
     c.card.classList.remove('on');
+    c.stage.classList.remove('tall');
     c.card.querySelector('.shield').style.display = '';
     c.ppi.setAttribute('d', PLAY);
   }
@@ -213,13 +218,14 @@ var TESTIMONIANZE = [
   var box = document.getElementById('tests');
   TESTIMONIANZE.forEach(function(t){
     var ini = t.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0, 2);
+    var thumb = t.loom ? 'https://cdn.loom.com/sessions/thumbnails/' + t.loom + '-00001.jpg' : 'https://i.ytimg.com/vi/' + t.yt + '/hqdefault.jpg';
     var card = document.createElement('article');
     card.className = 'test reveal';
     card.innerHTML =
       '<div class="watch"><i></i>Guarda ora il video</div>' +
-      '<div class="stage' + (t.vertical ? ' vertical' : '') + '"><div class="ybox"><div class="ytbox"></div></div><div class="shield"></div>' +
+      '<div class="stage"><div class="ybox"><div class="ytbox"></div></div><div class="shield"></div>' +
         '<button type="button" class="cover" aria-label="Guarda la testimonianza di ' + t.name + '">' +
-          '<img src="' + (t.loom ? 'https://cdn.loom.com/sessions/thumbnails/' + t.loom + '-00001.jpg' : 'https://i.ytimg.com/vi/' + t.yt + '/hqdefault.jpg') + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' +
+          (t.vertical ? '<img class="bg" src="' + thumb + '" alt="" loading="lazy"><img class="fg" src="' + thumb + '" alt="" loading="lazy">' : '<img src="' + thumb + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">') +
           '<span class="play"><b><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></b>Guarda</span></button></div>' +
       '<div class="bar"><button type="button" class="vbtn" aria-label="Pausa"><svg viewBox="0 0 24 24"><path d="' + PLAY + '"/></svg></button>' +
         '<div class="prog"><i></i></div><span class="time">0:00</span></div>' +
@@ -227,7 +233,7 @@ var TESTIMONIANZE = [
         '<div class="who"><span class="av">' + ini + '</span><div><b>' + t.name + '</b><span>' + t.role + '</span></div></div></div>';
     box.appendChild(card);
 
-    var c = { card: card, box: card.querySelector('.ybox'), cover: card.querySelector('.cover'), ppi: card.querySelector('.vbtn path'),
+    var c = { stage: card.querySelector('.stage'), card: card, box: card.querySelector('.ybox'), cover: card.querySelector('.cover'), ppi: card.querySelector('.vbtn path'),
               fill: card.querySelector('.prog i'), time: card.querySelector('.time'), player: null, timer: 0 };
 
     function toggle(){ var p = c.player; if (!p || !p.getPlayerState) return; if (p.getPlayerState() === 1) p.pauseVideo(); else p.playVideo(); }
@@ -245,6 +251,7 @@ var TESTIMONIANZE = [
       if (c.player && c.player.playVideo) { c.player.playVideo(); return; }
       if (current && current !== c) stop(current);
       current = c;
+      if (t.vertical) c.stage.classList.add('tall');
       c.cover.classList.add('wait');
       card.classList.add('on');
       loadYT().then(function(){
@@ -257,7 +264,7 @@ var TESTIMONIANZE = [
               var on = e.data === 1 || e.data === 3;
               c.cover.classList.toggle('hide', on);
               c.ppi.setAttribute('d', on ? PAUSE : PLAY);
-              if (e.data === 0) { e.target.seekTo(0, true); e.target.pauseVideo(); c.cover.classList.remove('hide'); }
+              if (e.data === 0) { e.target.seekTo(0, true); e.target.pauseVideo(); c.cover.classList.remove('hide'); c.stage.classList.remove('tall'); }
             }
           }
         });
