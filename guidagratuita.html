@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050816">
+<title>Guida Gratuita per Agenti e Agenzie Immobiliari | Vendita Uno</title>
+<meta name="description" content="Scarica la guida gratuita: come acquisire clienti di qualità tutto l'anno e riempire l'agenda di appuntamenti di acquisizione, senza passaparola, perditempo o guerra dei prezzi.">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://venditauno.it/guidagratuita">
+<link rel="icon" type="image/png" href="assets/img/logo.png">
+<meta property="og:title" content="Guida Gratuita per Agenti e Agenzie Immobiliari">
+<meta property="og:description" content="Come acquisire clienti di qualità tutto l'anno e riempire l'agenda di appuntamenti di acquisizione.">
+<meta property="og:image" content="https://venditauno.it/assets/img/book-acquisizioni-milionarie.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#050816; --ink-2:#0a1030; --card:rgba(255,255,255,0.045); --line:rgba(255,255,255,0.1);
+  --fg:#ffffff; --muted:#a6afc8; --blue:#2b4bff; --blue-2:#5b7cff; --yellow:#ffe500; --yellow-2:#fff36b;
+  --r:18px; --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{font-family:var(--font);background:var(--ink);color:var(--fg);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;height:auto;display:block}
+.wrap{width:100%;max-width:1120px;margin:0 auto;padding:0 20px}
+::selection{background:var(--yellow);color:#000}
+
+/* Sfondo */
+.glow{position:absolute;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+.grid-bg{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.035) 1px,transparent 1px);
+  background-size:56px 56px;mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,#000 30%,transparent 80%);-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,#000 30%,transparent 80%)}
+
+/* Barra in alto */
+.topbar{display:flex;justify-content:center;padding:22px 20px 0;position:relative;z-index:2}
+.topbar img{height:34px;width:auto}
+
+/* Hero */
+.hero{position:relative;overflow:hidden;padding:36px 0 90px;text-align:center}
+.hero .wrap{position:relative;z-index:1}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;background:var(--yellow);color:#000;font-weight:900;text-transform:uppercase;
+  letter-spacing:.04em;font-size:clamp(.78rem,2.6vw,.98rem);padding:10px 18px;border-radius:999px;box-shadow:0 10px 40px -10px rgba(255,229,0,.6)}
+.eyebrow .dot{width:8px;height:8px;border-radius:50%;background:#000;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+h1{font-size:clamp(2rem,5.6vw,3.9rem);line-height:1.06;font-weight:900;letter-spacing:-.035em;max-width:960px;margin:26px auto 0}
+.hl{background:var(--yellow);color:#000;padding:0 .22em;border-radius:8px;-webkit-box-decoration-break:clone;box-decoration-break:clone;box-shadow:0 8px 30px -10px rgba(255,229,0,.55)}
+.blue{background:linear-gradient(90deg,#7c95ff,#b9c6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.dots{color:var(--yellow)}
+
+.book-stage{position:relative;width:min(340px,72vw);margin:48px auto 0;perspective:1200px}
+.book-stage::before{content:"";position:absolute;inset:8% -20% -6%;background:radial-gradient(closest-side,rgba(43,75,255,.85),transparent);filter:blur(30px);z-index:-1}
+.book{border-radius:6px 14px 14px 6px;transform:rotateY(-14deg) rotateX(4deg);transform-style:preserve-3d;animation:float 6s ease-in-out infinite;
+  box-shadow:-2px 0 0 #1416a8 inset,20px 30px 60px -10px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08)}
+.book img{border-radius:6px 14px 14px 6px}
+@keyframes float{50%{transform:rotateY(-8deg) rotateX(2deg) translateY(-12px)}}
+.badge-free{position:absolute;top:-14px;right:-18px;width:86px;height:86px;border-radius:50%;background:var(--yellow);color:#000;font-weight:900;
+  display:grid;place-items:center;text-align:center;font-size:.8rem;line-height:1.05;transform:rotate(12deg);box-shadow:0 12px 30px -8px rgba(255,229,0,.7)}
+.badge-free b{font-size:1.25rem;display:block}
+
+.without{max-width:760px;margin:48px auto 0}
+.without p{font-size:clamp(1.05rem,2.4vw,1.3rem);color:var(--muted)}
+.without p strong{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:.92rem;color:#d7dcec}
+.chip svg{width:14px;height:14px;flex:none;color:#ff5a5a}
+
+/* CTA */
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:12px;background:var(--yellow);color:#000;font-family:inherit;font-weight:900;
+  font-size:clamp(1.02rem,2.6vw,1.2rem);padding:20px 34px;border:0;border-radius:14px;cursor:pointer;text-decoration:none;
+  box-shadow:0 0 0 0 rgba(255,229,0,.6),0 18px 40px -12px rgba(255,229,0,.65);transition:transform .2s,box-shadow .2s;animation:ring 2.4s infinite}
+.cta:hover{transform:translateY(-2px);background:var(--yellow-2)}
+.cta svg{width:20px;height:20px;transition:transform .2s}
+.cta:hover svg{transform:translateY(3px)}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(255,229,0,.5),0 18px 40px -12px rgba(255,229,0,.65)}70%{box-shadow:0 0 0 16px rgba(255,229,0,0),0 18px 40px -12px rgba(255,229,0,.65)}100%{box-shadow:0 0 0 0 rgba(255,229,0,0),0 18px 40px -12px rgba(255,229,0,.65)}}
+.cta-box{margin-top:36px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.cta-note{font-size:.86rem;color:var(--muted);display:flex;align-items:center;gap:8px}
+.cta-note svg{width:15px;height:15px;color:#4ade80}
+
+/* Sezioni */
+section{position:relative}
+.sec{padding:100px 0;overflow:hidden}
+.kicker{display:inline-block;font-size:.8rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--yellow)}
+h2{font-size:clamp(1.8rem,4.4vw,3rem);line-height:1.1;letter-spacing:-.03em;font-weight:900;margin-top:12px}
+.center{text-align:center}
+
+/* Cosa scoprirai */
+.learn{background:linear-gradient(180deg,var(--ink) 0%,#0b1446 50%,var(--ink) 100%)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:52px}
+.card{position:relative;padding:30px 26px 28px;border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));
+  border:1px solid var(--line);backdrop-filter:blur(8px);transition:transform .25s,border-color .25s}
+.card:hover{transform:translateY(-4px);border-color:rgba(255,229,0,.4)}
+.num{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:12px;background:rgba(43,75,255,.25);border:1px solid rgba(124,149,255,.45);
+  color:#c9d3ff;font-weight:900;font-size:1rem;margin-bottom:18px}
+.card p{color:#cfd5e6;font-size:1.02rem}
+.card p strong{color:var(--fg)}
+.card mark{background:none;color:var(--yellow);font-weight:800}
+.card.more{background:var(--yellow);border-color:var(--yellow);color:#000;display:flex;flex-direction:column;justify-content:center}
+.card.more .num{background:#000;border-color:#000;color:var(--yellow)}
+.card.more p{color:#000;font-size:1.5rem;font-weight:900;letter-spacing:-.02em;line-height:1.15}
+
+/* Chi sono */
+.about-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:center}
+.portrait{position:relative;border-radius:24px;overflow:hidden;aspect-ratio:4/5;border:1px solid var(--line)}
+.portrait img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.portrait::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(5,8,22,.85))}
+.portrait .tag{position:absolute;left:18px;right:18px;bottom:18px;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.portrait .tag b{font-size:1.25rem;font-weight:900;letter-spacing:-.02em}
+.portrait .tag span{font-size:.78rem;color:#000;background:var(--yellow);font-weight:800;padding:6px 10px;border-radius:999px;white-space:nowrap}
+.about h2{margin-top:10px}
+.role{color:var(--muted);margin-top:8px;font-size:1.05rem}
+.facts{list-style:none;margin-top:30px;display:grid;gap:14px}
+.facts li{display:grid;grid-template-columns:28px 1fr;gap:14px;padding:16px 18px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:#cfd5e6}
+.facts li strong{color:var(--fg)}
+.facts .ic{width:28px;height:28px;border-radius:8px;background:rgba(255,229,0,.14);color:var(--yellow);display:grid;place-items:center}
+.facts .ic svg{width:16px;height:16px}
+
+/* Chiusura */
+.final{padding:110px 0 120px;text-align:center;overflow:hidden}
+.final-box{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:56px 28px;border-radius:28px;border:1px solid rgba(124,149,255,.35);
+  background:radial-gradient(ellipse at top,rgba(43,75,255,.35),transparent 70%),rgba(255,255,255,.03)}
+.final-box img{width:150px;margin:0 auto 26px;transform:rotate(-6deg);border-radius:4px 10px 10px 4px;box-shadow:0 24px 50px -12px rgba(0,0,0,.8)}
+.final-box p{color:var(--muted);max-width:560px;margin:16px auto 0;font-size:1.08rem}
+
+footer{border-top:1px solid var(--line);padding:36px 20px 110px;text-align:center;color:#6f7896;font-size:.8rem}
+footer nav{display:flex;justify-content:center;gap:18px;margin:12px 0}
+footer a{color:#9aa4c4;text-decoration:none}
+footer a:hover{color:var(--fg)}
+footer .disc{max-width:760px;margin:14px auto 0;font-size:.72rem;line-height:1.5}
+
+/* Barra CTA mobile fissa */
+.sticky{position:fixed;left:12px;right:12px;bottom:12px;z-index:40;display:none;transform:translateY(140%);transition:transform .3s}
+.sticky.show{transform:none}
+.sticky .cta{width:100%;padding:16px 18px;animation:none}
+
+/* Modulo */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(3,5,15,.78);backdrop-filter:blur(8px)}
+.modal.open{display:flex}
+.modal-box{position:relative;width:100%;max-width:520px;max-height:calc(100vh - 32px);overflow:auto;background:#0d1330;border:1px solid rgba(124,149,255,.35);border-radius:22px;padding:28px 22px 18px;animation:pop .25s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.98)}}
+.modal-box h3{font-size:1.4rem;font-weight:900;letter-spacing:-.02em;line-height:1.2;padding-right:32px}
+.modal-box h3 em{font-style:normal;color:var(--yellow)}
+.modal-box .sub{color:var(--muted);font-size:.92rem;margin:8px 0 16px}
+.modal-close{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;font-size:1rem;cursor:pointer}
+.modal iframe{width:100%;height:560px;border:0;border-radius:12px;background:#fff}
+
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:900px){
+  .cards{grid-template-columns:1fr 1fr}
+  .about-grid{grid-template-columns:1fr;gap:36px}
+  .portrait{max-width:420px;margin:0 auto;width:100%}
+}
+@media (max-width:620px){
+  .wrap{padding:0 16px}
+  .hero{padding:24px 0 70px}
+  .cards{grid-template-columns:1fr}
+  .sec{padding:76px 0}
+  .cta{width:100%;padding:18px 20px}
+  .badge-free{width:72px;height:72px;font-size:.7rem;right:-10px}
+  .badge-free b{font-size:1.05rem}
+  .sticky{display:block}
+  .final-box{padding:40px 18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="grid-bg"></div>
+  <div class="glow" style="width:620px;height:620px;background:#2b4bff;opacity:.35;top:-260px;left:50%;transform:translateX(-50%)"></div>
+  <div class="glow" style="width:320px;height:320px;background:#ffe500;opacity:.08;top:420px;right:-120px"></div>
+
+  <div class="topbar"><img src="assets/img/logo.png" alt="Vendita Uno"></div>
+
+  <div class="wrap">
+    <div style="margin-top:30px"><span class="eyebrow"><span class="dot"></span>Guida gratuita per agenti e agenzie immobiliari</span></div>
+
+    <h1>Scopri come <span class="hl">acquisire clienti di qualità</span> tutto l'anno, <span class="blue">riempire la tua agenda di appuntamenti di acquisizione</span> e aumentare il tuo fatturato e profitto grazie a<span class="dots">…</span></h1>
+
+    <div class="book-stage reveal">
+      <div class="book"><img src="assets/img/book-acquisizioni-milionarie.webp" alt="Copertina della guida gratuita Acquisizioni Milionarie" width="1412" height="2000" fetchpriority="high"></div>
+      <div class="badge-free"><span><b>GRATIS</b>Guida PDF</span></div>
+    </div>
+
+    <div class="without reveal">
+      <p><strong>Senza avere a che fare con perditempo</strong>, entrare nella guerra dei prezzi o dipendere da:</p>
+      <div class="chips">
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Passaparola</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Telemarketing</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Mailing</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Lavoro di zona</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Campanelli</span>
+      </div>
+    </div>
+
+    <div class="cta-box">
+      <button type="button" class="cta" data-open>Scarica la Guida Gratuita <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14M5 11l7 7 7-7"/></svg></button>
+      <span class="cta-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>100% gratuita · La ricevi subito</span>
+    </div>
+  </div>
+</header>
+
+<!-- COSA SCOPRIRAI -->
+<section class="sec learn">
+  <div class="wrap">
+    <div class="center reveal">
+      <span class="kicker">Dentro la guida</span>
+      <h2>Ecco cosa scoprirai nella <span class="hl">Guida Gratuita</span></h2>
+    </div>
+
+    <div class="cards">
+      <div class="card reveal"><span class="num">01</span>
+        <p>La <mark>strategia vincente</mark> che le agenzie immobiliari di successo stanno usando oggi per distinguersi sul mercato <strong>(incassando milioni di euro senza passaparola)</strong></p></div>
+      <div class="card reveal"><span class="num">02</span>
+        <p>Il <mark>segreto di marketing</mark> che permette ad agenti e agenzie di passare dall'essere invisibili a <strong>dominare la propria zona</strong>, con acquisizioni costanti e proprietari che cercano proprio loro</p></div>
+      <div class="card reveal"><span class="num">03</span>
+        <p><mark>Come organizzare il tuo servizio</mark> per aumentare le provvigioni e <strong>lavorare solo gli immobili che ti interessano davvero</strong></p></div>
+      <div class="card reveal"><span class="num">04</span>
+        <p><mark>Come distinguere un proprietario che vuole vendere</mark> da uno solo curioso, <strong>ancora prima di parlarci</strong>, di incontrarlo dal vivo o di fare la valutazione</p></div>
+      <div class="card reveal"><span class="num">05</span>
+        <p>Il <mark>pilastro fondamentale</mark> (e nascosto) per avere un fatturato in aumento <strong>anno dopo anno</strong> e raggiungere i tuoi obiettivi di crescita</p></div>
+      <div class="card more reveal"><span class="num">+</span>
+        <p>E tanto, tanto altro!</p></div>
+    </div>
+
+    <div class="cta-box reveal">
+      <button type="button" class="cta" data-open>Voglio accedere alla guida GRATUITA <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14M5 11l7 7 7-7"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<!-- CHI SONO -->
+<section class="sec">
+  <div class="glow" style="width:420px;height:420px;background:#2b4bff;opacity:.22;top:20%;left:-160px"></div>
+  <div class="wrap about-grid" style="position:relative;z-index:1">
+    <div class="portrait reveal">
+      <img src="assets/img/samuele-diotti.jpg" alt="Samuele Diotti" width="1000" height="998">
+      <div class="tag"><b>Samuele Diotti</b><span>Founder Vendita Uno</span></div>
+    </div>
+
+    <div class="about reveal">
+      <span class="kicker">Chi sono</span>
+      <h2>Samuele Diotti</h2>
+      <p class="role">Imprenditore, esperto di marketing e vendita nel settore immobiliare.</p>
+
+      <ul class="facts">
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg></span>
+          <span><strong>Imprenditore</strong>, esperto di marketing e vendita, opera nel settore immobiliare da <strong>oltre 5 anni</strong></span></li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+          <span><strong>Founder e CEO di Diotti Consulting</strong>, azienda specializzata nell'acquisizione clienti per agenzie e agenti immobiliari</span></li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 15l2.5 2.5L16 13"/></svg></span>
+          <span>È il creatore di <strong>Vendita Uno</strong>, il sistema di acquisizione che riempie l'agenda di agenti e agenzie immobiliari di <strong>appuntamenti di acquisizione di qualità, anche per 12 mesi di fila</strong> (smettendo di dipendere dal passaparola imprevedibile)</span></li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></span>
+          <span><strong>Genera regolarmente centinaia di migliaia di euro</strong> di nuove vendite per i propri clienti (e spesso milioni)</span></li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 6.9L12 17.5 5.7 21l1.5-6.9L2 9.3l7-.8z"/></svg></span>
+          <span>Entro il 2027 aprirà <strong>3 agenzie immobiliari</strong> con cui opererà direttamente sul mercato</span></li>
+      </ul>
+
+      <div class="cta-box" style="align-items:flex-start">
+        <button type="button" class="cta" data-open>Scarica la Guida Gratuita <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14M5 11l7 7 7-7"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHIUSURA -->
+<section class="final">
+  <div class="glow" style="width:520px;height:520px;background:#2b4bff;opacity:.25;top:10%;left:50%;transform:translateX(-50%)"></div>
+  <div class="wrap">
+    <div class="final-box reveal">
+      <img src="assets/img/book-acquisizioni-milionarie.webp" alt="" width="1412" height="2000">
+      <span class="kicker">È gratis, ed è tua</span>
+      <h2>Smetti di aspettare il passaparola.<br>Inizia a <span class="hl">riempire l'agenda</span>.</h2>
+      <p>Inserisci i tuoi dati e ricevi subito la guida con il metodo che usiamo per portare appuntamenti di acquisizione ad agenti e agenzie in tutta Italia.</p>
+      <div class="cta-box">
+        <button type="button" class="cta" data-open>Voglio la guida GRATUITA <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14M5 11l7 7 7-7"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Vendita Uno · ufficio@venditauno.it</p>
+  <nav aria-label="Link utili"><a href="privacy.html">Privacy</a><a href="cookie.html">Cookie</a><a href="termini.html">Termini</a></nav>
+  <p>© <span id="y"></span> Vendita Uno · Tutti i diritti riservati</p>
+  <p class="disc">Questo sito non fa parte di Facebook™ né di Meta Platforms, Inc. Inoltre, questo sito NON è in alcun modo approvato da Facebook™. Facebook™ è un marchio registrato di Meta Platforms, Inc.</p>
+</footer>
+
+<div class="sticky" id="sticky"><button type="button" class="cta" data-open>Scarica la Guida Gratuita</button></div>
+
+<!-- Modulo guida gratuita (GoHighLevel) -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Accedi alla guida gratuita">
+  <div class="modal-box">
+    <button type="button" class="modal-close" data-close aria-label="Chiudi">✕</button>
+    <h3>Inserisci i tuoi dati per accedere alla <em>guida gratuita</em></h3>
+    <p class="sub">La ricevi subito. Riservata ad agenti e agenzie immobiliari.</p>
+    <iframe
+      data-src="https://api.leadconnectorhq.com/widget/form/zRN9Kv9D6yLem52yX4aa"
+      id="inline-guida"
+      data-layout="{'id':'INLINE'}"
+      data-trigger-type="alwaysShow"
+      data-trigger-value=""
+      data-activation-type="alwaysActivated"
+      data-activation-value=""
+      data-deactivation-type="neverDeactivate"
+      data-deactivation-value=""
+      data-form-name="download"
+      data-height="560"
+      data-layout-iframe-id="inline-guida"
+      data-form-id="zRN9Kv9D6yLem52yX4aa"
+      title="Guida gratuita"
+    ></iframe>
+  </div>
+</div>
+
+<script src="https://link.msgsndr.com/js/form_embed.js" defer></script>
+<script>
+(function(){
+  var modal=document.getElementById('modal'), frame=document.getElementById('inline-guida');
+  function open(){ if(!frame.src){frame.src=frame.getAttribute('data-src');} modal.classList.add('open'); document.body.style.overflow='hidden'; }
+  function close(){ modal.classList.remove('open'); document.body.style.overflow=''; }
+  document.querySelectorAll('[data-open]').forEach(function(b){ b.addEventListener('click',open); });
+  document.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click',close); });
+  modal.addEventListener('click',function(e){ if(e.target===modal) close(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
+
+  document.getElementById('y').textContent=new Date().getFullYear();
+
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+
+  var sticky=document.getElementById('sticky'), hero=document.querySelector('.hero');
+  window.addEventListener('scroll',function(){ sticky.classList.toggle('show', window.scrollY > hero.offsetHeight*0.6 && !modal.classList.contains('open')); },{passive:true});
+})();
+</script>
+</body>
+</html>

@@ -44,6 +44,15 @@ export default {
       return Response.redirect(`${url.origin}/medicinaestetica`, 301);
     }
 
+    // Guida gratuita: l'indirizzo è /guidagratuita; /guida-gratuita, /guida gratuita, /GuidaGratuita ecc. ci arrivano comunque.
+    {
+      let gp = url.pathname;
+      try { gp = decodeURIComponent(gp); } catch (e) {}
+      if (/^\/guida[\s_-]*gratuita(\.html)?\/?$/i.test(gp) && url.pathname !== "/guidagratuita") {
+        return Response.redirect(`${url.origin}/guidagratuita${url.search}`, 301);
+      }
+    }
+
     if (isRemoved(url.pathname)) {
       return Response.redirect(`${url.origin}/`, 301);
     }
