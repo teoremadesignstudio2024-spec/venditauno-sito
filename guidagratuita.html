@@ -333,6 +333,18 @@ footer .disc{max-width:760px;margin:14px auto 0;font-size:.72rem;line-height:1.5
   modal.addEventListener('click',function(e){ if(e.target===modal) close(); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
 
+  // Dopo l'invio del modulo GoHighLevel porta alla pagina grazie.
+  // Il modulo avvisa la pagina con un messaggio; scatta solo dopo che la persona ha scritto nel modulo.
+  var touched=false, gone=false;
+  window.addEventListener('blur',function(){ setTimeout(function(){ if(document.activeElement===frame) touched=true; },0); });
+  function goThanks(){ if(gone) return; gone=true; try{ if(window.fbq) fbq('track','Lead'); }catch(x){} location.href='/guidagratuita-grazie'; }
+  window.addEventListener('message',function(e){
+    if(!/leadconnectorhq\.com|msgsndr\.com|gohighlevel\.com|highlevel/i.test(e.origin||'')) return;
+    if(e.source && frame.contentWindow && e.source!==frame.contentWindow) return;
+    var str=''; try{ str=typeof e.data==='string'?e.data:JSON.stringify(e.data); }catch(x){ return; }
+    if(touched && /sticky-contacts|form[-_ ]?submit|submitted|submission|redirect|thank/i.test(str)) setTimeout(goThanks,400);
+  });
+
   document.getElementById('y').textContent=new Date().getFullYear();
 
   var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.12});
