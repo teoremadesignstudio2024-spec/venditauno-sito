@@ -63,7 +63,7 @@ h1 .blue{color:var(--blue)}
 h2{font-size:clamp(1.9rem,4.6vw,3.1rem);line-height:1.1;letter-spacing:-.03em;font-weight:900;margin-top:12px}
 .tsec .sub{color:rgba(255,255,255,.82);max-width:620px;margin:16px auto 0;font-size:1.08rem}
 
-.tests{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin:52px auto 0;max-width:980px}
+.tests{align-items:start;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin:52px auto 0;max-width:980px}
 .test{border-radius:22px;overflow:hidden;background:#fff;color:var(--navy);display:flex;flex-direction:column;box-shadow:0 30px 60px -20px rgba(5,4,80,.6)}
 .watch{display:flex;align-items:center;gap:8px;background:var(--yellow);color:#000;font-weight:900;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;padding:10px 16px}
 .watch i{width:8px;height:8px;border-radius:50%;background:#e11d48;animation:blink 1.4s infinite}
@@ -71,6 +71,7 @@ h2{font-size:clamp(1.9rem,4.6vw,3.1rem);line-height:1.1;letter-spacing:-.03em;fo
 
 /* Player nostro: niente titolo, logo o consigliati di YouTube */
 .stage{position:relative;aspect-ratio:16/9;background:#000;overflow:hidden}
+.stage.vertical{aspect-ratio:9/16;max-height:640px;margin:0 auto;width:100%}
 .stage .ytbox{position:absolute;inset:0}
 .stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
 .shield{position:absolute;inset:0;cursor:pointer;z-index:2}
@@ -174,7 +175,7 @@ footer .disc{max-width:760px;margin:14px auto 0;font-size:.72rem}
 <script>
 // Testimonianze: per aggiungerne una basta una riga qui (id del video YouTube oppure "loom", titolo, frase sotto, nome).
 var TESTIMONIANZE = [
-  { loom: "abfd4944abc14fb4b5a8fd7b76bb7883", big: "11 incarichi al mese", text: "", name: "Giuseppe Lanza", role: "Agenzia partner" },
+  { yt: "AGIXvdz6T1U", vertical: true, big: "11 incarichi al mese", text: "", name: "Giuseppe Lanza", role: "Agenzia partner" },
   { yt: "jqOjebgNQvk", big: "22.000 € incassati in un mese", text: "E oggi una media di 6 incarichi in esclusiva al mese.", name: "Giuseppe Lanza", role: "Agenzia partner" },
   { yt: "D-DQiwgqWYg", big: "Come Massimiliano ha preso un incarico investendo solo 100 €", text: "", name: "Massimiliano Bonomo", role: "Agenzia partner" }
 ];
@@ -215,7 +216,7 @@ var TESTIMONIANZE = [
     card.className = 'test reveal';
     card.innerHTML =
       '<div class="watch"><i></i>Guarda ora il video</div>' +
-      '<div class="stage"><div class="ybox"><div class="ytbox"></div></div><div class="shield"></div>' +
+      '<div class="stage' + (t.vertical ? ' vertical' : '') + '"><div class="ybox"><div class="ytbox"></div></div><div class="shield"></div>' +
         '<button type="button" class="cover" aria-label="Guarda la testimonianza di ' + t.name + '">' +
           '<img src="' + (t.loom ? 'https://cdn.loom.com/sessions/thumbnails/' + t.loom + '-00001.jpg' : 'https://i.ytimg.com/vi/' + t.yt + '/hqdefault.jpg') + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' +
           '<span class="play"><b><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></b>Guarda</span></button></div>' +
