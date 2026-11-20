@@ -74,7 +74,8 @@ h2{font-size:clamp(1.9rem,4.6vw,3.1rem);line-height:1.1;letter-spacing:-.03em;fo
 .stage .ytbox{position:absolute;inset:0}
 .stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
 .shield{position:absolute;inset:0;cursor:pointer;z-index:2}
-.cover{position:absolute;inset:0;z-index:3;border:0;padding:0;cursor:pointer;background:#000;display:block;width:100%}
+.stage iframe.loom{pointer-events:auto}
+.cover{position:absolute;inset:0;z-index:3;border:0;padding:0;cursor:pointer;background:linear-gradient(135deg,#1710c9,#2a22ff);display:block;width:100%}
 .cover img{width:100%;height:100%;object-fit:cover}
 .cover .play{position:absolute;left:14px;bottom:14px;display:inline-flex;align-items:center;gap:8px;background:var(--yellow);color:#000;font-weight:900;font-size:.88rem;
   padding:9px 14px 9px 10px;border-radius:999px;box-shadow:0 8px 20px -6px rgba(0,0,0,.6)}
@@ -171,8 +172,9 @@ footer .disc{max-width:760px;margin:14px auto 0;font-size:.72rem}
 </footer>
 
 <script>
-// Testimonianze: per aggiungerne una basta una riga qui (id del video YouTube, titolo, frase sotto, nome).
+// Testimonianze: per aggiungerne una basta una riga qui (id del video YouTube oppure "loom", titolo, frase sotto, nome).
 var TESTIMONIANZE = [
+  { loom: "abfd4944abc14fb4b5a8fd7b76bb7883", big: "11 incarichi al mese", text: "", name: "Giuseppe Lanza", role: "Agenzia partner" },
   { yt: "jqOjebgNQvk", big: "22.000 € incassati in un mese", text: "E oggi una media di 6 incarichi in esclusiva al mese.", name: "Giuseppe Lanza", role: "Agenzia partner" },
   { yt: "D-DQiwgqWYg", big: "Come Massimiliano ha preso un incarico investendo solo 100 €", text: "", name: "Massimiliano Bonomo", role: "Agenzia partner" }
 ];
@@ -202,6 +204,7 @@ var TESTIMONIANZE = [
     c.box.innerHTML = '<div class="ytbox"></div>';
     c.cover.classList.remove('hide', 'wait');
     c.card.classList.remove('on');
+    c.card.querySelector('.shield').style.display = '';
     c.ppi.setAttribute('d', PLAY);
   }
 
@@ -214,7 +217,7 @@ var TESTIMONIANZE = [
       '<div class="watch"><i></i>Guarda ora il video</div>' +
       '<div class="stage"><div class="ybox"><div class="ytbox"></div></div><div class="shield"></div>' +
         '<button type="button" class="cover" aria-label="Guarda la testimonianza di ' + t.name + '">' +
-          '<img src="https://i.ytimg.com/vi/' + t.yt + '/hqdefault.jpg" alt="" loading="lazy">' +
+          '<img src="' + (t.loom ? 'https://cdn.loom.com/sessions/thumbnails/' + t.loom + '-00001.jpg' : 'https://i.ytimg.com/vi/' + t.yt + '/hqdefault.jpg') + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' +
           '<span class="play"><b><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></b>Guarda</span></button></div>' +
       '<div class="bar"><button type="button" class="vbtn" aria-label="Pausa"><svg viewBox="0 0 24 24"><path d="' + PLAY + '"/></svg></button>' +
         '<div class="prog"><i></i></div><span class="time">0:00</span></div>' +
@@ -228,6 +231,15 @@ var TESTIMONIANZE = [
     function toggle(){ var p = c.player; if (!p || !p.getPlayerState) return; if (p.getPlayerState() === 1) p.pauseVideo(); else p.playVideo(); }
 
     c.cover.addEventListener('click', function(){
+      if (t.loom) {
+        // Video Loom: si apre nel riquadro con il player di Loom, senza barra in alto, titolo e autore.
+        if (current && current !== c) stop(current);
+        current = c;
+        c.box.innerHTML = '<iframe class="loom" src="https://www.loom.com/embed/' + t.loom + '?autoplay=1&hideEmbedTopBar=true&hide_owner=true&hide_share=true&hide_title=true&hide_speed=true" allow="autoplay; fullscreen" allowfullscreen title="Testimonianza ' + t.name + '"></iframe>';
+        c.cover.classList.add('hide');
+        card.querySelector('.shield').style.display = 'none';
+        return;
+      }
       if (c.player && c.player.playVideo) { c.player.playVideo(); return; }
       if (current && current !== c) stop(current);
       current = c;
