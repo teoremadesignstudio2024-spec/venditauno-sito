@@ -72,7 +72,7 @@ h2{font-size:clamp(1.9rem,4.6vw,3.1rem);line-height:1.1;letter-spacing:-.03em;fo
 /* Player nostro: niente titolo, logo o consigliati di YouTube */
 .stage{position:relative;aspect-ratio:16/9;background:#000;overflow:hidden}
 .stage .ytbox{position:absolute;inset:0}
-.stage iframe{position:absolute;left:0;top:-25%;width:100%;height:150%;border:0;pointer-events:none}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
 .shield{position:absolute;inset:0;cursor:pointer;z-index:2}
 .cover{position:absolute;inset:0;z-index:3;border:0;padding:0;cursor:pointer;background:#000;display:block;width:100%}
 .cover img{width:100%;height:100%;object-fit:cover}
@@ -241,7 +241,7 @@ var TESTIMONIANZE = [
             onReady: function(e){ c.cover.classList.remove('wait'); e.target.playVideo(); },
             onStateChange: function(e){
               var on = e.data === 1 || e.data === 3;
-              c.cover.classList.toggle('hide', on || e.data === 2);
+              c.cover.classList.toggle('hide', on);
               c.ppi.setAttribute('d', on ? PAUSE : PLAY);
               if (e.data === 0) { e.target.seekTo(0, true); e.target.pauseVideo(); c.cover.classList.remove('hide'); }
             }
