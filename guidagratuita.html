@@ -54,9 +54,12 @@ h1{font-size:clamp(2rem,5.6vw,3.9rem);line-height:1.06;font-weight:900;letter-sp
 .book-stage::before{content:"";position:absolute;inset:8% -20% -6%;background:radial-gradient(closest-side,rgba(43,75,255,.85),transparent);filter:blur(30px);z-index:-1}
 .book{animation:float 6s ease-in-out infinite;filter:drop-shadow(0 30px 40px rgba(0,0,0,.6));}
 @keyframes float{50%{transform:translateY(-12px)}}
-.badge-free{position:absolute;top:44%;right:-22px;width:86px;height:86px;border-radius:50%;background:var(--yellow);color:#000;font-weight:900;
-  display:grid;place-items:center;text-align:center;font-size:.8rem;line-height:1.05;transform:rotate(12deg);box-shadow:0 12px 30px -8px rgba(255,229,0,.7)}
-.badge-free b{font-size:1.25rem;display:block}
+.gratis-tag{position:absolute;top:34%;left:calc(100% + 18px);display:flex;align-items:center;gap:6px;white-space:nowrap;animation:nudge 1.6s ease-in-out infinite}
+.gratis-tag .lbl{background:var(--yellow);color:#000;font-weight:900;font-size:1.35rem;letter-spacing:-.01em;line-height:1.05;padding:12px 18px;border-radius:14px;transform:rotate(-4deg);
+  box-shadow:0 14px 34px -10px rgba(255,229,0,.7);text-align:left}
+.gratis-tag .lbl small{display:block;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+.gratis-tag svg{width:64px;height:44px;color:var(--yellow);flex:none;order:-1}
+@keyframes nudge{50%{transform:translateX(-8px)}}
 
 .without{max-width:760px;margin:48px auto 0}
 .without p{font-size:clamp(1.05rem,2.4vw,1.3rem);color:var(--muted)}
@@ -158,8 +161,10 @@ footer .disc{max-width:760px;margin:14px auto 0;font-size:.72rem;line-height:1.5
   .cards{grid-template-columns:1fr}
   .sec{padding:76px 0}
   .cta{width:100%;padding:18px 20px}
-  .badge-free{width:72px;height:72px;font-size:.7rem;right:-10px}
-  .badge-free b{font-size:1.05rem}
+  .gratis-tag{position:static;justify-content:center;flex-direction:column;gap:4px;margin-top:18px;animation:bob 1.6s ease-in-out infinite}
+  .gratis-tag svg{width:40px;height:40px;transform:rotate(80deg)}
+  .gratis-tag .lbl{font-size:1.15rem;text-align:center}
+  @keyframes bob{50%{transform:translateY(6px)}}
   .sticky{display:block}
   .final-box{padding:40px 18px}
 }
@@ -183,7 +188,7 @@ footer .disc{max-width:760px;margin:14px auto 0;font-size:.72rem;line-height:1.5
 
     <div class="book-stage reveal">
       <div class="book"><img src="assets/img/guida-acquisizioni-milionarie-3d.webp" alt="Guida gratuita Acquisizioni Milionarie" width="1059" height="1417" fetchpriority="high"></div>
-      <div class="badge-free"><span><b>GRATIS</b>Guida PDF</span></div>
+      <div class="gratis-tag"><span class="lbl"><small>Guida PDF</small>È GRATIS!</span><svg viewBox="0 0 64 44" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 30C44 40 22 36 8 18"/><path d="M6 32L8 17l15 2"/></svg></div>
     </div>
 
     <div class="without reveal">
