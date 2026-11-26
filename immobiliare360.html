@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Immobiliare 360 · Compriamo la tua casa</title>
+<meta name="description" content="Immobiliare 360 compra direttamente la tua casa: valutazione gratuita, offerta scritta in 72 ore, zero provvigioni e rogito quando decidi tu.">
+<!-- Bozza in revisione: fuori dai motori di ricerca finché non è approvata. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b1f33">
+<meta property="og:title" content="Immobiliare 360 · Compriamo la tua casa">
+<meta property="og:description" content="Offerta scritta in 72 ore, zero provvigioni, rogito quando decidi tu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0b1f33;
+  --navy-2: #12304d;
+  --ink: #0f1c2a;
+  --muted: #5b6b7c;
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --line: rgba(11, 31, 51, .1);
+  --accent: #ff7a1a;
+  --accent-2: #ffb020;
+  --green: #18a058;
+  --r: 18px;
+  --font: "Montserrat", system-ui, -apple-system, sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; overflow-x: clip; }
+body { font-family: var(--font); color: var(--ink); background: var(--bg); line-height: 1.6; overflow-x: clip; }
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+.wrap { width: 100%; max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+.hl { color: var(--accent); }
+.eyebrow { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+h1, h2, h3 { line-height: 1.15; font-weight: 800; letter-spacing: -.01em; }
+h2 { font-size: clamp(28px, 4.2vw, 42px); margin-bottom: 16px; }
+.lead { font-size: clamp(16px, 2vw, 18px); color: var(--muted); max-width: 640px; }
+section { padding: 88px 0; }
+.center { text-align: center; }
+.center .lead { margin: 0 auto; }
+
+/* Bottoni */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-family: inherit; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: .03em; text-decoration: none; border: 0; cursor: pointer; padding: 18px 30px; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 12px 30px -10px rgba(255, 122, 26, .7); transition: transform .25s var(--ease), box-shadow .25s var(--ease); }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 16px 36px -10px rgba(255, 122, 26, .85); }
+.btn svg { width: 18px; height: 18px; }
+.btn-ghost { background: transparent; color: var(--navy); border: 2px solid var(--navy); box-shadow: none; }
+
+/* Barra in alto */
+.topbar { background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; text-align: center; padding: 9px 16px; }
+header.nav { position: sticky; top: 0; z-index: 50; background: rgba(11, 31, 51, .96); backdrop-filter: blur(8px); }
+header.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+.logo { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-weight: 900; font-size: 19px; letter-spacing: .02em; }
+.logo-mark { width: 38px; height: 38px; }
+.logo small { display: block; font-size: 10px; font-weight: 600; letter-spacing: .2em; color: var(--accent-2); text-transform: uppercase; }
+.nav-cta { padding: 11px 20px; font-size: 13px; }
+
+/* Hero */
+.hero { position: relative; background: radial-gradient(1200px 600px at 85% -10%, #1d4a73 0%, transparent 60%), linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%); color: #fff; padding: 64px 0 96px; overflow: hidden; }
+.hero::after { content: ""; position: absolute; right: -180px; top: 40px; width: 520px; height: 520px; border-radius: 50%; border: 2px dashed rgba(255, 176, 32, .25); animation: spin 60s linear infinite; pointer-events: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+.hero h1 { font-size: clamp(34px, 5.6vw, 58px); margin-bottom: 20px; }
+.hero .lead { color: rgba(255, 255, 255, .78); margin-bottom: 28px; }
+.checks { list-style: none; display: grid; gap: 12px; margin-bottom: 32px; }
+.checks li { display: flex; gap: 12px; align-items: flex-start; font-weight: 600; }
+.checks li::before { content: ""; flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center/14px no-repeat; margin-top: 1px; }
+.trust-row { display: flex; flex-wrap: wrap; gap: 18px 28px; font-size: 13px; color: rgba(255, 255, 255, .7); }
+.trust-row strong { color: #fff; font-size: 22px; display: block; font-weight: 900; }
+
+/* Modulo */
+.form-card { background: #fff; color: var(--ink); border-radius: 24px; padding: 30px 26px; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .55); position: relative; }
+.form-card h3 { font-size: 22px; margin-bottom: 4px; }
+.form-card .sub { font-size: 14px; color: var(--muted); margin-bottom: 18px; }
+.progress { height: 6px; background: #e8edf3; border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+.progress span { display: block; height: 100%; width: 25%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .4s var(--ease); }
+.step-label { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 18px; }
+.step { display: none; }
+.step.on { display: block; animation: fade .35s var(--ease); }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.q { font-weight: 800; font-size: 17px; margin-bottom: 14px; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opt { position: relative; }
+.opt input { position: absolute; opacity: 0; pointer-events: none; }
+.opt label { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 12px 14px; border: 2px solid #e1e7ee; border-radius: 14px; font-weight: 600; font-size: 14px; cursor: pointer; transition: border-color .2s, background .2s; }
+.opt label .ico { font-size: 20px; }
+.opt input:checked + label { border-color: var(--accent); background: #fff5ec; }
+.opt input:focus-visible + label { outline: 3px solid rgba(255, 122, 26, .4); outline-offset: 2px; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.field input, .field select { width: 100%; font-family: inherit; font-size: 16px; padding: 14px 14px; border: 2px solid #e1e7ee; border-radius: 12px; background: #fff; color: var(--ink); }
+.field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.consent { display: flex; gap: 10px; font-size: 12px; color: var(--muted); margin: 6px 0 16px; align-items: flex-start; }
+.consent input { margin-top: 3px; width: 18px; height: 18px; flex: 0 0 18px; accent-color: var(--accent); }
+.form-nav { display: flex; gap: 10px; margin-top: 18px; }
+.form-nav .btn { flex: 1; padding: 16px 18px; font-size: 15px; }
+.back { background: none; border: 0; font-family: inherit; font-weight: 700; color: var(--muted); cursor: pointer; padding: 0 8px; font-size: 14px; }
+.err { color: #d43030; font-size: 13px; font-weight: 600; min-height: 18px; margin-top: 8px; }
+.secure { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 14px; }
+.done { text-align: center; padding: 20px 0; }
+.done .big { width: 72px; height: 72px; margin: 0 auto 16px; border-radius: 50%; background: var(--green); display: grid; place-items: center; }
+.done .big svg { width: 36px; height: 36px; }
+
+/* Barra loghi/fiducia */
+.strip { background: #fff; border-bottom: 1px solid var(--line); padding: 26px 0; }
+.strip .wrap { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 40px; font-weight: 700; font-size: 14px; color: var(--navy); }
+.strip span { display: flex; align-items: center; gap: 8px; }
+.strip span::before { content: "✓"; color: var(--green); font-weight: 900; }
+
+/* Problema */
+.pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; }
+.pain { background: #fff; border: 1px solid var(--line); border-radius: var(--r); padding: 26px; }
+.pain .x { width: 40px; height: 40px; border-radius: 12px; background: #fdecec; color: #d43030; display: grid; place-items: center; font-weight: 900; margin-bottom: 14px; }
+.pain h3 { font-size: 18px; margin-bottom: 8px; }
+.pain p { color: var(--muted); font-size: 15px; }
+
+/* Confronto */
+.versus { background: #fff; }
+.vs-table { margin-top: 40px; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: #fff; }
+.vs-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; border-top: 1px solid var(--line); }
+.vs-row:first-child { border-top: 0; }
+.vs-row > div { padding: 16px 18px; font-size: 15px; }
+.vs-row > div:first-child { font-weight: 700; }
+.vs-row.head > div { font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; }
+.vs-row.head > div:nth-child(2) { color: var(--muted); }
+.vs-row.head > div:nth-child(3) { background: var(--navy); color: #fff; }
+.vs-row > div:nth-child(3) { background: #fff8f1; font-weight: 700; }
+.vs-row > div:nth-child(2) { color: var(--muted); }
+.yes { color: var(--green); } .no { color: #d43030; }
+
+/* Processo 360 */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 48px; counter-reset: s; }
+.st { position: relative; background: #fff; border-radius: var(--r); padding: 30px 24px 26px; border: 1px solid var(--line); }
+.st .n { width: 50px; height: 50px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 900; font-size: 20px; display: grid; place-items: center; margin-bottom: 16px; position: relative; }
+.st .n::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--accent); border-right-color: transparent; }
+.st h3 { font-size: 18px; margin-bottom: 8px; }
+.st p { color: var(--muted); font-size: 15px; }
+.st .t { display: inline-block; margin-top: 12px; font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
+
+/* Situazioni */
+.sit { background: var(--navy); color: #fff; }
+.sit .lead { color: rgba(255, 255, 255, .72); }
+.sit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 40px; }
+.sit-card { background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); border-radius: 16px; padding: 20px; }
+.sit-card .e { font-size: 26px; margin-bottom: 10px; }
+.sit-card h3 { font-size: 16px; margin-bottom: 6px; }
+.sit-card p { font-size: 14px; color: rgba(255, 255, 255, .7); }
+
+/* Garanzia */
+.guarantee-box { display: grid; grid-template-columns: 180px 1fr; gap: 36px; align-items: center; background: #fff; border-radius: 28px; padding: 40px; border: 2px solid var(--accent); box-shadow: 0 30px 60px -40px rgba(11, 31, 51, .5); }
+.seal { width: 170px; height: 170px; }
+.guarantee-box ul { list-style: none; display: grid; gap: 10px; margin-top: 18px; }
+.guarantee-box li { font-weight: 600; display: flex; gap: 10px; }
+.guarantee-box li::before { content: "✓"; color: var(--green); font-weight: 900; }
+
+/* FAQ */
+.faq-list { max-width: 820px; margin: 40px auto 0; display: grid; gap: 12px; }
+details { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 0 22px; }
+summary { list-style: none; cursor: pointer; padding: 20px 30px 20px 0; font-weight: 700; position: relative; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 24px; font-weight: 600; color: var(--accent); transition: transform .25s; }
+details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+details p { padding: 0 0 20px; color: var(--muted); }
+
+/* CTA finale */
+.final { background: linear-gradient(135deg, var(--navy) 0%, #1d4a73 100%); color: #fff; text-align: center; }
+.final .lead { color: rgba(255, 255, 255, .75); margin: 0 auto 30px; }
+
+footer { background: #07141f; color: rgba(255, 255, 255, .55); font-size: 13px; padding: 36px 0 110px; text-align: center; }
+footer a { color: rgba(255, 255, 255, .75); }
+footer nav { display: flex; justify-content: center; gap: 18px; margin-top: 10px; }
+
+/* CTA fissa su mobile */
+.sticky { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 60; display: none; transform: translateY(140%); transition: transform .35s var(--ease); }
+.sticky.show { transform: none; }
+.sticky .btn { width: 100%; }
+
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+.reveal.in { opacity: 1; transform: none; }
+
+@media (max-width: 960px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+  .steps, .sit-grid { grid-template-columns: 1fr 1fr; }
+  .pain-grid { grid-template-columns: 1fr; }
+  .guarantee-box { grid-template-columns: 1fr; text-align: center; justify-items: center; padding: 30px 22px; }
+  .guarantee-box li { text-align: left; }
+}
+@media (max-width: 640px) {
+  section { padding: 64px 0; }
+  .wrap { padding: 0 16px; }
+  .hero { padding: 40px 0 64px; }
+  .hero::after { display: none; }
+  .steps { grid-template-columns: 1fr; }
+  .sit-card { padding: 16px; }
+  .nav-cta { display: none; }
+  .form-card { padding: 24px 18px; }
+  .vs-row { grid-template-columns: 1fr 1fr 1fr; }
+  .vs-row > div { padding: 12px 10px; font-size: 13px; }
+  .vs-row.head > div { font-size: 11px; }
+  .sticky { display: block; }
+  .btn { font-size: 15px; padding: 17px 22px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">Valutazione gratuita e senza impegno · Risposta entro 24 ore</div>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Immobiliare 360">
+      <svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="17" fill="none" stroke="#ff7a1a" stroke-width="3" stroke-dasharray="90 17" stroke-linecap="round"/>
+        <path d="M11 21.5 20 13l9 8.5V29H11z" fill="#fff"/>
+        <rect x="17.5" y="22.5" width="5" height="6.5" fill="#0b1f33"/>
+      </svg>
+      <span>IMMOBILIARE 360<small>Compriamo casa</small></span>
+    </a>
+    <a class="btn nav-cta" href="#valutazione">Ricevi l'offerta</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO + MODULO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Vendi casa senza agenzia e senza attese</span>
+      <h1>Compriamo <span class="hl">noi</span> la tua casa.<br>Offerta scritta in 72 ore.</h1>
+      <p class="lead">Niente annunci, niente visite di sconosciuti, niente mesi di attesa. Immobiliare 360 acquista direttamente il tuo immobile, si occupa di tutte le pratiche e ti paga al rogito, nella data che scegli tu.</p>
+      <ul class="checks">
+        <li>Zero provvigioni: non paghi nessuna agenzia</li>
+        <li>Acquistiamo anche case da ristrutturare, ereditate o con irregolarità</li>
+        <li>Rogito anche in 30 giorni, oppure quando ti è più comodo</li>
+        <li>Pratiche, documenti e notaio: ce ne occupiamo noi</li>
+      </ul>
+      <div class="trust-row">
+        <div><strong>72h</strong>per l'offerta scritta</div>
+        <div><strong>0 €</strong>di provvigioni</div>
+        <div><strong>30 gg</strong>per il rogito</div>
+      </div>
+    </div>
+
+    <div class="form-card" id="valutazione">
+      <form id="leadForm" novalidate>
+        <h3>Scopri quanto offriamo per la tua casa</h3>
+        <p class="sub">4 domande, meno di un minuto. Gratis e senza impegno.</p>
+        <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+        <div class="step-label" id="stepLabel">Passo 1 di 4</div>
+
+        <!-- 1 -->
+        <div class="step on" data-step="1">
+          <p class="q">Che tipo di immobile vuoi vendere?</p>
+          <div class="opts">
+            <div class="opt"><input type="radio" name="tipologia" id="t1" value="Appartamento"><label for="t1"><span class="ico">🏢</span>Appartamento</label></div>
+            <div class="opt"><input type="radio" name="tipologia" id="t2" value="Villa / Casa indipendente"><label for="t2"><span class="ico">🏡</span>Villa / Indipendente</label></div>
+            <div class="opt"><input type="radio" name="tipologia" id="t3" value="Rustico / Terreno"><label for="t3"><span class="ico">🌾</span>Rustico / Terreno</label></div>
+            <div class="opt"><input type="radio" name="tipologia" id="t4" value="Locale commerciale"><label for="t4"><span class="ico">🏪</span>Commerciale</label></div>
+          </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="step" data-step="2">
+          <p class="q">In che condizioni si trova?</p>
+          <div class="opts">
+            <div class="opt"><input type="radio" name="condizioni" id="c1" value="Ottime / Ristrutturato"><label for="c1"><span class="ico">✨</span>Ottime</label></div>
+            <div class="opt"><input type="radio" name="condizioni" id="c2" value="Buone / Abitabile"><label for="c2"><span class="ico">👍</span>Buone</label></div>
+            <div class="opt"><input type="radio" name="condizioni" id="c3" value="Da ristrutturare"><label for="c3"><span class="ico">🔨</span>Da ristrutturare</label></div>
+            <div class="opt"><input type="radio" name="condizioni" id="c4" value="Da ristrutturare completamente"><label for="c4"><span class="ico">🏚️</span>Da rifare</label></div>
+          </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="step" data-step="3">
+          <p class="q">Dove si trova e quanto è grande?</p>
+          <div class="field"><label for="citta">Città o comune</label><input id="citta" name="citta" type="text" autocomplete="address-level2" placeholder="Es. Milano"></div>
+          <div class="row2">
+            <div class="field"><label for="mq">Metri quadri</label><input id="mq" name="mq" type="number" inputmode="numeric" min="10" placeholder="Es. 90"></div>
+            <div class="field"><label for="tempi">Quando vuoi vendere?</label>
+              <select id="tempi" name="tempi">
+                <option value="">Scegli…</option>
+                <option>Il prima possibile</option>
+                <option>Entro 3 mesi</option>
+                <option>Entro 6 mesi</option>
+                <option>Sto solo valutando</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 -->
+        <div class="step" data-step="4">
+          <p class="q">A chi inviamo la valutazione?</p>
+          <div class="field"><label for="nome">Nome e cognome</label><input id="nome" name="nome" type="text" autocomplete="name" placeholder="Mario Rossi"></div>
+          <div class="field"><label for="telefono">Telefono</label><input id="telefono" name="telefono" type="tel" autocomplete="tel" inputmode="tel" placeholder="333 123 4567"></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" placeholder="nome@email.it"></div>
+          <label class="consent"><input type="checkbox" id="privacy" name="privacy"><span>Ho letto l'<a href="/privacy" target="_blank">informativa privacy</a> e acconsento a essere ricontattato per la valutazione del mio immobile.</span></label>
+        </div>
+
+        <div class="err" id="err" role="alert"></div>
+        <div class="form-nav">
+          <button type="button" class="back" id="prev" hidden>← Indietro</button>
+          <button type="submit" class="btn" id="next">Continua</button>
+        </div>
+        <div class="secure">🔒 I tuoi dati sono al sicuro e non vengono ceduti a terzi</div>
+      </form>
+
+      <div class="done" id="done" hidden>
+        <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+        <h3>Richiesta ricevuta!</h3>
+        <p class="sub" style="margin-top:8px">Un nostro consulente ti chiamerà entro 24 ore per fissare il sopralluogo gratuito. Tieni il telefono a portata di mano.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="strip">
+  <div class="wrap">
+    <span>Valutazione gratuita</span>
+    <span>Nessuna provvigione</span>
+    <span>Pagamento sicuro al rogito</span>
+    <span>Notaio scelto da te</span>
+  </div>
+</div>
+
+<!-- PROBLEMA -->
+<section>
+  <div class="wrap center">
+    <span class="eyebrow reveal">Il metodo tradizionale</span>
+    <h2 class="reveal">Vendere casa nel modo classico è <span class="hl">lento, caro e stressante</span></h2>
+    <p class="lead reveal">Se hai già provato con un'agenzia o con i portali, lo sai bene.</p>
+    <div class="pain-grid" style="text-align:left">
+      <div class="pain reveal"><div class="x">✕</div><h3>Mesi (o anni) di attesa</h3><p>L'annuncio resta online, le visite si susseguono e intanto continui a pagare IMU, condominio e bollette.</p></div>
+      <div class="pain reveal"><div class="x">✕</div><h3>Provvigioni e costi nascosti</h3><p>Tra provvigione d'agenzia, sistemazioni e ribassi, quello che ti resta in tasca è molto meno del previsto.</p></div>
+      <div class="pain reveal"><div class="x">✕</div><h3>Compratori che spariscono</h3><p>Proposte che saltano perché il mutuo non viene concesso, dopo che hai già bloccato la casa per settimane.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONFRONTO -->
+<section class="versus">
+  <div class="wrap center">
+    <span class="eyebrow reveal">La differenza</span>
+    <h2 class="reveal">Agenzia tradizionale o <span class="hl">Immobiliare 360</span>?</h2>
+    <div class="vs-table reveal" style="text-align:left">
+      <div class="vs-row head"><div></div><div>Agenzia</div><div>Immobiliare 360</div></div>
+      <div class="vs-row"><div>Tempi di vendita</div><div>6–12 mesi</div><div>Offerta in 72 ore</div></div>
+      <div class="vs-row"><div>Provvigioni</div><div class="no">3% + IVA</div><div class="yes">0 €</div></div>
+      <div class="vs-row"><div>Visite in casa</div><div>Decine</div><div>Un solo sopralluogo</div></div>
+      <div class="vs-row"><div>Rischio mutuo rifiutato</div><div class="no">Sì</div><div class="yes">No</div></div>
+      <div class="vs-row"><div>Case da ristrutturare</div><div>Difficili da vendere</div><div class="yes">Le compriamo così come sono</div></div>
+      <div class="vs-row"><div>Data del rogito</div><div>Decide il compratore</div><div class="yes">Decidi tu</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESSO -->
+<section>
+  <div class="wrap center">
+    <span class="eyebrow reveal">Il metodo 360</span>
+    <h2 class="reveal">Dalla richiesta al rogito in <span class="hl">4 passi</span></h2>
+    <p class="lead reveal">Un unico interlocutore che segue tutto, dall'inizio alla fine.</p>
+    <div class="steps" style="text-align:left">
+      <div class="st reveal"><div class="n">1</div><h3>Compila il modulo</h3><p>Ci dai le informazioni base sul tuo immobile. Ti richiamiamo per conoscere la tua situazione.</p><span class="t">1 minuto</span></div>
+      <div class="st reveal"><div class="n">2</div><h3>Sopralluogo gratuito</h3><p>Un nostro tecnico visita l'immobile e verifica documenti e conformità, senza alcun costo.</p><span class="t">Entro pochi giorni</span></div>
+      <div class="st reveal"><div class="n">3</div><h3>Offerta scritta</h3><p>Ricevi una proposta d'acquisto chiara e vincolante. Sei libero di accettarla o rifiutarla.</p><span class="t">Entro 72 ore</span></div>
+      <div class="st reveal"><div class="n">4</div><h3>Rogito e pagamento</h3><p>Firmi dal notaio nella data che preferisci e incassi l'intero importo concordato.</p><span class="t">Anche in 30 giorni</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SITUAZIONI -->
+<section class="sit">
+  <div class="wrap center">
+    <span class="eyebrow reveal">Per chi è</span>
+    <h2 class="reveal">Ti aiutiamo anche quando vendere <span class="hl">sembra impossibile</span></h2>
+    <p class="lead reveal">Ogni casa ha la sua storia. Valutiamo ogni situazione con discrezione.</p>
+    <div class="sit-grid" style="text-align:left">
+      <div class="sit-card reveal"><div class="e">📜</div><h3>Casa ereditata</h3><p>Successioni, più eredi, immobili da liberare: gestiamo noi le pratiche.</p></div>
+      <div class="sit-card reveal"><div class="e">🔨</div><h3>Da ristrutturare</h3><p>Non devi spendere un euro per sistemarla: la compriamo così com'è.</p></div>
+      <div class="sit-card reveal"><div class="e">⏱️</div><h3>Hai fretta</h3><p>Trasferimento, nuovo acquisto o bisogno di liquidità in tempi certi.</p></div>
+      <div class="sit-card reveal"><div class="e">📐</div><h3>Difformità urbanistiche</h3><p>Piccoli abusi o documenti non in regola: valutiamo sanatorie e regolarizzazioni.</p></div>
+      <div class="sit-card reveal"><div class="e">💔</div><h3>Separazione</h3><p>Una soluzione rapida e neutrale per chiudere un capitolo senza conflitti.</p></div>
+      <div class="sit-card reveal"><div class="e">🏚️</div><h3>Casa sfitta</h3><p>Un immobile vuoto che costa ogni mese tasse e spese senza rendere nulla.</p></div>
+      <div class="sit-card reveal"><div class="e">🔑</div><h3>Inquilino moroso</h3><p>Acquistiamo anche immobili occupati e ci occupiamo noi della situazione.</p></div>
+      <div class="sit-card reveal"><div class="e">🧾</div><h3>Debiti o ipoteche</h3><p>Valutiamo con te come estinguere l'ipoteca direttamente al rogito.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- GARANZIA -->
+<section>
+  <div class="wrap">
+    <div class="guarantee-box reveal">
+      <svg class="seal" viewBox="0 0 200 200" aria-hidden="true">
+        <defs><path id="ring" d="M100 100 m-74 0 a74 74 0 1 1 148 0 a74 74 0 1 1 -148 0"/></defs>
+        <circle cx="100" cy="100" r="96" fill="#0b1f33"/>
+        <circle cx="100" cy="100" r="58" fill="none" stroke="#ff7a1a" stroke-width="3"/>
+        <text fill="#ffb020" font-family="Montserrat, sans-serif" font-size="14" font-weight="800" letter-spacing="3"><textPath href="#ring">GARANZIA · ZERO VINCOLI · ZERO COSTI ·</textPath></text>
+        <text x="100" y="98" text-anchor="middle" fill="#fff" font-family="Montserrat, sans-serif" font-size="34" font-weight="900">360°</text>
+        <text x="100" y="120" text-anchor="middle" fill="#ffb020" font-family="Montserrat, sans-serif" font-size="12" font-weight="800" letter-spacing="2">TRASPARENZA</text>
+      </svg>
+      <div>
+        <span class="eyebrow">La nostra garanzia</span>
+        <h2>Se l'offerta non ti convince, <span class="hl">non ti costa nulla</span></h2>
+        <p class="lead">Valutazione, sopralluogo e offerta sono sempre gratuiti. Non firmi nulla finché non sei convinto al 100%.</p>
+        <ul>
+          <li>Offerta scritta e trasparente, senza sorprese al rogito</li>
+          <li>Il notaio puoi sceglierlo tu</li>
+          <li>Paghiamo noi le spese di sopralluogo e verifica documentale</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="padding-top:0">
+  <div class="wrap center">
+    <span class="eyebrow reveal">Domande frequenti</span>
+    <h2 class="reveal">Hai dei dubbi? È normale.</h2>
+    <div class="faq-list" style="text-align:left">
+      <details class="reveal"><summary>Quanto mi costa ricevere la valutazione?</summary><p>Nulla. La valutazione, il sopralluogo e l'offerta scritta sono completamente gratuiti e non ti impegnano in alcun modo.</p></details>
+      <details class="reveal"><summary>Siete un'agenzia immobiliare?</summary><p>No, non facciamo da intermediari: siamo noi ad acquistare il tuo immobile. Per questo non paghi provvigioni e non devi aspettare che si presenti un compratore.</p></details>
+      <details class="reveal"><summary>Come stabilite il prezzo dell'offerta?</summary><p>Partiamo dai valori di mercato della zona, dalle condizioni dell'immobile e dagli eventuali lavori necessari. Ti spieghiamo voce per voce come siamo arrivati alla cifra.</p></details>
+      <details class="reveal"><summary>Comprate anche case da ristrutturare o con problemi di documenti?</summary><p>Sì. Valutiamo immobili in qualsiasi stato, anche con difformità urbanistiche, catastali o situazioni ereditarie da sistemare.</p></details>
+      <details class="reveal"><summary>Quando e come vengo pagato?</summary><p>L'intero importo concordato ti viene versato al rogito, davanti al notaio, con assegno circolare o bonifico. La data la scegli tu: anche entro 30 giorni.</p></details>
+      <details class="reveal"><summary>Devo lasciare subito la casa?</summary><p>No. Concordiamo insieme i tempi di consegna dell'immobile in base alle tue esigenze.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINALE -->
+<section class="final">
+  <div class="wrap">
+    <span class="eyebrow">Inizia ora</span>
+    <h2>Scopri in 72 ore quanto vale<br>davvero la tua casa per noi</h2>
+    <p class="lead">Compila il modulo: ti richiamiamo entro 24 ore. Nessun costo, nessun impegno.</p>
+    <a class="btn" href="#valutazione">Voglio la mia offerta gratuita
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    © <span id="y"></span> Immobiliare 360 · Tutti i diritti riservati
+    <nav><a href="/privacy">Privacy</a><a href="/cookie">Cookie</a><a href="/termini">Termini</a></nav>
+  </div>
+</footer>
+
+<div class="sticky" id="sticky"><a class="btn" href="#valutazione">Ricevi l'offerta gratuita</a></div>
+
+<script>
+// Dove inviare le richieste (es. webhook GoHighLevel). Finché è vuoto, i dati restano solo nella console.
+const LEAD_ENDPOINT = "";
+
+(function () {
+  const form = document.getElementById("leadForm");
+  const steps = [...form.querySelectorAll(".step")];
+  const bar = document.getElementById("bar");
+  const label = document.getElementById("stepLabel");
+  const prev = document.getElementById("prev");
+  const next = document.getElementById("next");
+  const err = document.getElementById("err");
+  let cur = 0;
+
+  function show(i) {
+    steps.forEach((s, k) => s.classList.toggle("on", k === i));
+    bar.style.width = ((i + 1) / steps.length * 100) + "%";
+    label.textContent = "Passo " + (i + 1) + " di " + steps.length;
+    prev.hidden = i === 0;
+    next.textContent = i === steps.length - 1 ? "Ricevi l'offerta" : "Continua";
+    err.textContent = "";
+  }
+
+  function valid(i) {
+    const v = (n) => (form.elements[n] && form.elements[n].value || "").trim();
+    if (i === 0 && !v("tipologia")) return "Seleziona il tipo di immobile.";
+    if (i === 1 && !v("condizioni")) return "Seleziona le condizioni dell'immobile.";
+    if (i === 2) {
+      if (!v("citta")) return "Inserisci la città.";
+      if (!v("mq")) return "Inserisci i metri quadri.";
+      if (!v("tempi")) return "Indica quando vuoi vendere.";
+    }
+    if (i === 3) {
+      if (v("nome").length < 3) return "Inserisci nome e cognome.";
+      if (v("telefono").replace(/\D/g, "").length < 8) return "Inserisci un numero di telefono valido.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("email"))) return "Inserisci un'email valida.";
+      if (!form.elements.privacy.checked) return "Serve il consenso privacy per inviarti l'offerta.";
+    }
+    return "";
+  }
+
+  // Sui primi due passi basta toccare un'opzione per andare avanti.
+  form.querySelectorAll('input[type="radio"]').forEach((r) => r.addEventListener("change", () => {
+    if (cur < 2) setTimeout(() => { cur++; show(cur); }, 220);
+  }));
+
+  prev.addEventListener("click", () => { if (cur > 0) { cur--; show(cur); } });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = valid(cur);
+    if (msg) { err.textContent = msg; return; }
+    if (cur < steps.length - 1) { cur++; show(cur); return; }
+
+    const data = Object.fromEntries(new FormData(form));
+    data.privacy = true;
+    data.fonte = "Landing Immobiliare 360";
+    data.pagina = location.href;
+    const qs = new URLSearchParams(location.search);
+    ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid"].forEach((k) => { if (qs.get(k)) data[k] = qs.get(k); });
+
+    next.disabled = true; next.textContent = "Invio…";
+    try {
+      if (LEAD_ENDPOINT) {
+        const r = await fetch(LEAD_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+        if (!r.ok) throw new Error(r.status);
+      } else {
+        console.log("Lead (nessun endpoint configurato):", data);
+      }
+      if (window.fbq) fbq("track", "Lead");
+      form.hidden = true;
+      document.getElementById("done").hidden = false;
+    } catch (_) {
+      err.textContent = "Invio non riuscito. Riprova tra qualche secondo.";
+      next.disabled = false; next.textContent = "Ricevi l'offerta";
+    }
+  });
+
+  show(0);
+})();
+
+document.getElementById("y").textContent = new Date().getFullYear();
+
+// Animazioni in entrata
+const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .12 });
+document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+// CTA fissa su mobile: compare dopo l'hero, sparisce quando il modulo è in vista
+(function () {
+  const s = document.getElementById("sticky");
+  const card = document.getElementById("valutazione");
+  let formVisible = true;
+  new IntersectionObserver(([e]) => { formVisible = e.isIntersecting; update(); }).observe(card);
+  function update() { s.classList.toggle("show", !formVisible && window.scrollY > 400); }
+  addEventListener("scroll", update, { passive: true });
+})();
+</script>
+</body>
+</html>
