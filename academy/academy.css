@@ -5,7 +5,7 @@
    Titoli: Archivo. Testi: Inter.
    ===================================================================== */
 :root{
-  --acc:#9b1c31; --on-acc:#fff;
+  --acc:#ff1a4f; --on-acc:#fff;
   --bg:#050605; --s1:#0d0e0d; --s2:#141614; --s3:#1c1e1c;
   --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
   --text:#f3f5f3; --muted:#9aa19b; --dim:#6a716b;
@@ -376,3 +376,36 @@ body.auth{background:radial-gradient(70% 50% at 50% 110%,color-mix(in srgb,var(-
 .c-bg.gen{background:radial-gradient(40% 60% at 10% 20%,color-mix(in srgb,var(--acc) 85%,transparent),transparent 70%),radial-gradient(30% 50% at 80% 0%,color-mix(in srgb,var(--acc) 45%,transparent),transparent 70%)}
 .player{box-shadow:0 30px 80px -40px color-mix(in srgb,var(--acc) 80%,transparent)}
 .card:hover{border-color:color-mix(in srgb,var(--acc) 70%,transparent);box-shadow:0 26px 60px -30px color-mix(in srgb,var(--acc) 85%,transparent)}
+
+/* =====================================================================
+   COLORI ELETTRICI: accento pieno e acceso, bagliori al neon.
+   ===================================================================== */
+:root{--acc-t:var(--acc);--neon:0 0 8px color-mix(in srgb,var(--acc) 90%,transparent),0 0 26px color-mix(in srgb,var(--acc) 70%,transparent),0 0 60px color-mix(in srgb,var(--acc) 45%,transparent)}
+:root{--glow:radial-gradient(120% 90% at 50% 125%,color-mix(in srgb,var(--acc) 55%,transparent),transparent 58%)}
+.cov-pill{color:#fff;-webkit-text-stroke:0;text-shadow:var(--neon);border-color:color-mix(in srgb,var(--acc) 70%,rgba(255,255,255,.3));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px color-mix(in srgb,var(--acc) 40%,transparent),0 0 34px -4px color-mix(in srgb,var(--acc) 75%,transparent)}
+.cov-art{background:radial-gradient(55% 75% at 85% 10%,color-mix(in srgb,var(--acc) 85%,transparent),transparent 68%),radial-gradient(45% 60% at 0% 110%,color-mix(in srgb,var(--acc) 55%,transparent),transparent 70%),conic-gradient(from var(--seed) at 20% 110%,#070707,color-mix(in srgb,var(--acc) 30%,#070707),#070707 40%),repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 2px,transparent 2px 26px)}
+.cov-art b{-webkit-text-stroke:2px color-mix(in srgb,var(--acc) 85%,transparent);filter:drop-shadow(0 0 12px color-mix(in srgb,var(--acc) 60%,transparent))}
+.cov-shade{background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.2) 55%,rgba(0,0,0,.7))}
+.btn.pri{box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 60%,#fff 10%),0 0 28px -2px color-mix(in srgb,var(--acc) 85%,transparent)}
+.btn.pri:hover{box-shadow:0 0 0 1px #fff3,0 0 44px 2px color-mix(in srgb,var(--acc) 90%,transparent)}
+.btn.out{border-color:var(--acc);text-shadow:0 0 14px color-mix(in srgb,var(--acc) 70%,transparent);box-shadow:inset 0 0 18px -8px var(--acc),0 0 18px -8px var(--acc)}
+.bar i{background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 80%,#fff 0%),var(--acc));box-shadow:0 0 12px var(--acc)}
+.card{border-color:color-mix(in srgb,var(--acc) 22%,transparent)}
+.card:hover{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 30px 70px -30px var(--acc)}
+.hero-card{border-color:color-mix(in srgb,var(--acc) 30%,transparent)}
+.ha-glow{background:radial-gradient(circle,color-mix(in srgb,var(--acc) 85%,transparent),transparent 62%)}
+.hero-art img{filter:drop-shadow(0 20px 40px rgba(0,0,0,.6)) drop-shadow(0 0 40px var(--acc))}
+.lg-logo{filter:drop-shadow(0 0 30px var(--acc))}
+.lg-glow{background:radial-gradient(circle,color-mix(in srgb,var(--acc) 55%,transparent),transparent 60%)}
+body.auth{background:radial-gradient(70% 50% at 50% 115%,color-mix(in srgb,var(--acc) 55%,transparent),transparent 70%),var(--bg)}
+.lg-card{border-color:color-mix(in srgb,var(--acc) 35%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 80px -30px var(--acc),0 40px 90px -40px #000}
+.c-bg.gen{background:radial-gradient(40% 60% at 10% 20%,var(--acc),transparent 70%),radial-gradient(30% 50% at 85% 0%,color-mix(in srgb,var(--acc) 70%,#ff8a00 0%),transparent 70%)}
+.th.gen{background:radial-gradient(90% 70% at 50% 15%,color-mix(in srgb,var(--acc) 70%,#120607),#080606 78%);border-color:color-mix(in srgb,var(--acc) 30%,transparent)}
+.th.gen span{color:#fff;text-shadow:var(--neon);border-color:color-mix(in srgb,var(--acc) 60%,transparent)}
+.rs-play,.ll.done .ll-n{box-shadow:0 0 24px -2px var(--acc)}
+.les.done .les-ck{filter:drop-shadow(0 0 8px var(--acc))}
+.l-k{text-shadow:0 0 14px color-mix(in srgb,var(--acc) 70%,transparent)}
+.player{border-color:color-mix(in srgb,var(--acc) 30%,transparent);box-shadow:0 0 60px -20px var(--acc)}
+.side-card{border-color:color-mix(in srgb,var(--acc) 25%,transparent)}
+.top{border-bottom-color:color-mix(in srgb,var(--acc) 25%,transparent)}
+.me.on .av,.me:hover .av{box-shadow:0 0 16px -2px var(--acc)}

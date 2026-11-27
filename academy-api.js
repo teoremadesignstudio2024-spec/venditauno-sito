@@ -14,7 +14,8 @@ const SESSION_DAYS = 60;
 const FALLBACK_SECRET = "vendita-uno-academy-secret-cambiami";
 const PBKDF2_ITER = 100000;
 const SETUP_HASH = "e4d73f002659d7d2b3c49de49769098116e2bf35e6beddb154044738b568d53d";
-const CONTENT_V = 1;
+const CONTENT_V = 3;
+const ACCENT = "#ff1a4f"; // cremisi elettrico
 
 const enc = new TextEncoder();
 const toHex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -79,12 +80,12 @@ function seedContent() {
   const C = (n, id, title, desc, lessons = []) => ({ id, n, title, desc, cover: "", modules: [{ id: `${id}-m1`, title: "Lezioni", lessons: lessons.map(([t, v], i) => ({ id: `${id}-l${i + 1}`, title: t, video: v, desc: "", pdf: "", thumb: "" })) }] });
   return {
     v: CONTENT_V,
-    settings: { accent: "#9b1c31", heroTitle: "La tua libreria corsi", heroText: "Qui trovi i pilastri della formazione per costruire un'agenzia immobiliare che vende: dal piano alla squadra, passo dopo passo." },
+    settings: { accent: ACCENT, heroTitle: "La tua libreria corsi", heroText: "Qui trovi i pilastri della formazione per costruire un'agenzia immobiliare che vende: dal piano alla squadra, passo dopo passo." },
     courses: [
-      C(1, "business-planning", "Business Planning", "Il piano della tua agenzia: dove vuoi arrivare, con quali numeri e in quanto tempo. Dall'idea a un'attività che cresce e batte la concorrenza.", [["Le basi di un'agenzia che vende", loom("695e304d0b35481dbd5d6652311bf9bd")]]),
+      C(1, "business-planning", "Business Planning", "Il piano della tua agenzia: dove vuoi arrivare, con quali numeri e in quanto tempo. Dall'idea a un'attività che cresce e batte la concorrenza."),
       C(2, "marketing", "Marketing", "Fare marketing non è magia: è un sistema per farti trovare, attirare proprietari e trasformarli in incarichi."),
       C(3, "vendita", "Vendita", "Le trattative non si improvvisano. Il metodo per acquisire, trattare e chiudere senza svendere il tuo lavoro."),
-      C(4, "branding", "Branding", "Perché un proprietario dovrebbe scegliere te e non l'agenzia accanto? Costruisci un'identità che si riconosce e si ricorda.", [["Cos'è una USP e come crearla", loom("f0948ac5854a4c7491e7ff4c08d0f885")]]),
+      C(4, "branding", "Branding", "Perché un proprietario dovrebbe scegliere te e non l'agenzia accanto? Costruisci un'identità che si riconosce e si ricorda."),
       C(5, "finance", "Finance", "Margini, costi, provvigioni e cassa: i numeri che decidono se la tua agenzia guadagna davvero."),
       C(6, "organizzazione", "Organizzazione", "Procedure, strumenti e agenda per un'agenzia che gira senza che tu debba rincorrere tutto."),
       C(7, "mindset", "Mindset", "Fare impresa è stressante come poche altre cose. Le abitudini e il modo di pensare per reggere e crescere."),
@@ -97,6 +98,18 @@ async function getContent(kv) {
   let c = await getJSON(kv, "ac:content");
   if (!c) { c = seedContent(); await putJSON(kv, "ac:content", c); }
   c.settings = { ...seedContent().settings, ...(c.settings || {}) };
+  if ((c.v || 1) < 2) {
+    // Il primo bordeaux era troppo spento: passa al cremisi elettrico (solo se non era stato cambiato).
+    if (c.settings.accent === "#9b1c31") c.settings.accent = ACCENT;
+    c.v = 2;
+    await putJSON(kv, "ac:content", c);
+  }
+  if (c.v < 3) {
+    // Tolte tutte le lezioni (i corsi restano): le nuove arrivano dalla cartella dei video.
+    for (const co of c.courses) co.modules = [{ id: `${co.id}-m1`, title: "Lezioni", lessons: [] }];
+    c.v = 3;
+    await putJSON(kv, "ac:content", c);
+  }
   return c;
 }
 const isColor = (v) => /^#[0-9a-f]{6}$/i.test(v || "");

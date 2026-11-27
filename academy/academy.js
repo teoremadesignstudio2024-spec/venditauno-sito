@@ -67,13 +67,15 @@ function resizeImage(file, max = 1600, quality = 0.84) {
 
 // Colore di accento: testo bianco sui colori scuri (bordeaux), scuro su quelli chiari.
 function setAccent(c) {
-  const v = /^#[0-9a-f]{6}$/i.test(c || "") ? c : "#9b1c31";
+  const v = /^#[0-9a-f]{6}$/i.test(c || "") ? c : "#ff1a4f";
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
   const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
   document.documentElement.style.setProperty("--acc", v);
   document.documentElement.style.setProperty("--on-acc", lum > 0.35 ? "#0a0a0a" : "#ffffff");
+  // Testi in colore: il colore pieno se è acceso, una tinta più chiara se è scuro.
+  document.documentElement.style.setProperty("--acc-t", lum < 0.1 ? `color-mix(in srgb, ${v} 55%, #fff)` : v);
 }
-setAccent("#9b1c31");
+setAccent("#ff1a4f");
 
 // ---------- dati derivati ----------
 const courses = () => S.content.courses;
@@ -595,7 +597,7 @@ function admCourses() {
 }
 function admLook() {
   const s = S.content.settings;
-  const swatches = ["#9b1c31", "#7a1426", "#b8323f", "#c9a24a", "#22e04a", "#2f6bff", "#ffffff"];
+  const swatches = ["#ff1a4f", "#ff0a78", "#ff3b1f", "#b026ff", "#2979ff", "#00e5ff", "#00f060", "#ffd400"];
   $("#adm").innerHTML = `<form class="panel" id="lk">
     <h2>Aspetto della libreria</h2>
     ${field("Titolo in alto", "heroTitle", s.heroTitle)}
