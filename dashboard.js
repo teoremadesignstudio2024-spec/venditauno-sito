@@ -5,6 +5,7 @@
 // Il KV ACADEMY_PROGRESS serve solo per le sessioni di accesso.
 
 export const DASH_PATH = "/dashboardvenditatop";
+export const CLI_PATH = "/dashboardclienti";
 export const TV_PATH = "/tv";
 
 // Password di accesso: salvata solo come hash PBKDF2. Per cambiarla chiedi a Claude un nuovo hash.
@@ -199,7 +200,7 @@ async function readGHL(env) {
     const w = { id: String(o.id), name: who(o), amount: num(Number(o.monetaryValue) || 0), ts: Date.parse(at) || 0, day: ROME_DAY.format(new Date(at)),
       seller: (users[o.assignedTo] || "").slice(0, 30), upsell: isUpsell(o), leadMonth: ROME_MONTH(o.createdAt) };
     (wonByDay[w.day] = wonByDay[w.day] || []).push(w);
-    if (!w.upsell) closedClients.push({ oppId: w.id, nome: w.name, agenzia: txt(o.contact && o.contact.companyName, 80), telefono: txt(o.contact && o.contact.phone, 30), day: w.day, amount: w.amount, seller: w.seller });
+    if (!w.upsell) closedClients.push({ oppId: w.id, contactId: String(o.contactId || (o.contact && o.contact.id) || ""), nome: w.name, agenzia: txt(o.contact && o.contact.companyName, 80), telefono: txt(o.contact && o.contact.phone, 30), day: w.day, amount: w.amount, seller: w.seller });
   }
   for (const d in wonByDay) wonByDay[d].sort((a, b) => a.ts - b.ts);
 
@@ -450,7 +451,7 @@ const GLASS_CSS = `
   .well { background: rgba(0,0,0,0.16); border-radius: var(--r-md); box-shadow: inset 0 1px 1px rgba(0,0,0,0.25), inset 0 -1px 0 rgba(255,255,255,0.06); }
 `;
 
-function loginPage(error, tv = false) {
+function loginPage(error, tv = false, next = DASH_PATH) {
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -473,7 +474,7 @@ ${GLASS_CSS}
 </head>
 <body>
 <div class="napo" aria-hidden="true"></div>
-<form class="glass" method="POST" action="${DASH_PATH}/login${tv ? "?tv=1" : ""}">
+<form class="glass" method="POST" action="${DASH_PATH}/login${next === CLI_PATH ? "?next=clienti" : ""}">
   <img class="logo" src="/assets/img/logo.png" alt="Vendita Uno">
   <h1>Conquistiamo.</h1>
   ${error ? `<p class="err">${error}</p>` : ""}
@@ -706,169 +707,7 @@ ${GLASS_CSS}
     .cli-open { padding: 4px 4px 4px 9px !important; }
   }
 
-  /* Finestrella importo upsell */
-  .ups-ov { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(10,9,7,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-  .ups-box { width: min(420px, calc(100vw - 32px)); max-width: 100%; padding: 24px; border-radius: 26px; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)), rgba(30,27,22,0.92); }
-  .ups-box h3 { font-family: var(--serif); font-weight: 400; font-size: 1.9rem; color: var(--bone); margin: 0; }
-  .ups-box .meta { color: var(--bone-2); margin-top: 6px; }
-  .ups-amt { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 6px 16px; border-radius: 16px; background: rgba(0,0,0,0.28); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
-  .ups-amt span { font-size: 1.6rem; color: var(--bone-2); }
-  .ups-amt input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--bone); font: inherit; font-size: 2rem; font-weight: 600; padding: 6px 0; outline: none; color-scheme: dark; }
-  .ups-amt:focus-within { box-shadow: inset 0 0 0 2px rgba(236,230,218,0.6); }
-  .ups-note { color: var(--bone-3); font-size: 0.85rem; margin: 8px 0 16px; }
-
-  /* Clienti attivi */
-  [hidden] { display: none !important; }
-  .cli-open { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; padding: 9px 10px 9px 18px; border: 0; border-radius: 999px; color: var(--bone); font: inherit; font-weight: 600; cursor: pointer; }
-  .cli-open b { min-width: 28px; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,0.12); text-align: center; }
-  .cli-open.alert-on b { background: var(--bad); color: #1a0e0c; }
-  .cli-open:focus-visible, .cli-panel button:focus-visible, .todo button:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
-  .top .cli-open + .when { margin-left: 0; }
-  body.tv .cli-open, body.tv .todo { display: none !important; }
-
-  .todo { grid-column: 1 / -1; padding: 18px 20px; border-radius: 28px; }
-  .todo h3 { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.6rem; color: var(--bone); margin: 0 0 10px; }
-  .todo-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 12px; border-radius: var(--r-md); }
-  .todo-row + .todo-row { margin-top: 6px; }
-  .todo-row .dot { width: 12px; height: 12px; border-radius: 50%; }
-  .todo-row.scaduto { background: rgba(255,138,128,0.12); } .todo-row.scaduto .dot { background: var(--bad); box-shadow: 0 0 0 4px rgba(255,138,128,0.2); }
-  .todo-row.upsell { background: rgba(185,131,24,0.18); } .todo-row.upsell .dot { background: #f2c14e; box-shadow: 0 0 0 4px rgba(242,193,78,0.22); }
-  .todo-row.chiama { background: rgba(255,255,255,0.05); } .todo-row.chiama .dot { background: #f2a64e; }
-  .todo-row b { color: var(--bone); font-weight: 600; }
-  .todo-row .t { color: var(--bone-2); }
-  .todo-row .acts { display: flex; gap: 8px; }
-  .btn-pri, .btn-sec { border: 0; border-radius: 999px; padding: 9px 16px; font: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
-  .btn-pri { background: var(--bone); color: #1c1a16; }
-  .btn-sec { background: rgba(255,255,255,0.1); color: var(--bone); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
-  .btn-pri:hover { filter: brightness(1.08); } .btn-sec:hover { background: rgba(255,255,255,0.16); }
-
-  .cli-ov { position: fixed; inset: 0; z-index: 30; background: rgba(10,9,7,0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); display: flex; justify-content: flex-end; }
-  .cli-panel { width: min(1000px, 100%); height: 100%; overflow-y: auto; border-radius: 30px 0 0 30px; padding: 26px 26px 40px; background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 40%), rgba(26,23,19,0.86); }
-  .cli-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-  .cli-head h2 { font-family: var(--serif); font-weight: 400; font-size: 2.2rem; line-height: 1; color: var(--bone); margin: 0; }
-  .cli-head .meta { color: var(--bone-3); margin-top: 6px; }
-  .cli-head-act { display: flex; gap: 10px; align-items: center; }
-  .cli-x { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.1); color: var(--bone); cursor: pointer; font-size: 1rem; }
-  .cli-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; padding: 18px; margin-top: 20px; }
-  .cli-form .f-wide { grid-column: 1 / -1; }
-  .cli-form-title { grid-column: 1 / -1; font-weight: 600; color: var(--bone); }
-  .cli-form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--bone-2); }
-  .cli-form input { font: inherit; font-size: 0.95rem; color: var(--bone); background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 10px 12px; color-scheme: dark; }
-  .cli-form input:focus { outline: 2px solid rgba(236,230,218,0.6); outline-offset: 0; }
-  .f-end { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--bone-2); }
-  .f-end b { font-weight: 600; color: var(--bone); font-size: 0.95rem; padding: 10px 0; }
-  .cli-form-act { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
-  .cli-err { margin-right: auto; color: var(--bad); font-size: 0.88rem; }
-  .cli-tabs { display: inline-flex; margin-top: 22px; }
-  .cli-list { display: grid; gap: 10px; margin-top: 14px; }
-  .cli-empty { color: var(--bone-3); padding: 24px 4px; }
-  .cli { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr) auto minmax(0, 0.9fr); gap: 18px; align-items: center; padding: 16px 18px; border-radius: 20px; background: rgba(255,255,255,0.045); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
-  .cli.upsell { box-shadow: inset 0 0 0 1px rgba(242,193,78,0.55); background: rgba(185,131,24,0.12); }
-  .cli.scaduto { box-shadow: inset 0 0 0 1px rgba(255,138,128,0.5); }
-  .cli.focus { animation: cliFlash 1.6s ease-out; }
-  @keyframes cliFlash { 0%, 30% { background: rgba(236,230,218,0.18); } }
-  .cli-name b { display: block; color: var(--bone); font-weight: 600; font-size: 1.05rem; }
-  .cli-name span { display: block; color: var(--bone-3); font-size: 0.85rem; margin-top: 2px; overflow-wrap: anywhere; }
-  .cli-dates { font-size: 0.85rem; color: var(--bone-2); }
-  .cli-dates b { color: var(--bone); font-weight: 600; }
-  .cli-dates .line { display: flex; justify-content: space-between; gap: 8px; }
-  .cli-bar { position: relative; height: 6px; border-radius: 99px; background: rgba(255,255,255,0.1); margin-top: 8px; overflow: hidden; }
-  .cli-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold), #f2c14e); }
-  .cli.scaduto .cli-bar i { background: var(--bad); }
-  .cli-inc { display: flex; align-items: center; gap: 10px; }
-  .cli-inc button { width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; font: inherit; font-size: 1.2rem; line-height: 1; color: var(--bone); background: rgba(255,255,255,0.1); }
-  .cli-inc button.plus { background: var(--bone); color: #1c1a16; font-weight: 700; }
-  .cli-inc .n { min-width: 2.2ch; text-align: center; font-size: 1.7rem; font-weight: 600; color: var(--bone); }
-  .cli-inc .lab { display: block; font-size: 0.72rem; color: var(--bone-3); text-align: center; margin-top: -2px; }
-  .cli-pips { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
-  .cli-pips i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
-  .cli-pips i.on { background: #f2c14e; }
-  .cli-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-  .st { padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; background: rgba(255,255,255,0.08); color: var(--bone-2); }
-  .st.upsell { background: rgba(242,193,78,0.2); color: #f6d27a; }
-  .st.scaduto { background: rgba(255,138,128,0.18); color: #ffb2aa; }
-  .st.chiama { background: rgba(242,166,78,0.18); color: #f7c48a; }
-  .st.attesa { background: rgba(160,190,255,0.14); color: #c9dbff; }
-  .cli-dates .wait { color: #c9dbff; margin-top: 2px; }
-  .ads-go { margin-top: 8px; border: 0; cursor: pointer; font: inherit; font-size: 0.82rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; color: #10192e; background: #c9dbff; }
-  .ads-go:hover { background: #dce7ff; }
-  .todo-row.ads .dot { background: #9fbfff; box-shadow: 0 0 0 4px rgba(160,190,255,0.18); }
-  .ups-amt input[type=date] { font-size: 1.4rem; }
-  .st.chiamato { background: rgba(255,255,255,0.1); color: var(--bone); }
-  .st.upsell-fatto { background: rgba(111,220,154,0.16); color: #9fe8bb; }
-  .cli-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .cli-acts button { border: 0; background: transparent; color: var(--bone-3); font: inherit; font-size: 0.82rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; }
-  .cli-acts button:hover { color: var(--bone); background: rgba(255,255,255,0.08); }
-  .cli-name .src { color: var(--bone-3); font-size: 0.78rem; }
-  .cli-name .paid { color: var(--bone-2); font-size: 0.85rem; margin-top: 4px; }
-  .cli-name .paid b { display: inline; font-size: inherit; color: #f6d27a; font-weight: 600; }
-  .cli-acts button.up { color: #1c1a16; background: #f2c14e; font-weight: 600; padding: 5px 11px; border-radius: 999px; }
-  .cli-acts button.up:hover { background: #f6d27a; color: #1c1a16; }
-  .cli-panel { overflow-x: hidden; }
-  .cli-form label, .cli-form input { min-width: 0; }
-  .cli-form input { width: 100%; }
-  .cli-note { grid-column: 1 / -1; font-size: 0.85rem; color: var(--bone-3); margin-top: -6px; }
-  @media (max-width: 760px) {
-    .cli-panel { border-radius: 0; padding: 18px 14px 40px; }
-    .cli-form { grid-template-columns: 1fr 1fr; }
-    .cli { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
-    .cli-dates { grid-column: 1 / -1; order: 3; }
-    .cli-side { grid-column: 1 / -1; order: 4; flex-direction: row; justify-content: space-between; align-items: center; }
-    .todo-row { grid-template-columns: 12px minmax(0, 1fr); }
-    .todo-row .acts { grid-column: 2; }
-    .cli-open { padding: 7px 8px 7px 14px; font-size: 0.85rem; }
-  }
-  @media (max-width: 560px) {
-    .top { flex-wrap: nowrap; gap: 8px; }
-    .top > img { height: 26px; width: auto; flex: none; }
-    .cli-open { gap: 6px; padding: 5px 5px 5px 12px; font-size: 0.8rem; }
-    .cli-open .lg { display: none; }
-    .cli-open b { min-width: 24px; padding: 3px 7px; }
-    .when .clock { font-size: 0.85rem; padding: 6px 10px; }
-    .todo { padding: 14px 12px; border-radius: 22px; }
-    .todo h3 { font-size: 1.3rem; margin-bottom: 8px; }
-    .todo-row { gap: 4px 10px; padding: 10px; font-size: 0.86rem; line-height: 1.35; }
-    .todo-row .dot { width: 9px; height: 9px; align-self: start; margin-top: 5px; }
-    .todo-row .acts { margin-top: 6px; }
-    .todo-row .btn-pri, .todo-row .btn-sec { padding: 6px 12px; font-size: 0.8rem; }
-    .cli-head h2 { font-size: 1.8rem; }
-    .cli-head .meta { font-size: 0.82rem; }
-    .cli-head-act { width: 100%; justify-content: space-between; }
-    .cli-form { grid-template-columns: minmax(0, 1fr); padding: 14px; }
-    .cli-form input { font-size: 16px; }
-    .cli { padding: 14px; border-radius: 18px; }
-    .cli-name b { font-size: 1rem; }
-    .tiles { align-items: start; }
-    .tile .sub { margin-top: 4px; }
-    .cli { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; padding: 12px; }
-    .cli-name b { font-size: 0.98rem; }
-    .cli-name span { font-size: 0.78rem; margin-top: 1px; }
-    .cli-name .paid { font-size: 0.82rem; margin-top: 2px; }
-    .cli-name .src { display: none; }
-    .cli-inc { gap: 6px; }
-    .cli-inc button { width: 30px; height: 30px; font-size: 1.05rem; }
-    .cli-inc .n { font-size: 1.25rem; min-width: 1.6ch; }
-    .cli-inc .lab { display: none; }
-    .cli-pips { margin-top: 2px; }
-    .cli-dates { font-size: 0.78rem; }
-    .cli-dates .line + .line { margin-top: 1px; }
-    .cli-bar { height: 4px; margin-top: 6px; }
-    .cli-side { gap: 6px; }
-    .cli-side .st { font-size: 0.72rem; padding: 3px 8px; }
-    .cli-acts { gap: 2px; flex-wrap: nowrap; }
-    .cli-acts button { font-size: 0.76rem; padding: 4px 5px; }
-    .cli-acts button.up { padding: 5px 10px; }
-    .cli-note { font-size: 0.78rem; margin-top: 0; }
-  }
-
-  .toast { position: fixed; left: 50%; top: 44%; z-index: 20; transform: translate(-50%, -50%) scale(0.94); opacity: 0; pointer-events: none; text-align: center; padding: 28px 48px 30px; border-radius: 40px; visibility: hidden; transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s .45s; }
-  .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s; }
-  .toast .k { font-family: var(--serif); font-style: italic; font-size: clamp(1.4rem, 2.2vw, 2.2rem); color: var(--bone-2); }
-  .toast .n { font-size: clamp(2rem, 4.4vw, 4.4rem); font-weight: 600; letter-spacing: -0.035em; margin-top: 4px; }
-  .toast .a { font-size: clamp(1.6rem, 3.2vw, 3.2rem); font-weight: 600; color: var(--good); letter-spacing: -0.02em; }
-  @media (prefers-reduced-motion: reduce) { .toast { transition: opacity .2s; } .cl.new { animation: none; } }
-
-
+${CLI_CSS}
   /* TV: tutto in uno schermo */
   @media (min-width: 1181px) {
     body.tv { height: 100vh; overflow: hidden; }
@@ -934,12 +773,11 @@ ${GLASS_CSS}
   <header class="top">
     <img src="/assets/img/logo.png" alt="Vendita Uno">
     <button type="button" class="cli-open pipe-open glass" id="pipeOpen"><span>Pipeline</span></button>
-    <button type="button" class="cli-open glass" id="cliOpen"><span>Clienti<span class="lg"> attivi</span></span> <b class="num" id="cliCount">0</b></button>
+    <a class="cli-open glass" id="cliOpen" href="${CLI_PATH}"><span>Clienti<span class="lg"> attivi</span></span> <b class="num" id="cliCount">·</b></a>
     <div class="when glass"><span class="alert" id="alert">GoHighLevel non raggiungibile</span><span class="d" id="date"></span><span class="clock num well" id="clock"></span></div>
   </header>
 
   <section class="tiles" aria-label="Numeri principali">
-    <div class="todo glass" id="todo" hidden></div>
     <div class="tile glass hero">
       <div>
         <h3>Incassato oggi</h3>
@@ -997,32 +835,6 @@ ${GLASS_CSS}
   </section>
 
 </div>
-<div class="cli-ov" id="cliPanel" hidden>
-  <div class="cli-panel glass" role="dialog" aria-modal="true" aria-labelledby="cliTitle">
-    <div class="cli-head">
-      <div><h2 id="cliTitle">Clienti attivi</h2><div class="meta">Chi chiudete su GoHighLevel entra qui da solo. Segna gli incarichi: al terzo ti ricordo di valutare l'upsell.</div></div>
-      <div class="cli-head-act">
-        <button type="button" class="btn-pri" id="cliAdd">+ Aggiungi cliente</button>
-        <button type="button" class="cli-x" id="cliClose" aria-label="Chiudi">✕</button>
-      </div>
-    </div>
-    <form class="cli-form well" id="cliForm" hidden autocomplete="off">
-      <div class="cli-form-title" id="cliFormTitle">Nuovo cliente</div>
-      <label class="f-wide">Nome e cognome<input name="nome" required maxlength="80" placeholder="Es. Mario Rossi"></label>
-      <label>Agenzia<input name="agenzia" maxlength="80" placeholder="Es. Immobiliare Rossi"></label>
-      <label>Zona<input name="zona" maxlength="80" placeholder="Es. Bergamo centro"></label>
-      <label>Telefono<input name="telefono" maxlength="30" inputmode="tel" placeholder="Es. 333 1234567"></label>
-      <label>Ha pagato (€)<input name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Es. 2500"></label>
-      <label>Chiuso il<input name="start" type="date" required></label>
-      <label>Pubblicità partita il<input name="adsStart" type="date"></label>
-      <div class="f-end"><span>Scade il</span><b id="cliEndShow">quando parte la pubblicità</b></div>
-      <label class="f-wide">Note<input name="note" maxlength="500" placeholder="Facoltativo"></label>
-      <div class="cli-form-act f-wide"><span class="cli-err" id="cliErr"></span><button type="button" class="btn-sec" id="cliCancel">Annulla</button><button type="submit" class="btn-pri" id="cliSave">Salva</button></div>
-    </form>
-    <div class="seg well cli-tabs" role="group" aria-label="Quali clienti vedere"><button type="button" class="on" data-tab="attivi">Attivi</button><button type="button" data-tab="archiviati">Archiviati</button></div>
-    <div class="cli-list" id="cliList"></div>
-  </div>
-</div>
 <div class="pb-ov" id="pbPanel" hidden>
   <div class="pb-panel glass" role="dialog" aria-modal="true" aria-labelledby="pbTitle">
     <div class="pb-head">
@@ -1044,24 +856,6 @@ ${GLASS_CSS}
     <div class="pb-move" id="pbcMove"></div>
     <div class="cli-form-act"><span class="cli-err" id="pbcErr"></span><button type="button" class="btn-sec" id="pbcClose">Chiudi</button></div>
   </div>
-</div>
-<div class="ups-ov" id="adsDlg" hidden>
-  <form class="ups-box glass" id="adsForm" role="dialog" aria-modal="true" aria-labelledby="adsTitle">
-    <h3 id="adsTitle">Pubblicità partita</h3>
-    <p class="meta" id="adsText"></p>
-    <label class="ups-amt"><input name="date" type="date" required></label>
-    <p class="ups-note">Da questo giorno partono i 30 giorni: scadenza e promemoria li calcolo io.</p>
-    <div class="cli-form-act"><span class="cli-err" id="adsErr"></span><button type="button" class="btn-sec" id="adsCancel">Annulla</button><button type="submit" class="btn-pri">Salva</button></div>
-  </form>
-</div>
-<div class="ups-ov" id="upsDlg" hidden>
-  <form class="ups-box glass" id="upsForm" role="dialog" aria-modal="true" aria-labelledby="upsTitle">
-    <h3 id="upsTitle">Chiudi upsell</h3>
-    <p class="meta" id="upsText"></p>
-    <label class="ups-amt"><span>€</span><input name="amount" type="number" inputmode="decimal" min="0" step="0.01" required placeholder="0"></label>
-    <p class="ups-note">Va nell'incassato di oggi. Su GoHighLevel il cliente passa in CHIUSO 2.</p>
-    <div class="cli-form-act"><span class="cli-err" id="upsErr"></span><button type="button" class="btn-sec" id="upsCancel">Annulla</button><button type="submit" class="btn-pri">Salva incasso</button></div>
-  </form>
 </div>
 <div class="toast glass" id="toast" role="status" aria-live="polite"><div class="k">Nuovo cliente</div><div class="n" id="toastName"></div><div class="a num" id="toastAmt"></div></div>
 
@@ -1514,183 +1308,20 @@ if (!tvMode) {
   document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (!$('pbCard').hidden) closeCard(); else if (!$('pbPanel').hidden) closeBoard(); }, true);
 }
 
-// ---- Clienti attivi (solo PC e telefono, non sulla TV) ----
-const CAPI = API + '/clienti';
-let cli = { clienti: [], todos: [], today: '' }, cliTab = 'attivi', cliEdit = '', cliEndTouched = false, cliBusy = false;
-function dShort(iso) { return iso ? cap(new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })) : ''; }
-function addD(iso, n) { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+// ---- Clienti attivi: stanno nella loro pagina; qui solo il numero e il pallino rosso se c'è da fare ----
 function giorni(n) { return n === 1 ? '1 giorno' : n + ' giorni'; }
-function leftText(c) {
-  if (c.left > 1) return 'tra ' + giorni(c.left);
-  if (c.left === 1) return 'domani';
-  if (c.left === 0) return 'oggi';
-  return 'da ' + giorni(-c.left);
-}
-function todoText(t) {
-  if (t.kind === 'upsell') return '<b>' + esc(t.nome) + '</b> <span class="t">ha preso ' + t.count + ' incarichi: valuta l’upsell.</span>';
-  if (t.kind === 'scaduto') return '<b>' + esc(t.nome) + '</b> <span class="t">è arrivato alla scadenza ' + (t.left === 0 ? 'oggi' : 'da ' + giorni(-t.left)) + ', con ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo e senti com’è andata.</span>';
-  if (t.kind === 'ads') return '<b>' + esc(t.nome) + '</b> <span class="t">è chiuso da ' + giorni(t.since) + ' e la pubblicità non è ancora partita.</span>';
-  return '<b>' + esc(t.nome) + '</b> <span class="t">scade ' + (t.left === 1 ? 'domani' : 'tra ' + giorni(t.left)) + ', ha ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo adesso.</span>';
-}
-function renderTodo() {
-  const n = cli.clienti.filter((c) => !c.archived).length;
-  setText('cliCount', String(n));
-  $('cliOpen').classList.toggle('alert-on', cli.todos.length > 0);
-  if (!cli.todos.length) { $('todo').hidden = true; setHTML('todo', ''); return; }
-  $('todo').hidden = false;
-  setHTML('todo', '<h3>Da fare adesso</h3>' + cli.todos.map((t) =>
-    '<div class="todo-row ' + t.kind + '"><span class="dot"></span><div>' + todoText(t) + '</div><div class="acts">' +
-    '<button type="button" class="btn-sec" data-open="' + esc(t.id) + '">Apri</button>' +
-    (t.kind === 'upsell' ? '<button type="button" class="btn-sec" data-skip="' + esc(t.id) + '">Non ora</button>' : '') +
-    (t.kind === 'ads' ? '<button type="button" class="btn-pri" data-ads="' + esc(t.id) + '">Ads partite</button>' :
-    '<button type="button" class="btn-pri" data-done="' + (t.kind === 'upsell' ? 'upsell' : 'call') + '" data-id="' + esc(t.id) + '">' + (t.kind === 'upsell' ? 'Chiudi upsell' : 'Chiamato') + '</button>') +
-    '</div></div>').join(''));
-}
-const ST_LABEL = { attesa: 'Aspetta le ads', upsell: 'Valuta upsell', scaduto: 'Scaduto, chiamalo', chiama: 'Scade a breve', chiamato: 'Già chiamato', 'upsell-fatto': 'Upsell fatto', attivo: 'In corso', archiviato: 'Archiviato' };
-function cliRow(c) {
-  const pips = [0, 1, 2].map((i) => '<i' + (c.count > i ? ' class="on"' : '') + '></i>').join('');
-  const sub = [c.agenzia, c.zona, c.telefono].filter(Boolean).map(esc).join(' · ');
-  const src = c.source === 'ghl' ? '<span class="src">Chiuso su GoHighLevel' + (c.seller ? ' da ' + esc(c.seller) : '') + '</span>' : '';
-  const paid = '<span class="paid">Ha pagato <b>' + money0(c.paid || 0) + '</b>' + (c.upsellTot ? ' (di cui upsell ' + money0(c.upsellTot) + ')' : '') + '</span>';
-  const acts = c.archived
-    ? '<button type="button" data-act="unarchive">Ripristina</button><button type="button" data-act="delete">Elimina</button>'
-    : '<button type="button" class="up" data-act="upsell">Chiudi upsell</button>' +
-      '<button type="button" data-act="edit">Modifica</button>' +
-      ((c.upsells || []).length ? '<button type="button" data-act="unupsell">Annulla ultimo upsell</button>' : '') +
-      '<button type="button" data-act="archive">Archivia</button>';
-  return '<div class="cli ' + c.status + '" data-id="' + esc(c.id) + '">' +
-    '<div class="cli-name"><b>' + esc(c.nome) + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + paid + src + '</div>' +
-    (c.adsStart
-      ? '<div class="cli-dates"><div class="line"><span>Ads dal <b>' + dShort(c.adsStart) + '</b></span><span>' + (c.day >= 0 ? 'giorno ' + (c.day + 1) : 'partono ' + dShort(c.adsStart)) + '</span></div>' +
-        '<div class="line"><span>Scade <b>' + dShort(c.end) + '</b></span><span>' + leftText(c) + '</span></div>' +
-        '<div class="cli-bar"><i style="width:' + Math.round(c.progress * 100) + '%"></i></div></div>'
-      : '<div class="cli-dates"><div class="line"><span>Chiuso <b>' + dShort(c.start) + '</b></span><span>' + (c.sinceClose > 0 ? 'da ' + giorni(c.sinceClose) : 'oggi') + '</span></div>' +
-        '<div class="line wait"><span>Pubblicità non ancora partita</span></div>' +
-        '<button type="button" class="ads-go" data-act="ads">Ads partite</button></div>') +
-    '<div><div class="cli-inc"><button type="button" data-act="minus" aria-label="Togli un incarico">−</button><span class="n num">' + c.count + '</span><button type="button" class="plus" data-act="plus" aria-label="Aggiungi un incarico">+</button></div>' +
-    '<span class="lab">incarichi</span><div class="cli-pips" title="3 incarichi = upsell">' + pips + '</div></div>' +
-    '<div class="cli-side"><span class="st ' + c.status + '">' + (c.status === 'chiamato' && c.left <= 0 ? 'Scaduto, già chiamato' : ST_LABEL[c.status]) + '</span><div class="cli-acts">' + acts + '</div></div>' +
-    (c.note ? '<div class="cli-note">' + esc(c.note) + '</div>' : '') +
-    '</div>';
-}
-function renderClienti() {
-  const list = cli.clienti.filter((c) => (cliTab === 'archiviati') === !!c.archived);
-  setHTML('cliList', list.length ? list.map(cliRow).join('') :
-    '<div class="cli-empty">' + (cliTab === 'archiviati' ? 'Nessun cliente archiviato.' : 'Nessun cliente attivo. Premi "Aggiungi cliente" per inserire il primo.') + '</div>');
-  document.querySelectorAll('.cli-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === cliTab));
-}
+function dShort(iso) { return iso ? cap(new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })) : ''; }
 async function loadClienti() {
   if (tvMode) return;
   try {
-    const r = await fetch(CAPI, { cache: 'no-store' });
-    if (r.status === 401) { location.reload(); return; }
+    const r = await fetch('${CLI_PATH}/api/clienti?lite=1', { cache: 'no-store' });
     if (!r.ok) return;
-    cli = await r.json(); renderTodo();
-    if (!$('cliPanel').hidden) renderClienti();
+    const d = await r.json();
+    setText('cliCount', String(d.clienti.filter((c) => !c.archived).length));
+    $('cliOpen').classList.toggle('alert-on', d.todos.length > 0);
   } catch (e) {}
 }
-async function cliOp(body) {
-  if (cliBusy) return false;
-  cliBusy = true;
-  try {
-    const r = await fetch(CAPI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const d = await r.json().catch(() => ({}));
-    if (r.status === 401) { location.reload(); return false; }
-    if (!r.ok) { const m = d.error || 'Non salvato, riprova.'; if (!$('adsDlg').hidden) setText('adsErr', m); else if (!$('upsDlg').hidden) setText('upsErr', m); else if (!$('cliForm').hidden) setText('cliErr', m); else alert(m); return false; }
-    cli = d; renderTodo(); renderClienti();
-    if (d.ghlNote) alert(d.ghlNote);
-    return true;
-  } catch (e) { setText('cliErr', 'Connessione persa, riprova.'); return false; }
-  finally { cliBusy = false; }
-}
-function openClienti(focusId) {
-  $('cliPanel').hidden = false; document.body.style.overflow = 'hidden';
-  if (focusId) { const c = cli.clienti.find((x) => x.id === focusId); cliTab = c && c.archived ? 'archiviati' : 'attivi'; }
-  renderClienti(); loadClienti();
-  if (focusId) {
-    const row = document.querySelector('.cli[data-id="' + CSS.escape(focusId) + '"]');
-    if (row) { row.scrollIntoView({ block: 'center' }); row.classList.add('focus'); }
-  } else $('cliAdd').focus();
-}
-function closeClienti() { $('cliPanel').hidden = true; document.body.style.overflow = ''; closeForm(); $('cliOpen').focus(); }
-function openForm(c) {
-  const f = $('cliForm'); cliEdit = c ? c.id : ''; cliEndTouched = !!c; setText('cliErr', '');
-  setText('cliFormTitle', c ? 'Modifica ' + c.nome : 'Nuovo cliente');
-  const today = cli.today || new Date().toISOString().slice(0, 10);
-  f.nome.value = c ? c.nome : ''; f.agenzia.value = c ? c.agenzia || '' : ''; f.zona.value = c ? c.zona || '' : '';
-  f.telefono.value = c ? c.telefono || '' : ''; f.note.value = c ? c.note || '' : ''; f.amount.value = c && c.amount ? c.amount : '';
-  f.start.value = c ? c.start : today; f.adsStart.value = c && c.adsStart ? c.adsStart : ''; showEnd();
-  f.hidden = false; f.nome.focus();
-}
-function closeForm() { $('cliForm').hidden = true; cliEdit = ''; }
-function showEnd() { const v = $('cliForm').adsStart.value; setText('cliEndShow', v ? dShort(addD(v, 30)) + ' (30 giorni dopo)' : 'quando parte la pubblicità'); }
-let upsId = '';
-function askUpsell(id) {
-  const c = cli.clienti.find((x) => x.id === id); if (!c) return;
-  upsId = id; setText('upsErr', '');
-  setText('upsText', c.nome + ' ha già pagato ' + money0(c.paid || 0) + '. Quanto hai chiuso con l’upsell?');
-  $('upsForm').amount.value = ''; $('upsDlg').hidden = false; $('upsForm').amount.focus();
-}
-function closeUps() { $('upsDlg').hidden = true; upsId = ''; }
-let adsId = '';
-function askAds(id) {
-  const c = cli.clienti.find((x) => x.id === id); if (!c) return;
-  adsId = id; setText('adsErr', '');
-  setText('adsText', 'Da quando è accesa la pubblicità di ' + c.nome + '?');
-  $('adsForm').date.value = c.adsStart || cli.today; $('adsDlg').hidden = false; $('adsForm').date.focus();
-}
-function closeAds() { $('adsDlg').hidden = true; adsId = ''; }
-if (!tvMode) {
-  $('cliOpen').onclick = () => openClienti();
-  $('cliClose').onclick = closeClienti;
-  $('cliPanel').onclick = (e) => { if (e.target === $('cliPanel')) closeClienti(); };
-  document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (!$('adsDlg').hidden) closeAds(); else if (!$('upsDlg').hidden) closeUps(); else if (!$('cliPanel').hidden) closeClienti(); });
-  $('cliAdd').onclick = () => openForm(null);
-  $('upsCancel').onclick = closeUps;
-  $('adsCancel').onclick = closeAds;
-  $('adsDlg').onclick = (e) => { if (e.target === $('adsDlg')) closeAds(); };
-  $('adsForm').onsubmit = async (e) => { e.preventDefault(); if (await cliOp({ op: 'ads', id: adsId, date: $('adsForm').date.value })) closeAds(); };
-  $('upsDlg').onclick = (e) => { if (e.target === $('upsDlg')) closeUps(); };
-  $('upsForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const v = Number(String($('upsForm').amount.value).replace(',', '.'));
-    if (!(v >= 0)) { setText('upsErr', 'Scrivi un importo.'); return; }
-    if (await cliOp({ op: 'done', id: upsId, what: 'upsell', amount: v })) { closeUps(); refresh(curMonth); }
-  };
-  $('cliCancel').onclick = closeForm;
-  // La scadenza segue la partenza della pubblicità (+30 giorni) finché non la cambi a mano.
-  $('cliForm').adsStart.oninput = showEnd; $('cliForm').adsStart.onchange = showEnd;
-  $('cliForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const f = $('cliForm');
-    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, adsStart: f.adsStart.value, note: f.note.value, amount: f.amount.value || 0 };
-    if (await cliOp(cliEdit ? { op: 'update', id: cliEdit, data } : { op: 'add', data })) closeForm();
-  };
-  document.querySelector('.cli-tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) { cliTab = b.dataset.tab; renderClienti(); } };
-  $('cliList').onclick = (e) => {
-    const b = e.target.closest('button[data-act]'); if (!b) return;
-    const id = b.closest('.cli').dataset.id, c = cli.clienti.find((x) => x.id === id); if (!c) return;
-    const a = b.dataset.act;
-    if (a === 'plus') cliOp({ op: 'incarico', id, delta: 1 });
-    else if (a === 'minus') { if (c.count > 0) cliOp({ op: 'incarico', id, delta: -1 }); }
-    else if (a === 'edit') { openForm(c); $('cliPanel').querySelector('.cli-panel').scrollTop = 0; }
-    else if (a === 'upsell') askUpsell(id);
-    else if (a === 'ads') askAds(id);
-    else if (a === 'unupsell') { if (confirm('Annullare l’ultimo upsell di ' + c.nome + '? L’incasso viene tolto.')) cliOp({ op: 'done', id, what: 'upsell', undo: true }).then((ok) => { if (ok) refresh(curMonth); }); }
-    else if (a === 'archive') cliOp({ op: 'archive', id, archived: true });
-    else if (a === 'unarchive') cliOp({ op: 'archive', id, archived: false });
-    else if (a === 'delete') { if (confirm('Eliminare ' + c.nome + ' per sempre?')) cliOp({ op: 'delete', id }); }
-  };
-  $('todo').onclick = (e) => {
-    const o = e.target.closest('[data-open]'); if (o) { openClienti(o.dataset.open); return; }
-    const k = e.target.closest('[data-skip]'); if (k) { cliOp({ op: 'done', id: k.dataset.skip, what: 'skip' }); return; }
-    const g = e.target.closest('[data-ads]'); if (g) { askAds(g.dataset.ads); return; }
-    const d = e.target.closest('[data-done]'); if (!d) return;
-    if (d.dataset.done === 'upsell') askUpsell(d.dataset.id); else cliOp({ op: 'done', id: d.dataset.id, what: 'call' });
-  };
-  loadClienti(); setInterval(loadClienti, 60000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadClienti(); });
-}
+if (!tvMode) { loadClienti(); setInterval(loadClienti, 60000); }
 
 </script>
 </body>
@@ -1718,6 +1349,7 @@ function applyClientiOp(list, body, today) {
     if ("zona" in d) c.zona = txt(d.zona, 80);
     if ("telefono" in d) c.telefono = txt(d.telefono, 30);
     if ("note" in d) c.note = txt(d.note, 500);
+    if ("sheet" in d) c.sheetId = sheetIdOf(d.sheet);
     if ("amount" in d) { const a = Math.round(Number(String(d.amount).replace(",", ".")) * 100) / 100; c.amount = a >= 0 && a <= 1000000 ? a : 0; }
     if ("start" in d) c.start = ISO_RE.test(d.start || "") ? d.start : c.start;
     if (!c.start) c.start = today;
@@ -1739,13 +1371,26 @@ function applyClientiOp(list, body, today) {
     for (const it of Array.isArray(body.items) ? body.items.slice(0, 200) : []) {
       const id = "ghl:" + txt(it.oppId, 40);
       if (have.has(id) || !ISO_RE.test(it.day || "")) continue;
+      const same = it.contactId && list.concat(add).find((x) => x.contactId === it.contactId && !x.deleted && !x.mergedInto);
       add.push({ id, source: "ghl", nome: txt(it.nome, 80) || "Cliente", agenzia: txt(it.agenzia, 80), zona: "", telefono: txt(it.telefono, 30), note: "",
         start: it.day, adsStart: null, end: null, amount: Number(it.amount) || 0, seller: txt(it.seller, 30), incarichi: [], upsellDone: null, callDone: null,
+        contactId: txt(it.contactId, 40), mergedInto: same ? same.id : null,
         archived: daysBetween(it.day, today) > 90, createdAt: today });
       have.add(id);
     }
     if (list.length + add.length > CLI_MAX) return { error: "Troppi clienti in archivio." };
     return { list: [...list, ...add] };
+  }
+  if (op === "link") {
+    const map = body.map && typeof body.map === "object" ? body.map : {};
+    let next0 = list.map((x) => (map[x.id] && !x.contactId ? { ...x, contactId: txt(map[x.id], 40) } : x));
+    const first = {};
+    for (const x of [...next0].sort((a, b) => (a.start || "").localeCompare(b.start || "") || (a.createdAt || "").localeCompare(b.createdAt || ""))) {
+      if (!x.contactId || x.deleted || x.mergedInto) continue;
+      if (!first[x.contactId]) first[x.contactId] = x.id;
+    }
+    next0 = next0.map((x) => (x.contactId && !x.deleted && !x.mergedInto && !x.keepApart && first[x.contactId] && first[x.contactId] !== x.id ? { ...x, mergedInto: first[x.contactId] } : x));
+    return { list: next0 };
   }
   const c = find();
   if (!c || c.deleted) return { error: "Cliente non trovato." };
@@ -1780,6 +1425,12 @@ function applyClientiOp(list, body, today) {
   } else if (op === "done") {
     if (body.what !== "call") return { error: "Azione non valida." };
     next = { ...c, callDone: body.undo ? null : today };
+  } else if (op === "merge") {
+    const into = list.find((x) => x.id === body.into && !x.deleted && !x.mergedInto);
+    if (!into || into.id === c.id) return { error: "Scegli il cliente in cui unirlo." };
+    return { list: list.map((x) => (x.id === c.id ? { ...x, mergedInto: into.id } : x)) };
+  } else if (op === "unmerge") {
+    next = { ...c, mergedInto: null, keepApart: true };
   } else if (op === "archive") {
     next = { ...c, archived: !!body.archived };
   } else if (op === "delete") {
@@ -1800,7 +1451,9 @@ function adsOf(c) {
 
 // Cosa fare adesso: pubblicità da far partire, upsell a 3 incarichi, chiamata alla scadenza e 5 giorni prima.
 function clientiView(list, today) {
-  const clienti = list.filter((c) => !c.deleted).map((c0) => {
+  const merged = {};
+  for (const c of list) if (c.mergedInto && !c.deleted) (merged[c.mergedInto] = merged[c.mergedInto] || []).push(c);
+  const clienti = list.filter((c) => !c.deleted && !c.mergedInto).map((c0) => {
     const adsStart = adsOf(c0);
     const c = { ...c0, adsStart, end: adsStart ? addDays(adsStart, 30) : null };
     const count = (c.incarichi || []).length;
@@ -1816,7 +1469,9 @@ function clientiView(list, today) {
     else if (left <= 5 && !c.callDone) status = "chiama";
     else if (c.upsellDone) status = "upsell-fatto";
     else if (c.callDone && left <= 5) status = "chiamato";
-    const upTot = (c.upsells || []).reduce((s, u) => s + (Number(u.amount) || 0), 0);
+    const extra = (merged[c.id] || []).map((x) => ({ id: x.id, nome: x.nome, amount: Number(x.amount) || 0, day: x.start }));
+    const upTot = (c.upsells || []).reduce((s, u) => s + (Number(u.amount) || 0), 0) + extra.reduce((s, x) => s + x.amount, 0);
+    c.extra = extra;
     return { ...c, count, day, left, period, sinceClose, progress: adsStart ? Math.max(0, Math.min(1, day / period)) : 0, status, paid: round2((Number(c.amount) || 0) + upTot), upsellTot: round2(upTot) };
   });
   const todos = [];
@@ -1864,6 +1519,90 @@ function upsellIncassi(list) {
     });
   }
   return out;
+}
+
+// ---- Fogli Google dei clienti: i lead di Facebook arrivano lì (una riga per lead, colonna A "l:…", colonna B la data).
+// Il foglio va condiviso "chiunque abbia il link può visualizzare". Letto al massimo ogni 5 minuti.
+const SHEET_RE = /\/spreadsheets\/d\/([A-Za-z0-9_-]{20,80})/;
+function sheetIdOf(v) {
+  const s = String(v || "").trim();
+  const m = s.match(SHEET_RE);
+  if (m) return m[1];
+  return /^[A-Za-z0-9_-]{30,80}$/.test(s) ? s : "";
+}
+function parseCsv(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ",") { row.push(cell); cell = ""; }
+    else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += ch;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+const APPT_RE = /fissat|visita|appuntament|\bapp\b|\bapp\.|sopralluogo/i;
+function sheetStats(rows, adsStart, today) {
+  const seenIds = new Set(), leads = [];
+  for (const r of rows) {
+    const id = String(r[0] || "").trim();
+    if (!/^l:\d{6,}$/.test(id) || seenIds.has(id)) continue;
+    const t = Date.parse(String(r[1] || "").trim());
+    if (!t) continue;
+    seenIds.add(id);
+    leads.push({ t, day: ROME_DAY.format(new Date(t)), nome: txt(r[16], 60), zona: txt(r[13], 60), note: txt(r[19], 120) });
+  }
+  leads.sort((a, b) => b.t - a.t);
+  const from7 = addDays(today, -6), days = Array.from({ length: 14 }, (_, i) => addDays(today, i - 13));
+  const perDay = Object.fromEntries(days.map((d) => [d, 0]));
+  for (const l of leads) if (l.day in perDay) perDay[l.day]++;
+  const since = adsStart ? leads.filter((l) => l.day >= adsStart) : leads;
+  return {
+    total: leads.length, sinceAds: since.length,
+    today: leads.filter((l) => l.day === today).length,
+    last7: leads.filter((l) => l.day >= from7).length,
+    lastAt: leads.length ? leads[0].t : null,
+    appts: since.filter((l) => APPT_RE.test(l.note)).length,
+    perDay: days.map((d) => perDay[d]),
+    recent: leads.slice(0, 3).map((l) => ({ t: l.t, nome: l.nome, zona: l.zona, note: l.note })),
+  };
+}
+const sheetCache = new Map();
+async function readSheet(id) {
+  const hit = sheetCache.get(id);
+  if (hit && Date.now() - hit.at < 300000) return hit.res;
+  let res;
+  try {
+    const r = await fetch(`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&headers=0`, { headers: { Accept: "text/csv" }, signal: AbortSignal.timeout(9000) });
+    const ct = r.headers.get("content-type") || "";
+    if (!r.ok || !ct.includes("csv")) res = { error: r.status === 401 || r.status === 403 || ct.includes("html") ? "privato" : "errore" };
+    else res = { rows: parseCsv(await r.text()) };
+  } catch (e) { res = { error: "errore" }; }
+  if (sheetCache.size > 200) sheetCache.clear();
+  sheetCache.set(id, { at: Date.now(), res });
+  return res;
+}
+async function withSheets(view) {
+  await Promise.all(view.clienti.map(async (c) => {
+    if (!c.sheetId || c.archived) return;
+    const res = await readSheet(c.sheetId);
+    c.leads = res.error ? { error: res.error } : sheetStats(res.rows, c.adsStart, view.today);
+  }));
+  // Pubblicità partita da almeno 3 giorni e nessun lead negli ultimi 3: qualcosa non va nelle campagne.
+  for (const c of view.clienti) {
+    if (c.archived || !c.leads) continue;
+    if (c.leads.error) { view.todos.push({ id: c.id, kind: "foglio", rank: 4, nome: c.nome, count: c.count, left: 0 }); continue; }
+    if (c.adsStart && c.day >= 3 && c.left > 0) {
+      const quiet = c.leads.lastAt ? Math.floor((Date.now() - c.leads.lastAt) / 86400000) : c.day;
+      if (quiet >= 3) view.todos.push({ id: c.id, kind: "nolead", rank: 2, nome: c.nome, count: c.count, left: quiet });
+    }
+  }
+  view.todos.sort((a, b) => a.rank - b.rank || a.left - b.left);
+  return view;
 }
 
 // Sposta un'opportunità della VENDITA PIPELINE in un'altra fase, direttamente su GoHighLevel.
@@ -1923,21 +1662,22 @@ export async function handleDashboard(request, env, url) {
     const form = await request.formData();
     const ok = await checkDashPassword((form.get("password") || "").toString());
     const tv = false;
-    if (!ok) return html(loginPage("Password non corretta.", tv));
+    const next = url.searchParams.get("next") === "clienti" ? CLI_PATH : DASH_PATH;
+    if (!ok) return html(loginPage("Password non corretta.", tv, next));
     const token = toHex(crypto.getRandomValues(new Uint8Array(32)));
     await kv.put(`dashsess:${token}`, "1", { expirationTtl: DASH_SESSION_DAYS * 86400 });
     return new Response(null, {
       status: 302,
       headers: {
-        Location: tv ? `${DASH_PATH}/tv` : DASH_PATH,
-        "Set-Cookie": `${DASH_COOKIE}=${token}; Path=${DASH_PATH}; HttpOnly; Secure; SameSite=Lax; Max-Age=${DASH_SESSION_DAYS * 86400}`,
+        Location: next,
+        "Set-Cookie": `${DASH_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${DASH_SESSION_DAYS * 86400}`,
       },
     });
   }
 
   const loggedIn = await isLoggedIn(request, kv);
 
-  if (path === `${DASH_PATH}/api/clienti`) {
+  if (path === `${DASH_PATH}/api/clienti` || path === `${CLI_PATH}/api/clienti`) {
     if (!loggedIn) return json({ error: "unauthorized" }, 401);
     if (request.method === "GET") {
       let out = { list: await clientiList(env) };
@@ -1946,8 +1686,14 @@ export async function handleDashboard(request, env, url) {
         const have = new Set(out.list.map((x) => x.id));
         const items = g.closedClients.filter((it) => !have.has("ghl:" + it.oppId));
         if (items.length) { const synced = await clientiStore(env, { op: "sync", items }); if (synced.list) out = synced; }
+        // Clienti arrivati prima che salvassi il contatto: lo aggiungo, e chi ha comprato due volte diventa un cliente solo.
+        const byOpp = Object.fromEntries(g.closedClients.map((it) => ["ghl:" + it.oppId, it.contactId]));
+        const map = {};
+        for (const c of out.list) if (c.source === "ghl" && !c.contactId && byOpp[c.id]) map[c.id] = byOpp[c.id];
+        if (Object.keys(map).length) { const linked = await clientiStore(env, { op: "link", map }); if (linked.list) out = linked; }
       }
-      return json({ ...clientiView(out.list || [], romeDate()), ghl: !!g });
+      const view = { ...clientiView(out.list || [], romeDate()), ghl: !!g };
+      return json(url.searchParams.get("lite") ? view : await withSheets(view));
     }
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
     if (!(request.headers.get("Content-Type") || "").includes("application/json")) return json({ error: "Formato non valido." }, 415);
@@ -1966,7 +1712,7 @@ export async function handleDashboard(request, env, url) {
         if (mv.error) ghlNote = "Incasso salvato, ma su GoHighLevel non l'ho spostato: " + mv.error;
       }
     }
-    return json({ ...clientiView(out.list, romeDate()), ghlNote });
+    return json({ ...(await withSheets(clientiView(out.list, romeDate()))), ghlNote });
   }
 
   if (path === `${DASH_PATH}/api/pipeline`) {
@@ -1994,9 +1740,600 @@ export async function handleDashboard(request, env, url) {
     return json(await payload(ym, today, env));
   }
 
+  if (path === CLI_PATH) {
+    return html(loggedIn ? clientiPage() : loginPage(null, false, CLI_PATH));
+  }
+
   if (path === DASH_PATH || path === `${DASH_PATH}/login`) {
     return html(loggedIn ? dashboardPage(false) : loginPage(null));
   }
 
   return new Response(null, { status: 302, headers: { Location: DASH_PATH } });
 }
+
+// ---- Pagina Clienti attivi: /dashboardclienti ----
+function clientiPage() {
+  return `<!DOCTYPE html>
+<html lang="it">
+<head>
+${BASE_HEAD}
+<title>Clienti attivi · Vendita Uno</title>
+<style>
+${GLASS_CSS}
+${CLI_CSS}
+  .wrap { max-width: 1240px; margin: 0 auto; padding: clamp(14px, 2vw, 32px); display: grid; gap: 16px; }
+  .ctop { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .ctop img { height: 28px; }
+  .ctop h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1; color: var(--bone); margin: 0 auto 0 8px; }
+  .ctop a.navl { color: var(--bone-2); text-decoration: none; padding: 9px 16px; border-radius: 999px; font-weight: 600; }
+  .ctop a.navl:hover { color: var(--bone); }
+  .ctop #cliOpen { margin-left: 0; cursor: default; }
+  .sum { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .sum div { padding: 16px 18px; border-radius: 22px; }
+  .sum b { display: block; font-size: clamp(1.7rem, 2.6vw, 2.4rem); font-weight: 600; color: var(--bone); letter-spacing: -0.03em; line-height: 1.05; }
+  .sum span { color: var(--bone-3); font-size: 0.85rem; }
+  .todo { grid-column: auto; }
+  .cli-ov { position: static; inset: auto; z-index: auto; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; display: block; }
+  .cli-panel { width: 100%; height: auto; overflow: visible; border-radius: 30px; }
+  .cli-x { display: none; }
+  .cli-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); }
+  .cli { align-content: start; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 14px; }
+  .cli .cli-dates { grid-column: 1 / -1; order: 3; }
+  .cli .cli-leads { order: 4; }
+  .cli .cli-side { grid-column: 1 / -1; order: 5; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+  .cli .cli-note { order: 6; }
+  .lnk { border: 0; background: none; padding: 0; font: inherit; color: #f6d27a; cursor: pointer; text-decoration: none; font-weight: 600; }
+  .lnk:hover { text-decoration: underline; }
+  .cli-leads { grid-column: 1 / -1; border-radius: 16px; padding: 12px 14px; background: rgba(0,0,0,0.2); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); font-size: 0.88rem; }
+  .cli-leads.none, .cli-leads.bad { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: var(--bone-3); }
+  .cli-leads.bad span { color: #ffb2aa; }
+  .cl-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .cl-nums b { display: block; font-size: 1.35rem; font-weight: 600; color: var(--bone); }
+  .cl-nums span { color: var(--bone-3); font-size: 0.76rem; }
+  .cl-bars { display: flex; align-items: flex-end; gap: 3px; height: 34px; margin-top: 10px; }
+  .cl-bars i { flex: 1; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f2c14e, var(--gold)); }
+  .cl-bars i.z { background: rgba(255,255,255,0.12); }
+  .cl-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; color: var(--bone-2); }
+  .cl-recent { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid rgba(255,255,255,0.08); display: grid; gap: 6px; }
+  .cl-recent li { color: var(--bone-2); }
+  .cl-recent b { color: var(--bone); font-weight: 600; }
+  .cl-recent span { color: var(--bone-3); font-size: 0.8rem; }
+  .cl-recent em { display: block; font-style: normal; color: #c9dbff; font-size: 0.8rem; }
+  .mrg-sel { width: 100%; margin-top: 16px; font: inherit; font-size: 16px; color: var(--bone); background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 12px; color-scheme: dark; }
+  .todo-row.nolead .dot { background: #ff8a80; box-shadow: 0 0 0 4px rgba(255,138,128,0.18); }
+  .todo-row.foglio .dot { background: #c9c2b5; }
+  @media (max-width: 900px) { .sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sum div:last-child { grid-column: 1 / -1; } }
+  @media (max-width: 560px) {
+    body { font-size: 14px; }
+    .wrap { padding: 12px; gap: 12px; }
+    .ctop img { height: 22px; }
+    .ctop h1 { font-size: 1.7rem; flex-basis: 100%; margin: 4px 0 0; order: 3; }
+    .ctop a.navl { padding: 6px 12px; font-size: 0.85rem; margin-left: auto; }
+    .sum div { padding: 12px 14px; border-radius: 18px; }
+    .cli-panel { padding: 14px 10px 24px; border-radius: 24px; }
+    .cli-head-act { width: 100%; }
+    .cli-form { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+    .cli-form input { font-size: 16px; }
+    .cli { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; padding: 12px; }
+    .cli-dates { grid-column: 1 / -1; order: 3; font-size: 0.8rem; }
+    .cli-side { grid-column: 1 / -1; order: 5; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .cli-leads { order: 4; padding: 10px; }
+    .cl-nums b { font-size: 1.1rem; }
+    .cli-name .src { display: none; }
+    .cli-inc .lab { display: none; }
+    .cli-inc button { width: 30px; height: 30px; }
+    .cli-inc .n { font-size: 1.25rem; }
+    .cli-acts { flex-wrap: wrap; }
+    .cli-acts button { font-size: 0.76rem; padding: 4px 6px; }
+    .todo { padding: 14px 12px; border-radius: 22px; }
+    .todo-row { grid-template-columns: 12px minmax(0, 1fr); font-size: 0.86rem; }
+    .todo-row .acts { grid-column: 2; }
+  }
+</style>
+</head>
+<body class="pc">
+<div class="wrap">
+  <header class="ctop">
+    <img src="/assets/img/logo.png" alt="Vendita Uno">
+    <h1>Clienti attivi</h1>
+    <span class="cli-open glass" id="cliOpen"><span>Clienti</span> <b class="num" id="cliCount">·</b></span>
+    <a class="navl glass" href="${DASH_PATH}">Vendite</a>
+  </header>
+  <section class="sum" aria-label="Riepilogo">
+    <div class="glass"><b class="num" id="sAtt">·</b><span>clienti con le ads accese</span></div>
+    <div class="glass"><b class="num" id="sWait">·</b><span>aspettano le ads</span></div>
+    <div class="glass"><b class="num" id="sLead">·</b><span>lead negli ultimi 7 giorni</span></div>
+    <div class="glass"><b class="num" id="sInc">·</b><span>incarichi presi</span></div>
+    <div class="glass"><b class="num" id="sUp">·</b><span>pronti per l’upsell</span></div>
+  </section>
+  <div class="todo glass" id="todo" hidden></div>
+${CLI_HTML.replace('id="cliPanel" hidden', 'id="cliPanel"')}
+</div>
+<script>
+const API = '${CLI_PATH}/api';
+const tvMode = false;
+let curMonth = null;
+function refresh() {}
+const $ = (id) => document.getElementById(id);
+function grp(n) {
+  const s = String(Math.abs(Math.round(n)));
+  let out = '';
+  for (let i = 0; i < s.length; i++) { if (i && (s.length - i) % 3 === 0) out += '.'; out += s[i]; }
+  return (n < 0 && Math.round(n) !== 0 ? '-' : '') + out;
+}
+const money0 = (n) => '€ ' + grp(n);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const lastSet = {};
+function setHTML(id, html) { if (lastSet[id] === html) return; lastSet[id] = html; $(id).innerHTML = html; }
+function setText(id, text) { if (lastSet[id] === text) return; lastSet[id] = text; $(id).textContent = text; }
+${CLI_JS}
+// In questa pagina l'elenco è sempre aperto.
+function openClienti(focusId) {
+  if (focusId) { const c = cli.clienti.find((x) => x.id === focusId); cliTab = c && c.archived ? 'archiviati' : 'attivi'; }
+  renderClienti();
+  if (focusId) { const row = document.querySelector('.cli[data-id="' + CSS.escape(focusId) + '"]'); if (row) { row.scrollIntoView({ block: 'center', behavior: 'smooth' }); row.classList.add('focus'); } }
+}
+function closeClienti() { closeForm(); }
+const baseRenderTodo = renderTodo;
+renderTodo = function () {
+  baseRenderTodo();
+  const act = cli.clienti.filter((c) => !c.archived);
+  setText('sAtt', String(act.filter((c) => c.adsStart && c.day >= 0 && c.left > 0).length));
+  setText('sWait', String(act.filter((c) => !c.adsStart).length));
+  setText('sLead', grp(act.reduce((a, c) => a + (c.leads && !c.leads.error ? c.leads.last7 : 0), 0)));
+  setText('sInc', grp(act.reduce((a, c) => a + c.count, 0)));
+  setText('sUp', String(act.filter((c) => c.status === 'upsell').length));
+  renderClienti();
+};
+</script>
+</body>
+</html>`;
+}
+
+// ---- Pezzi della pagina Clienti attivi (stile, finestre, codice) ----
+const CLI_CSS = `  /* Finestrella importo upsell */
+  .ups-ov { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(10,9,7,0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .ups-box { width: min(420px, calc(100vw - 32px)); max-width: 100%; padding: 24px; border-radius: 26px; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)), rgba(30,27,22,0.92); }
+  .ups-box h3 { font-family: var(--serif); font-weight: 400; font-size: 1.9rem; color: var(--bone); margin: 0; }
+  .ups-box .meta { color: var(--bone-2); margin-top: 6px; }
+  .ups-amt { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 6px 16px; border-radius: 16px; background: rgba(0,0,0,0.28); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+  .ups-amt span { font-size: 1.6rem; color: var(--bone-2); }
+  .ups-amt input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--bone); font: inherit; font-size: 2rem; font-weight: 600; padding: 6px 0; outline: none; color-scheme: dark; }
+  .ups-amt:focus-within { box-shadow: inset 0 0 0 2px rgba(236,230,218,0.6); }
+  .ups-note { color: var(--bone-3); font-size: 0.85rem; margin: 8px 0 16px; }
+
+  /* Clienti attivi */
+  [hidden] { display: none !important; }
+  .cli-open { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; padding: 9px 10px 9px 18px; border: 0; border-radius: 999px; color: var(--bone); font: inherit; font-weight: 600; cursor: pointer; }
+  .cli-open b { min-width: 28px; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,0.12); text-align: center; }
+  .cli-open.alert-on b { background: var(--bad); color: #1a0e0c; }
+  .cli-open:focus-visible, .cli-panel button:focus-visible, .todo button:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
+  .top .cli-open + .when { margin-left: 0; }
+  body.tv .cli-open, body.tv .todo { display: none !important; }
+
+  .todo { grid-column: 1 / -1; padding: 18px 20px; border-radius: 28px; }
+  .todo h3 { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.6rem; color: var(--bone); margin: 0 0 10px; }
+  .todo-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 12px; border-radius: var(--r-md); }
+  .todo-row + .todo-row { margin-top: 6px; }
+  .todo-row .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .todo-row.scaduto { background: rgba(255,138,128,0.12); } .todo-row.scaduto .dot { background: var(--bad); box-shadow: 0 0 0 4px rgba(255,138,128,0.2); }
+  .todo-row.upsell { background: rgba(185,131,24,0.18); } .todo-row.upsell .dot { background: #f2c14e; box-shadow: 0 0 0 4px rgba(242,193,78,0.22); }
+  .todo-row.chiama { background: rgba(255,255,255,0.05); } .todo-row.chiama .dot { background: #f2a64e; }
+  .todo-row b { color: var(--bone); font-weight: 600; }
+  .todo-row .t { color: var(--bone-2); }
+  .todo-row .acts { display: flex; gap: 8px; }
+  .btn-pri, .btn-sec { border: 0; border-radius: 999px; padding: 9px 16px; font: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
+  .btn-pri { background: var(--bone); color: #1c1a16; }
+  .btn-sec { background: rgba(255,255,255,0.1); color: var(--bone); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+  .btn-pri:hover { filter: brightness(1.08); } .btn-sec:hover { background: rgba(255,255,255,0.16); }
+
+  .cli-ov { position: fixed; inset: 0; z-index: 30; background: rgba(10,9,7,0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); display: flex; justify-content: flex-end; }
+  .cli-panel { width: min(1000px, 100%); height: 100%; overflow-y: auto; border-radius: 30px 0 0 30px; padding: 26px 26px 40px; background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 40%), rgba(26,23,19,0.86); }
+  .cli-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .cli-head h2 { font-family: var(--serif); font-weight: 400; font-size: 2.2rem; line-height: 1; color: var(--bone); margin: 0; }
+  .cli-head .meta { color: var(--bone-3); margin-top: 6px; }
+  .cli-head-act { display: flex; gap: 10px; align-items: center; }
+  .cli-x { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.1); color: var(--bone); cursor: pointer; font-size: 1rem; }
+  .cli-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; padding: 18px; margin-top: 20px; }
+  .cli-form .f-wide { grid-column: 1 / -1; }
+  .cli-form-title { grid-column: 1 / -1; font-weight: 600; color: var(--bone); }
+  .cli-form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--bone-2); }
+  .cli-form input { font: inherit; font-size: 0.95rem; color: var(--bone); background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 10px 12px; color-scheme: dark; }
+  .cli-form input:focus { outline: 2px solid rgba(236,230,218,0.6); outline-offset: 0; }
+  .f-end { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--bone-2); }
+  .f-end b { font-weight: 600; color: var(--bone); font-size: 0.95rem; padding: 10px 0; }
+  .cli-form-act { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .cli-err { margin-right: auto; color: var(--bad); font-size: 0.88rem; }
+  .cli-tabs { display: inline-flex; margin-top: 22px; }
+  .cli-list { display: grid; gap: 10px; margin-top: 14px; }
+  .cli-empty { color: var(--bone-3); padding: 24px 4px; }
+  .cli { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr) auto minmax(0, 0.9fr); gap: 18px; align-items: center; padding: 16px 18px; border-radius: 20px; background: rgba(255,255,255,0.045); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+  .cli.upsell { box-shadow: inset 0 0 0 1px rgba(242,193,78,0.55); background: rgba(185,131,24,0.12); }
+  .cli.scaduto { box-shadow: inset 0 0 0 1px rgba(255,138,128,0.5); }
+  .cli.focus { animation: cliFlash 1.6s ease-out; }
+  @keyframes cliFlash { 0%, 30% { background: rgba(236,230,218,0.18); } }
+  .cli-name b { display: block; color: var(--bone); font-weight: 600; font-size: 1.05rem; }
+  .cli-name span { display: block; color: var(--bone-3); font-size: 0.85rem; margin-top: 2px; overflow-wrap: anywhere; }
+  .cli-dates { font-size: 0.85rem; color: var(--bone-2); }
+  .cli-dates b { color: var(--bone); font-weight: 600; }
+  .cli-dates .line { display: flex; justify-content: space-between; gap: 8px; }
+  .cli-bar { position: relative; height: 6px; border-radius: 99px; background: rgba(255,255,255,0.1); margin-top: 8px; overflow: hidden; }
+  .cli-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold), #f2c14e); }
+  .cli.scaduto .cli-bar i { background: var(--bad); }
+  .cli-inc { display: flex; align-items: center; gap: 10px; }
+  .cli-inc button { width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; font: inherit; font-size: 1.2rem; line-height: 1; color: var(--bone); background: rgba(255,255,255,0.1); }
+  .cli-inc button.plus { background: var(--bone); color: #1c1a16; font-weight: 700; }
+  .cli-inc .n { min-width: 2.2ch; text-align: center; font-size: 1.7rem; font-weight: 600; color: var(--bone); }
+  .cli-inc .lab { display: block; font-size: 0.72rem; color: var(--bone-3); text-align: center; margin-top: -2px; }
+  .cli-pips { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+  .cli-pips i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+  .cli-pips i.on { background: #f2c14e; }
+  .cli-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .st { padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; background: rgba(255,255,255,0.08); color: var(--bone-2); }
+  .st.upsell { background: rgba(242,193,78,0.2); color: #f6d27a; }
+  .st.scaduto { background: rgba(255,138,128,0.18); color: #ffb2aa; }
+  .st.chiama { background: rgba(242,166,78,0.18); color: #f7c48a; }
+  .st.attesa { background: rgba(160,190,255,0.14); color: #c9dbff; }
+  .cli-dates .wait { color: #c9dbff; margin-top: 2px; }
+  .ads-go { margin-top: 8px; border: 0; cursor: pointer; font: inherit; font-size: 0.82rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; color: #10192e; background: #c9dbff; }
+  .ads-go:hover { background: #dce7ff; }
+  .todo-row.ads .dot { background: #9fbfff; box-shadow: 0 0 0 4px rgba(160,190,255,0.18); }
+  .ups-amt input[type=date] { font-size: 1.4rem; }
+  .st.chiamato { background: rgba(255,255,255,0.1); color: var(--bone); }
+  .st.upsell-fatto { background: rgba(111,220,154,0.16); color: #9fe8bb; }
+  .cli-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .cli-acts button { border: 0; background: transparent; color: var(--bone-3); font: inherit; font-size: 0.82rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; }
+  .cli-acts button:hover { color: var(--bone); background: rgba(255,255,255,0.08); }
+  .cli-name .src { color: var(--bone-3); font-size: 0.78rem; }
+  .cli-name .paid { color: var(--bone-2); font-size: 0.85rem; margin-top: 4px; }
+  .cli-name .paid b { display: inline; font-size: inherit; color: #f6d27a; font-weight: 600; }
+  .cli-acts button.up { color: #1c1a16; background: #f2c14e; font-weight: 600; padding: 5px 11px; border-radius: 999px; }
+  .cli-acts button.up:hover { background: #f6d27a; color: #1c1a16; }
+  .cli-panel { overflow-x: hidden; }
+  .cli-form label, .cli-form input { min-width: 0; }
+  .cli-form input { width: 100%; }
+  .cli-note { grid-column: 1 / -1; font-size: 0.85rem; color: var(--bone-3); margin-top: -6px; }
+  @media (max-width: 760px) {
+    .cli-panel { border-radius: 0; padding: 18px 14px 40px; }
+    .cli-form { grid-template-columns: 1fr 1fr; }
+    .cli { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+    .cli-dates { grid-column: 1 / -1; order: 3; }
+    .cli-side { grid-column: 1 / -1; order: 4; flex-direction: row; justify-content: space-between; align-items: center; }
+    .todo-row { grid-template-columns: 12px minmax(0, 1fr); }
+    .todo-row .acts { grid-column: 2; }
+    .cli-open { padding: 7px 8px 7px 14px; font-size: 0.85rem; }
+  }
+  @media (max-width: 560px) {
+    .top { flex-wrap: nowrap; gap: 8px; }
+    .top > img { height: 26px; width: auto; flex: none; }
+    .cli-open { gap: 6px; padding: 5px 5px 5px 12px; font-size: 0.8rem; }
+    .cli-open .lg { display: none; }
+    .cli-open b { min-width: 24px; padding: 3px 7px; }
+    .when .clock { font-size: 0.85rem; padding: 6px 10px; }
+    .todo { padding: 14px 12px; border-radius: 22px; }
+    .todo h3 { font-size: 1.3rem; margin-bottom: 8px; }
+    .todo-row { gap: 4px 10px; padding: 10px; font-size: 0.86rem; line-height: 1.35; }
+    .todo-row .dot { width: 9px; height: 9px; align-self: start; margin-top: 5px; }
+    .todo-row .acts { margin-top: 6px; }
+    .todo-row .btn-pri, .todo-row .btn-sec { padding: 6px 12px; font-size: 0.8rem; }
+    .cli-head h2 { font-size: 1.8rem; }
+    .cli-head .meta { font-size: 0.82rem; }
+    .cli-head-act { width: 100%; justify-content: space-between; }
+    .cli-form { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+    .cli-form input { font-size: 16px; }
+    .cli { padding: 14px; border-radius: 18px; }
+    .cli-name b { font-size: 1rem; }
+    .tiles { align-items: start; }
+    .tile .sub { margin-top: 4px; }
+    .cli { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; padding: 12px; }
+    .cli-name b { font-size: 0.98rem; }
+    .cli-name span { font-size: 0.78rem; margin-top: 1px; }
+    .cli-name .paid { font-size: 0.82rem; margin-top: 2px; }
+    .cli-name .src { display: none; }
+    .cli-inc { gap: 6px; }
+    .cli-inc button { width: 30px; height: 30px; font-size: 1.05rem; }
+    .cli-inc .n { font-size: 1.25rem; min-width: 1.6ch; }
+    .cli-inc .lab { display: none; }
+    .cli-pips { margin-top: 2px; }
+    .cli-dates { font-size: 0.78rem; }
+    .cli-dates .line + .line { margin-top: 1px; }
+    .cli-bar { height: 4px; margin-top: 6px; }
+    .cli-side { gap: 6px; }
+    .cli-side .st { font-size: 0.72rem; padding: 3px 8px; }
+    .cli-acts { gap: 2px; flex-wrap: nowrap; }
+    .cli-acts button { font-size: 0.76rem; padding: 4px 5px; }
+    .cli-acts button.up { padding: 5px 10px; }
+    .cli-note { font-size: 0.78rem; margin-top: 0; }
+  }
+
+  .toast { position: fixed; left: 50%; top: 44%; z-index: 20; transform: translate(-50%, -50%) scale(0.94); opacity: 0; pointer-events: none; text-align: center; padding: 28px 48px 30px; border-radius: 40px; visibility: hidden; transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s .45s; }
+  .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); transition: opacity .45s, transform .45s cubic-bezier(.2,.9,.3,1.2), visibility 0s; }
+  .toast .k { font-family: var(--serif); font-style: italic; font-size: clamp(1.4rem, 2.2vw, 2.2rem); color: var(--bone-2); }
+  .toast .n { font-size: clamp(2rem, 4.4vw, 4.4rem); font-weight: 600; letter-spacing: -0.035em; margin-top: 4px; }
+  .toast .a { font-size: clamp(1.6rem, 3.2vw, 3.2rem); font-weight: 600; color: var(--good); letter-spacing: -0.02em; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: opacity .2s; } .cl.new { animation: none; } }
+
+
+`;
+
+const CLI_HTML = `<div class="cli-ov" id="cliPanel" hidden>
+  <div class="cli-panel glass" role="dialog" aria-modal="true" aria-labelledby="cliTitle">
+    <div class="cli-head">
+      <div><h2 id="cliTitle">Clienti attivi</h2><div class="meta">Chi chiudete su GoHighLevel entra qui da solo. Segna gli incarichi: al terzo ti ricordo di valutare l'upsell.</div></div>
+      <div class="cli-head-act">
+        <button type="button" class="btn-pri" id="cliAdd">+ Aggiungi cliente</button>
+        <button type="button" class="cli-x" id="cliClose" aria-label="Chiudi">✕</button>
+      </div>
+    </div>
+    <form class="cli-form well" id="cliForm" hidden autocomplete="off">
+      <div class="cli-form-title" id="cliFormTitle">Nuovo cliente</div>
+      <label class="f-wide">Nome e cognome<input name="nome" required maxlength="80" placeholder="Es. Mario Rossi"></label>
+      <label>Agenzia<input name="agenzia" maxlength="80" placeholder="Es. Immobiliare Rossi"></label>
+      <label>Zona<input name="zona" maxlength="80" placeholder="Es. Bergamo centro"></label>
+      <label>Telefono<input name="telefono" maxlength="30" inputmode="tel" placeholder="Es. 333 1234567"></label>
+      <label>Ha pagato (€)<input name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Es. 2500"></label>
+      <label>Chiuso il<input name="start" type="date" required></label>
+      <label>Pubblicità partita il<input name="adsStart" type="date"></label>
+      <div class="f-end"><span>Scade il</span><b id="cliEndShow">quando parte la pubblicità</b></div>
+      <label class="f-wide">Foglio Google dei lead (link)<input name="sheet" maxlength="300" inputmode="url" placeholder="https://docs.google.com/spreadsheets/d/…"></label>
+      <label class="f-wide">Note<input name="note" maxlength="500" placeholder="Facoltativo"></label>
+      <div class="cli-form-act f-wide"><span class="cli-err" id="cliErr"></span><button type="button" class="btn-sec" id="cliCancel">Annulla</button><button type="submit" class="btn-pri" id="cliSave">Salva</button></div>
+    </form>
+    <div class="seg well cli-tabs" role="group" aria-label="Quali clienti vedere"><button type="button" class="on" data-tab="attivi">Attivi</button><button type="button" data-tab="archiviati">Archiviati</button></div>
+    <div class="cli-list" id="cliList"></div>
+  </div>
+</div>
+<div class="ups-ov" id="adsDlg" hidden>
+  <form class="ups-box glass" id="adsForm" role="dialog" aria-modal="true" aria-labelledby="adsTitle">
+    <h3 id="adsTitle">Pubblicità partita</h3>
+    <p class="meta" id="adsText"></p>
+    <label class="ups-amt"><input name="date" type="date" required></label>
+    <p class="ups-note">Da questo giorno partono i 30 giorni: scadenza e promemoria li calcolo io.</p>
+    <div class="cli-form-act"><span class="cli-err" id="adsErr"></span><button type="button" class="btn-sec" id="adsCancel">Annulla</button><button type="submit" class="btn-pri">Salva</button></div>
+  </form>
+</div>
+<div class="ups-ov" id="mrgDlg" hidden>
+  <form class="ups-box glass" id="mrgForm" role="dialog" aria-modal="true" aria-labelledby="mrgTitle">
+    <h3 id="mrgTitle">È lo stesso cliente</h3>
+    <p class="meta" id="mrgText"></p>
+    <select class="mrg-sel" name="into" required></select>
+    <p class="ups-note">Resta un cliente solo: i soldi di questa scheda vanno nel suo "ha pagato" e l'incassato non cambia.</p>
+    <div class="cli-form-act"><span class="cli-err" id="mrgErr"></span><button type="button" class="btn-sec" id="mrgCancel">Annulla</button><button type="submit" class="btn-pri">Unisci</button></div>
+  </form>
+</div>
+<div class="ups-ov" id="upsDlg" hidden>
+  <form class="ups-box glass" id="upsForm" role="dialog" aria-modal="true" aria-labelledby="upsTitle">
+    <h3 id="upsTitle">Chiudi upsell</h3>
+    <p class="meta" id="upsText"></p>
+    <label class="ups-amt"><span>€</span><input name="amount" type="number" inputmode="decimal" min="0" step="0.01" required placeholder="0"></label>
+    <p class="ups-note">Va nell'incassato di oggi. Su GoHighLevel il cliente passa in CHIUSO 2.</p>
+    <div class="cli-form-act"><span class="cli-err" id="upsErr"></span><button type="button" class="btn-sec" id="upsCancel">Annulla</button><button type="submit" class="btn-pri">Salva incasso</button></div>
+  </form>
+</div>
+`;
+
+const CLI_JS = `// ---- Clienti attivi (solo PC e telefono, non sulla TV) ----
+const CAPI = API + '/clienti';
+let cli = { clienti: [], todos: [], today: '' }, cliTab = 'attivi', cliEdit = '', cliEndTouched = false, cliBusy = false;
+function dShort(iso) { return iso ? cap(new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })) : ''; }
+function addD(iso, n) { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function giorni(n) { return n === 1 ? '1 giorno' : n + ' giorni'; }
+function leftText(c) {
+  if (c.left > 1) return 'tra ' + giorni(c.left);
+  if (c.left === 1) return 'domani';
+  if (c.left === 0) return 'oggi';
+  return 'da ' + giorni(-c.left);
+}
+function todoText(t) {
+  if (t.kind === 'upsell') return '<b>' + esc(t.nome) + '</b> <span class="t">ha preso ' + t.count + ' incarichi: valuta l’upsell.</span>';
+  if (t.kind === 'scaduto') return '<b>' + esc(t.nome) + '</b> <span class="t">è arrivato alla scadenza ' + (t.left === 0 ? 'oggi' : 'da ' + giorni(-t.left)) + ', con ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo e senti com’è andata.</span>';
+  if (t.kind === 'nolead') return '<b>' + esc(t.nome) + '</b> <span class="t">non riceve lead da ' + giorni(t.left) + ' con la pubblicità accesa. Controlla le campagne.</span>';
+  if (t.kind === 'foglio') return '<b>' + esc(t.nome) + '</b><span class="t">: non riesco a leggere il suo foglio Google. Condividilo con "chiunque abbia il link".</span>';
+  if (t.kind === 'ads') return '<b>' + esc(t.nome) + '</b> <span class="t">è chiuso da ' + giorni(t.since) + ' e la pubblicità non è ancora partita.</span>';
+  return '<b>' + esc(t.nome) + '</b> <span class="t">scade ' + (t.left === 1 ? 'domani' : 'tra ' + giorni(t.left)) + ', ha ' + t.count + (t.count === 1 ? ' incarico' : ' incarichi') + '. Chiamalo adesso.</span>';
+}
+function renderTodo() {
+  const n = cli.clienti.filter((c) => !c.archived).length;
+  setText('cliCount', String(n));
+  $('cliOpen').classList.toggle('alert-on', cli.todos.length > 0);
+  if (!cli.todos.length) { $('todo').hidden = true; setHTML('todo', ''); return; }
+  $('todo').hidden = false;
+  setHTML('todo', '<h3>Da fare adesso</h3>' + cli.todos.map((t) =>
+    '<div class="todo-row ' + t.kind + '"><span class="dot"></span><div>' + todoText(t) + '</div><div class="acts">' +
+    '<button type="button" class="btn-sec" data-open="' + esc(t.id) + '">Apri</button>' +
+    (t.kind === 'upsell' ? '<button type="button" class="btn-sec" data-skip="' + esc(t.id) + '">Non ora</button>' : '') +
+    (t.kind === 'nolead' || t.kind === 'foglio' ? '' :
+    t.kind === 'ads' ? '<button type="button" class="btn-pri" data-ads="' + esc(t.id) + '">Ads partite</button>' :
+    '<button type="button" class="btn-pri" data-done="' + (t.kind === 'upsell' ? 'upsell' : 'call') + '" data-id="' + esc(t.id) + '">' + (t.kind === 'upsell' ? 'Chiudi upsell' : 'Chiamato') + '</button>') +
+    '</div></div>').join(''));
+}
+const ST_LABEL = { attesa: 'Aspetta le ads', upsell: 'Valuta upsell', scaduto: 'Scaduto, chiamalo', chiama: 'Scade a breve', chiamato: 'Già chiamato', 'upsell-fatto': 'Upsell fatto', attivo: 'In corso', archiviato: 'Archiviato' };
+function cliRow(c) {
+  const pips = [0, 1, 2].map((i) => '<i' + (c.count > i ? ' class="on"' : '') + '></i>').join('');
+  const sub = [c.agenzia, c.zona, c.telefono].filter(Boolean).map(esc).join(' · ');
+  const src = c.source === 'ghl' ? '<span class="src">Chiuso su GoHighLevel' + (c.seller ? ' da ' + esc(c.seller) : '') + '</span>' : '';
+  const paid = '<span class="paid">Ha pagato <b>' + money0(c.paid || 0) + '</b>' + (c.upsellTot ? ' (di cui upsell ' + money0(c.upsellTot) + ')' : '') + '</span>';
+  const acts = c.archived
+    ? '<button type="button" data-act="unarchive">Ripristina</button><button type="button" data-act="delete">Elimina</button>'
+    : '<button type="button" class="up" data-act="upsell">Chiudi upsell</button>' +
+      '<button type="button" data-act="edit">Modifica</button>' +
+      ((c.upsells || []).length ? '<button type="button" data-act="unupsell">Annulla ultimo upsell</button>' : '') +
+      '<button type="button" data-act="merge">Unisci</button>' +
+      '<button type="button" data-act="archive">Archivia</button>';
+  return '<div class="cli ' + c.status + '" data-id="' + esc(c.id) + '">' +
+    '<div class="cli-name"><b>' + esc(c.nome) + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + paid + src + '</div>' +
+    (c.adsStart
+      ? '<div class="cli-dates"><div class="line"><span>Ads dal <b>' + dShort(c.adsStart) + '</b></span><span>' + (c.day >= 0 ? 'giorno ' + (c.day + 1) : 'partono ' + dShort(c.adsStart)) + '</span></div>' +
+        '<div class="line"><span>Scade <b>' + dShort(c.end) + '</b></span><span>' + leftText(c) + '</span></div>' +
+        '<div class="cli-bar"><i style="width:' + Math.round(c.progress * 100) + '%"></i></div></div>'
+      : '<div class="cli-dates"><div class="line"><span>Chiuso <b>' + dShort(c.start) + '</b></span><span>' + (c.sinceClose > 0 ? 'da ' + giorni(c.sinceClose) : 'oggi') + '</span></div>' +
+        '<div class="line wait"><span>Pubblicità non ancora partita</span></div>' +
+        '<button type="button" class="ads-go" data-act="ads">Ads partite</button></div>') +
+    '<div><div class="cli-inc"><button type="button" data-act="minus" aria-label="Togli un incarico">−</button><span class="n num">' + c.count + '</span><button type="button" class="plus" data-act="plus" aria-label="Aggiungi un incarico">+</button></div>' +
+    '<span class="lab">incarichi</span><div class="cli-pips" title="3 incarichi = upsell">' + pips + '</div></div>' +
+    '<div class="cli-side"><span class="st ' + c.status + '">' + (c.status === 'chiamato' && c.left <= 0 ? 'Scaduto, già chiamato' : ST_LABEL[c.status]) + '</span><div class="cli-acts">' + acts + '</div></div>' +
+    leadsBlock(c) +
+    ((c.extra || []).length ? '<div class="cli-note">Unito: ' + c.extra.map((x) => esc(x.nome) + ' ' + money0(x.amount) + ' <button type="button" class="lnk" data-unmerge="' + esc(x.id) + '">separa</button>').join(', ') + '</div>' : '') +
+    (c.note ? '<div class="cli-note">' + esc(c.note) + '</div>' : '') +
+    '</div>';
+}
+function ago(t) {
+  const m = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (m < 60) return m <= 1 ? 'adesso' : m + ' min fa';
+  const h = Math.round(m / 60); if (h < 24) return h + (h === 1 ? ' ora fa' : ' ore fa');
+  const d = Math.round(h / 24); return d === 1 ? 'ieri' : d + ' giorni fa';
+}
+function leadsBlock(c) {
+  if (c.archived) return '';
+  const open = c.sheetId ? '<a class="lnk" href="https://docs.google.com/spreadsheets/d/' + esc(c.sheetId) + '" target="_blank" rel="noopener">Apri foglio</a>' : '';
+  if (!c.sheetId) return '<div class="cli-leads none"><span>Nessun foglio collegato.</span> <button type="button" class="lnk" data-act="edit">Collega il foglio</button></div>';
+  const L = c.leads;
+  if (!L) return '<div class="cli-leads none"><span>Leggo il foglio…</span> ' + open + '</div>';
+  if (L.error) return '<div class="cli-leads bad"><span>' + (L.error === 'privato' ? 'Foglio privato: condividilo con "chiunque abbia il link".' : 'Foglio non leggibile adesso.') + '</span> ' + open + '</div>';
+  const max = Math.max(1, ...L.perDay);
+  const bars = L.perDay.map((n, i) => '<i style="height:' + Math.max(n ? 18 : 4, Math.round(n / max * 100)) + '%"' + (n ? '' : ' class="z"') + ' title="' + n + '"></i>').join('');
+  const recent = L.recent.map((r) => '<li><b>' + esc(r.nome || 'Senza nome') + '</b>' + (r.zona ? ' · ' + esc(r.zona) : '') + ' <span>' + ago(r.t) + '</span>' + (r.note ? '<em>' + esc(r.note) + '</em>' : '') + '</li>').join('');
+  return '<div class="cli-leads">' +
+    '<div class="cl-nums"><div><b class="num">' + grp(c.adsStart ? L.sinceAds : L.total) + '</b><span>lead ' + (c.adsStart ? 'dalle ads' : 'nel foglio') + '</span></div>' +
+    '<div><b class="num">' + grp(L.last7) + '</b><span>ultimi 7 giorni</span></div>' +
+    '<div><b class="num">' + grp(L.today) + '</b><span>oggi</span></div>' +
+    '<div><b class="num">' + grp(L.appts) + '</b><span>appuntamenti</span></div></div>' +
+    '<div class="cl-bars" title="Lead al giorno, ultimi 14 giorni">' + bars + '</div>' +
+    '<div class="cl-foot"><span>Ultimo lead: ' + (L.lastAt ? ago(L.lastAt) : 'nessuno') + '</span>' + open + '</div>' +
+    (recent ? '<ul class="cl-recent">' + recent + '</ul>' : '') +
+    '</div>';
+}
+function renderClienti() {
+  const list = cli.clienti.filter((c) => (cliTab === 'archiviati') === !!c.archived);
+  setHTML('cliList', list.length ? list.map(cliRow).join('') :
+    '<div class="cli-empty">' + (cliTab === 'archiviati' ? 'Nessun cliente archiviato.' : 'Nessun cliente attivo. Premi "Aggiungi cliente" per inserire il primo.') + '</div>');
+  document.querySelectorAll('.cli-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === cliTab));
+}
+async function loadClienti() {
+  if (tvMode) return;
+  try {
+    const r = await fetch(CAPI, { cache: 'no-store' });
+    if (r.status === 401) { location.reload(); return; }
+    if (!r.ok) return;
+    cli = await r.json(); renderTodo();
+    if (!$('cliPanel').hidden) renderClienti();
+  } catch (e) {}
+}
+async function cliOp(body) {
+  if (cliBusy) return false;
+  cliBusy = true;
+  try {
+    const r = await fetch(CAPI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401) { location.reload(); return false; }
+    if (!r.ok) { const m = d.error || 'Non salvato, riprova.'; if (!$('mrgDlg').hidden) setText('mrgErr', m); else if (!$('adsDlg').hidden) setText('adsErr', m); else if (!$('upsDlg').hidden) setText('upsErr', m); else if (!$('cliForm').hidden) setText('cliErr', m); else alert(m); return false; }
+    cli = d; renderTodo(); renderClienti();
+    if (d.ghlNote) alert(d.ghlNote);
+    return true;
+  } catch (e) { setText('cliErr', 'Connessione persa, riprova.'); return false; }
+  finally { cliBusy = false; }
+}
+function openClienti(focusId) {
+  $('cliPanel').hidden = false; document.body.style.overflow = 'hidden';
+  if (focusId) { const c = cli.clienti.find((x) => x.id === focusId); cliTab = c && c.archived ? 'archiviati' : 'attivi'; }
+  renderClienti(); loadClienti();
+  if (focusId) {
+    const row = document.querySelector('.cli[data-id="' + CSS.escape(focusId) + '"]');
+    if (row) { row.scrollIntoView({ block: 'center' }); row.classList.add('focus'); }
+  } else $('cliAdd').focus();
+}
+function closeClienti() { $('cliPanel').hidden = true; document.body.style.overflow = ''; closeForm(); $('cliOpen').focus(); }
+function openForm(c) {
+  const f = $('cliForm'); cliEdit = c ? c.id : ''; cliEndTouched = !!c; setText('cliErr', '');
+  setText('cliFormTitle', c ? 'Modifica ' + c.nome : 'Nuovo cliente');
+  const today = cli.today || new Date().toISOString().slice(0, 10);
+  f.nome.value = c ? c.nome : ''; f.agenzia.value = c ? c.agenzia || '' : ''; f.zona.value = c ? c.zona || '' : '';
+  f.telefono.value = c ? c.telefono || '' : ''; f.note.value = c ? c.note || '' : ''; f.sheet.value = c && c.sheetId ? 'https://docs.google.com/spreadsheets/d/' + c.sheetId : ''; f.amount.value = c && c.amount ? c.amount : '';
+  f.start.value = c ? c.start : today; f.adsStart.value = c && c.adsStart ? c.adsStart : ''; showEnd();
+  f.hidden = false; f.nome.focus();
+}
+function closeForm() { $('cliForm').hidden = true; cliEdit = ''; }
+function showEnd() { const v = $('cliForm').adsStart.value; setText('cliEndShow', v ? dShort(addD(v, 30)) + ' (30 giorni dopo)' : 'quando parte la pubblicità'); }
+let upsId = '';
+function askUpsell(id) {
+  const c = cli.clienti.find((x) => x.id === id); if (!c) return;
+  upsId = id; setText('upsErr', '');
+  setText('upsText', c.nome + ' ha già pagato ' + money0(c.paid || 0) + '. Quanto hai chiuso con l’upsell?');
+  $('upsForm').amount.value = ''; $('upsDlg').hidden = false; $('upsForm').amount.focus();
+}
+function closeUps() { $('upsDlg').hidden = true; upsId = ''; }
+let mrgId = '';
+function askMerge(id) {
+  const c = cli.clienti.find((x) => x.id === id); if (!c) return;
+  mrgId = id; setText('mrgErr', '');
+  setText('mrgText', 'Con quale cliente unisco ' + c.nome + ' (' + money0(c.paid || 0) + ')? Usalo per l’upsell fatto su GoHighLevel con una scheda nuova.');
+  const opts = cli.clienti.filter((x) => x.id !== id && !x.archived).map((x) => '<option value="' + esc(x.id) + '">' + esc(x.nome) + ' · ' + money0(x.paid || 0) + '</option>').join('');
+  $('mrgForm').into.innerHTML = opts; $('mrgDlg').hidden = false; $('mrgForm').into.focus();
+}
+function closeMerge() { $('mrgDlg').hidden = true; mrgId = ''; }
+let adsId = '';
+function askAds(id) {
+  const c = cli.clienti.find((x) => x.id === id); if (!c) return;
+  adsId = id; setText('adsErr', '');
+  setText('adsText', 'Da quando è accesa la pubblicità di ' + c.nome + '?');
+  $('adsForm').date.value = c.adsStart || cli.today; $('adsDlg').hidden = false; $('adsForm').date.focus();
+}
+function closeAds() { $('adsDlg').hidden = true; adsId = ''; }
+if (!tvMode) {
+  $('cliOpen').onclick = () => openClienti();
+  $('cliClose').onclick = closeClienti;
+  $('cliPanel').onclick = (e) => { if (e.target === $('cliPanel')) closeClienti(); };
+  document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (!$('mrgDlg').hidden) closeMerge(); else if (!$('adsDlg').hidden) closeAds(); else if (!$('upsDlg').hidden) closeUps(); else if (!$('cliPanel').hidden) closeClienti(); });
+  $('cliAdd').onclick = () => openForm(null);
+  $('upsCancel').onclick = closeUps;
+  $('mrgCancel').onclick = closeMerge;
+  $('mrgDlg').onclick = (e) => { if (e.target === $('mrgDlg')) closeMerge(); };
+  $('mrgForm').onsubmit = async (e) => { e.preventDefault(); if (await cliOp({ op: 'merge', id: mrgId, into: $('mrgForm').into.value })) closeMerge(); };
+  $('adsCancel').onclick = closeAds;
+  $('adsDlg').onclick = (e) => { if (e.target === $('adsDlg')) closeAds(); };
+  $('adsForm').onsubmit = async (e) => { e.preventDefault(); if (await cliOp({ op: 'ads', id: adsId, date: $('adsForm').date.value })) closeAds(); };
+  $('upsDlg').onclick = (e) => { if (e.target === $('upsDlg')) closeUps(); };
+  $('upsForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const v = Number(String($('upsForm').amount.value).replace(',', '.'));
+    if (!(v >= 0)) { setText('upsErr', 'Scrivi un importo.'); return; }
+    if (await cliOp({ op: 'done', id: upsId, what: 'upsell', amount: v })) { closeUps(); refresh(curMonth); }
+  };
+  $('cliCancel').onclick = closeForm;
+  // La scadenza segue la partenza della pubblicità (+30 giorni) finché non la cambi a mano.
+  $('cliForm').adsStart.oninput = showEnd; $('cliForm').adsStart.onchange = showEnd;
+  $('cliForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = $('cliForm');
+    const data = { nome: f.nome.value, agenzia: f.agenzia.value, zona: f.zona.value, telefono: f.telefono.value, start: f.start.value, adsStart: f.adsStart.value, note: f.note.value, sheet: f.sheet.value, amount: f.amount.value || 0 };
+    if (await cliOp(cliEdit ? { op: 'update', id: cliEdit, data } : { op: 'add', data })) closeForm();
+  };
+  document.querySelector('.cli-tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) { cliTab = b.dataset.tab; renderClienti(); } };
+  $('cliList').onclick = (e) => {
+    const u = e.target.closest('[data-unmerge]'); if (u) { cliOp({ op: 'unmerge', id: u.dataset.unmerge }); return; }
+    const b = e.target.closest('button[data-act]'); if (!b) return;
+    const id = b.closest('.cli').dataset.id, c = cli.clienti.find((x) => x.id === id); if (!c) return;
+    const a = b.dataset.act;
+    if (a === 'plus') cliOp({ op: 'incarico', id, delta: 1 });
+    else if (a === 'minus') { if (c.count > 0) cliOp({ op: 'incarico', id, delta: -1 }); }
+    else if (a === 'edit') { openForm(c); $('cliPanel').querySelector('.cli-panel').scrollTop = 0; }
+    else if (a === 'upsell') askUpsell(id);
+    else if (a === 'ads') askAds(id);
+    else if (a === 'unupsell') { if (confirm('Annullare l’ultimo upsell di ' + c.nome + '? L’incasso viene tolto.')) cliOp({ op: 'done', id, what: 'upsell', undo: true }).then((ok) => { if (ok) refresh(curMonth); }); }
+    else if (a === 'merge') askMerge(id);
+    else if (a === 'archive') cliOp({ op: 'archive', id, archived: true });
+    else if (a === 'unarchive') cliOp({ op: 'archive', id, archived: false });
+    else if (a === 'delete') { if (confirm('Eliminare ' + c.nome + ' per sempre?')) cliOp({ op: 'delete', id }); }
+  };
+  $('todo').onclick = (e) => {
+    const o = e.target.closest('[data-open]'); if (o) { openClienti(o.dataset.open); return; }
+    const k = e.target.closest('[data-skip]'); if (k) { cliOp({ op: 'done', id: k.dataset.skip, what: 'skip' }); return; }
+    const g = e.target.closest('[data-ads]'); if (g) { askAds(g.dataset.ads); return; }
+    const d = e.target.closest('[data-done]'); if (!d) return;
+    if (d.dataset.done === 'upsell') askUpsell(d.dataset.id); else cliOp({ op: 'done', id: d.dataset.id, what: 'call' });
+  };
+  loadClienti(); setInterval(loadClienti, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadClienti(); });
+}
+`;

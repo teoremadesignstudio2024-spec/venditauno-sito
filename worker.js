@@ -1,4 +1,4 @@
-import { DASH_PATH, TV_PATH, handleDashboard, ClientiStore } from "./dashboard.js";
+import { DASH_PATH, CLI_PATH, TV_PATH, handleDashboard, ClientiStore } from "./dashboard.js";
 
 // Archivio dei clienti attivi della dashboard (Durable Object).
 export { ClientiStore };
@@ -63,7 +63,12 @@ export default {
     if (decodedPath.startsWith(`${DASH_PATH}ù`)) {
       return Response.redirect(`${url.origin}${DASH_PATH}`, 302);
     }
-    if (url.pathname === DASH_PATH || url.pathname.startsWith(`${DASH_PATH}/`) || url.pathname === TV_PATH || url.pathname === `${TV_PATH}/`) {
+    // Dashboard clienti attivi: /dashboardclienti (le altre grafie ci arrivano comunque).
+    if (/^\/dashboard[-_]?clienti([-_]?attivi)?\/?$/i.test(url.pathname) && url.pathname !== CLI_PATH) {
+      return Response.redirect(`${url.origin}${CLI_PATH}`, 301);
+    }
+    if (url.pathname === CLI_PATH || url.pathname.startsWith(`${CLI_PATH}/`) ||
+        url.pathname === DASH_PATH || url.pathname.startsWith(`${DASH_PATH}/`) || url.pathname === TV_PATH || url.pathname === `${TV_PATH}/`) {
       return handleDashboard(request, env, url);
     }
 
