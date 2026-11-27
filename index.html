@@ -214,6 +214,18 @@ main { display: grid; gap: 28px; padding: 28px 0 40px; }
 .case-t p b { color: var(--frost); font-weight: 600; }
 .case-t span { display: block; margin-top: 12px; color: var(--frost-3); font-size: 0.9rem; }
 
+/* Fondatore: la foto sfuma nello sfondo, senza cornice */
+.founder { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(20px, 4vw, 56px); align-items: center; }
+.founder-role { display: inline-block; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--frost-3); }
+.founder .h1 { margin-top: 14px; }
+.founder .copy { margin-top: 22px; }
+.founder-pic { position: relative; margin: clamp(-40px, -4vw, -20px) clamp(-60px, -5vw, -16px) clamp(-60px, -6vw, -30px) 0; }
+.founder-pic img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 76%, transparent 100%);
+  -webkit-mask-composite: source-in;
+          mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 76%, transparent 100%);
+          mask-composite: intersect; }
+
 /* Player video nostro */
 .vbox { position: relative; width: 100%; max-width: 1040px; border-radius: 28px; padding: 12px; }
 .vbox .modal-close { top: -14px; right: -14px; background: rgba(20,24,38,0.9); }
@@ -299,7 +311,8 @@ footer a:hover { color: #fff; }
 
 @media (max-width: 960px) {
   .nav-links { display: none; }
-  .split, .versus, .step, .books, .hero-panel, .cases { grid-template-columns: minmax(0, 1fr); }
+  .split, .versus, .step, .books, .hero-panel, .cases, .founder { grid-template-columns: minmax(0, 1fr); }
+  .founder-pic { margin: 0 -20px -30px; }
   .step:nth-child(even) .step-text { order: 0; }
   .glass { -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6); }
 }
@@ -434,6 +447,24 @@ footer a:hover { color: #fff; }
     </div>
   </div>
   <div class="center"><button type="button" class="cta" style="margin-top:40px" onclick="openModal('modal-candidati')">Candida adesso la tua agenzia</button></div>
+</section>
+
+<!-- Il fondatore -->
+<section class="slab glass" id="fondatore">
+  <div class="founder">
+    <div>
+      <span class="founder-role">CEO e fondatore</span>
+      <h2 class="h1">Samuele Diotti</h2>
+      <div class="copy">
+        <p>Ha fondato Vendita Uno dopo anni da agente nelle grandi reti immobiliari, <b>prendendo incarichi in prima persona</b>.</p>
+        <p>Oggi porta lo stesso metodo alle agenzie partner: oltre 23 milioni di euro generati e più di 130 agenzie di cui è socio.</p>
+      </div>
+      <button type="button" class="cta" style="margin-top:30px" onclick="openModal('modal-candidati')">Candida adesso la tua agenzia</button>
+    </div>
+    <div class="founder-pic">
+      <img src="assets/img/samuele-diotti.webp" srcset="assets/img/samuele-diotti-700.webp 700w, assets/img/samuele-diotti.webp 1200w" sizes="(max-width: 960px) 100vw, 640px" width="1200" height="1200" alt="Samuele Diotti, CEO e fondatore di Vendita Uno" loading="lazy">
+    </div>
+  </div>
 </section>
 
 <!-- Casi studio -->
