@@ -78,15 +78,17 @@ function seedContent() {
   const C = (n, id, title, desc, lessons = []) => ({ id, n, title, desc, cover: "", modules: [{ id: `${id}-m1`, title: "Lezioni", lessons: lessons.map(([t, v], i) => ({ id: `${id}-l${i + 1}`, title: t, video: v, desc: "", pdf: "", thumb: "" })) }] });
   return {
     v: CONTENT_V,
-    settings: { accent: "#9b1c31", heroTitle: "La tua libreria corsi", heroText: "Il percorso completo per costruire un'agenzia immobiliare che vende: dalle basi alla squadra, passo dopo passo." },
+    settings: { accent: "#9b1c31", heroTitle: "La tua libreria corsi", heroText: "Qui trovi i pilastri della formazione per costruire un'agenzia immobiliare che vende: dal piano alla squadra, passo dopo passo." },
     courses: [
-      C(1, "inizia", "Inizia da qui!", "Il punto di partenza: come funziona il metodo, come usare l'Academy e cosa otterrai alla fine del percorso."),
-      C(2, "basi", "Le basi di un'agenzia che vende", "Le fondamenta di un'agenzia che vende davvero: cosa deve avere, come deve lavorare e da dove partire.", [["Le basi di un'agenzia che vende", loom("695e304d0b35481dbd5d6652311bf9bd")]]),
-      C(3, "zona", "Diventa il punto di riferimento della tua zona", "Fatti scegliere dai proprietari della tua zona prima di tutte le altre agenzie, a partire dalla tua proposta unica.", [["Cos'è una USP e come crearla", loom("f0948ac5854a4c7491e7ff4c08d0f885")]]),
-      C(4, "numeri", "I numeri che contano", "Chiamate, appuntamenti, incarichi, margini: i numeri da guardare ogni settimana per sapere dove stai andando."),
-      C(5, "team", "Costruire un team che vende", "Trovare, formare e motivare agenti che portano risultati anche quando tu non ci sei."),
-      C(6, "organizzata", "L'agenzia organizzata", "Procedure, strumenti e agenda: un'agenzia che gira senza che tu debba rincorrere tutto."),
-      C(7, "freno", "Cosa ti sta frenando", "Paure, scuse e abitudini che bloccano la crescita, e come superarle una volta per tutte."),
+      C(1, "business-planning", "Business Planning", "Il piano della tua agenzia: dove vuoi arrivare, con quali numeri e in quanto tempo. Dall'idea a un'attività che cresce e batte la concorrenza.", [["Le basi di un'agenzia che vende", loom("695e304d0b35481dbd5d6652311bf9bd")]]),
+      C(2, "marketing", "Marketing", "Fare marketing non è magia: è un sistema per farti trovare, attirare proprietari e trasformarli in incarichi."),
+      C(3, "vendita", "Vendita", "Le trattative non si improvvisano. Il metodo per acquisire, trattare e chiudere senza svendere il tuo lavoro."),
+      C(4, "branding", "Branding", "Perché un proprietario dovrebbe scegliere te e non l'agenzia accanto? Costruisci un'identità che si riconosce e si ricorda.", [["Cos'è una USP e come crearla", loom("f0948ac5854a4c7491e7ff4c08d0f885")]]),
+      C(5, "finance", "Finance", "Margini, costi, provvigioni e cassa: i numeri che decidono se la tua agenzia guadagna davvero."),
+      C(6, "organizzazione", "Organizzazione", "Procedure, strumenti e agenda per un'agenzia che gira senza che tu debba rincorrere tutto."),
+      C(7, "mindset", "Mindset", "Fare impresa è stressante come poche altre cose. Le abitudini e il modo di pensare per reggere e crescere."),
+      C(8, "leadership", "Leadership", "Un'agenzia è forte quanto il suo agente più debole. Come guidare, formare e motivare una squadra che vende."),
+      C(9, "videomaking", "Videomaking", "Video per immobili e per i social fatti col telefono: riprese, montaggio e contenuti che portano clienti."),
     ],
   };
 }
