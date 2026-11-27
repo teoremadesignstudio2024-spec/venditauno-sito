@@ -2,9 +2,10 @@ import { DASH_PATH, CLI_PATH, TV_PATH, handleDashboard, ClientiStore } from "./d
 
 // Archivio dei clienti attivi della dashboard (Durable Object).
 export { ClientiStore };
+import { handleAcademyApi } from "./academy-api.js";
 
 // Pagine tolte dal sito: chi ha un vecchio link finisce sulla home invece che su una pagina vuota.
-const REMOVED = ["/app", "/academy", "/provegestionale", "/ahmis", "/stefanobonuccelli", "/consulting", "/agenti", "/webinar"];
+const REMOVED = [ "/provegestionale", "/ahmis", "/stefanobonuccelli", "/consulting", "/agenti", "/webinar"];
 function isRemoved(path) {
   const p = path.replace(/\.html$/, "").replace(/\/+$/, "") || "/";
   return REMOVED.some((r) => p === r || p.startsWith(r + "/"));
@@ -14,12 +15,25 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // L'app (/app) è stata tolta: si rifà da zero. Le sue API non rispondono più.
+    // Vendita Uno Academy: API e pagine (/academy). Niente cache, così ogni aggiornamento si vede subito.
+    if (url.pathname.startsWith("/api/academy/")) {
+      return handleAcademyApi(request, env);
+    }
+    if (url.pathname === "/worker.js" || url.pathname === "/dashboard.js" || url.pathname === "/academy-api.js") {
+      return new Response("Not found", { status: 404 });
+    }
+    // La vecchia app (/app) è stata tolta: chi ha il link arriva all'Academy.
     if (url.pathname.startsWith("/api/app/")) {
       return new Response("Gone", { status: 410 });
     }
-    if (url.pathname === "/worker.js" || url.pathname === "/dashboard.js") {
-      return new Response("Not found", { status: 404 });
+    if (url.pathname === "/app" || url.pathname.startsWith("/app/") || /^\/academy$/i.test(url.pathname) || (/^\/academy\/?$/i.test(url.pathname) && url.pathname !== "/academy/")) {
+      return Response.redirect(`${url.origin}/academy/`, 301);
+    }
+    if (url.pathname.startsWith("/academy/")) {
+      const res = await env.ASSETS.fetch(request);
+      const out = new Response(res.body, res);
+      out.headers.set("Cache-Control", "no-cache");
+      return out;
     }
 
     // Diotti Consulting: l'indirizzo è /diotticonsulting. Le altre grafie e il vecchio /cantieriuno ci arrivano comunque.
