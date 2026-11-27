@@ -68,8 +68,9 @@ async function setPassword(u, password) {
   u.pass = { salt, iter: PBKDF2_ITER, hash: await hashPassword(password, salt) };
   u.pv = (u.pv || 0) + 1;
 }
-const cleanUsername = (v) => str(v, 40).toLowerCase().replace(/\s+/g, "");
-const validUsername = (u) => /^[a-z0-9._-]{3,40}$/.test(u);
+// Username: minuscolo, senza spazi né accenti. Va bene anche un'email (mario@agenzia.it).
+const cleanUsername = (v) => str(v, 80).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
+const validUsername = (u) => /^[a-z0-9._@+-]{3,80}$/.test(u);
 const publicUser = (u) => ({ username: u.username, name: u.name, role: u.role, access: u.access, blocked: !!u.blocked, createdAt: u.createdAt, lastLogin: u.lastLogin || 0 });
 
 // ---------- contenuti ----------
@@ -176,7 +177,7 @@ export async function handleAcademyApi(request, env) {
     const h = toHex(await crypto.subtle.digest("SHA-256", enc.encode(str(body.code, 60).toUpperCase())));
     if (!safeEqual(h, SETUP_HASH)) { await addFail(kv, [`setup:${ip}`]); return fail("Codice di attivazione non valido"); }
     const username = cleanUsername(body.username);
-    if (!validUsername(username)) return fail("Username: almeno 3 caratteri tra lettere, numeri, punto, trattino");
+    if (!validUsername(username)) return fail("Username: almeno 3 caratteri, senza spazi (puoi usare anche la tua email)");
     if (str(body.password, 200).length < 8) return fail("La password deve avere almeno 8 caratteri");
     const u = { username, name: str(body.name, 80) || "Admin", role: "admin", access: "all", createdAt: now() };
     await setPassword(u, str(body.password, 200));
@@ -244,7 +245,7 @@ export async function handleAcademyApi(request, env) {
 
   if (path === "/admin/user" && method === "POST") {
     const username = cleanUsername(body.username);
-    if (!validUsername(username)) return fail("Username: almeno 3 caratteri tra lettere, numeri, punto, trattino (niente spazi)");
+    if (!validUsername(username)) return fail("Username: almeno 3 caratteri, senza spazi (puoi usare anche l'email del cliente)");
     let u = await getJSON(kv, `ac:user:${username}`);
     const isNew = !u;
     if (isNew && !body.create) return fail("Cliente non trovato", 404);

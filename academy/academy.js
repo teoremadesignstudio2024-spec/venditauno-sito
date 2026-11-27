@@ -446,12 +446,12 @@ async function admClients() {
     const pw = genPassword();
     formModal("Nuovo cliente",
       field("Nome e cognome", "name", "", "text", 'required') +
-      field("Username (senza spazi, es. mario.rossi)", "username", "", "text", 'required autocapitalize="none" spellcheck="false"') +
+      field("Username (senza spazi, es. mario.rossi oppure la sua email)", "username", "", "text", 'required autocapitalize="none" spellcheck="false"') +
       `<div class="pw-row">${field("Password", "password", pw, "text", 'required autocomplete="off"')}<button type="button" class="btn ghost" id="gp" aria-label="Genera password">${icon("dice")}</button></div>` +
       accessPicker("all"),
       async (f, form) => {
         await api("/admin/user", { create: true, name: f.name, username: f.username, password: f.password, access: readAccess(form) });
-        showCreds(f.username.toLowerCase().replace(/\s+/g, ""), f.password);
+        showCreds(f.username.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ""), f.password);
         admClients();
       }, "Crea cliente");
     const nm = $("#mf [name=name]"), un = $("#mf [name=username]");
